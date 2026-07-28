@@ -48,6 +48,8 @@ class Router
         'solicitudes'   => ['clase' => 'SolicitudController',     'archivo' => 'modules/sacramentos/SolicitudController.php'],
         'cursos'        => ['clase' => 'CursoController',         'archivo' => 'modules/cursos/CursoController.php'],
         'inscripciones' => ['clase' => 'InscripcionCursoController', 'archivo' => 'modules/cursos/InscripcionCursoController.php'],
+        'usuarios'      => ['clase' => 'UsuarioController',       'archivo' => 'modules/usuarios/UsuarioController.php'],
+        'auditoria'     => ['clase' => 'AuditoriaController',     'archivo' => 'modules/auditoria/AuditoriaController.php'],
     ];
 
     /**

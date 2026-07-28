@@ -63,6 +63,11 @@ class Controller
      * queda fija a una sola (coordinador con una única pastoral asignada,
      * que no debe elegir de una lista) y si puede dejarse en blanco
      * (alcance global = contenido parroquial general).
+     *
+     * Las claves llevan el prefijo sp_ porque son justo las que espera
+     * shared/views/parciales/selector_pastoral.php: al pasarlas por
+     * render(), extract() las deja listas para el partial sin que cada
+     * vista tenga que renombrarlas una por una.
      */
     protected function opcionesPastoral(): array
     {
@@ -70,7 +75,7 @@ class Controller
         $todas = (new PastoralModel())->paraSelector();
 
         if (Auth::tieneAlcanceGlobal()) {
-            return ['opciones' => $todas, 'fija' => null, 'permiteVacio' => true];
+            return ['sp_opciones' => $todas, 'sp_fija' => null, 'sp_permiteVacio' => true];
         }
 
         $propias  = Auth::pastoralesPermitidas();
@@ -79,9 +84,9 @@ class Controller
             static fn (array $p): bool => in_array((int) $p['id'], $propias, true)
         ));
         return [
-            'opciones'     => $opciones,
-            'fija'         => count($opciones) === 1 ? (int) $opciones[0]['id'] : null,
-            'permiteVacio' => false,
+            'sp_opciones'     => $opciones,
+            'sp_fija'         => count($opciones) === 1 ? (int) $opciones[0]['id'] : null,
+            'sp_permiteVacio' => false,
         ];
     }
 

@@ -628,6 +628,67 @@ administra `inscripciones.*` (ver, cambiar estado, exportar) pero no toca `curso
 punta a punta con los tres roles (`coordinador`, `editor`, `secretaria`) contra
 `/admin/cursos` y `/admin/inscripciones`.
 
+## Usuarios, roles y auditoría
+
+El CRUD de cuentas y la bandeja de auditoría son, por diseño del plan, exclusivos del
+administrador: ningún otro rol tiene entradas `usuarios.*` ni `auditoria.*` en la matriz de
+`config/app.php`, así que llegan solo por el comodín `'*'` de `ROL_ADMIN` — igual que
+`configuracion.*`. Los controladores llaman `requirePermiso('usuarios.ver')` de todos
+modos, en vez de un método `requireAdmin()` aparte: es el mismo patrón que ya usaba
+`ConfiguracionController`, y deja abierta la puerta a delegar un permiso suelto en el
+futuro sin tocar el controlador.
+
+**`usuarios_pastorales` solo se sincroniza si el rol es coordinador.** El formulario
+manda las casillas marcadas como `pastorales[]`, pero `UsuarioController::guardar()`
+descarta ese arreglo por completo cuando el rol elegido no es `coordinador`: admin y
+editor tienen alcance global sin importar qué haya en el pivote (`Auth::tieneAlcanceGlobal()`),
+así que guardarles pastorales sería un dato muerto que solo confundiría al leer la tabla
+después. `UsuarioModel::sincronizarPastorales()` borra e inserta de nuevo en cada guardado,
+más simple y sin margen de desincronización que calcular un diff.
+
+**Solo hay baja lógica, nunca borrado físico.** A diferencia de `personas` o `paginas`, un
+usuario no se puede eliminar de verdad: `auditoria.usuario_id` referencia su fila, y
+borrarla de la base dejaría el historial de "quién hizo qué" con nombres huérfanos. Por
+eso `UsuarioController::eliminar()` solo llama a `UsuarioModel::desactivar()` (`activo = 0`,
+que ya excluye del login por la condición en `Auth::intentarLogin()`), y ni siquiera se
+ofrece la opción de borrado físico en la interfaz.
+
+**Autoprotección mínima, calcada de `inventario`:** nadie puede darse de baja a sí mismo
+(`UsuarioController::eliminar()` lo bloquea antes de tocar la base) ni desactivar su propia
+cuenta desde el formulario (`activo` se fuerza a 1 cuando `$esPropio`, con la casilla
+además deshabilitada en la vista). Deliberadamente **no** se bloquea que alguien se cambie
+su propio rol: el proyecto de referencia tampoco lo hacía, y añadirlo sería una
+protección no pedida para un caso que, si ocurre, se corrige por SQL directo — igual que
+cualquier otra cuenta de administración de un sitio pequeño.
+
+**La auditoría es de solo lectura y no audita su propia consulta.** A diferencia de
+`solicitudes` e `inscripciones_curso`, `AuditoriaController::index()` no llama a
+`auditoria('consultar', …)`: el listado ya ES la bitácora, y una fila por cada vez que
+alguien la revisa no aporta nada, solo la infla. Sí se audita la exportación a CSV, igual
+que en el resto del panel.
+
+### Dos errores que este repaso encontró y corrigió
+
+El cierre de esta etapa incluía, por plan, un repaso de seguridad de todo el sistema — no
+solo del código nuevo. Ese repaso encontró dos fallas reales que venían de etapas
+anteriores y habían pasado inadvertidas porque ninguna prueba anterior había iniciado
+sesión como un coordinador con una pastoral ya asignada por la interfaz:
+
+1. **`Controller::opcionesPastoral()` devolvía las claves `opciones`, `fija` y
+   `permiteVacio`, pero `shared/views/parciales/selector_pastoral.php` siempre esperó
+   `sp_opciones`, `sp_fija` y `sp_permiteVacio`.** Los formularios de avisos, eventos y
+   galería nunca las traducían, así que el selector de pastoral fallaba con
+   "Undefined variable" para cualquier coordinador (con `APP_DEBUG` en `false` el error
+   quedaría oculto y el `<select>` simplemente saldría vacío). Se corrigió devolviendo ya
+   las claves con el prefijo `sp_` desde el origen, en vez de parchear cada vista.
+2. **El filtro de auditoría por acción no podía llamarse `accion` en la URL.** Ese nombre
+   ya lo usa el propio `Router` para elegir el método del controlador: `?accion=crear`
+   intentaba invocar `AuditoriaController::crear()`, que no existe, y devolvía 404 en vez
+   del listado filtrado. El parámetro público quedó como `tipo_accion` (la columna de la
+   tabla se sigue llamando `accion`; solo cambió el nombre expuesto en la URL y el
+   formulario). **Cualquier filtro nuevo en el panel debe evitar los nombres reservados
+   del Router: `area`, `modulo`, `accion`, `slug`.**
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por

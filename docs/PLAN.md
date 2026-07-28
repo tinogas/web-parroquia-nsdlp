@@ -112,7 +112,7 @@ vistas de administración.
 | 6 | Pastorales | CRUD con actividades, fichas públicas, y activación del rol coordinador con su alcance | 2.0 | **Hecha** |
 | 7 | Sacramentos y solicitudes | Catálogo, campos configurables, formulario público, bandeja con estados y bitácora | 2.5 | **Hecha** |
 | 8 | Cursos e inscripciones | Catálogo, temario, inscripción, cupo y lista de espera | 1.5 | **Hecha** |
-| 9 | Usuarios, roles y auditoría | CRUD de usuarios, asignación de pastorales, auditoría con filtros, repaso de seguridad | 1.0 | Pendiente |
+| 9 | Usuarios, roles y auditoría | CRUD de usuarios, asignación de pastorales, auditoría con filtros, repaso de seguridad | 1.0 | **Hecha** |
 | 10 | SEO y despliegue | `sitemap.xml`, Open Graph, datos estructurados, guía de cPanel, checklist final | 1.0 | Pendiente |
 | | | **Total** | **16.5** | |
 

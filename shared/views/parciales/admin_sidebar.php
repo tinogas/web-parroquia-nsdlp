@@ -112,15 +112,24 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('configuracion.ver')): ?>
+        <?php if (Auth::tienePermiso('configuracion.ver') || Auth::tienePermiso('usuarios.ver')
+                || Auth::tienePermiso('auditoria.ver')): ?>
         <div class="sidebar-section mt-2">Administración</div>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('configuracion.ver')): ?>
         <a href="<?= e(url_admin('configuracion')) ?>" class="sidebar-link <?= $activo('configuracion') ?>">
             <i class="bi bi-gear"></i> Configuración
         </a>
-        <?php /*
-        <a href="<?= e(url_admin('usuarios')) ?>"  class="sidebar-link <?= $activo('usuarios') ?>"><i class="bi bi-person-gear"></i> Usuarios</a>
-        <a href="<?= e(url_admin('auditoria')) ?>" class="sidebar-link <?= $activo('auditoria') ?>"><i class="bi bi-journal-text"></i> Auditoría</a>
-        */ ?>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('usuarios.ver')): ?>
+        <a href="<?= e(url_admin('usuarios')) ?>" class="sidebar-link <?= $activo('usuarios') ?>">
+            <i class="bi bi-person-gear"></i> Usuarios
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('auditoria.ver')): ?>
+        <a href="<?= e(url_admin('auditoria')) ?>" class="sidebar-link <?= $activo('auditoria') ?>">
+            <i class="bi bi-journal-text"></i> Auditoría
+        </a>
         <?php endif; ?>
 
     </nav>
