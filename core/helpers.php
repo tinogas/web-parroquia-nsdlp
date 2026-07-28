@@ -155,6 +155,20 @@ if (!function_exists('e')) {
         return $dias[$dia] ?? '';
     }
 
+    /** '2026-08-15' → 'ago'. Para tarjetas de fecha destacada. */
+    function mes_abreviado(?string $fecha): string
+    {
+        if (empty($fecha)) {
+            return '';
+        }
+        $ts = strtotime($fecha);
+        if ($ts === false) {
+            return '';
+        }
+        $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        return $meses[(int) date('n', $ts) - 1];
+    }
+
     /** '19:30:00' → '7:30 p. m.' */
     function hora_corta(?string $hora): string
     {

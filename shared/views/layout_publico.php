@@ -72,6 +72,7 @@ $canonica     = $urlCanonica ?? null;
 
 <?php require BASE_PATH . '/shared/views/parciales/publico_footer.php'; ?>
 
+<script>const APP_URL = <?= json_encode(url_base(), JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= e(url_activo('assets/js/publico.js')) ?>?v=<?= e(APP_VERSION) ?>"></script>
 <?php if (isset($scriptExtra)) { echo $scriptExtra; } ?>

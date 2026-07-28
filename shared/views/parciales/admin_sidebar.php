@@ -32,12 +32,6 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php /*
-        <a href="<?= e(url_admin('avisos')) ?>"   class="sidebar-link <?= $activo('avisos') ?>"><i class="bi bi-megaphone"></i> Avisos</a>
-        <a href="<?= e(url_admin('eventos')) ?>"  class="sidebar-link <?= $activo('eventos') ?>"><i class="bi bi-calendar-event"></i> Eventos</a>
-        <a href="<?= e(url_admin('galeria')) ?>"  class="sidebar-link <?= $activo('galeria') ?>"><i class="bi bi-images"></i> Galería</a>
-        */ ?>
-
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('personas.ver') || Auth::tienePermiso('organigrama.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
@@ -64,8 +58,32 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>"><i class="bi bi-pencil-square"></i> Inscripciones</a>
         */ ?>
 
-        <?php if (Auth::tienePermiso('mensajes.ver')): ?>
+        <?php if (Auth::tienePermiso('avisos.ver') || Auth::tienePermiso('eventos.ver')
+                || Auth::tienePermiso('galeria.ver') || Auth::tienePermiso('carrusel.ver')
+                || Auth::tienePermiso('mensajes.ver')): ?>
         <div class="sidebar-section mt-2">Comunicación</div>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('avisos.ver')): ?>
+        <a href="<?= e(url_admin('avisos')) ?>" class="sidebar-link <?= $activo('avisos') ?>">
+            <i class="bi bi-megaphone"></i> Avisos
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('eventos.ver')): ?>
+        <a href="<?= e(url_admin('eventos')) ?>" class="sidebar-link <?= $activo('eventos') ?>">
+            <i class="bi bi-calendar-event"></i> Eventos
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('galeria.ver')): ?>
+        <a href="<?= e(url_admin('galeria')) ?>" class="sidebar-link <?= $activo('galeria') ?>">
+            <i class="bi bi-images"></i> Galería
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('carrusel.ver')): ?>
+        <a href="<?= e(url_admin('carrusel')) ?>" class="sidebar-link <?= $activo('carrusel') ?>">
+            <i class="bi bi-collection-play"></i> Carrusel
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('mensajes.ver')): ?>
         <a href="<?= e(url_admin('mensajes')) ?>" class="sidebar-link <?= $activo('mensajes') ?>">
             <i class="bi bi-envelope"></i> Mensajes
         </a>

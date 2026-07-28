@@ -2,6 +2,9 @@
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/modules/bloques/BloqueModel.php';
 require_once BASE_PATH . '/modules/horarios/HorarioModel.php';
+require_once BASE_PATH . '/modules/carrusel/CarruselModel.php';
+require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
+require_once BASE_PATH . '/modules/eventos/EventoModel.php';
 
 class InicioController extends ControllerPublico
 {
@@ -18,10 +21,19 @@ class InicioController extends ControllerPublico
             'hero'           => $this->hero(),
             'bloques'        => (new BloqueModel())->porZona('inicio'),
             'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
+            'avisosRecientes' => (new AvisoModel())->recientes(3),
+            'proximosEventos' => (new EventoModel())->proximos(3),
         ]);
     }
 
     private function hero(): string
+    {
+        $diapositivas = (new CarruselModel())->activas();
+        return $diapositivas ? $this->heroCarrusel($diapositivas) : $this->heroEstatico();
+    }
+
+    /** Sin diapositivas cargadas, la portada muestra el saludo de siempre. */
+    private function heroEstatico(): string
     {
         ob_start(); ?>
         <section class="hero-inicio">
@@ -33,6 +45,53 @@ class InicioController extends ControllerPublico
                 <?php endif; ?>
             </div>
         </section>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    private function heroCarrusel(array $diapositivas): string
+    {
+        ob_start(); ?>
+        <div id="carruselInicio" class="carousel slide carrusel-inicio" data-bs-ride="carousel" data-bs-touch="true">
+            <div class="carousel-indicators">
+                <?php foreach ($diapositivas as $indice => $diapositiva): ?>
+                <button type="button" data-bs-target="#carruselInicio" data-bs-slide-to="<?= $indice ?>"
+                        class="<?= $indice === 0 ? 'active' : '' ?>"
+                        aria-current="<?= $indice === 0 ? 'true' : 'false' ?>"
+                        aria-label="Diapositiva <?= $indice + 1 ?>"></button>
+                <?php endforeach; ?>
+            </div>
+            <div class="carousel-inner">
+                <?php foreach ($diapositivas as $indice => $diapositiva): ?>
+                <div class="carousel-item <?= $indice === 0 ? 'active' : '' ?>">
+                    <img src="<?= e(url_activo($diapositiva['imagen'])) ?>" class="d-block w-100" alt="">
+                    <?php if ($diapositiva['titulo'] || $diapositiva['subtitulo']): ?>
+                    <div class="carousel-caption">
+                        <?php if ($diapositiva['titulo']): ?>
+                        <h2 class="fw-bold"><?= e($diapositiva['titulo']) ?></h2>
+                        <?php endif; ?>
+                        <?php if ($diapositiva['subtitulo']): ?>
+                        <p><?= e($diapositiva['subtitulo']) ?></p>
+                        <?php endif; ?>
+                        <?php if ($diapositiva['enlace']): ?>
+                        <a href="<?= e($diapositiva['enlace']) ?>" class="btn btn-dorado btn-sm mt-2">Ver más</a>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php if (count($diapositivas) > 1): ?>
+            <button class="carousel-control-prev" type="button" data-bs-target="#carruselInicio" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carruselInicio" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+            <?php endif; ?>
+        </div>
         <?php
         return (string) ob_get_clean();
     }

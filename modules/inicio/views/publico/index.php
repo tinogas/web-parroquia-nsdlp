@@ -91,4 +91,51 @@
 </div>
 <?php endif; ?>
 
-<?php /* Horarios destacados, próximos eventos y últimos avisos: etapas 4 y 5. */ ?>
+<?php if (!empty($proximosEventos) || !empty($avisosRecientes)): ?>
+<div class="row g-4 mt-1">
+
+    <?php if (!empty($proximosEventos)): ?>
+    <div class="col-md-6">
+        <h2 class="h6 text-uppercase text-muted mb-3">Próximos eventos</h2>
+        <div class="d-flex flex-column gap-2">
+            <?php foreach ($proximosEventos as $evento): ?>
+            <a href="<?= e(url_publica('eventos', ['slug' => $evento['slug']])) ?>"
+               class="card border-0 shadow-sm text-decoration-none">
+                <div class="card-body p-3 d-flex gap-3 align-items-center">
+                    <div class="fecha-destacada" style="border-color:<?= e($evento['color'] ?: '#1e4d8b') ?>">
+                        <span class="dia"><?= e(date('j', strtotime($evento['fecha_inicio']))) ?></span>
+                        <span class="mes text-uppercase"><?= e(mes_abreviado($evento['fecha_inicio'])) ?></span>
+                    </div>
+                    <span class="fw-semibold text-body"><?= e($evento['titulo']) ?></span>
+                </div>
+            </a>
+            <?php endforeach; ?>
+        </div>
+        <p class="mt-2 mb-0">
+            <a href="<?= e(url_publica('eventos')) ?>" class="small">Ver el calendario completo <i class="bi bi-arrow-right"></i></a>
+        </p>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($avisosRecientes)): ?>
+    <div class="col-md-6">
+        <h2 class="h6 text-uppercase text-muted mb-3">Últimos avisos</h2>
+        <div class="d-flex flex-column gap-2">
+            <?php foreach ($avisosRecientes as $aviso): ?>
+            <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>"
+               class="card border-0 shadow-sm text-decoration-none">
+                <div class="card-body p-3">
+                    <span class="fw-semibold text-body d-block"><?= e($aviso['titulo']) ?></span>
+                    <span class="small text-muted"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></span>
+                </div>
+            </a>
+            <?php endforeach; ?>
+        </div>
+        <p class="mt-2 mb-0">
+            <a href="<?= e(url_publica('avisos')) ?>" class="small">Ver todos los avisos <i class="bi bi-arrow-right"></i></a>
+        </p>
+    </div>
+    <?php endif; ?>
+
+</div>
+<?php endif; ?>

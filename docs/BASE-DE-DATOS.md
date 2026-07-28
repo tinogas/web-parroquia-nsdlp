@@ -116,7 +116,10 @@ Diapositivas de la portada. `imagen` obligatoria, más `titulo`, `subtitulo`, `e
 ### `galeria_imagenes`
 
 `archivo`, `titulo`, `alt_texto`, `pastoral_id` y `evento_id` opcionales, `orden`,
-`publicada`, `usuario_id`, `created_at`.
+`publicada`, `usuario_id`, `created_at`. `evento_id` tiene FK real a `eventos(id)` — esa
+tabla ya existe en el mismo `install.sql`. `pastoral_id` todavía no: se agrega en la
+etapa 6, cuando exista `pastorales`. Mismo caso en `avisos.pastoral_id` y
+`eventos.pastoral_id`.
 
 La columna que importa es **`autorizacion_imagen TINYINT(1) NOT NULL DEFAULT 0`**: deja
 constancia de que existe autorización para usar esa fotografía. La consulta pública filtra

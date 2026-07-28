@@ -94,10 +94,10 @@ define('PERMISOS', [
         // logo y las claves legales son responsabilidad del administrador.
         // El editor tampoco ve los mensajes de contacto: son datos personales
         // de quien escribe, y esa lectura queda para administración y secretaría.
-        // 'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.eliminar', 'avisos.publicar',
-        // 'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
-        // 'galeria.ver', 'galeria.crear', 'galeria.eliminar', 'galeria.publicar',
-        // 'carrusel.ver', 'carrusel.editar',
+        'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.eliminar', 'avisos.publicar',
+        'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
+        'galeria.ver', 'galeria.crear', 'galeria.editar', 'galeria.eliminar', 'galeria.publicar',
+        'carrusel.ver', 'carrusel.editar',
         // 'pastorales.ver', 'pastorales.editar',
         // 'sacramentos.ver', 'sacramentos.editar',
         // 'cursos.ver', 'cursos.editar', 'cursos.publicar',

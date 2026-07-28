@@ -21,6 +21,9 @@ class Router
         'horarios' => ['clase' => 'HorarioPublicoController',   'archivo' => 'modules/horarios/HorarioPublicoController.php'],
         'contacto' => ['clase' => 'ContactoPublicoController',  'archivo' => 'modules/contacto/ContactoPublicoController.php'],
         'pagina'   => ['clase' => 'PaginaPublicoController',    'archivo' => 'modules/paginas/PaginaPublicoController.php'],
+        'avisos'   => ['clase' => 'AvisoPublicoController',     'archivo' => 'modules/avisos/AvisoPublicoController.php'],
+        'eventos'  => ['clase' => 'EventoPublicoController',    'archivo' => 'modules/eventos/EventoPublicoController.php'],
+        'galeria'  => ['clase' => 'GaleriaPublicoController',   'archivo' => 'modules/galeria/GaleriaPublicoController.php'],
     ];
 
     private static array $rutasAdmin = [
@@ -33,6 +36,10 @@ class Router
         'horarios'      => ['clase' => 'HorarioController',       'archivo' => 'modules/horarios/HorarioController.php'],
         'personas'      => ['clase' => 'PersonaController',       'archivo' => 'modules/personas/PersonaController.php'],
         'organigrama'   => ['clase' => 'OrganigramaController',   'archivo' => 'modules/organigrama/OrganigramaController.php'],
+        'avisos'        => ['clase' => 'AvisoController',         'archivo' => 'modules/avisos/AvisoController.php'],
+        'eventos'       => ['clase' => 'EventoController',        'archivo' => 'modules/eventos/EventoController.php'],
+        'galeria'       => ['clase' => 'GaleriaController',       'archivo' => 'modules/galeria/GaleriaController.php'],
+        'carrusel'      => ['clase' => 'CarruselController',      'archivo' => 'modules/carrusel/CarruselController.php'],
     ];
 
     /**

@@ -1,0 +1,144 @@
+<?php
+require_once BASE_PATH . '/core/ControllerPublico.php';
+require_once BASE_PATH . '/modules/eventos/EventoModel.php';
+
+class EventoPublicoController extends ControllerPublico
+{
+    public function index(): void
+    {
+        [$anio, $mes] = $this->mesSolicitado();
+        $modelo        = new EventoModel();
+        $eventosDelMes = $modelo->delMes($anio, $mes);
+
+        $mesAnterior   = $mes === 1 ? 12 : $mes - 1;
+        $anioAnterior  = $mes === 1 ? $anio - 1 : $anio;
+        $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
+        $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
+
+        $this->render('eventos/publico/index', [
+            'metaTitulo'      => 'Eventos',
+            'metaDescripcion' => 'Calendario de celebraciones y actividades de la Parroquia Nuestra Señora de la Paz.',
+            'urlCanonica'     => url_publica('eventos'),
+            'anio'            => $anio,
+            'mes'             => $mes,
+            'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
+            'semanas'         => $this->construirCalendario($anio, $mes, $eventosDelMes),
+            'proximos'        => $modelo->proximos(6),
+            'urlMesAnterior'  => url_publica('eventos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
+            'urlMesSiguiente' => url_publica('eventos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
+            'scriptExtra'     => '<script src="' . e(url_activo('assets/js/calendario.js'))
+                               . '?v=' . e(APP_VERSION) . '"></script>',
+        ]);
+    }
+
+    public function ver(): void
+    {
+        $slug   = $this->slug();
+        $evento = $slug !== '' ? (new EventoModel())->porSlugPublicado($slug) : null;
+
+        if (!$evento) {
+            $this->noEncontrado();
+            return;
+        }
+
+        $this->render('eventos/publico/detalle', [
+            'metaTitulo'      => $evento['titulo'],
+            'metaDescripcion' => resumen($evento['descripcion']),
+            'ogImagen'        => $evento['imagen'] ?: null,
+            'urlCanonica'     => url_publica('eventos', ['slug' => $evento['slug']]),
+            'evento'          => $evento,
+        ]);
+    }
+
+    /**
+     * Endpoint JSON que alimenta el calendario en JavaScript. Nombrado
+     * "datos" y no "json": Controller ya tiene un método json() para emitir
+     * la respuesta, y una acción de ruta con el mismo nombre lo taparía.
+     */
+    public function datos(): void
+    {
+        [$anio, $mes] = $this->mesSolicitado();
+
+        $eventos = array_map(static function (array $evento): array {
+            return [
+                'id'        => (int) $evento['id'],
+                'titulo'    => $evento['titulo'],
+                'fecha'     => substr((string) $evento['fecha_inicio'], 0, 10),
+                'hora'      => $evento['todo_el_dia'] ? null : substr((string) $evento['fecha_inicio'], 11, 5),
+                'lugar'     => $evento['lugar'],
+                'color'     => $evento['color'] ?: '#1e4d8b',
+                'url'       => url_publica('eventos', ['slug' => $evento['slug']]),
+            ];
+        }, (new EventoModel())->delMes($anio, $mes));
+
+        $this->json(['anio' => $anio, 'mes' => $mes, 'eventos' => $eventos]);
+    }
+
+    private function mesSolicitado(): array
+    {
+        $anio = $this->getInt('anio', (int) date('Y'));
+        $mes  = $this->getInt('mes', (int) date('n'));
+        if ($mes < 1 || $mes > 12) {
+            $mes = (int) date('n');
+        }
+        if ($anio < 2000 || $anio > 2100) {
+            $anio = (int) date('Y');
+        }
+        return [$anio, $mes];
+    }
+
+    private function slug(): string
+    {
+        $slug = strtolower(trim((string) ($_GET['slug'] ?? '')));
+        return preg_match('/^[a-z0-9\-]{1,160}$/', $slug) ? $slug : '';
+    }
+
+    /**
+     * Cuadrícula del mes en semanas de 7 casillas (domingo primero, igual que
+     * horarios.dia_semana). Una casilla es null si cae fuera del mes.
+     */
+    private function construirCalendario(int $anio, int $mes, array $eventosDelMes): array
+    {
+        $eventosPorDia = [];
+        foreach ($eventosDelMes as $evento) {
+            $dia = (int) substr((string) $evento['fecha_inicio'], 8, 2);
+            $eventosPorDia[$dia][] = $evento;
+        }
+
+        $primerDia    = new DateTimeImmutable(sprintf('%04d-%02d-01', $anio, $mes));
+        $diasEnMes    = (int) $primerDia->format('t');
+        $diaSemanaIni = (int) $primerDia->format('w');
+        $hoy          = date('Y-m-d');
+
+        $semanas = [];
+        $semana  = array_fill(0, $diaSemanaIni, null);
+
+        for ($dia = 1; $dia <= $diasEnMes; $dia++) {
+            $fecha    = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
+            $semana[] = [
+                'dia'     => $dia,
+                'fecha'   => $fecha,
+                'eventos' => $eventosPorDia[$dia] ?? [],
+                'hoy'     => $fecha === $hoy,
+            ];
+            if (count($semana) === 7) {
+                $semanas[] = $semana;
+                $semana    = [];
+            }
+        }
+        if ($semana) {
+            while (count($semana) < 7) {
+                $semana[] = null;
+            }
+            $semanas[] = $semana;
+        }
+        return $semanas;
+    }
+
+    private function nombreMes(int $mes): string
+    {
+        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                  'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return ucfirst($meses[$mes - 1] ?? '');
+    }
+}

@@ -116,9 +116,102 @@ CREATE TABLE IF NOT EXISTS paginas (
     KEY idx_pag_menu (en_menu, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Diapositivas de la portada. No van a ser muchas: id pequeño a propósito.
+CREATE TABLE IF NOT EXISTS carrusel (
+    id       TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    imagen   VARCHAR(255)     NOT NULL,
+    titulo   VARCHAR(120)     NULL,
+    subtitulo VARCHAR(200)    NULL,
+    enlace   VARCHAR(255)     NULL,
+    orden    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo   TINYINT(1)       NOT NULL DEFAULT 1,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Galería de fotografías. La columna que importa es autorizacion_imagen: dejar
+-- constancia de que existe autorización de uso. La consulta pública filtra
+-- WHERE publicada=1 AND autorizacion_imagen=1, así que una foto sin esa
+-- autorización no puede llegar al sitio ni por descuido. Ver docs/PRIVACIDAD.md
+--
+-- evento_id SÍ lleva FK real a eventos(id): esa tabla se crea más abajo, en
+-- este mismo script, así que ya existe para cuando se hagan inserciones
+-- reales (las semillas de este archivo no tocan ninguna de las dos tablas).
+-- pastoral_id, en cambio, referencia una tabla que no existe todavía en
+-- ninguna parte del script: se deja sin FK hasta que la etapa 6 cree
+-- pastorales, momento en el que esta definición se reescribe con la
+-- restricción real (no hay migraciones mientras el sitio no esté en
+-- producción; ver docs/DESPLIEGUE.md).
+CREATE TABLE IF NOT EXISTS galeria_imagenes (
+    id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    archivo             VARCHAR(255) NOT NULL,
+    titulo              VARCHAR(140) NULL,
+    alt_texto           VARCHAR(160) NULL,
+    pastoral_id         TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    evento_id           INT UNSIGNED NULL,
+    autorizacion_imagen TINYINT(1)   NOT NULL DEFAULT 0,
+    orden               SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    publicada           TINYINT(1)   NOT NULL DEFAULT 0,
+    usuario_id          INT UNSIGNED NULL,
+    created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_gal_pastoral (pastoral_id),
+    KEY idx_gal_evento (evento_id),
+    CONSTRAINT fk_gal_evento FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- COMUNICACIÓN
 -- ------------------------------------------------------------
+
+-- Boletín semanal y noticias. publicado arranca en 0: todo entra como
+-- borrador. pastoral_id NULL significa aviso parroquial global, que un
+-- coordinador nunca podrá tocar (etapa 6). Sin FK todavía, por la misma
+-- razón que en galeria_imagenes.
+CREATE TABLE IF NOT EXISTS avisos (
+    id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug              VARCHAR(160) NOT NULL,
+    titulo            VARCHAR(200) NOT NULL,
+    resumen           VARCHAR(300) NULL,
+    contenido         MEDIUMTEXT   NULL,
+    imagen            VARCHAR(255) NULL,
+    tipo              ENUM('noticia','boletin','comunicado') NOT NULL DEFAULT 'noticia',
+    archivo_pdf       VARCHAR(255) NULL,
+    pastoral_id       TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    fecha_publicacion DATE         NOT NULL,
+    destacado         TINYINT(1)   NOT NULL DEFAULT 0,
+    publicado         TINYINT(1)   NOT NULL DEFAULT 0,
+    vistas            INT UNSIGNED NOT NULL DEFAULT 0,
+    usuario_id        INT UNSIGNED NULL,
+    created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME     NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_avi_slug (slug),
+    KEY idx_avi_pub (publicado, fecha_publicacion),
+    KEY idx_avi_pastoral (pastoral_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Fecha concreta, no recurrencia: lo que se repite cada semana vive en
+-- horarios, no aquí. color alimenta el calendario del sitio público.
+CREATE TABLE IF NOT EXISTS eventos (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug         VARCHAR(160) NOT NULL,
+    titulo       VARCHAR(200) NOT NULL,
+    descripcion  MEDIUMTEXT   NULL,
+    imagen       VARCHAR(255) NULL,
+    lugar        VARCHAR(160) NULL,
+    fecha_inicio DATETIME     NOT NULL,
+    fecha_fin    DATETIME     NULL,
+    todo_el_dia  TINYINT(1)   NOT NULL DEFAULT 0,
+    pastoral_id  TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    color        VARCHAR(7)   NULL,
+    publicado    TINYINT(1)   NOT NULL DEFAULT 0,
+    usuario_id   INT UNSIGNED NULL,
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_eve_slug (slug),
+    KEY idx_eve_fecha (fecha_inicio),
+    KEY idx_eve_pub (publicado, fecha_inicio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mensajes del formulario de contacto. Contienen datos personales de quien
 -- escribe, así que guardan la constancia de consentimiento. Ver docs/PRIVACIDAD.md

@@ -347,9 +347,32 @@ organigrama. La parroquia decide sin que nadie toque código.
 
 ### Calendario propio
 
-Cuadrícula mensual en `assets/js/calendario.js`, alimentada por un endpoint JSON del
-módulo de eventos. Sin FullCalendar ni ninguna otra librería. Sin JavaScript, la misma
-vista degrada a una lista de próximos eventos en HTML.
+Mejora progresiva de verdad, no solo de palabra: `EventoPublicoController::index()`
+calcula la cuadrícula del mes solicitado **en el servidor** (`construirCalendario()`) y la
+sirve como HTML normal — funciona sin JavaScript, incluida la navegación de mes anterior
+y siguiente, porque esos enlaces son URLs comunes (`?anio=&mes=`) que el propio
+controlador sabe responder. `assets/js/calendario.js` solo intercepta esos clics para
+traer el mes por `fetch` contra `?accion=datos` (un endpoint JSON) y reconstruir la tabla
+sin recargar; si el `fetch` falla por lo que sea, cae al enlace normal sin más. Sin
+FullCalendar ni ninguna otra librería. Debajo del calendario, una lista de "próximos
+eventos" en HTML plano cubre a quien tiene JavaScript desactivado.
+
+La acción JSON se llama `datos`, no `json`: `Controller` ya tiene un método `json()` para
+emitir la respuesta, y una acción de ruta con ese mismo nombre lo taparía.
+
+Simplificación deliberada en `EventoModel::delMes()`: un evento se ubica en el día en que
+**empieza**, no en cada día que dura. La inmensa mayoría de los eventos de una parroquia
+son de un solo día; uno de varios días solo aparece en su fecha de inicio.
+
+### Publicación con moderación, ya preparada
+
+`avisos.publicado` y `eventos.publicado` arrancan en 0. Los controladores comprueban el
+permiso `*.publicar` por separado de `*.crear`/`*.editar` — hoy tanto `admin` como
+`editor` lo tienen, así que en la práctica todo el contenido que crean se publica según
+ellos decidan. La separación existe para la etapa 6: el rol coordinador tendrá
+`*.crear`/`*.editar` pero no `*.publicar`, así que lo que escriba entrará como borrador
+para que un editor lo revise, sin tocar un solo controlador de esta etapa. Se aplicó el
+mismo patrón a `galeria.publicar`, independiente de `galeria.editar`.
 
 ## Roles y permisos
 
