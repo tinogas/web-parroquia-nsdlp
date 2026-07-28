@@ -97,15 +97,16 @@ class OrganigramaModel extends Model
     {
         $nivel = $this->calcularNivel($datos['padre_id'], null);
         $this->execute(
-            'INSERT INTO organigrama_nodos (padre_id, titulo, persona_id, nivel, orden, activo)
-             VALUES (:padre, :titulo, :persona, :nivel, :orden, :activo)',
+            'INSERT INTO organigrama_nodos (padre_id, titulo, persona_id, pastoral_id, nivel, orden, activo)
+             VALUES (:padre, :titulo, :persona, :pastoral, :nivel, :orden, :activo)',
             [
-                ':padre'   => $datos['padre_id'],
-                ':titulo'  => $datos['titulo'],
-                ':persona' => $datos['persona_id'],
-                ':nivel'   => $nivel,
-                ':orden'   => $datos['orden'],
-                ':activo'  => $datos['activo'],
+                ':padre'    => $datos['padre_id'],
+                ':titulo'   => $datos['titulo'],
+                ':persona'  => $datos['persona_id'],
+                ':pastoral' => $datos['pastoral_id'],
+                ':nivel'    => $nivel,
+                ':orden'    => $datos['orden'],
+                ':activo'   => $datos['activo'],
             ]
         );
         return $this->lastInsertId();
@@ -118,16 +119,17 @@ class OrganigramaModel extends Model
         return $this->execute(
             'UPDATE organigrama_nodos
                 SET padre_id = :padre, titulo = :titulo, persona_id = :persona,
-                    nivel = :nivel, orden = :orden, activo = :activo
+                    pastoral_id = :pastoral, nivel = :nivel, orden = :orden, activo = :activo
               WHERE id = :id',
             [
-                ':padre'   => $datos['padre_id'],
-                ':titulo'  => $datos['titulo'],
-                ':persona' => $datos['persona_id'],
-                ':nivel'   => $nivel,
-                ':orden'   => $datos['orden'],
-                ':activo'  => $datos['activo'],
-                ':id'      => $id,
+                ':padre'    => $datos['padre_id'],
+                ':titulo'   => $datos['titulo'],
+                ':persona'  => $datos['persona_id'],
+                ':pastoral' => $datos['pastoral_id'],
+                ':nivel'    => $nivel,
+                ':orden'    => $datos['orden'],
+                ':activo'   => $datos['activo'],
+                ':id'       => $id,
             ]
         );
     }

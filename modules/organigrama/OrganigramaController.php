@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/organigrama/OrganigramaModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 class OrganigramaController extends Controller
 {
@@ -32,6 +33,7 @@ class OrganigramaController extends Controller
             'padrePreseleccionado' => $this->getInt('padre_id') ?: null,
             'padres'               => $this->modelo->paraSelectorPadre(null),
             'personas'             => (new PersonaModel())->paraSelector(),
+            'pastorales'           => (new PastoralModel())->paraSelector(),
         ]);
     }
 
@@ -53,6 +55,7 @@ class OrganigramaController extends Controller
             'padrePreseleccionado' => null,
             'padres'               => $this->modelo->paraSelectorPadre($id),
             'personas'             => (new PersonaModel())->paraSelector(),
+            'pastorales'           => (new PastoralModel())->paraSelector(),
         ]);
     }
 
@@ -76,11 +79,12 @@ class OrganigramaController extends Controller
         }
 
         $datos = [
-            'padre_id'   => $this->postIntONull('padre_id'),
-            'titulo'     => $titulo,
-            'persona_id' => $this->postIntONull('persona_id'),
-            'orden'      => $this->postInt('orden'),
-            'activo'     => $this->postBool('activo'),
+            'padre_id'    => $this->postIntONull('padre_id'),
+            'titulo'      => $titulo,
+            'persona_id'  => $this->postIntONull('persona_id'),
+            'pastoral_id' => $this->postIntONull('pastoral_id'),
+            'orden'       => $this->postInt('orden'),
+            'activo'      => $this->postBool('activo'),
         ];
 
         try {

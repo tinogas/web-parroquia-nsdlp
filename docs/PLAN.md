@@ -109,7 +109,7 @@ vistas de administración.
 | 3 | Sitio público estructural | Layout público real, hoja de estilos, `inicio`, `nosotros`, `contacto` con antispam, páginas libres y aviso de privacidad | 2.0 | **Hecha** |
 | 4 | Horarios, personas y organigrama | Tres CRUD y sus secciones públicas | 1.5 | **Hecha** |
 | 5 | Avisos, eventos, galería y carrusel | Publicación con borrador, calendario mensual, álbumes | 2.5 | **Hecha** |
-| 6 | Pastorales | CRUD con actividades, fichas públicas, y activación del rol coordinador con su alcance | 2.0 | Pendiente |
+| 6 | Pastorales | CRUD con actividades, fichas públicas, y activación del rol coordinador con su alcance | 2.0 | **Hecha** |
 | 7 | Sacramentos y solicitudes | Catálogo, campos configurables, formulario público, bandeja con estados y bitácora | 2.5 | Pendiente |
 | 8 | Cursos e inscripciones | Catálogo, temario, inscripción, cupo y lista de espera | 1.5 | Pendiente |
 | 9 | Usuarios, roles y auditoría | CRUD de usuarios, asignación de pastorales, auditoría con filtros, repaso de seguridad | 1.0 | Pendiente |

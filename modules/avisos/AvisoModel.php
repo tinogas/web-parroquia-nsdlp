@@ -17,21 +17,37 @@ class AvisoModel extends Model
         'comunicado' => 'Comunicado',
     ];
 
-    /** Listado paginado para el panel. $filtro: 'todos', 'publicados' o 'borradores'. */
-    public function listar(int $pagina, string $filtro = 'todos'): array
+    /**
+     * Listado paginado para el panel. $filtro: 'todos', 'publicados' o 'borradores'.
+     * $pastoralesPermitidas: null = ve todo (alcance global); array de IDs = solo esas.
+     */
+    public function listar(int $pagina, string $filtro = 'todos', ?array $pastoralesPermitidas = null): array
     {
-        $where = match ($filtro) {
-            'publicados' => 'WHERE a.publicado = 1',
-            'borradores' => 'WHERE a.publicado = 0',
-            default      => '',
-        };
+        $condiciones = [];
+        $params      = [];
+
+        if ($filtro === 'publicados') {
+            $condiciones[] = 'a.publicado = 1';
+        } elseif ($filtro === 'borradores') {
+            $condiciones[] = 'a.publicado = 0';
+        }
+
+        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'a.pastoral_id');
+        if ($condicionPastoral !== '') {
+            $condiciones[] = $condicionPastoral;
+            $params += $paramsPastoral;
+        }
+
+        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
+
         return $this->paginar(
-            "SELECT a.*, u.nombre AS autor
+            "SELECT a.*, u.nombre AS autor, p.nombre AS pastoral_nombre
                FROM avisos a
                LEFT JOIN usuarios u ON u.id = a.usuario_id
+               LEFT JOIN pastorales p ON p.id = a.pastoral_id
                {$where}
               ORDER BY a.fecha_publicacion DESC, a.id DESC",
-            [],
+            $params,
             $pagina,
             15
         );
@@ -82,10 +98,10 @@ class AvisoModel extends Model
     {
         $this->execute(
             'INSERT INTO avisos
-                (slug, titulo, resumen, contenido, imagen, tipo, archivo_pdf,
+                (slug, titulo, resumen, contenido, imagen, tipo, archivo_pdf, pastoral_id,
                  fecha_publicacion, destacado, publicado, usuario_id)
              VALUES
-                (:slug, :titulo, :resumen, :contenido, :imagen, :tipo, :pdf,
+                (:slug, :titulo, :resumen, :contenido, :imagen, :tipo, :pdf, :pastoral,
                  :fecha, :destacado, :publicado, :usuario)',
             $this->parametros($datos) + [':usuario' => $usuarioId]
         );
@@ -97,8 +113,9 @@ class AvisoModel extends Model
         return $this->execute(
             'UPDATE avisos
                 SET slug = :slug, titulo = :titulo, resumen = :resumen, contenido = :contenido,
-                    imagen = :imagen, tipo = :tipo, archivo_pdf = :pdf, fecha_publicacion = :fecha,
-                    destacado = :destacado, publicado = :publicado, updated_at = NOW()
+                    imagen = :imagen, tipo = :tipo, archivo_pdf = :pdf, pastoral_id = :pastoral,
+                    fecha_publicacion = :fecha, destacado = :destacado, publicado = :publicado,
+                    updated_at = NOW()
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -119,6 +136,7 @@ class AvisoModel extends Model
             ':imagen'    => $datos['imagen'],
             ':tipo'      => $datos['tipo'],
             ':pdf'       => $datos['archivo_pdf'],
+            ':pastoral'  => $datos['pastoral_id'],
             ':fecha'     => $datos['fecha_publicacion'],
             ':destacado' => $datos['destacado'],
             ':publicado' => $datos['publicado'],

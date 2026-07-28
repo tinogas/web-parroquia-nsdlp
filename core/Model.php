@@ -117,6 +117,36 @@ class Model
     }
 
     /**
+     * Fragmento SQL y parámetros para filtrar por una lista de pastorales
+     * permitidas. Lo usan avisos, eventos y galería para aplicar el alcance
+     * del rol coordinador sin repetir esta lógica tres veces.
+     *
+     * null   = sin filtro (alcance global, ve todo)
+     * []     = no debe ver nada (alcance limitado sin ninguna pastoral asignada)
+     * [1,3]  = solo esas pastorales
+     *
+     * @return array{0: string, 1: array} [condición SQL o cadena vacía, parámetros]
+     */
+    protected function condicionPastoral(?array $pastoralesPermitidas, string $columna = 'pastoral_id'): array
+    {
+        if ($pastoralesPermitidas === null) {
+            return ['', []];
+        }
+        if (!$pastoralesPermitidas) {
+            return ['1 = 0', []];
+        }
+
+        $params     = [];
+        $marcadores = [];
+        foreach (array_values($pastoralesPermitidas) as $i => $id) {
+            $clave         = ":pas{$i}";
+            $marcadores[]  = $clave;
+            $params[$clave] = (int) $id;
+        }
+        return ["{$columna} IN (" . implode(',', $marcadores) . ')', $params];
+    }
+
+    /**
      * Folio consecutivo por año. Formato: BAU-2026-00001
      *
      * La columna de folio lleva índice UNIQUE: si dos peticiones concurrentes

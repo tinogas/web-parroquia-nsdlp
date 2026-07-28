@@ -20,7 +20,7 @@ class EventoController extends Controller
 
         $this->render('eventos/lista', [
             'titulo'  => 'Eventos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro),
+            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
             'filtro'  => $filtro,
         ]);
     }
@@ -29,11 +29,11 @@ class EventoController extends Controller
     {
         $this->requirePermiso('eventos.crear');
 
-        $this->render('eventos/form', [
+        $this->render('eventos/form', array_merge($this->opcionesPastoral(), [
             'titulo'      => 'Nuevo evento',
             'evento'      => null,
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function editar(): void
@@ -46,12 +46,13 @@ class EventoController extends Controller
             $this->redirect(url_admin('eventos'));
             return;
         }
+        $this->requireAlcancePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null);
 
-        $this->render('eventos/form', [
+        $this->render('eventos/form', array_merge($this->opcionesPastoral(), [
             'titulo'      => $evento['titulo'],
             'evento'      => $evento,
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function guardar(): void
@@ -65,12 +66,23 @@ class EventoController extends Controller
         $id        = $this->postInt('id');
         $existente = $id ? $this->modelo->porId($id) : null;
         $this->requirePermiso($existente ? 'eventos.editar' : 'eventos.crear');
+        if ($existente) {
+            $this->requireAlcancePastoral($existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null);
+        }
 
         $titulo = $this->postStr('titulo');
         $inicio = $this->postStr('fecha_inicio');
 
         if ($titulo === '' || $inicio === '') {
             Session::flash('error', 'El evento necesita título y fecha de inicio.');
+            $this->redirect($id ? url_admin('eventos', 'editar', ['id' => $id]) : url_admin('eventos', 'nuevo'));
+            return;
+        }
+
+        try {
+            $pastoralId = $this->pastoralIdValidado();
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('eventos', 'editar', ['id' => $id]) : url_admin('eventos', 'nuevo'));
             return;
         }
@@ -101,6 +113,7 @@ class EventoController extends Controller
             'fecha_inicio' => str_replace('T', ' ', $inicio) . ':00',
             'fecha_fin'    => $fin !== '' ? str_replace('T', ' ', $fin) . ':00' : null,
             'todo_el_dia'  => $this->postBool('todo_el_dia'),
+            'pastoral_id'  => $pastoralId,
             'color'        => $this->postStr('color') ?: '#1e4d8b',
             'publicado'    => $publicado,
         ];
@@ -131,6 +144,7 @@ class EventoController extends Controller
         $id     = $this->postInt('id');
         $evento = $this->modelo->porId($id);
         if ($evento) {
+            $this->requireAlcancePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null);
             Upload::borrar($evento['imagen']);
             $this->modelo->eliminar($id);
             $this->auditoria('eliminar', 'eventos', $id, $evento['titulo']);

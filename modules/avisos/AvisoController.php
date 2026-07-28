@@ -20,7 +20,7 @@ class AvisoController extends Controller
 
         $this->render('avisos/lista', [
             'titulo'  => 'Avisos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro),
+            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
             'filtro'  => $filtro,
         ]);
     }
@@ -29,11 +29,11 @@ class AvisoController extends Controller
     {
         $this->requirePermiso('avisos.crear');
 
-        $this->render('avisos/form', [
+        $this->render('avisos/form', array_merge($this->opcionesPastoral(), [
             'titulo'      => 'Nuevo aviso',
             'aviso'       => null,
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function editar(): void
@@ -46,12 +46,13 @@ class AvisoController extends Controller
             $this->redirect(url_admin('avisos'));
             return;
         }
+        $this->requireAlcancePastoral($aviso['pastoral_id'] !== null ? (int) $aviso['pastoral_id'] : null);
 
-        $this->render('avisos/form', [
+        $this->render('avisos/form', array_merge($this->opcionesPastoral(), [
             'titulo'      => $aviso['titulo'],
             'aviso'       => $aviso,
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function guardar(): void
@@ -65,10 +66,21 @@ class AvisoController extends Controller
         $id       = $this->postInt('id');
         $existente = $id ? $this->modelo->porId($id) : null;
         $this->requirePermiso($existente ? 'avisos.editar' : 'avisos.crear');
+        if ($existente) {
+            $this->requireAlcancePastoral($existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null);
+        }
 
         $titulo = $this->postStr('titulo');
         if ($titulo === '' || !isset(AvisoModel::TIPOS[$this->postStr('tipo')])) {
             Session::flash('error', 'El aviso necesita título y tipo.');
+            $this->redirect($id ? url_admin('avisos', 'editar', ['id' => $id]) : url_admin('avisos', 'nuevo'));
+            return;
+        }
+
+        try {
+            $pastoralId = $this->pastoralIdValidado();
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('avisos', 'editar', ['id' => $id]) : url_admin('avisos', 'nuevo'));
             return;
         }
@@ -98,6 +110,7 @@ class AvisoController extends Controller
             'imagen'            => $imagen,
             'tipo'              => $this->postStr('tipo'),
             'archivo_pdf'       => $pdf,
+            'pastoral_id'       => $pastoralId,
             'fecha_publicacion' => $this->postStr('fecha_publicacion') ?: date('Y-m-d'),
             'destacado'         => $this->postBool('destacado'),
             'publicado'         => $publicado,
@@ -129,6 +142,7 @@ class AvisoController extends Controller
         $id    = $this->postInt('id');
         $aviso = $this->modelo->porId($id);
         if ($aviso) {
+            $this->requireAlcancePastoral($aviso['pastoral_id'] !== null ? (int) $aviso['pastoral_id'] : null);
             Upload::borrar($aviso['imagen']);
             Upload::borrar($aviso['archivo_pdf']);
             $this->modelo->eliminar($id);

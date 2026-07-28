@@ -45,6 +45,9 @@
                         <?php if ($aviso['destacado']): ?>
                         <span class="badge bg-warning-subtle text-warning-emphasis">Destacado</span>
                         <?php endif; ?>
+                        <span class="badge bg-light text-secondary border">
+                            <?= e($aviso['pastoral_nombre'] ?? 'General') ?>
+                        </span>
                     </td>
                     <td class="d-none d-md-table-cell"><?= e(AvisoModel::TIPOS[$aviso['tipo']] ?? $aviso['tipo']) ?></td>
                     <td class="d-none d-lg-table-cell small text-muted"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></td>

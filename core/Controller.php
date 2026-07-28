@@ -57,6 +57,57 @@ class Controller
         return Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas();
     }
 
+    /**
+     * Datos para el selector de pastoral en los formularios de avisos,
+     * eventos y galería: las opciones que puede elegir según su alcance, si
+     * queda fija a una sola (coordinador con una única pastoral asignada,
+     * que no debe elegir de una lista) y si puede dejarse en blanco
+     * (alcance global = contenido parroquial general).
+     */
+    protected function opcionesPastoral(): array
+    {
+        require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+        $todas = (new PastoralModel())->paraSelector();
+
+        if (Auth::tieneAlcanceGlobal()) {
+            return ['opciones' => $todas, 'fija' => null, 'permiteVacio' => true];
+        }
+
+        $propias  = Auth::pastoralesPermitidas();
+        $opciones = array_values(array_filter(
+            $todas,
+            static fn (array $p): bool => in_array((int) $p['id'], $propias, true)
+        ));
+        return [
+            'opciones'     => $opciones,
+            'fija'         => count($opciones) === 1 ? (int) $opciones[0]['id'] : null,
+            'permiteVacio' => false,
+        ];
+    }
+
+    /**
+     * Valida el pastoral_id recibido del formulario contra el alcance real
+     * del usuario. Nunca se confía en lo que traiga el select del navegador:
+     * un coordinador manipulando el POST no puede asignar contenido a una
+     * pastoral ajena, ni dejarlo como "general".
+     *
+     * @throws RuntimeException si el valor no es válido para este usuario
+     */
+    protected function pastoralIdValidado(): ?int
+    {
+        $enviado = $this->postIntONull('pastoral_id');
+
+        if (Auth::tieneAlcanceGlobal()) {
+            return $enviado;
+        }
+
+        $propias = Auth::pastoralesPermitidas();
+        if ($enviado !== null && in_array($enviado, $propias, true)) {
+            return $enviado;
+        }
+        throw new RuntimeException('Selecciona una de tus pastorales.');
+    }
+
     protected function validarCsrf(): void
     {
         if (!Session::validarCsrf($_POST['_csrf'] ?? '')) {

@@ -10,20 +10,33 @@ require_once BASE_PATH . '/core/Model.php';
  */
 class EventoModel extends Model
 {
-    public function listar(int $pagina, string $filtro = 'todos'): array
+    public function listar(int $pagina, string $filtro = 'todos', ?array $pastoralesPermitidas = null): array
     {
-        $where = match ($filtro) {
-            'publicados' => 'WHERE e.publicado = 1',
-            'borradores' => 'WHERE e.publicado = 0',
-            default      => '',
-        };
+        $condiciones = [];
+        $params      = [];
+
+        if ($filtro === 'publicados') {
+            $condiciones[] = 'e.publicado = 1';
+        } elseif ($filtro === 'borradores') {
+            $condiciones[] = 'e.publicado = 0';
+        }
+
+        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'e.pastoral_id');
+        if ($condicionPastoral !== '') {
+            $condiciones[] = $condicionPastoral;
+            $params += $paramsPastoral;
+        }
+
+        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
+
         return $this->paginar(
-            "SELECT e.*, u.nombre AS autor
+            "SELECT e.*, u.nombre AS autor, p.nombre AS pastoral_nombre
                FROM eventos e
                LEFT JOIN usuarios u ON u.id = e.usuario_id
+               LEFT JOIN pastorales p ON p.id = e.pastoral_id
                {$where}
               ORDER BY e.fecha_inicio DESC, e.id DESC",
-            [],
+            $params,
             $pagina,
             15
         );
@@ -79,10 +92,10 @@ class EventoModel extends Model
         $this->execute(
             'INSERT INTO eventos
                 (slug, titulo, descripcion, imagen, lugar, fecha_inicio, fecha_fin,
-                 todo_el_dia, color, publicado, usuario_id)
+                 todo_el_dia, pastoral_id, color, publicado, usuario_id)
              VALUES
                 (:slug, :titulo, :descripcion, :imagen, :lugar, :inicio, :fin,
-                 :todoDia, :color, :publicado, :usuario)',
+                 :todoDia, :pastoral, :color, :publicado, :usuario)',
             $this->parametros($datos) + [':usuario' => $usuarioId]
         );
         return $this->lastInsertId();
@@ -94,7 +107,7 @@ class EventoModel extends Model
             'UPDATE eventos
                 SET slug = :slug, titulo = :titulo, descripcion = :descripcion, imagen = :imagen,
                     lugar = :lugar, fecha_inicio = :inicio, fecha_fin = :fin, todo_el_dia = :todoDia,
-                    color = :color, publicado = :publicado
+                    pastoral_id = :pastoral, color = :color, publicado = :publicado
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -116,6 +129,7 @@ class EventoModel extends Model
             ':inicio'      => $datos['fecha_inicio'],
             ':fin'         => $datos['fecha_fin'],
             ':todoDia'     => $datos['todo_el_dia'],
+            ':pastoral'    => $datos['pastoral_id'],
             ':color'       => $datos['color'],
             ':publicado'   => $datos['publicado'],
         ];

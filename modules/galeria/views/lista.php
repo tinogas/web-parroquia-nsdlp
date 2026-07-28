@@ -47,6 +47,9 @@
                     <?php else: ?>
                     <span class="badge bg-warning-subtle text-warning-emphasis">Sin autorizar</span>
                     <?php endif; ?>
+                    <span class="badge bg-light text-secondary border">
+                        <?= e($imagen['pastoral_nombre'] ?? 'General') ?>
+                    </span>
                 </div>
                 <?php if (Auth::tienePermiso('galeria.editar')): ?>
                 <button type="button" class="btn btn-sm btn-outline-primary w-100"

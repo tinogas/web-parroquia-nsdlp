@@ -93,6 +93,11 @@ $paraInput = static fn (?string $valor): string => $valor ? str_replace(' ', 'T'
                     require BASE_PATH . '/shared/views/parciales/campo_imagen.php';
                     ?>
 
+                    <?php
+                    $sp_valorActual = $esNuevo ? null : $evento['pastoral_id'];
+                    require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
+                    ?>
+
                     <div class="mb-3">
                         <label for="color" class="form-label fw-semibold">Color en el calendario</label>
                         <input type="color" name="color" id="color" class="form-control form-control-color"

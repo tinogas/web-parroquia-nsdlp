@@ -32,7 +32,8 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('personas.ver') || Auth::tienePermiso('organigrama.ver')): ?>
+        <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('personas.ver')
+                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -50,9 +51,13 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-diagram-3"></i> Organigrama
         </a>
         <?php endif; ?>
-        <?php /*
-        <a href="<?= e(url_admin('pastorales')) ?>"  class="sidebar-link <?= $activo('pastorales') ?>"><i class="bi bi-people"></i> Pastorales</a>
+        <?php if (Auth::tienePermiso('pastorales.ver')): ?>
+        <a href="<?= e(url_admin('pastorales')) ?>" class="sidebar-link <?= $activo('pastorales') ?>">
+            <i class="bi bi-people"></i> Pastorales
+        </a>
+        <?php endif; ?>
 
+        <?php /*
         <div class="sidebar-section mt-2">Trámites</div>
         <a href="<?= e(url_admin('solicitudes')) ?>"   class="sidebar-link <?= $activo('solicitudes') ?>"><i class="bi bi-file-earmark-text"></i> Solicitudes</a>
         <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>"><i class="bi bi-pencil-square"></i> Inscripciones</a>

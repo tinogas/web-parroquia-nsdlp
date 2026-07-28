@@ -29,6 +29,11 @@
                     <div class="form-text">Puedes elegir varias a la vez. Máximo 4 MB cada una.</div>
                 </div>
 
+                <?php
+                $sp_valorActual = null;
+                require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
+                ?>
+
                 <div class="alert alert-light border">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="autorizacion_imagen"

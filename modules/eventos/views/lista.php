@@ -43,6 +43,9 @@
                     <td>
                         <span class="badge rounded-pill me-1" style="background:<?= e($evento['color'] ?: '#1e4d8b') ?>;width:.6rem;height:.6rem;padding:0"></span>
                         <span class="fw-semibold"><?= e($evento['titulo']) ?></span>
+                        <span class="badge bg-light text-secondary border">
+                            <?= e($evento['pastoral_nombre'] ?? 'General') ?>
+                        </span>
                     </td>
                     <td class="d-none d-md-table-cell small text-muted">
                         <?= e(fecha_larga(substr($evento['fecha_inicio'], 0, 10))) ?>

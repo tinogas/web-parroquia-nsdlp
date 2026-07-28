@@ -492,6 +492,55 @@ Verificado con seis casos: señuelo relleno, envío inmediato, validación sin d
 mal formado, firma de tiempo manipulada y un envío legítimo — cada uno se comportó como se
 describe arriba.
 
+## Pastorales y la activación del rol coordinador
+
+Casi toda la infraestructura de alcance por pastoral se escribió en la etapa 1, antes de
+que existiera una sola pastoral: `Auth::pastoralesPermitidas()`,
+`Auth::tieneAlcanceGlobal()`, `Auth::puedeSobrePastoral()`,
+`Controller::requireAlcancePastoral()` y `filtroPastoralSql()` llevaban ahí desde el
+principio, y `Auth::intentarLogin()` ya intentaba leer `usuarios_pastorales` en un
+`try/catch` que simplemente devolvía `[]` mientras la tabla no existiera. Esta etapa creó
+esa tabla y hay pastorales reales a las que apuntar: el mecanismo empezó a funcionar solo,
+sin tocar una línea de `Auth.php`.
+
+Lo que sí fue trabajo de esta etapa:
+
+**Las cuatro columnas `pastoral_id` diferidas** (`organigrama_nodos`, `avisos`, `eventos`,
+`galeria_imagenes`) se reescribieron con su FK real hacia `pastorales(id)`. Antes de
+hacerlo se comprobó empíricamente que MariaDB acepta declarar una FK hacia una tabla que
+todavía no existe en ningún punto del script, mientras `foreign_key_checks` esté en 0 —
+que es como corre `install.sql` completo. `galeria_imagenes.evento_id` ya llevaba FK real
+desde la etapa 5, porque `eventos` se crea antes en el mismo archivo.
+
+**El selector de pastoral** (`shared/views/parciales/selector_pastoral.php`) es un único
+partial reutilizado en avisos, eventos y la subida de galería, alimentado por
+`Controller::opcionesPastoral()`:
+
+- Alcance global (admin, editor): select abierto con todas las pastorales, más la opción
+  de dejarlo en blanco ("contenido parroquial general").
+- Coordinador con una sola pastoral asignada: ni siquiera elige — va en un campo oculto.
+- Coordinador con varias: select construido solo con las suyas, nunca con la lista completa.
+
+`Controller::pastoralIdValidado()` vuelve a comprobar el valor recibido **en el servidor**,
+sin importar lo que el HTML del select permitiera elegir: un coordinador que manipule el
+POST directamente no puede asignar contenido a una pastoral ajena ni dejarlo como general.
+Verificado con una prueba directa: el intento se rechaza con un error y el valor en la
+base de datos no cambia.
+
+**El filtrado de listados** se resolvió con un método común,
+`Model::condicionPastoral()`, usado igual en `AvisoModel`, `EventoModel` y
+`GaleriaModel::listar()`. Su parte más delicada no es el caso con pastorales asignadas,
+sino el caso sin ninguna: un coordinador sin pastoral asignada debe ver listados
+**vacíos**, nunca el listado completo. La condición para ese caso es literalmente
+`1 = 0`, y quedó comprobado con una prueba dedicada.
+
+**Borrar una pastoral no borra su contenido.** Las cuatro FK usan `ON DELETE SET NULL`:
+al eliminar una pastoral, sus avisos, eventos, fotos y nodos del organigrama sobreviven
+como contenido parroquial general (`pastoral_id NULL`). Solo `pastoral_actividades` y
+`usuarios_pastorales` tienen `ON DELETE CASCADE`, porque una actividad sin su pastoral no
+significa nada y la asignación de un coordinador tampoco. Comprobado borrando una pastoral
+con un aviso asociado: el aviso siguió existiendo, con `pastoral_id` en `NULL`.
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por

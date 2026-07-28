@@ -59,6 +59,11 @@ $puedePublicar = Auth::tienePermiso('avisos.publicar');
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
 
+                    <?php
+                    $sp_valorActual = $esNuevo ? null : $aviso['pastoral_id'];
+                    require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
+                    ?>
+
                     <div class="mb-3">
                         <label for="tipo" class="form-label fw-semibold">Tipo</label>
                         <select name="tipo" id="tipo" class="form-select">

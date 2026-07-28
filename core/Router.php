@@ -24,6 +24,7 @@ class Router
         'avisos'   => ['clase' => 'AvisoPublicoController',     'archivo' => 'modules/avisos/AvisoPublicoController.php'],
         'eventos'  => ['clase' => 'EventoPublicoController',    'archivo' => 'modules/eventos/EventoPublicoController.php'],
         'galeria'  => ['clase' => 'GaleriaPublicoController',   'archivo' => 'modules/galeria/GaleriaPublicoController.php'],
+        'pastorales' => ['clase' => 'PastoralPublicoController', 'archivo' => 'modules/pastorales/PastoralPublicoController.php'],
     ];
 
     private static array $rutasAdmin = [
@@ -40,6 +41,7 @@ class Router
         'eventos'       => ['clase' => 'EventoController',        'archivo' => 'modules/eventos/EventoController.php'],
         'galeria'       => ['clase' => 'GaleriaController',       'archivo' => 'modules/galeria/GaleriaController.php'],
         'carrusel'      => ['clase' => 'CarruselController',      'archivo' => 'modules/carrusel/CarruselController.php'],
+        'pastorales'    => ['clase' => 'PastoralController',      'archivo' => 'modules/pastorales/PastoralController.php'],
     ];
 
     /**

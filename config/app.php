@@ -98,20 +98,23 @@ define('PERMISOS', [
         'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
         'galeria.ver', 'galeria.crear', 'galeria.editar', 'galeria.eliminar', 'galeria.publicar',
         'carrusel.ver', 'carrusel.editar',
-        // 'pastorales.ver', 'pastorales.editar',
+        'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
+        'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         // 'sacramentos.ver', 'sacramentos.editar',
         // 'cursos.ver', 'cursos.editar', 'cursos.publicar',
     ],
 
     // Sin los permisos *.publicar a propósito: lo que escribe un coordinador
-    // queda en borrador hasta que un editor lo revisa.
+    // queda en borrador hasta que un editor lo revisa. El alcance sobre CUÁL
+    // pastoral puede tocar no vive aquí, sino en Auth::puedeSobrePastoral() y
+    // Controller::requireAlcancePastoral(). Ver docs/ARQUITECTURA.md
     ROL_COORDINADOR => [
         'panel.ver',
-        // 'avisos.ver', 'avisos.crear', 'avisos.editar',
-        // 'eventos.ver', 'eventos.crear', 'eventos.editar',
-        // 'galeria.ver', 'galeria.crear', 'galeria.eliminar',
-        // 'pastorales.ver', 'pastorales.editar',
-        // 'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'avisos.ver', 'avisos.crear', 'avisos.editar',
+        'eventos.ver', 'eventos.crear', 'eventos.editar',
+        'galeria.ver', 'galeria.crear', 'galeria.eliminar',
+        'pastorales.ver', 'pastorales.editar',
+        'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         // 'cursos.ver',
     ],
 

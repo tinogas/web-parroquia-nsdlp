@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS usuarios (
     KEY idx_usr_rol (rol, activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pivote: un coordinador puede administrar más de una pastoral a la vez (es
+-- lo habitual, no la excepción), así que es una tabla propia y no una columna
+-- pastoral_id en usuarios. FK real a pastorales, creada más abajo en este
+-- mismo script.
+CREATE TABLE IF NOT EXISTS usuarios_pastorales (
+    usuario_id  INT UNSIGNED     NOT NULL,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY (usuario_id, pastoral_id),
+    CONSTRAINT fk_up_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_up_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Bitácora de acciones. Registra escrituras y también CONSULTAS de datos
 -- personales, que es lo que permite responder a una solicitud de acceso.
 -- Ver docs/PRIVACIDAD.md
@@ -133,20 +145,18 @@ CREATE TABLE IF NOT EXISTS carrusel (
 -- WHERE publicada=1 AND autorizacion_imagen=1, así que una foto sin esa
 -- autorización no puede llegar al sitio ni por descuido. Ver docs/PRIVACIDAD.md
 --
--- evento_id SÍ lleva FK real a eventos(id): esa tabla se crea más abajo, en
--- este mismo script, así que ya existe para cuando se hagan inserciones
--- reales (las semillas de este archivo no tocan ninguna de las dos tablas).
--- pastoral_id, en cambio, referencia una tabla que no existe todavía en
--- ninguna parte del script: se deja sin FK hasta que la etapa 6 cree
--- pastorales, momento en el que esta definición se reescribe con la
--- restricción real (no hay migraciones mientras el sitio no esté en
--- producción; ver docs/DESPLIEGUE.md).
+-- evento_id y pastoral_id SÍ llevan FK real: eventos y pastorales se crean más
+-- abajo, en este mismo script, así que ya existen para cuando se hagan
+-- inserciones reales (las semillas de este archivo no tocan esta tabla).
+-- MariaDB permite declarar una FK hacia una tabla que aún no existe mientras
+-- foreign_key_checks esté en 0, como ocurre en todo este script; se
+-- comprobó empíricamente antes de confiar en ello.
 CREATE TABLE IF NOT EXISTS galeria_imagenes (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
     archivo             VARCHAR(255) NOT NULL,
     titulo              VARCHAR(140) NULL,
     alt_texto           VARCHAR(160) NULL,
-    pastoral_id         TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    pastoral_id         TINYINT UNSIGNED NULL,
     evento_id           INT UNSIGNED NULL,
     autorizacion_imagen TINYINT(1)   NOT NULL DEFAULT 0,
     orden               SMALLINT UNSIGNED NOT NULL DEFAULT 0,
@@ -156,7 +166,8 @@ CREATE TABLE IF NOT EXISTS galeria_imagenes (
     PRIMARY KEY (id),
     KEY idx_gal_pastoral (pastoral_id),
     KEY idx_gal_evento (evento_id),
-    CONSTRAINT fk_gal_evento FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE SET NULL
+    CONSTRAINT fk_gal_evento   FOREIGN KEY (evento_id)   REFERENCES eventos(id)    ON DELETE SET NULL,
+    CONSTRAINT fk_gal_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -165,8 +176,8 @@ CREATE TABLE IF NOT EXISTS galeria_imagenes (
 
 -- Boletín semanal y noticias. publicado arranca en 0: todo entra como
 -- borrador. pastoral_id NULL significa aviso parroquial global, que un
--- coordinador nunca podrá tocar (etapa 6). Sin FK todavía, por la misma
--- razón que en galeria_imagenes.
+-- coordinador nunca podrá tocar. FK real a pastorales: se crea más abajo, en
+-- este mismo script.
 CREATE TABLE IF NOT EXISTS avisos (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     slug              VARCHAR(160) NOT NULL,
@@ -176,7 +187,7 @@ CREATE TABLE IF NOT EXISTS avisos (
     imagen            VARCHAR(255) NULL,
     tipo              ENUM('noticia','boletin','comunicado') NOT NULL DEFAULT 'noticia',
     archivo_pdf       VARCHAR(255) NULL,
-    pastoral_id       TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    pastoral_id       TINYINT UNSIGNED NULL,
     fecha_publicacion DATE         NOT NULL,
     destacado         TINYINT(1)   NOT NULL DEFAULT 0,
     publicado         TINYINT(1)   NOT NULL DEFAULT 0,
@@ -187,7 +198,8 @@ CREATE TABLE IF NOT EXISTS avisos (
     PRIMARY KEY (id),
     UNIQUE KEY uq_avi_slug (slug),
     KEY idx_avi_pub (publicado, fecha_publicacion),
-    KEY idx_avi_pastoral (pastoral_id)
+    KEY idx_avi_pastoral (pastoral_id),
+    CONSTRAINT fk_avi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Fecha concreta, no recurrencia: lo que se repite cada semana vive en
@@ -202,7 +214,7 @@ CREATE TABLE IF NOT EXISTS eventos (
     fecha_inicio DATETIME     NOT NULL,
     fecha_fin    DATETIME     NULL,
     todo_el_dia  TINYINT(1)   NOT NULL DEFAULT 0,
-    pastoral_id  TINYINT UNSIGNED NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    pastoral_id  TINYINT UNSIGNED NULL,
     color        VARCHAR(7)   NULL,
     publicado    TINYINT(1)   NOT NULL DEFAULT 0,
     usuario_id   INT UNSIGNED NULL,
@@ -210,7 +222,9 @@ CREATE TABLE IF NOT EXISTS eventos (
     PRIMARY KEY (id),
     UNIQUE KEY uq_eve_slug (slug),
     KEY idx_eve_fecha (fecha_inicio),
-    KEY idx_eve_pub (publicado, fecha_inicio)
+    KEY idx_eve_pub (publicado, fecha_inicio),
+    KEY idx_eve_pastoral (pastoral_id),
+    CONSTRAINT fk_eve_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mensajes del formulario de contacto. Contienen datos personales de quien
@@ -271,21 +285,23 @@ CREATE TABLE IF NOT EXISTS personas (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Árbol autorreferenciado de hasta 4 niveles. Un nodo puede apuntar a una
--- persona, a una pastoral (cuando exista, etapa 6) o a ninguna de las dos y
--- ser solo un título de agrupación ("Consejo Pastoral").
+-- persona, a una pastoral, o a ninguna de las dos y ser solo un título de
+-- agrupación ("Consejo Pastoral").
 CREATE TABLE IF NOT EXISTS organigrama_nodos (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     padre_id    SMALLINT UNSIGNED NULL,
     titulo      VARCHAR(140)      NOT NULL,
     persona_id  SMALLINT UNSIGNED NULL,
-    pastoral_id TINYINT UNSIGNED  NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    pastoral_id TINYINT UNSIGNED  NULL,
     nivel       TINYINT UNSIGNED  NOT NULL DEFAULT 1,
     orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo      TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     KEY idx_org_padre (padre_id),
-    CONSTRAINT fk_org_padre   FOREIGN KEY (padre_id)   REFERENCES organigrama_nodos(id) ON DELETE SET NULL,
-    CONSTRAINT fk_org_persona FOREIGN KEY (persona_id) REFERENCES personas(id)          ON DELETE SET NULL
+    KEY idx_org_pastoral (pastoral_id),
+    CONSTRAINT fk_org_padre    FOREIGN KEY (padre_id)    REFERENCES organigrama_nodos(id) ON DELETE SET NULL,
+    CONSTRAINT fk_org_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)          ON DELETE SET NULL,
+    CONSTRAINT fk_org_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id)        ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Recurrencia semanal, no fechas concretas: una misa dominical no es un
@@ -306,6 +322,45 @@ CREATE TABLE IF NOT EXISTS horarios (
     activo        TINYINT(1)       NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     KEY idx_hor_tipo_dia (tipo, dia_semana, hora)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Coro, catequesis, caridad, jóvenes, ministros MESC... Cada una puede tener
+-- uno o más coordinadores (usuarios_pastorales) con permiso para crear
+-- contenido, pero no para publicarlo directamente: eso queda para admin/editor.
+CREATE TABLE IF NOT EXISTS pastorales (
+    id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug               VARCHAR(80)  NOT NULL,
+    nombre             VARCHAR(120) NOT NULL,
+    descripcion_corta  VARCHAR(255) NULL,
+    descripcion        MEDIUMTEXT   NULL,
+    imagen             VARCHAR(255) NULL,
+    icono              VARCHAR(40)  NULL,
+    responsable_nombre VARCHAR(140) NULL,
+    contacto_email     VARCHAR(150) NULL,
+    contacto_telefono  VARCHAR(20)  NULL,
+    dia_reunion        VARCHAR(60)  NULL,
+    hora_reunion       TIME         NULL,
+    lugar_reunion      VARCHAR(140) NULL,
+    acepta_voluntarios TINYINT(1)   NOT NULL DEFAULT 1,
+    orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activa             TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_pas_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Actividades comunitarias y de apoyo social de cada pastoral.
+CREATE TABLE IF NOT EXISTS pastoral_actividades (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    titulo      VARCHAR(160) NOT NULL,
+    descripcion TEXT NULL,
+    tipo        ENUM('comunitaria','apoyo_social','formacion','liturgica') NOT NULL DEFAULT 'comunitaria',
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activa      TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_pta_pastoral (pastoral_id),
+    CONSTRAINT fk_pta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

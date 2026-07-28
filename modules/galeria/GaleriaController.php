@@ -20,7 +20,7 @@ class GaleriaController extends Controller
 
         $this->render('galeria/lista', [
             'titulo'  => 'Galería',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro),
+            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
             'filtro'  => $filtro,
         ]);
     }
@@ -30,17 +30,27 @@ class GaleriaController extends Controller
         $this->requirePermiso('galeria.crear');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->render('galeria/subir', ['titulo' => 'Subir fotografías']);
+            $this->render('galeria/subir', array_merge($this->opcionesPastoral(), [
+                'titulo' => 'Subir fotografías',
+            ]));
             return;
         }
         $this->validarCsrf();
+
+        try {
+            $pastoralId = $this->pastoralIdValidado();
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+            $this->redirect(url_admin('galeria', 'subir'));
+            return;
+        }
 
         $errores = [];
         $rutas   = Upload::imagenes('fotos', 'galeria', 'galeria', $errores);
 
         if ($rutas) {
             $autorizacion = $this->postBool('autorizacion_imagen') === 1;
-            $n = $this->modelo->crearLote($rutas, $autorizacion, (int) Auth::usuario()['id']);
+            $n = $this->modelo->crearLote($rutas, $autorizacion, $pastoralId, (int) Auth::usuario()['id']);
             $this->auditoria('crear', 'galeria_imagenes', 0, $n . ' foto(s) subidas');
             Session::flash('success', $n . ' fotografía(s) subidas. Revísalas antes de publicarlas.');
         }
@@ -71,6 +81,7 @@ class GaleriaController extends Controller
             $this->redirect(url_admin('galeria'));
             return;
         }
+        $this->requireAlcancePastoral($actual['pastoral_id'] !== null ? (int) $actual['pastoral_id'] : null);
 
         $puedePublicar = Auth::tienePermiso('galeria.publicar');
 
@@ -80,6 +91,10 @@ class GaleriaController extends Controller
             'autorizacion_imagen' => $this->postBool('autorizacion_imagen'),
             'publicada'           => $puedePublicar ? $this->postBool('publicada') : $actual['publicada'],
             'orden'               => $this->postInt('orden'),
+            // La pastoral de una foto no se reasigna desde este modal rápido:
+            // se conserva la que tenía. Para moverla a otra, se borra y se
+            // vuelve a subir en el lote correcto.
+            'pastoral_id'         => $actual['pastoral_id'],
         ]);
         $this->auditoria('editar', 'galeria_imagenes', $id);
 
@@ -100,6 +115,7 @@ class GaleriaController extends Controller
         $id    = $this->postInt('id');
         $imagen = $this->modelo->porId($id);
         if ($imagen) {
+            $this->requireAlcancePastoral($imagen['pastoral_id'] !== null ? (int) $imagen['pastoral_id'] : null);
             Upload::borrar($imagen['archivo']);
             $this->modelo->eliminar($id);
             $this->auditoria('eliminar', 'galeria_imagenes', $id);

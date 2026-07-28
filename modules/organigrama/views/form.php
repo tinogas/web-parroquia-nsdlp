@@ -56,6 +56,22 @@
                 </div>
 
                 <div class="mb-3">
+                    <label for="pastoral_id" class="form-label fw-semibold">Pastoral (opcional)</label>
+                    <select name="pastoral_id" id="pastoral_id" class="form-select">
+                        <option value="">— Ninguna —</option>
+                        <?php foreach ($pastorales as $p): ?>
+                        <option value="<?= (int) $p['id'] ?>"
+                            <?= (!$esNuevo && (int) $nodo['pastoral_id'] === (int) $p['id']) ? 'selected' : '' ?>>
+                            <?= e($p['nombre']) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">
+                        Vincula este nodo con la página pública de esa pastoral, si aplica.
+                    </div>
+                </div>
+
+                <div class="mb-3">
                     <label for="persona_id" class="form-label fw-semibold">Persona (opcional)</label>
                     <select name="persona_id" id="persona_id" class="form-select">
                         <option value="">— Solo el título, sin persona asignada —</option>
