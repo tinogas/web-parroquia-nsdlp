@@ -47,7 +47,42 @@ class EventoPublicoController extends ControllerPublico
             'ogImagen'        => $evento['imagen'] ?: null,
             'urlCanonica'     => url_publica('eventos', ['slug' => $evento['slug']]),
             'evento'          => $evento,
+            'jsonLd'          => $this->datosEstructurados($evento),
         ]);
+    }
+
+    /** Datos estructurados schema.org/Event, para que aparezca como evento en los buscadores. */
+    private function datosEstructurados(array $evento): array
+    {
+        $datos = [
+            '@context'            => 'https://schema.org',
+            '@type'                => 'Event',
+            'name'                 => $evento['titulo'],
+            'startDate'            => date('c', strtotime($evento['fecha_inicio'])),
+            'eventAttendanceMode'  => 'https://schema.org/OfflineEventAttendanceMode',
+            'eventStatus'          => 'https://schema.org/EventScheduled',
+            'organizer'            => [
+                '@type' => 'Organization',
+                'name'  => Config::get('parroquia_nombre', APP_NAME),
+                'url'   => url_absoluta(url_publica('inicio')),
+            ],
+        ];
+
+        if ($evento['fecha_fin']) {
+            $datos['endDate'] = date('c', strtotime($evento['fecha_fin']));
+        }
+        if ($evento['descripcion']) {
+            $datos['description'] = resumen($evento['descripcion'], 500);
+        }
+        if ($evento['imagen']) {
+            $datos['image'] = url_absoluta(url_activo($evento['imagen']));
+        }
+
+        $datos['location'] = $evento['lugar']
+            ? ['@type' => 'Place', 'name' => $evento['lugar']]
+            : ['@type' => 'VirtualLocation', 'url' => url_absoluta(url_publica('eventos', ['slug' => $evento['slug']]))];
+
+        return $datos;
     }
 
     /**

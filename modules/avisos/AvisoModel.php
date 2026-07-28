@@ -80,6 +80,15 @@ class AvisoModel extends Model
         );
     }
 
+    /** slug + fecha, de todos los visibles al público. Para sitemap.xml. */
+    public function paraSitemap(): array
+    {
+        return $this->fetchAll(
+            "SELECT slug, COALESCE(updated_at, created_at) AS modificado
+               FROM avisos WHERE publicado = 1 AND fecha_publicacion <= CURDATE()"
+        );
+    }
+
     /** Los más recientes, para destacar en la portada. */
     public function recientes(int $limite = 3): array
     {

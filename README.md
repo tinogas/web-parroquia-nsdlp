@@ -7,8 +7,11 @@ inscripciones a cursos, todo desde un panel de administración con usuarios y ro
 
 ## Estado
 
-En desarrollo. Fase 1: sitio público y panel de administración.
-Ver [`docs/PLAN.md`](docs/PLAN.md) para el alcance y el avance por etapas.
+Fase 1 completa: sitio público y panel de administración con las diez etapas del plan
+implementadas y probadas en local. Pendiente de contenido real y de desplegarse a
+producción — ver [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con
+tareas y calificaciones sobre el catálogo de cursos) queda fuera de este alcance.
+Ver [`docs/PLAN.md`](docs/PLAN.md) para el detalle de cada etapa.
 
 ## Stack
 
@@ -95,7 +98,8 @@ WebParroquia/
 ├── shared/views/        Los dos layouts y sus parciales
 ├── modules/             Un directorio por sección (admin + público + modelo)
 ├── assets/              CSS, JavaScript e imágenes propias
-└── uploads/             Archivos subidos desde el panel
+├── uploads/             Archivos subidos desde el panel
+└── cli/                 Scripts de línea de comandos (cron), sin acceso por HTTP
 ```
 
 Cada módulo agrupa su controlador de administración, su controlador público, su modelo

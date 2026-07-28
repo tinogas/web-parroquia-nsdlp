@@ -27,6 +27,7 @@ class Router
         'pastorales' => ['clase' => 'PastoralPublicoController', 'archivo' => 'modules/pastorales/PastoralPublicoController.php'],
         'sacramentos' => ['clase' => 'SacramentoPublicoController', 'archivo' => 'modules/sacramentos/SacramentoPublicoController.php'],
         'cursos'      => ['clase' => 'CursoPublicoController',      'archivo' => 'modules/cursos/CursoPublicoController.php'],
+        'sitemap'     => ['clase' => 'SitemapController',           'archivo' => 'modules/sitemap/SitemapController.php'],
     ];
 
     private static array $rutasAdmin = [

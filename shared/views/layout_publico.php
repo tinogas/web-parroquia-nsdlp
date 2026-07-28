@@ -10,6 +10,7 @@
  *   $urlCanonica      dirección oficial de la página
  *   $sinIndexar       true para pedir a los buscadores que no la registren
  *   $hero             HTML de la cabecera destacada, si la hay
+ *   $jsonLd           arreglo con datos estructurados (schema.org), o null
  */
 $nombreSitio  = Config::get('parroquia_nombre', APP_NAME);
 $tituloPagina = isset($metaTitulo) && $metaTitulo !== ''
@@ -33,19 +34,29 @@ $canonica     = $urlCanonica ?? null;
     <meta name="robots" content="noindex, follow">
     <?php endif; ?>
     <?php if ($canonica): ?>
-    <link rel="canonical" href="<?= e($canonica) ?>">
+    <link rel="canonical" href="<?= e(url_absoluta($canonica)) ?>">
     <?php endif; ?>
 
     <meta property="og:type"        content="website">
     <meta property="og:site_name"   content="<?= e($nombreSitio) ?>">
     <meta property="og:title"       content="<?= e($tituloPagina) ?>">
+    <?php if ($canonica): ?>
+    <meta property="og:url"         content="<?= e(url_absoluta($canonica)) ?>">
+    <?php endif; ?>
     <?php if ($descripcion !== ''): ?>
     <meta property="og:description" content="<?= e($descripcion) ?>">
     <?php endif; ?>
     <?php if ($imagenSocial !== ''): ?>
-    <meta property="og:image"       content="<?= e(url_activo($imagenSocial)) ?>">
+    <meta property="og:image"       content="<?= e(url_absoluta(url_activo($imagenSocial))) ?>">
     <?php endif; ?>
     <meta name="twitter:card" content="summary_large_image">
+
+    <?php if (!empty($jsonLd)): ?>
+    <script type="application/ld+json"><?= json_encode(
+        $jsonLd,
+        JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    ) ?></script>
+    <?php endif; ?>
 
     <?php if (Config::tiene('favicon')): ?>
     <link rel="icon" href="<?= e(url_activo(Config::get('favicon'))) ?>">

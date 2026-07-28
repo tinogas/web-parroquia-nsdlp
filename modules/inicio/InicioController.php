@@ -23,7 +23,62 @@ class InicioController extends ControllerPublico
             'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
             'avisosRecientes' => (new AvisoModel())->recientes(3),
             'proximosEventos' => (new EventoModel())->proximos(3),
+            'jsonLd'          => $this->datosEstructurados(),
         ]);
+    }
+
+    /**
+     * Datos estructurados schema.org/Church para la portada. Solo se incluyen
+     * los campos que de verdad están capturados en configuración: un
+     * "telephone": "" vacío se lee como dato de mala calidad, no como ausente.
+     */
+    private function datosEstructurados(): array
+    {
+        $datos = [
+            '@context' => 'https://schema.org',
+            '@type'    => 'Church',
+            'name'     => Config::get('parroquia_nombre', APP_NAME),
+            'url'      => url_absoluta(url_publica('inicio')),
+        ];
+
+        if (Config::tiene('logo')) {
+            $datos['logo'] = url_absoluta(url_activo(Config::get('logo')));
+        }
+        if (Config::tiene('telefono')) {
+            $datos['telephone'] = Config::get('telefono');
+        }
+        if (Config::tiene('email')) {
+            $datos['email'] = Config::get('email');
+        }
+
+        if (Config::tiene('direccion') || Config::tiene('ciudad')) {
+            $datos['address'] = array_filter([
+                '@type'           => 'PostalAddress',
+                'streetAddress'   => Config::get('direccion') ?: null,
+                'addressLocality' => Config::get('ciudad') ?: null,
+                'postalCode'      => Config::get('cp') ?: null,
+                'addressCountry'  => 'MX',
+            ]);
+        }
+
+        if (Config::tiene('latitud') && Config::tiene('longitud')) {
+            $datos['geo'] = [
+                '@type'     => 'GeoCoordinates',
+                'latitude'  => (float) Config::get('latitud'),
+                'longitude' => (float) Config::get('longitud'),
+            ];
+        }
+
+        $redes = array_filter([
+            Config::get('facebook') ?: null,
+            Config::get('instagram') ?: null,
+            Config::get('youtube') ?: null,
+        ]);
+        if ($redes) {
+            $datos['sameAs'] = array_values($redes);
+        }
+
+        return $datos;
     }
 
     private function hero(): string

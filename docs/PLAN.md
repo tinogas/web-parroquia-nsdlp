@@ -113,7 +113,7 @@ vistas de administración.
 | 7 | Sacramentos y solicitudes | Catálogo, campos configurables, formulario público, bandeja con estados y bitácora | 2.5 | **Hecha** |
 | 8 | Cursos e inscripciones | Catálogo, temario, inscripción, cupo y lista de espera | 1.5 | **Hecha** |
 | 9 | Usuarios, roles y auditoría | CRUD de usuarios, asignación de pastorales, auditoría con filtros, repaso de seguridad | 1.0 | **Hecha** |
-| 10 | SEO y despliegue | `sitemap.xml`, Open Graph, datos estructurados, guía de cPanel, checklist final | 1.0 | Pendiente |
+| 10 | SEO y despliegue | `sitemap.xml`, Open Graph, datos estructurados, guía de cPanel, checklist final | 1.0 | **Hecha** |
 | | | **Total** | **16.5** | |
 
 ### Hitos

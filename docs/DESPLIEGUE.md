@@ -1,8 +1,10 @@
 # Despliegue en cPanel
 
-> **Estado del documento.** Esqueleto. Se completa en la etapa 10, cuando el hosting esté
-> contratado y se conozcan sus características reales. Lo que sigue es la guía prevista y
-> las decisiones de diseño que ya se tomaron pensando en este momento.
+> **Estado del documento.** Completo en lo que no depende del hosting real: los pasos, la
+> checklist y el respaldo ya están pensados para un cPanel genérico y no deberían cambiar.
+> Lo que falta —marcado en "Pendiente de resolver"— es información que solo se conoce
+> cuando el hosting esté contratado: dominio, límites reales del plan y quién tendrá cada
+> acceso.
 
 ## Supuestos de partida
 
@@ -63,8 +65,22 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 10. **Instalar el certificado SSL** —cPanel ofrece Let's Encrypt gratuito— y activar la
     redirección forzada a HTTPS.
 
-11. **Cargar el contenido real** desde el panel: datos de la parroquia, horarios, equipo
-    pastoral, pastorales, y los textos de los bloques.
+11. **Programar la purga de solicitudes vencidas** en *Cron Jobs* de cPanel (no requiere
+    SSH: esa herramienta existe también en las cuentas sin acceso a terminal). Una vez al
+    día basta:
+    ```
+    php -f /home/usuario/public_html/cli/purgar_solicitudes.php
+    ```
+    Sustituir la ruta por la real de la cuenta. Sin este paso, el plazo de retención de
+    `docs/PRIVACIDAD.md` depende de que alguien entre al panel y pulse "Purgar vencidas" a
+    mano — el botón sigue ahí como respaldo si el hosting no ofreciera *Cron Jobs*.
+
+12. **Sustituir el dominio de ejemplo** en `robots.txt` (la línea `Sitemap:`) por el
+    dominio real: es un archivo estático, no se genera solo como `sitemap.xml`.
+
+13. **Cargar el contenido real** desde el panel: datos de la parroquia, horarios, equipo
+    pastoral, pastorales, y los textos de los bloques. Los datos de contacto y redes
+    sociales alimentan también los datos estructurados `Church` de la portada.
 
 ## Verificación posterior al despliegue
 
@@ -74,12 +90,62 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 - [ ] El panel exige contraseña y la sesión se mantiene.
 - [ ] Una imagen subida desde el panel se ve en el sitio.
 - [ ] `https://dominio/uploads/prueba.php` devuelve 403 y no ejecuta nada.
+- [ ] `https://dominio/cli/purgar_solicitudes.php` devuelve 403 y no ejecuta nada.
 - [ ] `setup.php` ya no existe.
 - [ ] `config/database.php` no es accesible por HTTP.
-- [ ] `sitemap.xml` se genera y `robots.txt` lo referencia.
+- [ ] `sitemap.xml` se genera, incluye el contenido publicado y usa el dominio real.
+- [ ] `robots.txt` referencia el sitemap con el dominio real.
 - [ ] El certificado SSL es válido y HTTP redirige a HTTPS.
 - [ ] El formulario de contacto envía y el mensaje aparece en el panel.
 - [ ] Los enlaces del footer, incluido el aviso de privacidad, funcionan.
+- [ ] La tarea programada de purga aparece en *Cron Jobs* y corrió al menos una vez sin error.
+
+## Checklist de seguridad
+
+Repaso final antes de anunciar el sitio. La mayoría de estos puntos ya están resueltos por
+diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
+**verificarlos en el entorno real**, no para construirlos de nuevo.
+
+**Configuración del entorno**
+- [ ] `APP_DEBUG` en `false`. Con `true`, un error de PHP muestra rutas del servidor y,
+      alguna vez, datos de la consulta que falló.
+- [ ] `setup.php` borrado. Mientras exista, cualquiera que lo encuentre crea un
+      administrador.
+- [ ] `config/database.php` fuera de `.git` (revisar `.gitignore`) y no accesible por HTTP.
+- [ ] `cli/purgar_solicitudes.php` no accesible por HTTP (403) — solo debe poder invocarse
+      desde el cron.
+- [ ] HTTPS forzado y certificado válido; `session.cookie_samesite=Strict` y
+      `cookie_httponly` activos (ya vienen en `.htaccess`, confirmar que el hosting no los
+      sobrescribe).
+
+**Superficie de ataque**
+- [ ] `uploads/archivo.php` (o cualquier `.php*` dentro de `uploads/`) devuelve 403: el
+      `.htaccess` de esa carpeta desactiva la ejecución de PHP por completo.
+- [ ] Subir un archivo renombrado a `.jpg` que en realidad es un script falla por MIME real
+      (`finfo`), no por extensión.
+- [ ] Guardar `<script>alert(1)</script>` en un campo de contenido enriquecido (bloques,
+      avisos, eventos, pastorales, sacramentos, cursos, páginas) se guarda sin la etiqueta:
+      `core/SanitizadorHtml.php` la retira al guardar, no al mostrar.
+- [ ] Un POST sin `_csrf` válido responde 403 en cualquier formulario del panel y en los
+      formularios públicos con envío (contacto, solicitudes, inscripciones).
+- [ ] Las cabeceras `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y
+      `Content-Security-Policy` llegan en la respuesta (`curl -I` a cualquier página).
+
+**Datos personales (LFPDPPP) — ver `docs/PRIVACIDAD.md`**
+- [ ] El aviso de privacidad (`/aviso-de-privacidad`) está publicado y con los datos reales
+      de la parroquia, no el texto de plantilla con corchetes.
+- [ ] Ninguna foto de la galería con menores está marcada `autorizacion_imagen` sin el
+      permiso firmado correspondiente.
+- [ ] La tarea de purga (paso 11 de arriba) está programada y corriendo.
+
+**Cuentas y accesos**
+- [ ] Cada persona con acceso al panel tiene su propia cuenta; nadie comparte la de
+      administrador.
+- [ ] Los roles asignados corresponden a la función real de cada quien: `secretaria` para
+      quien atiende trámites, `coordinador` solo con sus pastorales, `editor` sin acceso a
+      usuarios ni configuración.
+- [ ] La contraseña de la cuenta de administrador no es la que trae este documento como
+      ejemplo en ningún paso previo.
 
 ## Respaldos
 

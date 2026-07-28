@@ -697,10 +697,41 @@ slug no se regenera al editar el título**, porque rompería los enlaces ya comp
 hace falta cambiarlo, se edita a mano.
 
 `layout_publico.php` emite `<title>`, `meta description`, `link canonical`, Open Graph y
-Twitter Card a partir de las variables que cada controlador público define. El módulo
-`sitemap` genera `sitemap.xml` desde la base de datos incluyendo solo lo publicado, y
-`robots.txt` lo referencia. La portada lleva datos estructurados JSON-LD de tipo `Church`
-y el detalle de evento de tipo `Event`, escritos a mano como HTML plano.
+Twitter Card a partir de las variables que cada controlador público define.
+
+**`url_publica()` y `url_activo()` devuelven rutas relativas a propósito** (empiezan en
+`/`, sin esquema ni dominio): son las que necesitan los enlaces internos del sitio, y
+generarlas relativas evita depender de que `$_SERVER['HTTP_HOST']` sea confiable en cada
+request. Pero `sitemap.xml` exige rutas absolutas por especificación, y el canonical y
+`og:image`/`og:url` deberían serlo por buena práctica (algunos rastreadores no las
+resuelven bien si llegan relativas). Para eso existe `url_absoluta()` en `core/helpers.php`:
+antepone esquema y `HTTP_HOST` a una ruta ya construida, deducido del propio request igual
+que `APP_URL` — así no hace falta una clave "dominio del sitio" en `configuracion` que
+alguien olvide actualizar el día que cambie de dominio. Se aplica en tres lugares:
+`layout_publico.php` (canonical, og:url, og:image), `SitemapController` (cada `<loc>`) y
+los constructores de JSON-LD.
+
+**El módulo `sitemap`** (`modules/sitemap/SitemapController.php`) genera `sitemap.xml`
+consultando cada modelo de contenido en cada visita, sin escribir un archivo estático: para
+el volumen de una parroquia —decenas o pocos cientos de avisos y eventos acumulados en
+años— regenerar en cada visita es más simple que invalidar una caché en disco al publicar
+algo, y `noCache()` ya dispensa una caché HTTP de 5 minutos para no repetir el trabajo en
+cada rastreo. Incluye solo lo visible al público (mismo filtro `publicado`/`activo` que su
+propia página de detalle) y usa `AvisoModel::paraSitemap()` / `EventoModel::paraSitemap()`
+—añadidos en esta etapa— en vez de sus métodos `publicados()`/`listar()` paginados, que
+truncarían el sitemap a una sola página. `robots.txt` referencia la URL con el dominio de
+ejemplo; se corrige a mano al desplegar, junto con el resto de los pendientes que anota el
+propio archivo.
+
+**Datos estructurados vía un contrato en el layout, no HTML escrito a mano.** El
+controlador público arma un arreglo PHP con la forma de schema.org y lo pasa como
+`$jsonLd` a `render()`; `layout_publico.php` es el único lugar que llama
+`json_encode()` (con `JSON_HEX_TAG` y las demás banderas `JSON_HEX_*`, para que un título
+con `</script>` dentro no rompa la etiqueta) y lo imprime como
+`<script type="application/ld+json">`. La portada (`InicioController::datosEstructurados()`)
+arma tipo `Church`, con `address`, `geo` y `sameAs` solo si esos campos de `configuracion`
+tienen valor real —un `"telephone": ""` se lee como dato de mala calidad, no como ausente—.
+El detalle de evento (`EventoPublicoController::datosEstructurados()`) arma tipo `Event`.
 
 ## Seguridad
 

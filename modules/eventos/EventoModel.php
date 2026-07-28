@@ -52,6 +52,12 @@ class EventoModel extends Model
         return $this->fetchOne('SELECT * FROM eventos WHERE slug = :slug AND publicado = 1', [':slug' => $slug]);
     }
 
+    /** slug + fecha de todos los publicados. Para sitemap.xml. */
+    public function paraSitemap(): array
+    {
+        return $this->fetchAll('SELECT slug, created_at AS modificado FROM eventos WHERE publicado = 1');
+    }
+
     /** Próximos eventos a partir de ahora, para la portada y la página de eventos. */
     public function proximos(int $limite = 6): array
     {

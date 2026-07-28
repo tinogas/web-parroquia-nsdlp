@@ -27,6 +27,23 @@ if (!function_exists('e')) {
         return rtrim(APP_URL, '/');
     }
 
+    /**
+     * Antepone esquema y dominio a una URL ya construida por url_publica() o
+     * url_activo(). Necesaria para sitemap.xml (el protocolo exige rutas
+     * absolutas) y para og:image/og:url/canonical, que las redes sociales y
+     * los buscadores no siempre resuelven bien si llegan relativas.
+     *
+     * Se deduce del propio request, igual que APP_URL: así no hace falta una
+     * clave de configuración "dominio del sitio" que alguien pueda olvidar
+     * actualizar el día que cambie de dominio.
+     */
+    function url_absoluta(string $rutaRelativa): string
+    {
+        $esquema = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host    = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $esquema . '://' . $host . $rutaRelativa;
+    }
+
     /** URL de un archivo de assets o uploads: url_activo('assets/css/app.css') */
     function url_activo(string $ruta): string
     {
