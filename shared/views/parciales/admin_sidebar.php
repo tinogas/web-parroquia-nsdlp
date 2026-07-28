@@ -36,11 +36,28 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <a href="<?= e(url_admin('avisos')) ?>"   class="sidebar-link <?= $activo('avisos') ?>"><i class="bi bi-megaphone"></i> Avisos</a>
         <a href="<?= e(url_admin('eventos')) ?>"  class="sidebar-link <?= $activo('eventos') ?>"><i class="bi bi-calendar-event"></i> Eventos</a>
         <a href="<?= e(url_admin('galeria')) ?>"  class="sidebar-link <?= $activo('galeria') ?>"><i class="bi bi-images"></i> Galería</a>
+        */ ?>
 
+        <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('personas.ver') || Auth::tienePermiso('organigrama.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
-        <a href="<?= e(url_admin('horarios')) ?>"    class="sidebar-link <?= $activo('horarios') ?>"><i class="bi bi-clock"></i> Horarios</a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('horarios.ver')): ?>
+        <a href="<?= e(url_admin('horarios')) ?>" class="sidebar-link <?= $activo('horarios') ?>">
+            <i class="bi bi-clock"></i> Horarios
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('personas.ver')): ?>
+        <a href="<?= e(url_admin('personas')) ?>" class="sidebar-link <?= $activo('personas') ?>">
+            <i class="bi bi-person-badge"></i> Equipo pastoral
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('organigrama.ver')): ?>
+        <a href="<?= e(url_admin('organigrama')) ?>" class="sidebar-link <?= $activo('organigrama') ?>">
+            <i class="bi bi-diagram-3"></i> Organigrama
+        </a>
+        <?php endif; ?>
+        <?php /*
         <a href="<?= e(url_admin('pastorales')) ?>"  class="sidebar-link <?= $activo('pastorales') ?>"><i class="bi bi-people"></i> Pastorales</a>
-        <a href="<?= e(url_admin('personas')) ?>"    class="sidebar-link <?= $activo('personas') ?>"><i class="bi bi-person-badge"></i> Equipo pastoral</a>
 
         <div class="sidebar-section mt-2">Trámites</div>
         <a href="<?= e(url_admin('solicitudes')) ?>"   class="sidebar-link <?= $activo('solicitudes') ?>"><i class="bi bi-file-earmark-text"></i> Solicitudes</a>

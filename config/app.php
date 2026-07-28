@@ -87,6 +87,9 @@ define('PERMISOS', [
         'panel.ver',
         'bloques.ver', 'bloques.editar',
         'paginas.ver', 'paginas.editar',
+        'horarios.ver', 'horarios.editar',
+        'personas.ver', 'personas.editar',
+        'organigrama.ver', 'organigrama.editar',
         // El editor no toca la configuración global: los datos de contacto, el
         // logo y las claves legales son responsabilidad del administrador.
         // El editor tampoco ve los mensajes de contacto: son datos personales
@@ -95,9 +98,6 @@ define('PERMISOS', [
         // 'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
         // 'galeria.ver', 'galeria.crear', 'galeria.eliminar', 'galeria.publicar',
         // 'carrusel.ver', 'carrusel.editar',
-        // 'horarios.ver', 'horarios.editar',
-        // 'personas.ver', 'personas.editar',
-        // 'organigrama.ver', 'organigrama.editar',
         // 'pastorales.ver', 'pastorales.editar',
         // 'sacramentos.ver', 'sacramentos.editar',
         // 'cursos.ver', 'cursos.editar', 'cursos.publicar',

@@ -153,6 +153,69 @@ CREATE TABLE IF NOT EXISTS intentos_formulario (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- PARROQUIA
+-- ------------------------------------------------------------
+
+-- Párroco, vicarios, diáconos, religiosos, laicos y personal. Borrado lógico:
+-- se desactivan (dejaron el cargo), no se borran. Un delete real sí está
+-- permitido para corregir un alta por error (organigrama_nodos.persona_id
+-- queda en NULL automáticamente por el ON DELETE SET NULL de su FK).
+CREATE TABLE IF NOT EXISTS personas (
+    id         SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre     VARCHAR(140)      NOT NULL,
+    cargo      VARCHAR(100)      NULL,
+    tipo       ENUM('parroco','vicario','diacono','religioso','laico','staff')
+                                 NOT NULL DEFAULT 'laico',
+    semblanza  TEXT              NULL,
+    foto       VARCHAR(255)      NULL,
+    email      VARCHAR(150)      NULL,
+    telefono   VARCHAR(20)       NULL,
+    orden      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo     TINYINT(1)        NOT NULL DEFAULT 1,
+    created_at DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_per_tipo (tipo, orden)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Árbol autorreferenciado de hasta 4 niveles. Un nodo puede apuntar a una
+-- persona, a una pastoral (cuando exista, etapa 6) o a ninguna de las dos y
+-- ser solo un título de agrupación ("Consejo Pastoral").
+CREATE TABLE IF NOT EXISTS organigrama_nodos (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    padre_id    SMALLINT UNSIGNED NULL,
+    titulo      VARCHAR(140)      NOT NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
+    pastoral_id TINYINT UNSIGNED  NULL,   -- FK a pastorales(id) cuando exista (etapa 6)
+    nivel       TINYINT UNSIGNED  NOT NULL DEFAULT 1,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_org_padre (padre_id),
+    CONSTRAINT fk_org_padre   FOREIGN KEY (padre_id)   REFERENCES organigrama_nodos(id) ON DELETE SET NULL,
+    CONSTRAINT fk_org_persona FOREIGN KEY (persona_id) REFERENCES personas(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Recurrencia semanal, no fechas concretas: una misa dominical no es un
+-- evento, es un patrón que se repite. vigente_desde/vigente_hasta cubre los
+-- horarios de temporada (Cuaresma, verano) sin duplicar la tabla.
+CREATE TABLE IF NOT EXISTS horarios (
+    id            TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tipo          ENUM('misa','confesion','adoracion','oficina','otro')
+                                   NOT NULL DEFAULT 'misa',
+    dia_semana    TINYINT UNSIGNED NOT NULL,   -- 0=domingo … 6=sábado
+    hora          TIME             NOT NULL,
+    hora_fin      TIME             NULL,
+    lugar         VARCHAR(120)     NULL,
+    nota          VARCHAR(160)     NULL,
+    vigente_desde DATE             NULL,
+    vigente_hasta DATE             NULL,
+    orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo        TINYINT(1)       NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_hor_tipo_dia (tipo, dia_semana, hora)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SEMILLAS DE CONFIGURACIÓN
 -- ------------------------------------------------------------
 -- INSERT IGNORE: al reimportar sobre una base con datos no se pisan los

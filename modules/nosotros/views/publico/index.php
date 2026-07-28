@@ -41,4 +41,46 @@ foreach (array_keys($mvv) as $clave) {
 <p class="text-muted fst-italic">Esta sección se está preparando.</p>
 <?php endif; ?>
 
-<?php /* El equipo pastoral y el organigrama se agregan en la etapa 4. */ ?>
+<?php if (!empty($equipo)): ?>
+<section class="mb-5">
+    <h2 class="h4 fw-bold mb-4">Nuestro equipo pastoral</h2>
+    <?php foreach (PersonaModel::TIPOS as $tipo => $nombreTipo): ?>
+        <?php if (empty($equipo[$tipo])) { continue; } ?>
+        <h3 class="h6 text-uppercase text-muted mb-3"><?= e($nombreTipo) ?></h3>
+        <div class="row g-4 mb-4">
+            <?php foreach ($equipo[$tipo] as $persona): ?>
+            <div class="col-sm-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body p-4">
+                        <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 96)) ?>"
+                             class="rounded-circle mb-3" style="width:88px;height:88px;object-fit:cover" alt="">
+                        <h4 class="h6 fw-bold mb-1"><?= e($persona['nombre']) ?></h4>
+                        <?php if ($persona['cargo']): ?>
+                        <p class="text-dorado small fw-semibold mb-2"><?= e($persona['cargo']) ?></p>
+                        <?php endif; ?>
+                        <?php if ($persona['semblanza']): ?>
+                        <p class="small text-muted mb-0"><?= e($persona['semblanza']) ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endforeach; ?>
+</section>
+<?php endif; ?>
+
+<?php if ($organigramaImagen !== '' || !empty($organigramaArbol)): ?>
+<section class="mb-5">
+    <h2 class="h4 fw-bold mb-4">Organigrama</h2>
+    <?php if ($organigramaImagen !== ''): ?>
+        <img src="<?= e(url_activo($organigramaImagen)) ?>" alt="Organigrama de la parroquia" class="img-fluid rounded shadow-sm">
+    <?php else: ?>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <?php $oa_nodos = $organigramaArbol; require BASE_PATH . '/shared/views/parciales/organigrama_arbol.php'; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+</section>
+<?php endif; ?>

@@ -222,6 +222,73 @@ body {
     font-size: .85rem;
 }
 
+/* ---- Organigrama ---- */
+
+.arbol-organigrama,
+.arbol-organigrama ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 1.75rem;
+}
+
+.arbol-organigrama {
+    padding-left: 0;
+}
+
+.arbol-organigrama li {
+    margin: .5rem 0;
+}
+
+.arbol-organigrama ul {
+    border-left: 2px solid #e9ecef;
+    margin-top: .5rem;
+    padding-top: .25rem;
+}
+
+.nodo-organigrama {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: .45rem .8rem;
+}
+
+.nodo-organigrama.nodo-inactivo {
+    opacity: .5;
+}
+
+.nodo-foto {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.nodo-texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.nodo-titulo {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.nodo-persona {
+    font-size: .78rem;
+    color: #6c757d;
+}
+
+.nodo-acciones {
+    display: flex;
+    gap: .25rem;
+    margin-left: .4rem;
+}
+
 .lista-etapas {
     padding-left: 1.15rem;
     color: #6c757d;

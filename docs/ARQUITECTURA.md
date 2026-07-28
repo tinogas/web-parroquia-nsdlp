@@ -322,12 +322,28 @@ después.
 
 ### El organigrama son datos, no una imagen
 
-`organigrama_nodos` es un árbol autorreferenciado de hasta cuatro niveles, renderizado con
-listas anidadas y CSS puro. Es accesible, responsivo, indexable por buscadores y editable
-sin abrir Photoshop. En pantallas menores a 768 px colapsa a lista jerárquica indentada.
+`organigrama_nodos` es un árbol autorreferenciado de hasta `OrganigramaModel::NIVEL_MAXIMO`
+(4) niveles. Se renderiza como una lista indentada con líneas de guía —`<ul>` anidados,
+CSS puro, sin JavaScript— en vez de un diagrama de cajas y conectores: un organigrama real
+de caja-y-línea en CSS puro es notoriamente frágil, y una lista jerárquica es accesible,
+indexable por buscadores, editable sin abrir Photoshop, y se lee igual de bien en escritorio
+que en un celular sin necesitar dos diseños distintos.
+
+El HTML lo genera un único partial recursivo (`shared/views/parciales/organigrama_arbol.php`,
+con la función `organigrama_render_nodo()`), compartido entre el panel y el sitio público;
+solo cambian los colores según la hoja de estilos que cargue la página. Un nodo puede tener
+un título sin persona asignada (un puesto vacante sigue apareciendo, solo que sin nombre), y
+si la persona asignada está inactiva, el sitio público muestra el título pero no el nombre.
+
+**Prevención de ciclos.** Al editar un nodo, el selector de "depende de" excluye al propio
+nodo y a todos sus descendientes (`OrganigramaModel::idsConDescendientes()`), y el servidor
+vuelve a validar esa misma regla al guardar — el filtro del formulario es una ayuda, no el
+control real. El nivel de cada nodo se calcula solo a partir del de su padre; nunca lo
+escribe la persona que edita.
 
 Válvula de escape: si la clave `configuracion.organigrama_imagen` tiene valor, la vista
-muestra esa imagen en lugar del árbol. La parroquia decide sin que nadie toque código.
+muestra esa imagen en lugar del árbol, y ni siquiera se consulta la base de datos del
+organigrama. La parroquia decide sin que nadie toque código.
 
 ### Calendario propio
 

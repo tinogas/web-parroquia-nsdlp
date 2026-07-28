@@ -18,6 +18,7 @@ class Router
     private static array $rutasPublicas = [
         'inicio'   => ['clase' => 'InicioController',           'archivo' => 'modules/inicio/InicioController.php'],
         'nosotros' => ['clase' => 'NosotrosController',         'archivo' => 'modules/nosotros/NosotrosController.php'],
+        'horarios' => ['clase' => 'HorarioPublicoController',   'archivo' => 'modules/horarios/HorarioPublicoController.php'],
         'contacto' => ['clase' => 'ContactoPublicoController',  'archivo' => 'modules/contacto/ContactoPublicoController.php'],
         'pagina'   => ['clase' => 'PaginaPublicoController',    'archivo' => 'modules/paginas/PaginaPublicoController.php'],
     ];
@@ -29,6 +30,9 @@ class Router
         'bloques'       => ['clase' => 'BloqueController',        'archivo' => 'modules/bloques/BloqueController.php'],
         'paginas'       => ['clase' => 'PaginaController',        'archivo' => 'modules/paginas/PaginaController.php'],
         'mensajes'      => ['clase' => 'MensajeController',       'archivo' => 'modules/contacto/MensajeController.php'],
+        'horarios'      => ['clase' => 'HorarioController',       'archivo' => 'modules/horarios/HorarioController.php'],
+        'personas'      => ['clase' => 'PersonaController',       'archivo' => 'modules/personas/PersonaController.php'],
+        'organigrama'   => ['clase' => 'OrganigramaController',   'archivo' => 'modules/organigrama/OrganigramaController.php'],
     ];
 
     /**

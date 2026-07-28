@@ -1,22 +1,23 @@
 <?php
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/modules/bloques/BloqueModel.php';
+require_once BASE_PATH . '/modules/horarios/HorarioModel.php';
 
 class InicioController extends ControllerPublico
 {
     public function index(): void
     {
-        // Horarios destacados, próximos eventos y últimos avisos se agregan en
-        // las etapas 4 y 5, cuando esos módulos existan.
+        // Próximos eventos y últimos avisos se agregan en la etapa 5.
         $this->render('inicio/publico/index', [
             'metaTitulo'      => '',
             'metaDescripcion' => Config::get(
                 'meta_descripcion',
                 'Horarios de misas, sacramentos, pastorales y avisos de la Parroquia Nuestra Señora de la Paz.'
             ),
-            'urlCanonica' => url_publica('inicio'),
-            'hero'        => $this->hero(),
-            'bloques'     => (new BloqueModel())->porZona('inicio'),
+            'urlCanonica'    => url_publica('inicio'),
+            'hero'           => $this->hero(),
+            'bloques'        => (new BloqueModel())->porZona('inicio'),
+            'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
         ]);
     }
 
