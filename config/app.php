@@ -85,6 +85,9 @@ define('PERMISOS', [
 
     ROL_EDITOR => [
         'panel.ver',
+        'bloques.ver', 'bloques.editar',
+        // El editor no toca la configuración global: los datos de contacto, el
+        // logo y las claves legales son responsabilidad del administrador.
         // 'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.eliminar', 'avisos.publicar',
         // 'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
         // 'galeria.ver', 'galeria.crear', 'galeria.eliminar', 'galeria.publicar',

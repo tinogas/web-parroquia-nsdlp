@@ -75,6 +75,30 @@ CREATE TABLE IF NOT EXISTS configuracion (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- CONTENIDO EDITABLE
+-- ------------------------------------------------------------
+
+-- Textos largos anclados a zonas fijas del sitio. El panel edita el título, el
+-- contenido y la imagen, pero NO puede crear ni borrar claves: son las anclas
+-- que las vistas esperan encontrar. Ver docs/ARQUITECTURA.md
+CREATE TABLE IF NOT EXISTS bloques_contenido (
+    id              SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    clave           VARCHAR(60)       NOT NULL,
+    zona            VARCHAR(40)       NOT NULL DEFAULT 'general',
+    titulo          VARCHAR(160)      NULL,
+    descripcion     VARCHAR(255)      NULL,
+    contenido       MEDIUMTEXT        NULL,
+    imagen          VARCHAR(255)      NULL,
+    orden           SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo          TINYINT(1)        NOT NULL DEFAULT 1,
+    actualizado_por INT UNSIGNED      NULL,
+    updated_at      DATETIME          NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_blq_clave (clave),
+    KEY idx_blq_zona (zona, orden)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SEMILLAS DE CONFIGURACIÓN
 -- ------------------------------------------------------------
 -- INSERT IGNORE: al reimportar sobre una base con datos no se pisan los
@@ -108,5 +132,37 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
 
     ('aviso_privacidad_version', '1.0', 'legal'),
     ('retencion_meses_solicitudes', '36', 'legal');
+
+-- ------------------------------------------------------------
+-- SEMILLAS DE BLOQUES DE CONTENIDO
+-- ------------------------------------------------------------
+-- La descripción explica al editor dónde aparece cada bloque; sin ella, una
+-- lista de claves como «mision» o «historia» no le dice nada a nadie.
+
+INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) VALUES
+    ('bienvenida_parroco', 'inicio',      'Bienvenida',
+     'Saludo del párroco. Aparece en la portada, debajo de la imagen principal.', 10),
+    ('inicio_intro',       'inicio',      'Presentación',
+     'Párrafo breve de presentación de la parroquia en la portada.', 20),
+
+    ('historia',           'nosotros',    'Nuestra historia',
+     'Historia de la parroquia. Aparece en «Quiénes somos».', 10),
+    ('mision',             'nosotros',    'Misión',
+     'Misión de la parroquia. Aparece en «Quiénes somos».', 20),
+    ('vision',             'nosotros',    'Visión',
+     'Visión de la parroquia. Aparece en «Quiénes somos».', 30),
+    ('valores',            'nosotros',    'Valores',
+     'Valores de la comunidad. Aparece en «Quiénes somos».', 40),
+
+    ('horarios_intro',     'horarios',    'Horarios',
+     'Texto introductorio de la página de horarios de misas y celebraciones.', 10),
+    ('sacramentos_intro',  'sacramentos', 'Sacramentos',
+     'Texto introductorio de la página de sacramentos, antes del listado.', 10),
+    ('pastorales_intro',   'pastorales',  'Pastorales',
+     'Texto introductorio de la página de pastorales, antes del listado.', 10),
+    ('cursos_intro',       'cursos',      'Cursos y capacitaciones',
+     'Texto introductorio de la página de cursos, antes del catálogo.', 10),
+    ('contacto_intro',     'contacto',    'Contacto',
+     'Texto introductorio de la página de contacto, antes del formulario.', 10);
 
 SET foreign_key_checks = 1;

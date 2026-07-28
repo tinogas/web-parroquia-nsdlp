@@ -207,11 +207,31 @@ valores vive en el módulo de administración `configuracion`; `Config` solo los
 
 ## Editor de texto y sanitizado
 
-**El editor** es `assets/js/editor.js`: unas 120 líneas de JavaScript vanilla sobre un
-`contenteditable`, con barra de negrita, cursiva, listas, enlace y encabezado, que
-serializa a un `<textarea>` oculto. Se descartaron TinyMCE y CKEditor porque son
-dependencia externa —contra la regla del proyecto— y porque amplían la superficie de XSS.
-También se descartó un textarea plano: los coordinadores no van a escribir HTML.
+**El editor** es `assets/js/editor.js`: JavaScript vanilla sobre un `contenteditable`, con
+barra de negrita, cursiva, subrayado, títulos, listas y enlaces, sincronizado con un
+`<textarea>`. Se descartaron TinyMCE y CKEditor porque son dependencia externa —contra la
+regla del proyecto— y porque amplían la superficie de XSS. También se descartó un textarea
+plano a secas: los coordinadores no van a escribir HTML.
+
+Tres detalles del editor:
+
+- Usa `document.execCommand`, marcado como obsoleto pero todavía funcional en todos los
+  navegadores y sin sustituto nativo. **Si algún día deja de responder, el textarea sigue
+  ahí**: se muestra cuando el JavaScript no se carga y se puede escribir directamente.
+- Al pegar conserva solo el texto. Arrastrar el formato de Word o de otra página no sirve
+  de nada, porque el servidor lo descartaría igual.
+- Sincroniza también en el `submit` del formulario, por si se guarda sin que el área
+  editable pierda el foco.
+
+**Las imágenes se quitan con una casilla**, no con un botón aparte. Un formulario por
+imagen no puede anidarse dentro del formulario principal, y resolverlo con el atributo
+`form` obligaba a colocar los formularios fuera del contenido. La casilla
+`<campo>_quitar` lo resuelve sin JavaScript y con un solo envío.
+
+**La configuración se guarda por secciones**, con un formulario independiente por pestaña.
+Si algo falla al validar el mapa, no se pierde lo escrito en las demás. Además, cada
+sección solo escribe las claves que vienen en el envío: un formulario completo las manda
+todas, pero un envío incompleto no borra datos que nadie pidió borrar.
 
 **El sanitizado es obligatorio, con editor o sin él.** `core/SanitizadorHtml.php` usa
 `DOMDocument`, que es nativo de PHP, y aplica:
@@ -223,9 +243,38 @@ También se descartó un textarea plano: los coordinadores no van a escribir HTM
 - eliminación de todo atributo `on*` y de cualquier `javascript:`.
 
 Todo campo de contenido pasa por el sanitizador **al guardar**, no al mostrar. Esos
-campos —y solo esos— se imprimen con `echo` en lugar de `htmlspecialchars()`. Es la única
-excepción a la regla de escapar en cada eco, y debe ir marcada con un comentario en el
-código donde ocurra.
+campos —y solo esos— se imprimen con `echo` en lugar de `e()`. Es la única excepción a la
+regla de escapar en cada eco, y debe ir marcada con un comentario en el código donde
+ocurra.
+
+Comportamiento verificado con HTML hostil:
+
+| Entrada | Resultado |
+|---|---|
+| `<script>alert(1)</script>` | Se elimina con su contenido |
+| `<p onclick="alert(1)">Hola</p>` | `<p>Hola</p>` — se cae el atributo, no el párrafo |
+| `<a href="javascript:alert(1)">x</a>` | `<a>x</a>` — se cae el `href` |
+| `<a href="https://…" target="_blank">` | Se conserva y se le añade `rel="noopener noreferrer"` |
+| `<div style="color:red">texto</div>` | `texto` — se desenvuelve y se conserva lo escrito |
+| `<iframe src="…">` | Se elimina con su contenido |
+
+### El mapa se guarda como dirección, no como HTML
+
+El campo del mapa acepta que se pegue el fragmento completo que entrega Google Maps, pero
+solo conserva la dirección del `iframe`, comprobando que apunte de verdad a
+`google.com/maps/embed`. La vista construye el `iframe` a partir de ella.
+
+Guardar el fragmento tal cual obligaría a imprimir HTML de terceros en el sitio, y sería
+la única vía por la que un `iframe` podría entrar al contenido después de todo el trabajo
+del sanitizador.
+
+### Entrada normalizada a UTF-8
+
+`postStr()`, `postHtml()` y `getStr()` comprueban que el texto recibido sea UTF-8 válido y
+lo reinterpretan si no lo es. Un navegador que abre una página con `<meta charset="UTF-8">`
+siempre envía UTF-8, así que en el uso normal no hace nada; pero si llegara texto en otra
+codificación, MySQL sustituye cada acento por un signo de interrogación y el dato se pierde
+sin aviso. Los formularios además declaran `accept-charset="UTF-8"`.
 
 ## Decisiones de modelado
 

@@ -16,6 +16,8 @@ require_once BASE_PATH . '/core/Session.php';
 require_once BASE_PATH . '/core/Auth.php';
 require_once BASE_PATH . '/core/Config.php';
 require_once BASE_PATH . '/core/Model.php';
+require_once BASE_PATH . '/core/Upload.php';
+require_once BASE_PATH . '/core/SanitizadorHtml.php';
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/core/Router.php';

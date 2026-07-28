@@ -30,7 +30,7 @@
                 <?php endforeach; ?>
             <?php endforeach; ?>
 
-            <form method="POST" action="<?= e(url_post('admin', 'auth', 'login')) ?>">
+            <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'auth', 'login')) ?>">
                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
                 <div class="mb-3">

@@ -166,7 +166,7 @@ class Controller
     /** Texto plano: recorta y quita etiquetas. No usar para contenido enriquecido. */
     protected function postStr(string $key, string $default = ''): string
     {
-        return trim(strip_tags((string) ($_POST[$key] ?? $default)));
+        return $this->utf8(trim(strip_tags((string) ($_POST[$key] ?? $default))));
     }
 
     /**
@@ -175,7 +175,24 @@ class Controller
      */
     protected function postHtml(string $key): string
     {
-        return trim((string) ($_POST[$key] ?? ''));
+        return $this->utf8(trim((string) ($_POST[$key] ?? '')));
+    }
+
+    /**
+     * Asegura que el texto sea UTF-8 antes de que llegue a la base de datos.
+     *
+     * Un navegador que abre una página con <meta charset="UTF-8"> envía UTF-8,
+     * así que en el uso normal esto no hace nada. Pero si por cualquier motivo
+     * llegara texto en otra codificación, MySQL sustituye cada acento por un
+     * signo de interrogación y el dato se pierde sin remedio ni aviso. Vale más
+     * reinterpretarlo que guardar «Se?ora».
+     */
+    private function utf8(string $valor): string
+    {
+        if ($valor === '' || mb_check_encoding($valor, 'UTF-8')) {
+            return $valor;
+        }
+        return mb_convert_encoding($valor, 'UTF-8', 'ISO-8859-1');
     }
 
     protected function postFloat(string $key, float $default = 0.0): float
@@ -208,7 +225,7 @@ class Controller
 
     protected function getStr(string $key, string $default = ''): string
     {
-        return trim(strip_tags((string) ($_GET[$key] ?? $default)));
+        return $this->utf8(trim(strip_tags((string) ($_GET[$key] ?? $default))));
     }
 
     // ── Auditoría ───────────────────────────────────────────────────────

@@ -41,7 +41,7 @@
                 <li><span class="dropdown-item-text text-muted small"><?= e(Auth::nombreRol()) ?></span></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <form method="POST" action="<?= e(url_post('admin', 'auth', 'logout')) ?>" class="m-0">
+                    <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'auth', 'logout')) ?>" class="m-0">
                         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                         <button type="submit" class="dropdown-item text-danger">
                             <i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión

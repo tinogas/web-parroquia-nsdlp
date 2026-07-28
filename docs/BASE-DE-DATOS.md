@@ -75,15 +75,26 @@ Claves sembradas: `parroquia_nombre`, `parroquia_diocesis`, `direccion`, `ciudad
 
 ### `bloques_contenido`
 
-Textos largos anclados a zonas fijas del sitio. `clave` VARCHAR(60) con `uq_blq_clave`,
-`titulo`, `contenido` MEDIUMTEXT, `imagen`, `orden`, `activo`, `actualizado_por` y
-`updated_at`.
+Textos largos anclados a zonas fijas del sitio.
 
-Claves sembradas: `bienvenida_parroco`, `historia`, `mision`, `vision`, `valores`,
-`contacto_intro`, `pastorales_intro`, `cursos_intro`, `sacramentos_intro`.
+| Columna | Notas |
+|---|---|
+| `clave` | VARCHAR(60) con `uq_blq_clave`; es lo que busca la vista |
+| `zona` | Agrupa por página: `inicio`, `nosotros`, `horarios`, `sacramentos`, `pastorales`, `cursos`, `contacto` |
+| `titulo` | Encabezado que se muestra sobre el texto |
+| `descripcion` | Explica al editor **dónde aparece** el bloque. Sin esto, una lista de claves como `mision` o `historia` no le dice nada a nadie |
+| `contenido` | MEDIUMTEXT con HTML ya saneado |
+| `imagen` | Opcional, acompaña al texto |
+| `orden`, `activo` | Un bloque desactivado no se muestra en la página |
+| `actualizado_por`, `updated_at` | Quién lo cambió y cuándo |
 
-El administrador edita el contenido pero **no puede crear ni borrar claves**: son las
-anclas que las vistas esperan encontrar.
+Once claves sembradas: `bienvenida_parroco`, `inicio_intro`, `historia`, `mision`,
+`vision`, `valores`, `horarios_intro`, `sacramentos_intro`, `pastorales_intro`,
+`cursos_intro`, `contacto_intro`.
+
+El panel edita el contenido pero **no puede crear ni borrar claves**: son las anclas que
+las vistas esperan encontrar. Las semillas usan `INSERT IGNORE`, así que reimportar
+`install.sql` sobre una base con datos no pisa nada y una clave nueva aparece sola.
 
 ### `paginas`
 

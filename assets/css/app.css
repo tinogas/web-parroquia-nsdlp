@@ -125,6 +125,103 @@ body {
     --bs-btn-active-border-color: #143559;
 }
 
+/* ---- Campos de imagen ---- */
+
+.vista-imagen {
+    width: 160px;
+    height: 110px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: .25rem;
+}
+
+.marco-mapa {
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    overflow: hidden;
+}
+
+/* ---- Editor de texto ---- */
+
+.editor-html {
+    display: none;               /* Se muestra cuando editor.js lo activa. */
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    background: #fff;
+}
+
+.editor-html.activo {
+    display: block;
+}
+
+.editor-barra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .15rem;
+    padding: .35rem .4rem;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    border-radius: .375rem .375rem 0 0;
+}
+
+.editor-boton {
+    border: 0;
+    background: transparent;
+    border-radius: .25rem;
+    width: 2rem;
+    height: 2rem;
+    color: #495057;
+    line-height: 1;
+}
+
+.editor-boton:hover {
+    background: #e9ecef;
+    color: var(--color-primario);
+}
+
+.editor-boton.activo {
+    background: var(--color-primario);
+    color: #fff;
+}
+
+.editor-separador {
+    width: 1px;
+    margin: .25rem .3rem;
+    background: #dee2e6;
+}
+
+.editor-area {
+    min-height: 12rem;
+    max-height: 32rem;
+    overflow-y: auto;
+    padding: .75rem 1rem;
+    outline: none;
+}
+
+.editor-area:focus {
+    box-shadow: inset 0 0 0 2px rgba(30, 77, 139, .18);
+}
+
+.editor-area > :first-child { margin-top: 0; }
+.editor-area > :last-child  { margin-bottom: 0; }
+
+.editor-area h2 { font-size: 1.35rem; }
+.editor-area h3 { font-size: 1.15rem; }
+
+.editor-area blockquote {
+    border-left: 3px solid var(--color-dorado);
+    padding-left: .9rem;
+    color: #6c757d;
+}
+
+/* Con JavaScript activo el textarea queda oculto; sin él se usa directamente. */
+.editor-fuente {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem;
+}
+
 .lista-etapas {
     padding-left: 1.15rem;
     color: #6c757d;

@@ -125,7 +125,7 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <?php if (!$exito): ?>
-            <form method="POST">
+            <form method="POST" accept-charset="UTF-8">
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Nombre</label>
                     <input type="text" name="nombre" class="form-control"

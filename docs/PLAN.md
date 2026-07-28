@@ -105,7 +105,7 @@ vistas de administración.
 |---|---|---|---|---|
 | 0 | Documentación | Este documento y los demás de `docs/`, más el README | 0.5 | **Hecha** |
 | 1 | Andamiaje | `.gitignore`, `.htaccess`, `config/`, `core/`, Router de dos áreas, sesión perezosa, `index.php`, layouts esqueleto, `install.sql` inicial, `setup.php` | 1.0 | **Hecha** |
-| 2 | Configuración y bloques | Módulos `configuracion` y `bloques`, sanitizador de HTML, editor de texto, subida de archivos extendida | 1.0 | Pendiente |
+| 2 | Configuración y bloques | Módulos `configuracion` y `bloques`, sanitizador de HTML, editor de texto, subida de archivos extendida | 1.0 | **Hecha** |
 | 3 | Sitio público estructural | Layout público real, hoja de estilos, `inicio`, `nosotros`, `contacto` con antispam, páginas libres y aviso de privacidad | 2.0 | Pendiente |
 | 4 | Horarios, personas y organigrama | Tres CRUD y sus secciones públicas | 1.5 | Pendiente |
 | 5 | Avisos, eventos, galería y carrusel | Publicación con borrador, calendario mensual, álbumes | 2.5 | Pendiente |

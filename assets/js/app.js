@@ -33,6 +33,17 @@
         });
     }
 
+    // ---- Abrir la pestaña indicada en la dirección ----
+    // Tras guardar, el controlador redirige a …/configuracion#contacto para
+    // devolver al usuario a la sección donde estaba.
+    if (window.location.hash) {
+        var destino = document.querySelector('[data-bs-target="#panel-' +
+            window.location.hash.substring(1).replace(/[^a-z0-9_-]/gi, '') + '"]');
+        if (destino && window.bootstrap) {
+            window.bootstrap.Tab.getOrCreateInstance(destino).show();
+        }
+    }
+
     // ---- Vista previa de la imagen antes de subirla ----
     // Se activa con: <input type="file" data-preview="idDeLaImagen">
     document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {

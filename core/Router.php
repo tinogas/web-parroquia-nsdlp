@@ -20,8 +20,10 @@ class Router
     ];
 
     private static array $rutasAdmin = [
-        'auth'  => ['clase' => 'AuthController',  'archivo' => 'modules/auth/AuthController.php'],
-        'panel' => ['clase' => 'PanelController', 'archivo' => 'modules/panel/PanelController.php'],
+        'auth'          => ['clase' => 'AuthController',          'archivo' => 'modules/auth/AuthController.php'],
+        'panel'         => ['clase' => 'PanelController',         'archivo' => 'modules/panel/PanelController.php'],
+        'configuracion' => ['clase' => 'ConfiguracionController', 'archivo' => 'modules/configuracion/ConfiguracionController.php'],
+        'bloques'       => ['clase' => 'BloqueController',        'archivo' => 'modules/bloques/BloqueController.php'],
     ];
 
     /**
