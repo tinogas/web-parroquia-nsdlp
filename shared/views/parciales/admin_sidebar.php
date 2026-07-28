@@ -56,10 +56,19 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-people"></i> Pastorales
         </a>
         <?php endif; ?>
+        <?php if (Auth::tienePermiso('sacramentos.ver')): ?>
+        <a href="<?= e(url_admin('sacramentos')) ?>" class="sidebar-link <?= $activo('sacramentos') ?>">
+            <i class="bi bi-droplet"></i> Sacramentos
+        </a>
+        <?php endif; ?>
 
-        <?php /*
+        <?php if (Auth::tienePermiso('solicitudes.ver')): ?>
         <div class="sidebar-section mt-2">Trámites</div>
-        <a href="<?= e(url_admin('solicitudes')) ?>"   class="sidebar-link <?= $activo('solicitudes') ?>"><i class="bi bi-file-earmark-text"></i> Solicitudes</a>
+        <a href="<?= e(url_admin('solicitudes')) ?>" class="sidebar-link <?= $activo('solicitudes') ?>">
+            <i class="bi bi-file-earmark-text"></i> Solicitudes
+        </a>
+        <?php endif; ?>
+        <?php /*
         <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>"><i class="bi bi-pencil-square"></i> Inscripciones</a>
         */ ?>
 

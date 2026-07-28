@@ -100,7 +100,7 @@ define('PERMISOS', [
         'carrusel.ver', 'carrusel.editar',
         'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
-        // 'sacramentos.ver', 'sacramentos.editar',
+        'sacramentos.ver', 'sacramentos.editar',
         // 'cursos.ver', 'cursos.editar', 'cursos.publicar',
     ],
 
@@ -122,7 +122,7 @@ define('PERMISOS', [
     ROL_SECRETARIA => [
         'panel.ver',
         'mensajes.ver', 'mensajes.editar',
-        // 'solicitudes.ver', 'solicitudes.editar', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
+        'solicitudes.ver', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
         // 'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],

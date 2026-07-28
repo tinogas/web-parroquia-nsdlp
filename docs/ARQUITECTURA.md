@@ -541,6 +541,54 @@ como contenido parroquial general (`pastoral_id NULL`). Solo `pastoral_actividad
 significa nada y la asignación de un coordinador tampoco. Comprobado borrando una pastoral
 con un aviso asociado: el aviso siguió existiendo, con `pastoral_id` en `NULL`.
 
+## Sacramentos y solicitudes
+
+La pieza de más valor operativo del sistema, y la más delicada legalmente: recibe
+solicitudes de bautizo, primera comunión, confirmación, matrimonio y unción de enfermos
+directamente desde el sitio, con frecuencia de menores de edad.
+
+**El folio no se deriva del slug.** `SacramentoModel::prefijoFolio()` usa un mapa
+explícito (`bautizo`→`BAU`, `confirmacion`→`CNF`, `confesion`→`CNS`…) en vez de tomar las
+tres primeras letras del slug: "confirmacion" y "confesion" comparten esas tres letras
+("CON"), lo que habría hecho indistinguibles sus folios para la secretaría. Un sacramento
+nuevo que se cree desde el panel —el catálogo lo permite en principio, aunque solo existen
+los seis universales— cae en una derivación genérica de respaldo, con el riesgo aceptado
+de coincidir con otro.
+
+**El catálogo es fijo, el contenido es editable.** No hay acción para crear ni borrar un
+sacramento: los seis se siembran en `install.sql` y solo se edita su descripción,
+requisitos, documentos e imagen. Es la misma filosofía que `bloques_contenido`, aplicada
+aquí porque agregar un séptimo sacramento no es algo que vaya a pasar en la práctica.
+
+**El menor de edad se calcula en el servidor**, siempre, a partir de la fecha de
+nacimiento — nunca se confía en lo que el formulario indique. La sección de tutor se
+muestra **siempre** en el formulario público (con la nota "completa esto solo si el
+solicitante es menor"), en vez de mostrarla u ocultarla con JavaScript según la fecha
+capturada: así funciona igual con o sin JavaScript, y el control real de todos modos
+ocurre en el servidor al validar, no en la vista.
+
+**Solo la lectura respeta el flag `dato_sensible`.** El formulario público pide todos los
+campos configurados de un sacramento sin distinción; ese flag únicamente decide qué se
+muestra al ver la solicitud en el panel — es una barrera de visualización para admin y
+secretaría, no una barrera de captura.
+
+**Auditoría de lectura, no solo de escritura.** `SolicitudController::index()` y `::ver()`
+llaman `auditoria('consultar', …)` antes de mostrar nada, incluida la exportación a CSV.
+Verificado: cada apertura de una solicitud deja una fila en `auditoria` con su folio.
+
+**La purga anonimiza, nunca borra.** `SolicitudModel::purgarVencidas()` vacía nombre,
+contacto, tutor y `datos_extra` de las solicitudes ya cerradas (aprobada→completada,
+rechazada, cancelada) más viejas que `configuracion.retencion_meses_solicitudes`, pero
+conserva folio, sacramento, estado y fechas para poder seguir contando cuántos bautizos
+hubo en un año. Verificado con una solicitud cerrada de 40 meses: la purga la anonimizó
+sin tocar una solicitud abierta más reciente.
+
+**Separación de roles, verificada de punta a punta.** `secretaria` administra
+`solicitudes.*` pero no puede tocar el catálogo de sacramentos (`sacramentos.editar`);
+`editor` administra el catálogo pero no ve una sola solicitud. Es el reflejo exacto de
+"quién ve datos personales" contra "quién edita el sitio" que exige
+[`PRIVACIDAD.md`](PRIVACIDAD.md).
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por

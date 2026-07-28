@@ -364,6 +364,98 @@ CREATE TABLE IF NOT EXISTS pastoral_actividades (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- SACRAMENTOS
+-- ------------------------------------------------------------
+
+-- Catálogo. Semillas: bautizo, primera comunión, confirmación, matrimonio,
+-- confesión, unción de enfermos.
+CREATE TABLE IF NOT EXISTS sacramentos (
+    id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug               VARCHAR(60)  NOT NULL,
+    nombre             VARCHAR(80)  NOT NULL,
+    descripcion        MEDIUMTEXT   NULL,
+    requisitos         MEDIUMTEXT   NULL,
+    documentos         MEDIUMTEXT   NULL,
+    aportacion         VARCHAR(80)  NULL,
+    imagen             VARCHAR(255) NULL,
+    acepta_solicitudes TINYINT(1)   NOT NULL DEFAULT 1,
+    requiere_tutor     TINYINT(1)   NOT NULL DEFAULT 0,
+    orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo             TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_sac_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Campos adicionales que pide cada sacramento en su formulario: es lo que
+-- permite agregar "nombre del padrino" a Confirmación sin tocar el esquema.
+-- Los marcados dato_sensible=1 solo se muestran a admin y secretaría.
+CREATE TABLE IF NOT EXISTS sacramento_campos (
+    id            SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    sacramento_id TINYINT UNSIGNED NOT NULL,
+    nombre_campo  VARCHAR(40)  NOT NULL,
+    etiqueta      VARCHAR(120) NOT NULL,
+    tipo          ENUM('texto','textarea','fecha','telefono','email','seleccion','checkbox')
+                               NOT NULL DEFAULT 'texto',
+    opciones      VARCHAR(255) NULL,
+    requerido     TINYINT(1)   NOT NULL DEFAULT 0,
+    dato_sensible TINYINT(1)   NOT NULL DEFAULT 0,
+    orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo        TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_scp (sacramento_id, nombre_campo),
+    CONSTRAINT fk_scp_sacramento FOREIGN KEY (sacramento_id) REFERENCES sacramentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- La tabla más delicada del sistema: datos personales, con frecuencia de
+-- menores. es_menor se calcula en el servidor a partir de fecha_nacimiento,
+-- nunca se confía en lo que mande el formulario. Ver docs/PRIVACIDAD.md
+CREATE TABLE IF NOT EXISTS solicitudes_sacramento (
+    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    folio              VARCHAR(20)  NOT NULL,
+    sacramento_id      TINYINT UNSIGNED NOT NULL,
+    nombre_solicitante VARCHAR(150) NOT NULL,
+    fecha_nacimiento   DATE         NULL,
+    es_menor           TINYINT(1)   NOT NULL DEFAULT 0,
+    telefono           VARCHAR(20)  NULL,
+    email              VARCHAR(150) NULL,
+    direccion          VARCHAR(255) NULL,
+    tutor_nombre       VARCHAR(150) NULL,
+    tutor_parentesco   VARCHAR(60)  NULL,
+    tutor_telefono     VARCHAR(20)  NULL,
+    fecha_preferida    DATE         NULL,
+    notas              TEXT         NULL,
+    datos_extra        JSON         NULL,
+    estado             ENUM('pendiente','en_revision','aprobada','rechazada','cancelada','completada')
+                                    NOT NULL DEFAULT 'pendiente',
+    motivo_estado      VARCHAR(255) NULL,
+    atendida_por       INT UNSIGNED NULL,
+    atendida_at        DATETIME     NULL,
+    consentimiento     TINYINT(1)   NOT NULL DEFAULT 0,
+    consentimiento_ip  VARCHAR(45)  NULL,
+    aviso_version      VARCHAR(20)  NULL,
+    origen             ENUM('web','panel') NOT NULL DEFAULT 'web',
+    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_sol_folio (folio),
+    KEY idx_sol_estado (estado, created_at),
+    KEY idx_sol_sac (sacramento_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Historial de cambios de estado: "¿quién aprobó esto y cuándo?" sin adivinar.
+CREATE TABLE IF NOT EXISTS solicitudes_bitacora (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    solicitud_id    INT UNSIGNED NOT NULL,
+    usuario_id      INT UNSIGNED NULL,
+    estado_anterior VARCHAR(20)  NULL,
+    estado_nuevo    VARCHAR(20)  NOT NULL,
+    comentario      VARCHAR(255) NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_solb_solicitud (solicitud_id),
+    CONSTRAINT fk_solb_solicitud FOREIGN KEY (solicitud_id) REFERENCES solicitudes_sacramento(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SEMILLAS DE CONFIGURACIÓN
 -- ------------------------------------------------------------
 -- INSERT IGNORE: al reimportar sobre una base con datos no se pisan los
@@ -429,6 +521,21 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) V
      'Texto introductorio de la página de cursos, antes del catálogo.', 10),
     ('contacto_intro',     'contacto',    'Contacto',
      'Texto introductorio de la página de contacto, antes del formulario.', 10);
+
+-- ------------------------------------------------------------
+-- SEMILLAS DE SACRAMENTOS
+-- ------------------------------------------------------------
+-- Los seis son universales en la práctica católica; lo que varía por
+-- parroquia son los requisitos y documentos, que quedan en blanco para que
+-- la parroquia los capture desde el panel antes de publicar el sitio.
+
+INSERT IGNORE INTO sacramentos (slug, nombre, acepta_solicitudes, requiere_tutor, orden) VALUES
+    ('bautizo',            'Bautizo',                   1, 1, 10),
+    ('primera-comunion',   'Primera Comunión',           1, 1, 20),
+    ('confirmacion',       'Confirmación',                1, 1, 30),
+    ('matrimonio',         'Matrimonio',                 1, 0, 40),
+    ('confesion',          'Confesión',                  0, 0, 50),
+    ('uncion-enfermos',    'Unción de los Enfermos',     1, 0, 60);
 
 -- ------------------------------------------------------------
 -- AVISO DE PRIVACIDAD (BORRADOR)
