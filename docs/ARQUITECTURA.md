@@ -115,10 +115,30 @@ interno cuando no coinciden, como `quienes-somos` a `nosotros`.
 Dos reglas de uso:
 
 - **Los formularios POST siempre apuntan a la URL canónica con query string**, nunca a la
-  legible. Evita ambigüedades de reescritura y problemas al volver con `redirectBack()`.
+  legible. Se construye con `url_post()`. Evita ambigüedades de reescritura y problemas al
+  volver con `redirectBack()`.
 - **La constante `URLS_AMIGABLES` en `config/app.php` es el interruptor.** Si el hosting
   no coopera con `mod_rewrite`, se pone en `false` y los helpers emiten query strings. Sin
   esa indirección desde el primer día, migrar significaría reescribir cada vista.
+
+Las direcciones se construyen siempre con los helpers de `core/helpers.php`:
+`url_publica()`, `url_admin()`, `url_post()` y `url_activo()` para los assets. Ninguna
+vista escribe una URL a mano; es lo que hace que el interruptor anterior baste.
+
+### `APP_URL` se deduce sola
+
+El sitio vive en `/WebParroquia` durante el desarrollo y en la raíz del dominio en
+producción. Olvidar ese cambio al desplegar rompe todos los enlaces a la vez, así que
+`config/app.php` lo calcula a partir de `dirname($_SERVER['SCRIPT_NAME'])`, que es
+precisamente lo que cambia entre un entorno y otro. Se puede fijar a mano sustituyendo el
+bloque por un `define()` si algún hosting se comportara de forma extraña.
+
+### Para desarrollar sin Apache
+
+`router.php` reproduce las reglas del `.htaccess` para el servidor integrado de PHP
+(`php -S localhost:8080 router.php`), incluido el bloqueo de las carpetas de código y de
+cualquier script dentro de `uploads/`. Así el entorno de desarrollo se comporta como el
+servidor real. En Apache y en cPanel no interviene.
 
 ## Los dos layouts
 
@@ -178,6 +198,12 @@ cubre lo imprevisto sin abrir la puerta a romper lo esencial.
 Las semillas de `bloques_contenido` se reinsertan con `INSERT IGNORE` al arrancar el
 modelo, siguiendo el patrón `ensureTable()` del módulo de empresa en inventario. Así, si
 una versión futura añade una clave nueva, aparece sola sin necesidad de migrar.
+
+**Lectura**: `core/Config.php` carga la tabla `configuracion` una sola vez por petición y
+la deja en memoria. El pie del sitio necesita el teléfono, la dirección y las redes en
+cada página, y no tiene sentido consultarlos varias veces. Si la base de datos aún no
+está lista, devuelve valores vacíos en lugar de romper la página. La edición de esos
+valores vive en el módulo de administración `configuracion`; `Config` solo los lee.
 
 ## Editor de texto y sanitizado
 

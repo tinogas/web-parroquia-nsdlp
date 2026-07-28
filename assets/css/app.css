@@ -1,0 +1,144 @@
+/* ============================================================
+   Panel de administración
+   ============================================================ */
+
+:root {
+    --sidebar-ancho:  240px;
+    --navbar-alto:    56px;
+    --color-primario: #1e4d8b;
+    --color-dorado:   #c9a227;
+    --color-oscuro:   #16233a;
+}
+
+body {
+    background: #f4f6f9;
+}
+
+/* ---- Barra lateral ---- */
+
+.sidebar {
+    position: fixed;
+    top: var(--navbar-alto);
+    left: 0;
+    width: var(--sidebar-ancho);
+    height: calc(100vh - var(--navbar-alto));
+    background: var(--color-oscuro);
+    overflow-y: auto;
+    transition: transform .2s ease;
+    z-index: 1030;
+}
+
+.sidebar.oculto {
+    transform: translateX(-100%);
+}
+
+.sidebar-nav {
+    padding: .75rem 0;
+}
+
+.sidebar-section {
+    padding: .5rem 1rem .25rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .38);
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .55rem 1rem;
+    color: rgba(255, 255, 255, .78);
+    text-decoration: none;
+    font-size: .925rem;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.sidebar-link.active {
+    background: rgba(255, 255, 255, .09);
+    border-left-color: var(--color-dorado);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sidebar-link i {
+    width: 1.15rem;
+    text-align: center;
+}
+
+/* ---- Contenido ---- */
+
+.main-content {
+    margin-top: var(--navbar-alto);
+    margin-left: var(--sidebar-ancho);
+    padding: 1.5rem;
+    transition: margin-left .2s ease;
+}
+
+.main-content.ancho {
+    margin-left: 0;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar       { transform: translateX(-100%); }
+    .sidebar.visible { transform: translateX(0); }
+    .main-content  { margin-left: 0; padding: 1rem; }
+}
+
+/* ---- Pantalla de acceso ---- */
+
+.pantalla-acceso {
+    background: linear-gradient(160deg, var(--color-oscuro) 0%, var(--color-primario) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.caja-acceso {
+    width: 100%;
+    max-width: 420px;
+}
+
+.icono-acceso {
+    font-size: 2.75rem;
+    line-height: 1;
+    color: var(--color-dorado);
+}
+
+/* ---- Detalles ---- */
+
+.btn-primary {
+    --bs-btn-bg: var(--color-primario);
+    --bs-btn-border-color: var(--color-primario);
+    --bs-btn-hover-bg: #18406f;
+    --bs-btn-hover-border-color: #18406f;
+    --bs-btn-active-bg: #143559;
+    --bs-btn-active-border-color: #143559;
+}
+
+.lista-etapas {
+    padding-left: 1.15rem;
+    color: #6c757d;
+}
+
+.lista-etapas li {
+    margin-bottom: .3rem;
+}
+
+.lista-etapas li.hecha {
+    color: #198754;
+    font-weight: 600;
+}
+
+.lista-etapas li.hecha::marker {
+    content: '✓ ';
+}

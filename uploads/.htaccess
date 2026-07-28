@@ -1,0 +1,26 @@
+# ============================================================
+# uploads/ — Aquí solo hay archivos subidos desde el panel.
+#
+# Nada de lo que vive en esta carpeta debe ejecutarse jamás. Es la mitigación
+# crítica del riesgo de subida maliciosa: aunque alguien lograra colocar un
+# .php aquí, Apache lo servirá como texto o lo negará, nunca lo interpretará.
+# ============================================================
+
+Options -Indexes -ExecCGI
+
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+# Por si el módulo de PHP se llama de otro modo en el servidor
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+RemoveType    .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+AddType text/plain .php .phtml .phar
+
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|phar|cgi|pl|py|sh|htaccess)$">
+    Require all denied
+</FilesMatch>

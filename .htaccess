@@ -1,0 +1,81 @@
+# ============================================================
+# Parroquia Nuestra Señora de la Paz — Configuración Apache
+# ============================================================
+#
+# AL DESPLEGAR EN CPANEL: cambiar RewriteBase a /
+# Ver docs/DESPLIEGUE.md
+
+Options -Indexes
+Options -ExecCGI
+
+DirectoryIndex index.php
+
+RewriteEngine On
+RewriteBase /WebParroquia/
+
+# ---- Carpetas de código: nunca accesibles por HTTP ----
+RewriteRule ^(config|core|modules|shared|docs)/ - [F,L]
+
+# ---- Lo que existe en disco se sirve tal cual (assets, uploads) ----
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# ---- Panel de administración ----
+RewriteRule ^admin/?$                        index.php?area=admin&modulo=panel [QSA,L]
+RewriteRule ^admin/([a-z_]+)/?$              index.php?area=admin&modulo=$1 [QSA,L]
+RewriteRule ^admin/([a-z_]+)/([a-z_]+)/?$    index.php?area=admin&modulo=$1&accion=$2 [QSA,L]
+
+# ---- Mapa del sitio ----
+RewriteRule ^sitemap\.xml$                   index.php?area=publico&modulo=sitemap [L]
+
+# ---- Sitio público: módulo / slug / acción ----
+RewriteRule ^([a-z0-9-]+)/?$                             index.php?area=publico&modulo=$1 [QSA,L]
+RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/?$                index.php?area=publico&modulo=$1&slug=$2 [QSA,L]
+RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/([a-z0-9-]+)/?$   index.php?area=publico&modulo=$1&slug=$2&accion=$3 [QSA,L]
+
+# ---- Cabeceras de seguridad ----
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+    # Content-Security-Policy: la defensa de fondo contra XSS almacenado es el
+    # sanitizado con lista blanca al guardar (core/SanitizadorHtml.php). Esta
+    # cabecera añade una segunda barrera impidiendo cargar scripts de dominios
+    # ajenos. Se admite 'unsafe-inline' porque las vistas usan atributos style
+    # y algún script embebido; aun así, un <script src="…"> inyectado no se
+    # ejecutaría.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+</IfModule>
+
+# ---- PHP: ocultar versión y errores en producción ----
+<IfModule mod_php8.c>
+    php_flag display_errors off
+    php_flag expose_php off
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+    php_value session.cookie_samesite Strict
+</IfModule>
+
+# ---- Archivos que no deben servirse nunca ----
+<FilesMatch "\.(sql|log|env|md|json|lock|sh|bak|ini)$">
+    Require all denied
+</FilesMatch>
+
+# ---- Caché de recursos estáticos ----
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css               "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png              "access plus 6 months"
+    ExpiresByType image/jpeg             "access plus 6 months"
+    ExpiresByType image/webp             "access plus 6 months"
+    ExpiresByType image/svg+xml          "access plus 6 months"
+</IfModule>
+
+# ---- Compresión ----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

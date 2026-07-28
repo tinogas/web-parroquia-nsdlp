@@ -20,16 +20,17 @@ Si el hosting resulta más generoso, mejor. Nada de lo construido lo impide.
 
 | Aspecto | XAMPP local | cPanel |
 |---|---|---|
-| `APP_URL` | `/WebParroquia` | `''` (raíz del dominio) |
-| `APP_DEBUG` | `true` | **`false`** |
+| `APP_URL` | `/WebParroquia` | `''` (raíz del dominio) — **se deduce sola** |
+| `APP_DEBUG` | `true` | **`false`** ← hay que cambiarlo a mano |
 | Raíz web | `htdocs/WebParroquia/` | `public_html/` |
 | HTTPS | No | Obligatorio, forzado |
-| `RewriteBase` | `/WebParroquia/` | `/` |
+| `RewriteBase` | `/WebParroquia/` | `/` ← hay que cambiarlo a mano |
 
-La constante `APP_URL` es la razón por la que ninguna ruta se escribe a mano en el código:
-todas salen de los helpers `url_publica()` y `url_admin()`. Antes de desplegar conviene
-probar el sitio **en una subcarpeta y en la raíz de un vhost**, porque es donde aparecen
-las rutas olvidadas.
+`APP_URL` se calcula a partir de la ubicación de `index.php`, así que el cambio de
+subcarpeta a raíz de dominio no requiere editar nada. Ninguna ruta se escribe a mano en
+el código: todas salen de los helpers `url_publica()`, `url_admin()`, `url_post()` y
+`url_activo()`. Aun así conviene probar el sitio **en una subcarpeta y en la raíz de un
+vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 
 ## Pasos previstos
 
@@ -48,8 +49,8 @@ las rutas olvidadas.
 
 5. **Crear `config/database.php`** a partir del ejemplo, con las credenciales reales.
 
-6. **Ajustar `config/app.php`**: `APP_URL` a cadena vacía, `APP_DEBUG` a `false`,
-   `URLS_AMIGABLES` según si `mod_rewrite` responde.
+6. **Ajustar `config/app.php`**: `APP_DEBUG` a `false`, y `URLS_AMIGABLES` según si
+   `mod_rewrite` responde. `APP_URL` no se toca: se deduce sola.
 
 7. **Ajustar `RewriteBase`** en `.htaccess` a `/`.
 
