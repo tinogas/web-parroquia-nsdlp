@@ -174,6 +174,59 @@
     color: rgba(255, 255, 255, .6);
 }
 
+/* ---- Páginas de contenido ---- */
+
+.titulo-pagina {
+    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+    font-weight: 700;
+    color: var(--azul-oscuro);
+}
+
+.contenido-editorial {
+    line-height: 1.75;
+}
+
+.contenido-editorial > :first-child { margin-top: 0; }
+.contenido-editorial > :last-child  { margin-bottom: 0; }
+
+.contenido-editorial h2 { font-size: 1.4rem;  margin-top: 2rem; }
+.contenido-editorial h3 { font-size: 1.15rem; margin-top: 1.5rem; }
+
+.contenido-editorial blockquote {
+    border-left: 3px solid var(--dorado);
+    padding-left: 1rem;
+    margin: 1.25rem 0;
+    color: #6c757d;
+}
+
+.contenido-editorial a {
+    color: var(--azul);
+}
+
+.marco-mapa {
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: .5rem;
+    overflow: hidden;
+}
+
+/* ---- Formulario de contacto ---- */
+
+.campo-senuelo {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.bloque-consentimiento {
+    background: rgba(30, 77, 139, .04);
+    border: 1px solid rgba(30, 77, 139, .12);
+    border-radius: .5rem;
+    padding: 1rem 1.1rem;
+}
+
 /* ---- Accesibilidad ---- */
 
 a:focus-visible,

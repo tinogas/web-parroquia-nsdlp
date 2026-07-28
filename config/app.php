@@ -86,14 +86,15 @@ define('PERMISOS', [
     ROL_EDITOR => [
         'panel.ver',
         'bloques.ver', 'bloques.editar',
+        'paginas.ver', 'paginas.editar',
         // El editor no toca la configuración global: los datos de contacto, el
         // logo y las claves legales son responsabilidad del administrador.
+        // El editor tampoco ve los mensajes de contacto: son datos personales
+        // de quien escribe, y esa lectura queda para administración y secretaría.
         // 'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.eliminar', 'avisos.publicar',
         // 'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'eventos.publicar',
         // 'galeria.ver', 'galeria.crear', 'galeria.eliminar', 'galeria.publicar',
         // 'carrusel.ver', 'carrusel.editar',
-        // 'paginas.ver', 'paginas.editar', 'paginas.publicar',
-        // 'bloques.ver', 'bloques.editar',
         // 'horarios.ver', 'horarios.editar',
         // 'personas.ver', 'personas.editar',
         // 'organigrama.ver', 'organigrama.editar',
@@ -117,9 +118,9 @@ define('PERMISOS', [
     // Único rol, junto con el administrador, que ve datos personales.
     ROL_SECRETARIA => [
         'panel.ver',
+        'mensajes.ver', 'mensajes.editar',
         // 'solicitudes.ver', 'solicitudes.editar', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
         // 'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
-        // 'mensajes.ver', 'mensajes.editar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],
 ]);

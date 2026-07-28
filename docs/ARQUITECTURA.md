@@ -406,6 +406,53 @@ cuatro medidas:
 3. Límite por IP en la tabla `intentos_formulario`: cinco envíos por formulario y hora.
 4. El token CSRF, que ya es obligatorio en todo POST.
 
+## Páginas libres y el aviso de privacidad
+
+`paginas` es el tercer mecanismo de contenido editable (§ arriba): a diferencia de
+`bloques_contenido`, aquí el panel **sí puede crear y borrar**. Sirve para lo que no cabe
+en las secciones fijas, y es donde vive el aviso de privacidad.
+
+Una sola excepción: los slugs listados en `PaginaModel::PROTEGIDAS` (hoy, solo
+`aviso-de-privacidad`) no se pueden borrar desde el panel, y su slug no cambia aunque se
+envíe otro en el formulario. El sitio depende de que esa dirección exista siempre; sin
+esta protección, cualquiera con permiso de editar páginas podría dejar el enlace del pie
+apuntando a una página inexistente.
+
+El aviso de privacidad se instala **sin publicar**, con contenido de referencia entre
+corchetes (`[DOMICILIO COMPLETO]`, `[CORREO DE CONTACTO]`…) que la parroquia debe
+completar. Publicar un aviso legal a medio llenar es peor que no tener aviso: por eso el
+pie del sitio solo enlaza a la página cuando `pagina_publicada('aviso-de-privacidad')`
+devuelve `true`, y esa comprobación vive en `core/helpers.php` —no en `PaginaModel`—
+porque el pie se dibuja en todas las páginas públicas, y cargar un modelo de módulo desde
+el arranque global rompería la regla de que los módulos solo se cargan cuando su ruta se
+despacha.
+
+## El formulario de contacto y su antispam
+
+`ContactoPublicoController` es el primer controlador público con `$requiereSesion = true`:
+la página necesita CSRF —porque tiene un formulario— y CSRF necesita sesión. Es la
+excepción documentada a la sesión perezosa.
+
+Flujo de `enviar()`:
+
+1. CSRF (`validarCsrf()`), como cualquier POST del sitio.
+2. `AntiSpam::validar('contacto')`. Si el campo señuelo llegó lleno, o el envío tardó
+   menos de 4 segundos, **no lanza excepción**: devuelve `false`, y el controlador
+   responde con el mismo mensaje de éxito de siempre, sin insertar nada. No hay forma de
+   que un script automatizado distinga "se guardó" de "se descartó".
+3. Solo si `validar()` lanza `RuntimeException` —firma manipulada o formulario abierto más
+   de dos horas— se muestra un error real: eso sí puede pasarle a una persona real que
+   dejó la pestaña abierta.
+4. Validación de campos: nombre, mensaje, al menos un correo o teléfono, formato de
+   correo si se dio, y la casilla de consentimiento. **Los errores no redirigen**: se
+   re-renderiza la misma página con los valores ya escritos, igual que el formulario de
+   acceso. Solo el envío exitoso hace `redirect` (patrón *Post/Redirect/Get*, para que
+   recargar la página no reenvíe el mensaje).
+
+Verificado con seis casos: señuelo relleno, envío inmediato, validación sin datos, correo
+mal formado, firma de tiempo manipulada y un envío legítimo — cada uno se comportó como se
+describe arriba.
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por

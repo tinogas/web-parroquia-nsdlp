@@ -16,7 +16,10 @@ class Router
     private static ?string $areaResuelta = null;
 
     private static array $rutasPublicas = [
-        'inicio' => ['clase' => 'InicioController', 'archivo' => 'modules/inicio/InicioController.php'],
+        'inicio'   => ['clase' => 'InicioController',           'archivo' => 'modules/inicio/InicioController.php'],
+        'nosotros' => ['clase' => 'NosotrosController',         'archivo' => 'modules/nosotros/NosotrosController.php'],
+        'contacto' => ['clase' => 'ContactoPublicoController',  'archivo' => 'modules/contacto/ContactoPublicoController.php'],
+        'pagina'   => ['clase' => 'PaginaPublicoController',    'archivo' => 'modules/paginas/PaginaPublicoController.php'],
     ];
 
     private static array $rutasAdmin = [
@@ -24,6 +27,8 @@ class Router
         'panel'         => ['clase' => 'PanelController',         'archivo' => 'modules/panel/PanelController.php'],
         'configuracion' => ['clase' => 'ConfiguracionController', 'archivo' => 'modules/configuracion/ConfiguracionController.php'],
         'bloques'       => ['clase' => 'BloqueController',        'archivo' => 'modules/bloques/BloqueController.php'],
+        'paginas'       => ['clase' => 'PaginaController',        'archivo' => 'modules/paginas/PaginaController.php'],
+        'mensajes'      => ['clase' => 'MensajeController',       'archivo' => 'modules/contacto/MensajeController.php'],
     ];
 
     /**

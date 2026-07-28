@@ -84,7 +84,7 @@ $redes = array_filter([
         <div class="container py-3 d-flex flex-wrap justify-content-between align-items-center gap-2 small">
             <span>&copy; <?= date('Y') ?> <?= e(Config::get('parroquia_nombre', APP_NAME)) ?></span>
             <span class="d-flex gap-3">
-                <?php if (Router::existeRutaPublica('pagina')): ?>
+                <?php if (Router::existeRutaPublica('pagina') && pagina_publicada('aviso-de-privacidad')): ?>
                 <a href="<?= e(url_publica('pagina', ['slug' => 'aviso-de-privacidad'])) ?>">Aviso de privacidad</a>
                 <?php endif; ?>
                 <a href="<?= e(url_admin('auth', 'login')) ?>">Acceso</a>

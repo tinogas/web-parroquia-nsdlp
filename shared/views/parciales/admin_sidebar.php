@@ -18,10 +18,17 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-speedometer2"></i> Panel
         </a>
 
-        <?php if (Auth::tienePermiso('bloques.ver')): ?>
+        <?php if (Auth::tienePermiso('bloques.ver') || Auth::tienePermiso('paginas.ver')): ?>
         <div class="sidebar-section mt-2">Contenido</div>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('bloques.ver')): ?>
         <a href="<?= e(url_admin('bloques')) ?>" class="sidebar-link <?= $activo('bloques') ?>">
             <i class="bi bi-file-richtext"></i> Textos del sitio
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('paginas.ver')): ?>
+        <a href="<?= e(url_admin('paginas')) ?>" class="sidebar-link <?= $activo('paginas') ?>">
+            <i class="bi bi-file-earmark-text"></i> Páginas
         </a>
         <?php endif; ?>
 
@@ -38,8 +45,14 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <div class="sidebar-section mt-2">Trámites</div>
         <a href="<?= e(url_admin('solicitudes')) ?>"   class="sidebar-link <?= $activo('solicitudes') ?>"><i class="bi bi-file-earmark-text"></i> Solicitudes</a>
         <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>"><i class="bi bi-pencil-square"></i> Inscripciones</a>
-        <a href="<?= e(url_admin('mensajes')) ?>"      class="sidebar-link <?= $activo('mensajes') ?>"><i class="bi bi-envelope"></i> Mensajes</a>
         */ ?>
+
+        <?php if (Auth::tienePermiso('mensajes.ver')): ?>
+        <div class="sidebar-section mt-2">Comunicación</div>
+        <a href="<?= e(url_admin('mensajes')) ?>" class="sidebar-link <?= $activo('mensajes') ?>">
+            <i class="bi bi-envelope"></i> Mensajes
+        </a>
+        <?php endif; ?>
 
         <?php if (Auth::tienePermiso('configuracion.ver')): ?>
         <div class="sidebar-section mt-2">Administración</div>

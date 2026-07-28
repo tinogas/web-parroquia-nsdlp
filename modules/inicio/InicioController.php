@@ -1,21 +1,22 @@
 <?php
 require_once BASE_PATH . '/core/ControllerPublico.php';
+require_once BASE_PATH . '/modules/bloques/BloqueModel.php';
 
 class InicioController extends ControllerPublico
 {
     public function index(): void
     {
-        // La portada definitiva se arma en la etapa 3, con el saludo del
-        // párroco, los horarios destacados, los próximos eventos y los últimos
-        // avisos. Por ahora solo confirma que el área pública responde sin
-        // pedir sesión.
+        // Horarios destacados, próximos eventos y últimos avisos se agregan en
+        // las etapas 4 y 5, cuando esos módulos existan.
         $this->render('inicio/publico/index', [
             'metaTitulo'      => '',
             'metaDescripcion' => Config::get(
                 'meta_descripcion',
                 'Horarios de misas, sacramentos, pastorales y avisos de la Parroquia Nuestra Señora de la Paz.'
             ),
-            'hero' => $this->hero(),
+            'urlCanonica' => url_publica('inicio'),
+            'hero'        => $this->hero(),
+            'bloques'     => (new BloqueModel())->porZona('inicio'),
         ]);
     }
 

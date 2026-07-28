@@ -226,4 +226,32 @@ if (!function_exists('e')) {
     {
         return !empty($imagen) ? url_activo($imagen) : placeholder_rect($leyenda, $w, $h);
     }
+
+    // ── Páginas libres ──────────────────────────────────────────────────
+
+    /**
+     * ¿Está publicada esta página? La usa el pie del sitio para no enlazar al
+     * aviso de privacidad mientras siga siendo un borrador. Vive aquí y no en
+     * PaginaModel porque el pie se dibuja en TODAS las páginas públicas, y
+     * cargar un modelo de módulo desde el arranque global rompería la regla de
+     * que los módulos solo se cargan cuando su ruta se despacha.
+     */
+    function pagina_publicada(string $slug): bool
+    {
+        static $cache = [];
+
+        if (!array_key_exists($slug, $cache)) {
+            try {
+                $stmt = Database::getInstance()->prepare(
+                    'SELECT COUNT(*) FROM paginas WHERE slug = :slug AND publicada = 1'
+                );
+                $stmt->execute([':slug' => $slug]);
+                $cache[$slug] = (int) $stmt->fetchColumn() > 0;
+            } catch (PDOException $e) {
+                $cache[$slug] = false;
+            }
+        }
+
+        return $cache[$slug];
+    }
 }

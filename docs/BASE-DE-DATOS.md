@@ -100,7 +100,13 @@ las vistas esperan encontrar. Las semillas usan `INSERT IGNORE`, así que reimpo
 
 Páginas libres con slug propio, para lo que no cabe en las secciones fijas. Aquí vive el
 aviso de privacidad. `slug` VARCHAR(120) con `uq_pag_slug`, `titulo`, `contenido`
-MEDIUMTEXT, `meta_descripcion` VARCHAR(200), `en_menu`, `orden`, `publicada`.
+MEDIUMTEXT, `meta_descripcion` VARCHAR(200), `en_menu`, `orden`, `publicada`,
+`actualizado_por`, `updated_at`.
+
+El slug `aviso-de-privacidad` está protegido en código (`PaginaModel::PROTEGIDAS`): no se
+borra desde el panel y su slug no cambia aunque se envíe otro. Se instala con
+`publicada = 0`: es contenido de referencia con datos entre corchetes que la parroquia
+debe completar antes de publicarlo.
 
 ### `carrusel`
 

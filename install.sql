@@ -98,6 +98,60 @@ CREATE TABLE IF NOT EXISTS bloques_contenido (
     KEY idx_blq_zona (zona, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Páginas libres con dirección propia. Aquí vive el aviso de privacidad.
+CREATE TABLE IF NOT EXISTS paginas (
+    id               SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug             VARCHAR(120)      NOT NULL,
+    titulo           VARCHAR(160)      NOT NULL,
+    contenido        MEDIUMTEXT        NULL,
+    meta_descripcion VARCHAR(200)      NULL,
+    en_menu          TINYINT(1)        NOT NULL DEFAULT 0,
+    orden            SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    publicada        TINYINT(1)        NOT NULL DEFAULT 0,
+    actualizado_por  INT UNSIGNED      NULL,
+    created_at       DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME          NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_pag_slug (slug),
+    KEY idx_pag_menu (en_menu, orden)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- COMUNICACIÓN
+-- ------------------------------------------------------------
+
+-- Mensajes del formulario de contacto. Contienen datos personales de quien
+-- escribe, así que guardan la constancia de consentimiento. Ver docs/PRIVACIDAD.md
+CREATE TABLE IF NOT EXISTS mensajes_contacto (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre         VARCHAR(140) NOT NULL,
+    email          VARCHAR(150) NULL,
+    telefono       VARCHAR(20)  NULL,
+    asunto         VARCHAR(160) NULL,
+    mensaje        TEXT         NOT NULL,
+    ip             VARCHAR(45)  NULL,
+    leido          TINYINT(1)   NOT NULL DEFAULT 0,
+    respondido     TINYINT(1)   NOT NULL DEFAULT 0,
+    nota_interna   VARCHAR(255) NULL,
+    atendido_por   INT UNSIGNED NULL,
+    consentimiento TINYINT(1)   NOT NULL DEFAULT 0,
+    aviso_version  VARCHAR(20)  NULL,
+    created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_msg_leido (leido, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Control de frecuencia de los formularios públicos. Es la única tabla que se
+-- borra de verdad: solo sirve para contar los envíos de la última hora.
+CREATE TABLE IF NOT EXISTS intentos_formulario (
+    id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    ip         VARCHAR(45)  NOT NULL,
+    formulario VARCHAR(40)  NOT NULL,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_int_ip (ip, formulario, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- SEMILLAS DE CONFIGURACIÓN
 -- ------------------------------------------------------------
@@ -164,5 +218,48 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) V
      'Texto introductorio de la página de cursos, antes del catálogo.', 10),
     ('contacto_intro',     'contacto',    'Contacto',
      'Texto introductorio de la página de contacto, antes del formulario.', 10);
+
+-- ------------------------------------------------------------
+-- AVISO DE PRIVACIDAD (BORRADOR)
+-- ------------------------------------------------------------
+-- Se instala SIN PUBLICAR a propósito. Es una base redactada conforme a la
+-- LFPDPPP, pero tiene datos por completar y debe revisarla la parroquia antes
+-- de que el sitio salga al público. Un aviso legal incompleto y publicado es
+-- peor que no tenerlo. Ver docs/PRIVACIDAD.md
+
+INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada, orden) VALUES
+('aviso-de-privacidad', 'Aviso de Privacidad',
+'<blockquote><strong>Borrador pendiente de revision.</strong> Este texto es una base conforme a la Ley Federal de Proteccion de Datos Personales en Posesion de los Particulares. Antes de publicar el sitio hay que completar los datos entre corchetes y revisarlo con la parroquia.</blockquote>
+<h2>Responsable del tratamiento</h2>
+<p>La [DENOMINACION LEGAL DE LA ASOCIACION RELIGIOSA], con domicilio en [DOMICILIO COMPLETO], es responsable del uso y proteccion de sus datos personales.</p>
+<h2>Datos que recabamos</h2>
+<p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, domicilio, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
+<p>No solicitamos datos patrimoniales ni datos personales sensibles.</p>
+<h2>Para que usamos sus datos</h2>
+<p>Finalidades necesarias para el tramite solicitado:</p>
+<ul>
+<li>Atender y dar seguimiento a solicitudes de sacramentos.</li>
+<li>Registrar inscripciones a cursos y catequesis.</li>
+<li>Responder los mensajes que nos envia por el formulario de contacto.</li>
+<li>Integrar los registros sacramentales que la parroquia debe conservar.</li>
+</ul>
+<p>Finalidades adicionales, que no son necesarias y a las que puede oponerse:</p>
+<ul>
+<li>Informarle de actividades, celebraciones y avisos de la comunidad parroquial.</li>
+</ul>
+<h2>Datos de menores de edad</h2>
+<p>Cuando el solicitante es menor de edad, el padre, la madre o el tutor debe otorgar el consentimiento y proporcionar sus propios datos de contacto. No publicamos nombres ni fotografias de menores en este sitio sin autorizacion expresa por escrito.</p>
+<h2>Transferencias</h2>
+<p>No transferimos sus datos a terceros, salvo a la [DIOCESIS O ARQUIDIOCESIS] cuando la normativa eclesiastica lo requiera para el registro del sacramento, y a las autoridades competentes cuando exista una obligacion legal.</p>
+<h2>Como ejercer sus derechos</h2>
+<p>Usted puede acceder a sus datos, rectificarlos si son inexactos, cancelarlos u oponerse a su uso. Tambien puede revocar el consentimiento que nos otorgo.</p>
+<p>Para ello, escriba a <strong>[CORREO DE CONTACTO]</strong> o acuda a la oficina parroquial en el domicilio senalado, durante el horario de atencion. Le pediremos identificarse y describir con claridad que dato desea corregir o eliminar. Responderemos en un plazo maximo de veinte dias habiles.</p>
+<h2>Conservacion de los datos</h2>
+<p>Los datos de solicitudes e inscripciones ya atendidas se conservan el tiempo indicado en la configuracion del sitio, y despues se anonimizan: se conservan solo las cifras, sin los datos que identifican a la persona. Los registros sacramentales se conservan de forma permanente por obligacion eclesiastica.</p>
+<h2>Cambios a este aviso</h2>
+<p>Cualquier modificacion se publicara en esta misma pagina. Cada solicitud que recibimos queda asociada a la version del aviso que estaba vigente al momento de enviarla.</p>
+<p><em>Ultima actualizacion: [FECHA].</em></p>',
+'Aviso de privacidad de la parroquia: que datos recabamos, para que los usamos y como ejercer sus derechos.',
+0, 100);
 
 SET foreign_key_checks = 1;
