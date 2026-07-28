@@ -101,7 +101,7 @@ define('PERMISOS', [
         'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
-        // 'cursos.ver', 'cursos.editar', 'cursos.publicar',
+        'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
 
     // Sin los permisos *.publicar a propósito: lo que escribe un coordinador
@@ -115,7 +115,7 @@ define('PERMISOS', [
         'galeria.ver', 'galeria.crear', 'galeria.eliminar',
         'pastorales.ver', 'pastorales.editar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
-        // 'cursos.ver',
+        'cursos.ver',
     ],
 
     // Único rol, junto con el administrador, que ve datos personales.
@@ -123,7 +123,7 @@ define('PERMISOS', [
         'panel.ver',
         'mensajes.ver', 'mensajes.editar',
         'solicitudes.ver', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
-        // 'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
+        'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],
 ]);

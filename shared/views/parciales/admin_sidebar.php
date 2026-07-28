@@ -61,16 +61,25 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-droplet"></i> Sacramentos
         </a>
         <?php endif; ?>
+        <?php if (Auth::tienePermiso('cursos.ver')): ?>
+        <a href="<?= e(url_admin('cursos')) ?>" class="sidebar-link <?= $activo('cursos') ?>">
+            <i class="bi bi-mortarboard"></i> Cursos
+        </a>
+        <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('solicitudes.ver')): ?>
+        <?php if (Auth::tienePermiso('solicitudes.ver') || Auth::tienePermiso('inscripciones.ver')): ?>
         <div class="sidebar-section mt-2">Trámites</div>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('solicitudes.ver')): ?>
         <a href="<?= e(url_admin('solicitudes')) ?>" class="sidebar-link <?= $activo('solicitudes') ?>">
             <i class="bi bi-file-earmark-text"></i> Solicitudes
         </a>
         <?php endif; ?>
-        <?php /*
-        <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>"><i class="bi bi-pencil-square"></i> Inscripciones</a>
-        */ ?>
+        <?php if (Auth::tienePermiso('inscripciones.ver')): ?>
+        <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>">
+            <i class="bi bi-pencil-square"></i> Inscripciones
+        </a>
+        <?php endif; ?>
 
         <?php if (Auth::tienePermiso('avisos.ver') || Auth::tienePermiso('eventos.ver')
                 || Auth::tienePermiso('galeria.ver') || Auth::tienePermiso('carrusel.ver')

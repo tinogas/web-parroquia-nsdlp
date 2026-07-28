@@ -456,6 +456,87 @@ CREATE TABLE IF NOT EXISTS solicitudes_bitacora (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- CURSOS
+-- ------------------------------------------------------------
+-- A diferencia de avisos/eventos/galería, aquí pastoral_id es solo una
+-- etiqueta organizativa: el rol coordinador no administra cursos (no tiene
+-- cursos.crear ni cursos.editar), así que no hace falta el mismo alcance por
+-- pastoral ni su validación en el servidor.
+
+CREATE TABLE IF NOT EXISTS cursos (
+    id                       SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug                     VARCHAR(120) NOT NULL,
+    titulo                   VARCHAR(160) NOT NULL,
+    descripcion              MEDIUMTEXT   NULL,
+    objetivos                TEXT         NULL,
+    dirigido_a               VARCHAR(160) NULL,
+    imagen                   VARCHAR(255) NULL,
+    modalidad                ENUM('presencial','en_linea','mixta') NOT NULL DEFAULT 'presencial',
+    instructor_id            SMALLINT UNSIGNED NULL,
+    pastoral_id              TINYINT UNSIGNED  NULL,
+    cupo                     SMALLINT UNSIGNED NULL,
+    aportacion               VARCHAR(60)  NULL,
+    fecha_inicio             DATE         NULL,
+    fecha_fin                DATE         NULL,
+    horario                  VARCHAR(120) NULL,
+    lugar                    VARCHAR(160) NULL,
+    inscripciones_abiertas   TINYINT(1)   NOT NULL DEFAULT 1,
+    fecha_cierre_inscripcion DATE         NULL,
+    requiere_tutor           TINYINT(1)   NOT NULL DEFAULT 0,
+    publicado                TINYINT(1)   NOT NULL DEFAULT 0,
+    orden                    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_cur_slug (slug),
+    KEY idx_cur_pub (publicado, fecha_inicio),
+    CONSTRAINT fk_cur_instructor FOREIGN KEY (instructor_id) REFERENCES personas(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_cur_pastoral   FOREIGN KEY (pastoral_id)   REFERENCES pastorales(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Temario. Hoy es contenido público informativo; en fase 2 es el ancla del
+-- aula virtual (curso_materiales, curso_tareas, curso_entregas,
+-- curso_calificaciones colgarán de aquí sin tocar nada existente).
+CREATE TABLE IF NOT EXISTS curso_sesiones (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    curso_id    SMALLINT UNSIGNED NOT NULL,
+    numero      SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    titulo      VARCHAR(160) NOT NULL,
+    descripcion TEXT         NULL,
+    fecha       DATE         NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_cus_curso (curso_id),
+    CONSTRAINT fk_cus_curso FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- uq_ins_curso_email evita que la misma persona se inscriba dos veces al
+-- mismo curso.
+CREATE TABLE IF NOT EXISTS inscripciones_curso (
+    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    folio            VARCHAR(20)  NOT NULL,
+    curso_id         SMALLINT UNSIGNED NOT NULL,
+    nombre           VARCHAR(150) NOT NULL,
+    fecha_nacimiento DATE         NULL,
+    es_menor         TINYINT(1)   NOT NULL DEFAULT 0,
+    telefono         VARCHAR(20)  NULL,
+    email            VARCHAR(150) NULL,
+    tutor_nombre     VARCHAR(150) NULL,
+    tutor_parentesco VARCHAR(60)  NULL,
+    tutor_telefono   VARCHAR(20)  NULL,
+    estado           ENUM('pendiente','confirmada','lista_espera','cancelada') NOT NULL DEFAULT 'pendiente',
+    consentimiento   TINYINT(1)   NOT NULL DEFAULT 0,
+    consentimiento_ip VARCHAR(45) NULL,
+    aviso_version    VARCHAR(20)  NULL,
+    notas            TEXT         NULL,
+    created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_ins_folio (folio),
+    UNIQUE KEY uq_ins_curso_email (curso_id, email),
+    KEY idx_ins_estado (estado),
+    CONSTRAINT fk_ins_curso FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SEMILLAS DE CONFIGURACIÓN
 -- ------------------------------------------------------------
 -- INSERT IGNORE: al reimportar sobre una base con datos no se pisan los

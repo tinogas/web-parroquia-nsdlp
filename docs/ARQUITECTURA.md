@@ -589,6 +589,45 @@ sin tocar una solicitud abierta más reciente.
 "quién ve datos personales" contra "quién edita el sitio" que exige
 [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
+## Cursos e inscripciones
+
+El catálogo de cursos y capacitaciones es la primera piedra del LMS de fase 2 (tareas,
+entregas y calificaciones quedan fuera de esta fase), pero ya resuelve el problema
+inmediato: publicar cursos con temario y recibir inscripciones con control de cupo.
+
+**El correo es obligatorio aquí, a diferencia de otros formularios públicos.** En
+contacto y en solicitudes de sacramento basta teléfono o correo; en la inscripción a un
+curso el correo es la clave que evita una doble inscripción accidental
+(`uq_ins_curso_email` es único por `curso_id` + `email`, y `InscripcionCursoModel::yaInscrito()`
+lo comprueba antes de insertar). Verificado: el mismo correo intentando inscribirse dos
+veces al mismo curso recibe el mensaje de rechazo explicando por qué el campo es
+obligatorio.
+
+**Cupo y lista de espera se deciden dentro de una transacción.** `InscripcionCursoModel::crear()`
+cuenta las inscripciones activas (`pendiente` + `confirmada`, no `lista_espera` ni
+`cancelada`) y decide el estado inicial del registro nuevo, todo dentro de un
+`beginTransaction()`/`commit()` con `rollback()` en caso de error. Sin la transacción, dos
+inscripciones casi simultáneas al último lugar disponible podrían leer el mismo conteo y
+ambas entrar como `pendiente`, rebasando el cupo. Verificado con cupo=1: la primera
+inscripción quedó `pendiente` y la segunda, `lista_espera`.
+
+**`pastoral_id` en `cursos` es solo organizativo, sin scope de coordinador.** A diferencia
+de avisos, eventos y galería, el rol `coordinador` tiene únicamente `cursos.ver` — nunca
+`cursos.crear` ni `cursos.editar` — así que no hay escritura suya que requiera acotarse a
+sus pastorales. La columna existe para poder filtrar "cursos de la pastoral juvenil" en el
+listado público, no para controlar permisos.
+
+**Menor de edad, misma regla que en sacramentos.** `es_menor` se calcula en el servidor a
+partir de la fecha de nacimiento y, si aplica, exige nombre, parentesco y teléfono del
+tutor. Verificado con una inscripción sin datos de tutor (rechazada) y otra con los tres
+campos completos (aceptada, `es_menor=1`).
+
+**Bandeja de inscripciones separada del catálogo, para separar roles.** `secretaria`
+administra `inscripciones.*` (ver, cambiar estado, exportar) pero no toca `cursos.*`;
+`editor` administra el catálogo completo pero no ve una sola inscripción. Verificado de
+punta a punta con los tres roles (`coordinador`, `editor`, `secretaria`) contra
+`/admin/cursos` y `/admin/inscripciones`.
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por
