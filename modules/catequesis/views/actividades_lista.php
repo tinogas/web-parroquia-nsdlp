@@ -5,7 +5,10 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="<?= e(url_admin('catequesis')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-person-badge me-1"></i>Maestros
+            <i class="bi bi-person-badge me-1"></i>Catequistas
+        </a>
+        <a href="<?= e(url_admin('catequesis', 'periodos')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar-range me-1"></i>Periodos
         </a>
         <a href="<?= e(url_admin('catequesis', 'documentos')) ?>" class="btn btn-outline-secondary">
             <i class="bi bi-file-earmark-pdf me-1"></i>Documentos
@@ -13,26 +16,9 @@
     </div>
 </div>
 
-<?php if (!$pastorales): ?>
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-        <p class="text-muted mb-0">No administras la pastoral de Catequesis todavía.</p>
-    </div>
-</div>
-<?php endif; ?>
-
-<?php foreach ($pastorales as $pastoral): ?>
-<?php
-$pid   = (int) $pastoral['id'];
-$lista = $actividades[$pid]['filas'] ?? [];
-?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
-        <?php if (count($pastorales) > 1): ?>
-        <h2 class="h6 fw-bold mb-3"><?= e($pastoral['nombre']) ?></h2>
-        <?php endif; ?>
-
-        <?php if (!$lista): ?>
+        <?php if (!$actividades): ?>
         <p class="text-muted small mb-3">Todavía no hay actividades registradas.</p>
         <?php else: ?>
         <div class="table-responsive mb-3">
@@ -41,7 +27,7 @@ $lista = $actividades[$pid]['filas'] ?? [];
                     <tr><th>Título</th><th class="d-none d-md-table-cell">Vigencia</th><th>Estado</th><th>&nbsp;</th></tr>
                 </thead>
                 <tbody>
-                <?php foreach ($lista as $actividad): ?>
+                <?php foreach ($actividades as $actividad): ?>
                     <tr>
                         <td><?= e($actividad['titulo']) ?></td>
                         <td class="d-none d-md-table-cell small text-muted">
@@ -67,13 +53,11 @@ $lista = $actividades[$pid]['filas'] ?? [];
         </div>
         <?php endif; ?>
 
-        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                data-bs-target="#actividadNueva<?= $pid ?>">
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#actividadNueva">
             <i class="bi bi-plus-lg me-1"></i>Agregar actividad
         </button>
     </div>
 </div>
-<?php endforeach; ?>
 
 <?php
 $dibujarModalActividad = static function (string $idModal, ?array $actividad, int $pastoralId, string $csrf) {
@@ -144,11 +128,8 @@ $dibujarModalActividad = static function (string $idModal, ?array $actividad, in
     <?php
 };
 
-foreach ($pastorales as $pastoral) {
-    $pid = (int) $pastoral['id'];
-    $dibujarModalActividad('actividadNueva' . $pid, null, $pid, $csrf);
-    foreach (($actividades[$pid]['filas'] ?? []) as $actividad) {
-        $dibujarModalActividad('actividad' . (int) $actividad['id'], $actividad, $pid, $csrf);
-    }
+$dibujarModalActividad('actividadNueva', null, $pastoralId, $csrf);
+foreach ($actividades as $actividad) {
+    $dibujarModalActividad('actividad' . (int) $actividad['id'], $actividad, $pastoralId, $csrf);
 }
 ?>

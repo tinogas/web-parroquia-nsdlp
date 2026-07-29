@@ -640,20 +640,39 @@ los turnos, no de uno en particular.
 
 Dos módulos nuevos, `modules/catequesis/` y `modules/lector/`, replican deliberadamente el
 patrón de MESC —módulo propio y separado para una pastoral específica, sin controlador
-público, `pastoral_id` siempre obligatorio y validado con la misma copia local de
-`pastoralIdMescValidado()` (nunca acepta `null`, a diferencia de avisos/eventos)— en vez
-de ampliar el sistema genérico de "contenido propio por pastoral"
+público— en vez de ampliar el sistema genérico de "contenido propio por pastoral"
 (`pastoral_actividades`/`pastoral_documentos`). La razón es la misma que hizo a MESC un
 módulo aparte: cada uno necesita columnas y pantallas que ese sistema genérico no tiene
 y que no tendría sentido forzar sobre *todas* las pastorales.
 
-**Catequesis** (pastoral "Catecismo"): `catequesis_maestros` agrega justo lo que
-`pastoral_actividades`/`personas` no tienen, el sacramento que cada catequista prepara
-(ENUM acotado a `primera_comunion`/`confirmacion`, no el catálogo completo de
-`sacramentos`); `catequesis_actividades` es un tablero con vigencia y `publicado` propios,
-como un mini-`eventos`, distinto de la lista fija sin fechas de `pastoral_actividades`;
-`catequesis_documentos` sí es una copia directa de `pastoral_documentos` (mismo patrón de
-subida vía `Upload::documento()`), separada solo porque el módulo entero vive aparte.
+**Catequesis va un paso más allá que MESC: no solo `pastoral_id` es obligatorio, la
+pastoral está fija.** MESC sí muestra un selector si el usuario administra más de una
+pastoral (`pastoralIdMescValidado()`, nunca acepta `null` pero sí acepta *cuál*).
+Catequesis nunca lo hace: `CatequesisModel::pastoralId()` resuelve la pastoral de
+Catecismo por su `slug`, no por un id fijo en PHP (los id de pastorales se generan al
+crearlas desde el panel, no se siembran en `install.sql`), y
+`CatequesisController::pastoralIdOFallar()` corta el flujo con un mensaje claro si esa
+pastoral todavía no existe. Esto vino de un bug real: al copiar el patrón "selector de
+pastoral" de MESC tal cual, la pantalla de Catequesis también ofrecía la pastoral de
+MESC como opción —cualquier administrador con acceso a ambas la veía en las dos—, algo
+que no tiene sentido para un módulo que por diseño es de una sola pastoral.
+
+**Catequesis: catequistas, periodos y el grado vive en la asignación, no en la
+persona.** `catequesis_catequistas` es solo nombre y contacto — nada de sacramento ni
+grado fijo. `catequesis_periodos` es un ciclo (ej. "2026-2027"), y
+`catequesis_periodo_catequistas` es el pivote que junta periodo + catequista +
+`grado` (diez valores, de Kinder a Confirmación). El grado se modeló ahí a propósito:
+un catequista normalmente no da el mismo grado cada ciclo, así que fijarlo en
+`catequesis_catequistas` perdería esa historia en cuanto cambiara de grado el año
+siguiente; puesto en la asignación, "qué catequistas dieron clase en cuál periodo y de
+qué grado cada uno" queda respondido con una sola consulta y sin perder nada del
+pasado. `CatequesisModel::asignarCatequista()` usa
+`INSERT ... ON DUPLICATE KEY UPDATE` sobre la llave compuesta `(periodo_id,
+catequista_id)`: reasignar a alguien ya presente en el periodo le cambia el grado en
+vez de duplicar la fila. `catequesis_actividades` es un tablero con vigencia y
+`publicado` propios, como un mini-`eventos`, distinto de la lista fija sin fechas de
+`pastoral_actividades`; `catequesis_documentos` es una copia directa de
+`pastoral_documentos` (mismo patrón de subida vía `Upload::documento()`).
 
 **Lector** (pastoral "Lectores"): recorta MESC a sus dos piezas no sensibles y
 extrapolables —`lector_turnos`/`lector_turno_lectores` calcan

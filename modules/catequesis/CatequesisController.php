@@ -1,8 +1,14 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/catequesis/CatequesisModel.php';
-require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
+/**
+ * CatequesisController — A diferencia de MESC, este módulo es exclusivo de
+ * la pastoral de Catecismo: ninguna acción muestra ni acepta otra pastoral.
+ * pastoralIdOFallar() resuelve esa única pastoral y corta el flujo con un
+ * mensaje claro si todavía no existe (instalación nueva, antes de crear la
+ * pastoral "Catecismo" desde el módulo de Pastorales).
+ */
 class CatequesisController extends Controller
 {
     private CatequesisModel $modelo;
@@ -12,21 +18,25 @@ class CatequesisController extends Controller
         $this->modelo = new CatequesisModel();
     }
 
-    // ── Maestros (pantalla principal del módulo) ────────────────────────
+    // ── Catequistas (pantalla principal del módulo) ─────────────────────
 
     public function index(): void
     {
         $this->requirePermiso('catequesis.ver');
 
-        $pastorales = $this->pastoralesDisponibles();
-        $this->render('catequesis/maestros_lista', [
-            'titulo'      => 'Catequesis — Maestros',
-            'pastorales'  => $pastorales,
-            'maestros'    => $this->porTodasLasPastorales($pastorales, [$this->modelo, 'maestros']),
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
+        $this->render('catequesis/catequistas_lista', [
+            'titulo'      => 'Catequesis — Catequistas',
+            'pastoralId'  => $pastoralId,
+            'catequistas' => $this->modelo->catequistas($pastoralId),
         ]);
     }
 
-    public function maestroGuardar(): void
+    public function catequistaGuardar(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(url_admin('catequesis'));
@@ -35,25 +45,18 @@ class CatequesisController extends Controller
         $this->validarCsrf();
 
         $id        = $this->postInt('id');
-        $existente = $id ? $this->modelo->maestroPorId($id) : null;
+        $existente = $id ? $this->modelo->catequistaPorId($id) : null;
         $this->requirePermiso($existente ? 'catequesis.editar' : 'catequesis.crear');
 
-        if ($existente) {
-            $this->requireAlcancePastoral((int) $existente['pastoral_id']);
-        }
-
-        $nombre     = $this->postStr('nombre');
-        $sacramento = $this->postStr('sacramento');
-        if ($nombre === '' || !isset(CatequesisModel::SACRAMENTOS[$sacramento])) {
-            Session::flash('error', 'El maestro necesita nombre y sacramento.');
-            $this->redirect(url_admin('catequesis'));
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
             return;
         }
+        $this->requireAlcancePastoral($pastoralId);
 
-        try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdCatequesisValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
+        $nombre = $this->postStr('nombre');
+        if ($nombre === '') {
+            Session::flash('error', 'El catequista necesita un nombre.');
             $this->redirect(url_admin('catequesis'));
             return;
         }
@@ -61,7 +64,6 @@ class CatequesisController extends Controller
         $datos = [
             'pastoral_id' => $pastoralId,
             'nombre'      => $nombre,
-            'sacramento'  => $sacramento,
             'telefono'    => $this->postStr('telefono') ?: null,
             'email'       => $this->postStr('email') ?: null,
             'orden'       => $this->postInt('orden'),
@@ -69,19 +71,19 @@ class CatequesisController extends Controller
         ];
 
         if ($existente) {
-            $this->modelo->actualizarMaestro($id, $datos);
-            $this->auditoria('editar', 'catequesis_maestros', $id, $nombre);
-            Session::flash('success', 'Maestro actualizado.');
+            $this->modelo->actualizarCatequista($id, $datos);
+            $this->auditoria('editar', 'catequesis_catequistas', $id, $nombre);
+            Session::flash('success', 'Catequista actualizado.');
         } else {
-            $id = $this->modelo->crearMaestro($datos);
-            $this->auditoria('crear', 'catequesis_maestros', $id, $nombre);
-            Session::flash('success', 'Maestro agregado.');
+            $id = $this->modelo->crearCatequista($datos);
+            $this->auditoria('crear', 'catequesis_catequistas', $id, $nombre);
+            Session::flash('success', 'Catequista agregado.');
         }
 
         $this->redirect(url_admin('catequesis'));
     }
 
-    public function maestroEliminar(): void
+    public function catequistaEliminar(): void
     {
         $this->requirePermiso('catequesis.eliminar');
 
@@ -91,16 +93,195 @@ class CatequesisController extends Controller
         }
         $this->validarCsrf();
 
-        $id      = $this->postInt('id');
-        $maestro = $this->modelo->maestroPorId($id);
-        if ($maestro) {
-            $this->requireAlcancePastoral((int) $maestro['pastoral_id']);
-            $this->modelo->eliminarMaestro($id);
-            $this->auditoria('eliminar', 'catequesis_maestros', $id, $maestro['nombre']);
-            Session::flash('success', 'Maestro eliminado.');
+        $id         = $this->postInt('id');
+        $catequista = $this->modelo->catequistaPorId($id);
+        if ($catequista) {
+            $this->requireAlcancePastoral((int) $catequista['pastoral_id']);
+            $this->modelo->eliminarCatequista($id);
+            $this->auditoria('eliminar', 'catequesis_catequistas', $id, $catequista['nombre']);
+            Session::flash('success', 'Catequista eliminado.');
         }
 
         $this->redirect(url_admin('catequesis'));
+    }
+
+    // ── Periodos ─────────────────────────────────────────────────────────
+
+    public function periodos(): void
+    {
+        $this->requirePermiso('catequesis.ver');
+
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
+        $this->render('catequesis/periodos_lista', [
+            'titulo'   => 'Catequesis — Periodos',
+            'periodos' => $this->modelo->periodos($pastoralId),
+        ]);
+    }
+
+    public function periodoVer(): void
+    {
+        $this->requirePermiso('catequesis.ver');
+
+        $periodo = $this->modelo->periodoPorId($this->getInt('id'));
+        if (!$periodo) {
+            Session::flash('error', 'No encontramos ese periodo.');
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $periodo['pastoral_id']);
+
+        $asignados    = $this->modelo->catequistasDePeriodo((int) $periodo['id']);
+        $idsAsignados = $this->modelo->catequistaIdsDePeriodo((int) $periodo['id']);
+        $disponibles  = array_values(array_filter(
+            $this->modelo->catequistasActivos((int) $periodo['pastoral_id']),
+            static fn (array $c): bool => !in_array((int) $c['id'], $idsAsignados, true)
+        ));
+
+        $this->render('catequesis/periodo_ver', [
+            'titulo'      => $periodo['nombre'],
+            'periodo'     => $periodo,
+            'asignados'   => $asignados,
+            'disponibles' => $disponibles,
+        ]);
+    }
+
+    public function periodoGuardar(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $existente = $id ? $this->modelo->periodoPorId($id) : null;
+        $this->requirePermiso($existente ? 'catequesis.editar' : 'catequesis.crear');
+
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+        $this->requireAlcancePastoral($pastoralId);
+
+        $nombre      = $this->postStr('nombre');
+        $fechaInicio = $this->postStr('fecha_inicio');
+        $fechaFin    = $this->postStr('fecha_fin');
+
+        if ($nombre === '' || $fechaInicio === '' || $fechaFin === '') {
+            Session::flash('error', 'El periodo necesita nombre, fecha de inicio y fecha de término.');
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        if ($fechaFin < $fechaInicio) {
+            Session::flash('error', 'La fecha de término no puede ser anterior a la de inicio.');
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+
+        $datos = [
+            'pastoral_id'  => $pastoralId,
+            'nombre'       => $nombre,
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'activo'       => $this->postBool('activo'),
+        ];
+
+        if ($existente) {
+            $this->modelo->actualizarPeriodo($id, $datos);
+            $this->auditoria('editar', 'catequesis_periodos', $id, $nombre);
+            Session::flash('success', 'Periodo actualizado.');
+        } else {
+            $id = $this->modelo->crearPeriodo($datos);
+            $this->auditoria('crear', 'catequesis_periodos', $id, $nombre);
+            Session::flash('success', 'Periodo agregado.');
+        }
+
+        $this->redirect(url_admin('catequesis', 'periodos'));
+    }
+
+    public function periodoEliminar(): void
+    {
+        $this->requirePermiso('catequesis.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id      = $this->postInt('id');
+        $periodo = $this->modelo->periodoPorId($id);
+        if ($periodo) {
+            $this->requireAlcancePastoral((int) $periodo['pastoral_id']);
+            $this->modelo->eliminarPeriodo($id);
+            $this->auditoria('eliminar', 'catequesis_periodos', $id, $periodo['nombre']);
+            Session::flash('success', 'Periodo eliminado.');
+        }
+
+        $this->redirect(url_admin('catequesis', 'periodos'));
+    }
+
+    /** Agrega (o cambia el grado de) un catequista dentro de un periodo. */
+    public function periodoAsignar(): void
+    {
+        $this->requirePermiso('catequesis.editar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $periodoId = $this->postInt('periodo_id');
+        $periodo   = $this->modelo->periodoPorId($periodoId);
+        if (!$periodo) {
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $periodo['pastoral_id']);
+
+        $catequistaId = $this->postInt('catequista_id');
+        $grado        = $this->postStr('grado');
+        $catequista   = $this->modelo->catequistaPorId($catequistaId);
+
+        if (!$catequista || (int) $catequista['pastoral_id'] !== (int) $periodo['pastoral_id']
+            || !isset(CatequesisModel::GRADOS[$grado])
+        ) {
+            Session::flash('error', 'Elige un catequista y un grado válidos.');
+            $this->redirect(url_admin('catequesis', 'periodo_ver', ['id' => $periodoId]));
+            return;
+        }
+
+        $this->modelo->asignarCatequista($periodoId, $catequistaId, $grado);
+        $this->auditoria('editar', 'catequesis_periodo_catequistas', $periodoId, $catequista['nombre'] . ' — ' . CatequesisModel::GRADOS[$grado]);
+        Session::flash('success', 'Catequista asignado al periodo.');
+
+        $this->redirect(url_admin('catequesis', 'periodo_ver', ['id' => $periodoId]));
+    }
+
+    public function periodoDesasignar(): void
+    {
+        $this->requirePermiso('catequesis.editar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('catequesis', 'periodos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $periodoId = $this->postInt('periodo_id');
+        $periodo   = $this->modelo->periodoPorId($periodoId);
+        if ($periodo) {
+            $this->requireAlcancePastoral((int) $periodo['pastoral_id']);
+            $this->modelo->quitarCatequistaDePeriodo($periodoId, $this->postInt('catequista_id'));
+            Session::flash('success', 'Catequista quitado del periodo.');
+        }
+
+        $this->redirect(url_admin('catequesis', 'periodo_ver', ['id' => $periodoId]));
     }
 
     // ── Actividades (tablero/calendario) ────────────────────────────────
@@ -109,11 +290,15 @@ class CatequesisController extends Controller
     {
         $this->requirePermiso('catequesis.ver');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('catequesis/actividades_lista', [
             'titulo'      => 'Catequesis — Actividades',
-            'pastorales'  => $pastorales,
-            'actividades' => $this->porTodasLasPastorales($pastorales, [$this->modelo, 'actividades']),
+            'pastoralId'  => $pastoralId,
+            'actividades' => $this->modelo->actividades($pastoralId),
         ]);
     }
 
@@ -129,13 +314,15 @@ class CatequesisController extends Controller
         $existente = $id ? $this->modelo->actividadPorId($id) : null;
         $this->requirePermiso($existente ? 'catequesis.editar' : 'catequesis.crear');
 
-        if ($existente) {
-            $this->requireAlcancePastoral((int) $existente['pastoral_id']);
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
         }
+        $this->requireAlcancePastoral($pastoralId);
 
-        $titulo       = $this->postStr('titulo');
-        $fechaInicio  = $this->postStr('fecha_inicio');
-        $fechaFin     = $this->postStr('fecha_fin') ?: null;
+        $titulo      = $this->postStr('titulo');
+        $fechaInicio = $this->postStr('fecha_inicio');
+        $fechaFin    = $this->postStr('fecha_fin') ?: null;
 
         if ($titulo === '' || $fechaInicio === '') {
             Session::flash('error', 'La actividad necesita título y fecha de inicio.');
@@ -144,14 +331,6 @@ class CatequesisController extends Controller
         }
         if ($fechaFin !== null && $fechaFin < $fechaInicio) {
             Session::flash('error', 'La fecha de término no puede ser anterior a la de inicio.');
-            $this->redirect(url_admin('catequesis', 'actividades'));
-            return;
-        }
-
-        try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdCatequesisValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
             $this->redirect(url_admin('catequesis', 'actividades'));
             return;
         }
@@ -189,8 +368,8 @@ class CatequesisController extends Controller
         }
         $this->validarCsrf();
 
-        $id         = $this->postInt('id');
-        $actividad  = $this->modelo->actividadPorId($id);
+        $id        = $this->postInt('id');
+        $actividad = $this->modelo->actividadPorId($id);
         if ($actividad) {
             $this->requireAlcancePastoral((int) $actividad['pastoral_id']);
             $this->modelo->eliminarActividad($id);
@@ -207,11 +386,15 @@ class CatequesisController extends Controller
     {
         $this->requirePermiso('catequesis.ver');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('catequesis/documentos_lista', [
-            'titulo'      => 'Catequesis — Documentos',
-            'pastorales'  => $pastorales,
-            'documentos'  => $this->porTodasLasPastorales($pastorales, [$this->modelo, 'documentos']),
+            'titulo'     => 'Catequesis — Documentos',
+            'pastoralId' => $pastoralId,
+            'documentos' => $this->modelo->documentos($pastoralId),
         ]);
     }
 
@@ -225,13 +408,11 @@ class CatequesisController extends Controller
         }
         $this->validarCsrf();
 
-        try {
-            $pastoralId = $this->pastoralIdCatequesisValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
-            $this->redirect(url_admin('catequesis', 'documentos'));
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
             return;
         }
+        $this->requireAlcancePastoral($pastoralId);
 
         $titulo = $this->postStr('titulo');
         if ($titulo === '') {
@@ -291,39 +472,25 @@ class CatequesisController extends Controller
 
     // ── Privados ─────────────────────────────────────────────────────────
 
-    /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
-    private function pastoralIdCatequesisValidado(): int
+    /**
+     * Resuelve la pastoral de Catecismo, la única que administra este
+     * módulo. Si todavía no existe (instalación nueva) o el usuario no
+     * tiene alcance sobre ella, corta el flujo con un mensaje claro en vez
+     * de un error a medias más adelante.
+     */
+    private function pastoralIdOFallar(): ?int
     {
-        $enviado = $this->postIntONull('pastoral_id');
-        if ($enviado === null) {
-            throw new RuntimeException('Selecciona la pastoral de Catequesis.');
+        $pastoralId = $this->modelo->pastoralId();
+        if ($pastoralId === null) {
+            Session::flash('error', 'Todavía no existe la pastoral "Catecismo". Créala primero desde Pastorales.');
+            $this->redirect(url_admin('pastorales'));
+            return null;
         }
-        if (Auth::tieneAlcanceGlobal() || in_array($enviado, Auth::pastoralesPermitidas(), true)) {
-            return $enviado;
+        if (!Auth::puedeSobrePastoral($pastoralId)) {
+            Session::flash('error', 'No administras la pastoral de Catecismo.');
+            $this->redirect(url_admin('panel'));
+            return null;
         }
-        throw new RuntimeException('Selecciona una de tus pastorales.');
-    }
-
-    private function pastoralesDisponibles(): array
-    {
-        $todas = (new PastoralModel())->paraSelector();
-        if (Auth::tieneAlcanceGlobal()) {
-            return $todas;
-        }
-        $propias = Auth::pastoralesPermitidas();
-        return array_values(array_filter($todas, static fn (array $p): bool => in_array((int) $p['id'], $propias, true)));
-    }
-
-    /** @param array $pastorales de pastoralesDisponibles(): ya acotadas al alcance del usuario */
-    private function porTodasLasPastorales(array $pastorales, callable $consulta): array
-    {
-        $porPastoral = [];
-        foreach ($pastorales as $pastoral) {
-            $porPastoral[(int) $pastoral['id']] = [
-                'pastoral' => $pastoral,
-                'filas'    => $consulta((int) $pastoral['id']),
-            ];
-        }
-        return $porPastoral;
+        return $pastoralId;
     }
 }

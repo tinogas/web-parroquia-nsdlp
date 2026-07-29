@@ -334,19 +334,41 @@ colarse en un turno nuevo aunque se manipule el formulario.
 
 ---
 
-## Catequesis — maestros, tablero de actividades y documentos
+## Catequesis — catequistas, periodos, tablero de actividades y documentos
 
-Módulo dedicado para la pastoral de Catecismo, calcado del patrón de MESC (módulo propio
-para una pastoral específica, sin controlador público) pero mucho más pequeño: no hay
-datos sensibles ni rutas.
+Módulo dedicado **exclusivamente** a la pastoral de Catecismo: a diferencia de MESC (que
+sirve a cualquier pastoral), aquí no hay selector de pastoral en ningún formulario —
+`CatequesisModel::pastoralId()` resuelve la única pastoral por su `slug = 'catecismo'`, no
+por un id fijo (los id de pastorales no se siembran en `install.sql`, se crean desde el
+panel)—. Sin controlador público ni datos sensibles.
 
-### `catequesis_maestros`
+### `catequesis_catequistas`
 
-Catequistas, uno por sacramento que preparan. `pastoral_id` (FK a `pastorales`,
-`ON DELETE CASCADE`), `nombre`, `sacramento` ENUM(`primera_comunion`, `confirmacion`) —no
-es FK al catálogo `sacramentos`: un catequista no prepara bautizos ni bodas, así que la
-lista se acota a las dos opciones reales en vez de abrir las seis del catálogo general—,
-`telefono`, `email`, `orden`, `activo`.
+Solo nombre y contacto: `pastoral_id` (FK a `pastorales`, `ON DELETE CASCADE`), `nombre`,
+`telefono`, `email`, `orden`, `activo`. **No tiene grado ni sacramento** — ver
+`catequesis_periodo_catequistas`: un catequista normalmente no da el mismo grado cada
+ciclo, así que ese dato no puede ser fijo de la persona.
+
+### `catequesis_periodos`
+
+Un ciclo de catecismo (ej. "2026-2027", de agosto a junio): `pastoral_id`, `nombre`,
+`fecha_inicio`, `fecha_fin` (ambas NOT NULL: un periodo siempre tiene principio y fin,
+a diferencia de `catequesis_actividades.fecha_fin` que sí puede quedar abierta),
+`activo` (marca cuál es el periodo vigente).
+
+### `catequesis_periodo_catequistas`
+
+Qué catequista dio clase en qué periodo, y de qué grado — el pivote que responde
+"qué catequistas estuvieron en cuál periodo". `grado` ENUM(`kinder`, `primero_primaria`,
+`segundo_primaria`, `tercero_primaria`, `comunion`, `quinto_misionero`,
+`sexto_misionero`, `primero_secundaria_misionero`, `segundo_secundaria`, `confirmacion`)
+vive **aquí, no en `catequesis_catequistas`**: el mismo catequista puede dar
+Segundo Primaria un ciclo y Tercero Primaria el siguiente, y esta tabla es la que
+conserva esa historia completa en vez de sobrescribirla. Llave primaria compuesta
+`(periodo_id, catequista_id)` — un catequista no puede tener dos grados a la vez en el
+mismo periodo —, y `CatequesisModel::asignarCatequista()` usa
+`INSERT ... ON DUPLICATE KEY UPDATE grado = VALUES(grado)` para que reasignar a alguien
+ya presente en el periodo simplemente le cambie el grado, sin duplicar la fila.
 
 ### `catequesis_actividades`
 
@@ -494,17 +516,18 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
-| Catequesis | `catequesis_maestros`, `catequesis_actividades`, `catequesis_documentos` |
+| Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, `catequesis_actividades`, `catequesis_documentos` |
 | Lector | `lector_lectores`, `lector_turnos`, `lector_turno_lectores` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 40 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 42 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `persona_pastorales`, `persona_centros`,
 `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
 `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos`,
-`catequesis_maestros`, `catequesis_actividades`, `catequesis_documentos`,
+`catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
+`catequesis_actividades`, `catequesis_documentos`,
 `lector_lectores`, `lector_turnos` y `lector_turno_lectores`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`).

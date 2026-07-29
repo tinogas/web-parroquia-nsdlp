@@ -642,28 +642,58 @@ CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- CATEQUESIS — MAESTROS, TABLERO DE ACTIVIDADES Y DOCUMENTOS
+-- CATEQUESIS — CATEQUISTAS, PERIODOS, ACTIVIDADES Y DOCUMENTOS
 -- ------------------------------------------------------------
--- Módulo dedicado para la pastoral de Catecismo, calcado del patrón de
--- MESC: pastoral_id es obligatorio (nunca "general"), validado con el mismo
--- mecanismo que MescController::pastoralIdMescValidado(). No hay controlador
--- público: como MESC, vive enteramente en el panel.
+-- Módulo dedicado exclusivamente a la pastoral de Catecismo (issue de
+-- revisión de módulos: a diferencia de MESC, aquí NO hay selector de
+-- pastoral — el controlador resuelve la pastoral por su slug 'catecismo' y
+-- nunca muestra ni acepta otra). No hay controlador público: vive
+-- enteramente en el panel.
 
--- Maestro catequista, con el sacramento para el que prepara (issue de
--- revisión de módulos: solo primera comunión o confirmación, no el catálogo
--- completo de `sacramentos` — un catequista no prepara bautizos ni bodas).
-CREATE TABLE IF NOT EXISTS catequesis_maestros (
+-- Catequista: solo nombre y contacto. El grado que da NO es un dato fijo
+-- suyo —vive en catequesis_periodo_catequistas—, porque normalmente no da
+-- el mismo grado cada ciclo (ver esa tabla).
+CREATE TABLE IF NOT EXISTS catequesis_catequistas (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED  NOT NULL,
     nombre      VARCHAR(140)      NOT NULL,
-    sacramento  ENUM('primera_comunion','confirmacion') NOT NULL,
     telefono    VARCHAR(20)       NULL,
     email       VARCHAR(150)      NULL,
     orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo      TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    KEY idx_ctm_pastoral (pastoral_id),
-    CONSTRAINT fk_ctm_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+    KEY idx_ctq_pastoral (pastoral_id),
+    CONSTRAINT fk_ctq_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ciclo de catecismo (ej. "2026-2027", agosto a junio). Para saber qué
+-- catequistas dieron clase en cuál ciclo.
+CREATE TABLE IF NOT EXISTS catequesis_periodos (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    nombre       VARCHAR(60)       NOT NULL,
+    fecha_inicio DATE              NOT NULL,
+    fecha_fin    DATE              NOT NULL,
+    activo       TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_ctp_pastoral (pastoral_id),
+    CONSTRAINT fk_ctp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Qué catequista dio clase en qué periodo, y de qué grado — el grado vive
+-- aquí, no en catequesis_catequistas, porque el mismo catequista puede dar
+-- un grado distinto cada periodo (issue de revisión de módulos). Un
+-- catequista no puede tener dos grados a la vez en un mismo periodo, de
+-- ahí la llave primaria compuesta.
+CREATE TABLE IF NOT EXISTS catequesis_periodo_catequistas (
+    periodo_id    SMALLINT UNSIGNED NOT NULL,
+    catequista_id SMALLINT UNSIGNED NOT NULL,
+    grado         ENUM('kinder', 'primero_primaria', 'segundo_primaria', 'tercero_primaria',
+                        'comunion', 'quinto_misionero', 'sexto_misionero',
+                        'primero_secundaria_misionero', 'segundo_secundaria', 'confirmacion') NOT NULL,
+    PRIMARY KEY (periodo_id, catequista_id),
+    CONSTRAINT fk_cpc_periodo    FOREIGN KEY (periodo_id)    REFERENCES catequesis_periodos(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_cpc_catequista FOREIGN KEY (catequista_id) REFERENCES catequesis_catequistas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tablero/calendario de actividades: a diferencia de pastoral_actividades
