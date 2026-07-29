@@ -93,6 +93,7 @@ define('PERMISOS', [
         'bloques.ver', 'bloques.editar',
         'paginas.ver', 'paginas.editar',
         'horarios.ver', 'horarios.editar',
+        'centros.ver', 'centros.editar',
         'personas.ver', 'personas.editar',
         'organigrama.ver', 'organigrama.editar',
         // El editor no toca la configuración global: los datos de contacto, el

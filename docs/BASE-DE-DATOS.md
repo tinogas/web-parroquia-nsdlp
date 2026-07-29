@@ -1,8 +1,8 @@
 # Base de datos
 
-Diccionario de las 25 tablas del sistema (24 de las diez etapas del plan original, más
-`respaldos_log` añadida después). El esquema real vive en `install.sql`; este documento
-explica el porqué de cada tabla y sus columnas relevantes.
+Diccionario de las 26 tablas del sistema (24 de las diez etapas del plan original, más
+`respaldos_log` y `centros` añadidas después, en el issue #3). El esquema real vive en
+`install.sql`; este documento explica el porqué de cada tabla y sus columnas relevantes.
 
 ## Convenciones
 
@@ -152,6 +152,14 @@ registrada no puede llegar al sitio ni por descuido.
 ---
 
 ## Parroquia
+
+### `centros`
+
+La sede parroquial y los centros que dependen de ella, en un solo catálogo: `tipo`
+ENUM(`sede`, `centro`), `nombre`, `direccion`, `telefono`, `descripcion`, `imagen`, `orden`,
+`activo`. Sembrada con los datos reales de la parroquia (issue #3): una fila `sede`
+("Parroquia Nuestra Señora de la Paz") y dos `centro` ("San Pío de Pietrelcina", "Jesús el
+Señor"). Ver [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sede y centros".
 
 ### `personas`
 
@@ -337,9 +345,10 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
+| Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
 | Sacramentos | `sacramentos`, `sacramento_campos`, `solicitudes_sacramento`, `solicitudes_bitacora` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 25 tablas** (24 de las diez etapas del plan original, más `respaldos_log`).
+**Total: 26 tablas** (24 de las diez etapas del plan original, más `respaldos_log` y
+`centros`).

@@ -32,13 +32,18 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('personas.ver')
+        <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
                 || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
         <a href="<?= e(url_admin('horarios')) ?>" class="sidebar-link <?= $activo('horarios') ?>">
             <i class="bi bi-clock"></i> Horarios
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('centros.ver')): ?>
+        <a href="<?= e(url_admin('centros')) ?>" class="sidebar-link <?= $activo('centros') ?>">
+            <i class="bi bi-buildings"></i> Sede y centros
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('personas.ver')): ?>

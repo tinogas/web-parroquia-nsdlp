@@ -300,6 +300,30 @@ CREATE TABLE IF NOT EXISTS intentos_formulario (
 -- PARROQUIA
 -- ------------------------------------------------------------
 
+-- La sede parroquial y los centros que dependen de ella, en un solo catálogo:
+-- "sede" y "centro" son el mismo tipo de dato, distinguidos por tipo. Sin
+-- tabla aparte para la sede -hoy hay una sola, pero forzar esa cardinalidad
+-- en el esquema es una regla que nadie pidió.
+CREATE TABLE IF NOT EXISTS centros (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tipo        ENUM('sede','centro') NOT NULL DEFAULT 'centro',
+    nombre      VARCHAR(150)      NOT NULL,
+    direccion   VARCHAR(255)      NULL,
+    telefono    VARCHAR(20)       NULL,
+    descripcion TEXT              NULL,
+    imagen      VARCHAR(255)      NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_cen_tipo (tipo, activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO centros (tipo, nombre, orden) VALUES
+    ('sede',   'Parroquia Nuestra Señora de la Paz', 10),
+    ('centro', 'San Pío de Pietrelcina',             20),
+    ('centro', 'Jesús el Señor',                     30);
+
 -- Párroco, vicarios, diáconos, religiosos, laicos y personal. Borrado lógico:
 -- se desactivan (dejaron el cargo), no se borran. Un delete real sí está
 -- permitido para corregir un alta por error (organigrama_nodos.persona_id

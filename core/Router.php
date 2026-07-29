@@ -38,6 +38,7 @@ class Router
         'paginas'       => ['clase' => 'PaginaController',        'archivo' => 'modules/paginas/PaginaController.php'],
         'mensajes'      => ['clase' => 'MensajeController',       'archivo' => 'modules/contacto/MensajeController.php'],
         'horarios'      => ['clase' => 'HorarioController',       'archivo' => 'modules/horarios/HorarioController.php'],
+        'centros'       => ['clase' => 'CentroController',        'archivo' => 'modules/centros/CentroController.php'],
         'personas'      => ['clase' => 'PersonaController',       'archivo' => 'modules/personas/PersonaController.php'],
         'organigrama'   => ['clase' => 'OrganigramaController',   'archivo' => 'modules/organigrama/OrganigramaController.php'],
         'avisos'        => ['clase' => 'AvisoController',         'archivo' => 'modules/avisos/AvisoController.php'],

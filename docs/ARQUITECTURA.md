@@ -821,6 +821,33 @@ nuevo. En una fila `tipo='restauracion'`, `archivo` referencia el `.sql` de un r
 ajeno (el que se restauró), no uno propio: `RespaldoModel::eliminar()` por eso solo borra el
 archivo físico cuando `tipo='respaldo'`, nunca para una fila de restauración.
 
+## Sede y centros
+
+Primer pendiente del issue #3 (los que siguieron a la fase 1 original). La parroquia tiene
+una sede y, hoy, dos centros que dependen de ella (San Pío de Pietrelcina, Jesús el Señor).
+
+**Una sola tabla, no dos.** `centros` con una columna `tipo` ENUM(`sede`, `centro`)
+distingue el registro principal de los que dependen de él, igual que `horarios.tipo` o
+`respaldos_log.tipo` distinguen variantes de una misma clase de dato en el resto del
+proyecto. No hay una tabla `sede` separada con cardinalidad 1: forzar "solo puede haber una
+sede" en el esquema es una regla que nadie pidió, y que estorbaría el día que la parroquia
+tenga una segunda. La sede de hoy es simplemente la fila con `tipo='sede'`.
+
+**Sembrado con datos reales, no con anclas vacías.** A diferencia de la mayoría de
+`bloques_contenido`, esta tabla se siembra con los tres registros reales que ya existen
+(la sede y los dos centros nombrados), igual que las seis semillas de `sacramentos`: el
+administrador no debería tener que dar de alta a mano algo que ya se sabía desde el primer
+día.
+
+**`centros.*` es de alcance parroquial, no de pastoral: lo administra editor, no
+coordinador.** Igual que `horarios`/`personas`/`organigrama`, es información de toda la
+parroquia, no de una pastoral en particular — el coordinador nunca lo toca.
+
+**Sin dirección en mapa (lat/long) todavía.** Los centros solo llevan una dirección de
+texto libre. El mapa con selección de pin es un requisito de la visita a enfermos de MESC
+(la ubicación de la persona visitada, no la del centro), no de este catálogo; si más
+adelante un centro necesita su propio mapa, se agrega ahí cuando haga falta.
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por
