@@ -108,6 +108,16 @@ class AvisoModel extends Model
         );
     }
 
+    /** Avisos vigentes de una pastoral, para su ficha pública (issue #3). */
+    public function publicadosPorPastoral(int $pastoralId, int $limite = 6): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM avisos WHERE pastoral_id = :pastoral AND ' . self::VIGENTE . '
+              ORDER BY fecha_publicacion DESC, id DESC LIMIT ' . max(1, $limite),
+            [':pastoral' => $pastoralId]
+        );
+    }
+
     public function incrementarVistas(int $id): void
     {
         $this->execute('UPDATE avisos SET vistas = vistas + 1 WHERE id = :id', [':id' => $id]);

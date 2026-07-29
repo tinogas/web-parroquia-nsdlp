@@ -32,6 +32,7 @@ class Auth
         // hasta entonces el arreglo queda vacío y solo los roles con alcance
         // global pueden escribir contenido.
         Session::set('usuario_pastorales', self::cargarPastorales((int) $usuario['id']));
+        Session::set('usuario_centros',    self::cargarCentros((int) $usuario['id']));
 
         return true;
     }
@@ -55,6 +56,7 @@ class Auth
             'rol'        => Session::get('usuario_rol'),
             'foto'       => Session::get('usuario_foto'),
             'pastorales' => Session::get('usuario_pastorales', []),
+            'centros'    => Session::get('usuario_centros', []),
         ];
     }
 
@@ -80,10 +82,21 @@ class Auth
     // registro?". Se mantienen separados a propósito: mezclarlos obligaría a
     // una entrada por pastoral en la matriz. Ver docs/ARQUITECTURA.md
 
-    /** IDs de las pastorales que administra el usuario. Vacío si tiene alcance global. */
+    /**
+     * IDs de las pastorales que administra el usuario, ya sea porque se le
+     * asignó directo (usuarios_pastorales) o porque administra el centro/sede
+     * completo (usuarios_centros) al que esa pastoral está ligada — issue #3,
+     * "usuarios por centro/sede". Vacío si tiene alcance global.
+     */
     public static function pastoralesPermitidas(): array
     {
         return Session::get('usuario_pastorales', []);
+    }
+
+    /** IDs de los centros/sedes que el usuario administra completos. Vacío si no tiene ninguno. */
+    public static function centrosPermitidos(): array
+    {
+        return Session::get('usuario_centros', []);
     }
 
     /** El administrador y el editor pueden con todo el contenido del sitio. */
@@ -110,16 +123,38 @@ class Auth
         return in_array($pastoralId, self::pastoralesPermitidas(), true);
     }
 
+    /**
+     * Unión de dos fuentes: pastorales asignadas directo, más las de
+     * cualquier centro/sede que el usuario administre completo (issue #3).
+     * PDO con ATTR_EMULATE_PREPARES=false no admite repetir :id, de ahí :id2.
+     */
     private static function cargarPastorales(int $usuarioId): array
     {
         try {
             $stmt = Database::getInstance()->prepare(
-                'SELECT pastoral_id FROM usuarios_pastorales WHERE usuario_id = :id'
+                'SELECT pastoral_id FROM usuarios_pastorales WHERE usuario_id = :id
+                 UNION
+                 SELECT p.id FROM pastorales p
+                   INNER JOIN usuarios_centros uc ON uc.centro_id = p.centro_id
+                  WHERE uc.usuario_id = :id2'
+            );
+            $stmt->execute([':id' => $usuarioId, ':id2' => $usuarioId]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        } catch (PDOException $e) {
+            // Las tablas aún no existen (etapas previas a la 6). No es un error.
+            return [];
+        }
+    }
+
+    private static function cargarCentros(int $usuarioId): array
+    {
+        try {
+            $stmt = Database::getInstance()->prepare(
+                'SELECT centro_id FROM usuarios_centros WHERE usuario_id = :id'
             );
             $stmt->execute([':id' => $usuarioId]);
             return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
         } catch (PDOException $e) {
-            // La tabla aún no existe (etapas previas a la 6). No es un error.
             return [];
         }
     }
@@ -157,6 +192,7 @@ class Auth
         Session::set('usuario_rol',        $objetivo['rol']);
         Session::set('usuario_foto',       $objetivo['foto'] ?? null);
         Session::set('usuario_pastorales', self::cargarPastorales((int) $objetivo['id']));
+        Session::set('usuario_centros',    self::cargarCentros((int) $objetivo['id']));
     }
 
     /** Restaura la sesión del administrador real y borra el rastro de la impersonación. */
@@ -168,6 +204,7 @@ class Auth
         Session::set('usuario_rol',        ROL_ADMIN);
         Session::set('usuario_foto',       null);
         Session::set('usuario_pastorales', []);
+        Session::set('usuario_centros',    []);
 
         Session::delete('_impersonando');
         Session::delete('_admin_real_id');

@@ -49,7 +49,10 @@
                     </td>
                     <td class="d-none d-md-table-cell"><?= e(ROLES_NOMBRES[$usuario['rol']] ?? $usuario['rol']) ?></td>
                     <td class="d-none d-lg-table-cell small text-muted">
-                        <?= e($usuario['pastorales_nombres'] ?: '—') ?>
+                        <?php
+                        $ambitos = array_filter([$usuario['pastorales_nombres'] ?? null, $usuario['centros_nombres'] ?? null]);
+                        echo $ambitos ? e(implode(', ', $ambitos)) : '—';
+                        ?>
                     </td>
                     <td class="d-none d-md-table-cell">
                         <?php if ($usuario['activo']): ?>

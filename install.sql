@@ -56,6 +56,18 @@ CREATE TABLE IF NOT EXISTS usuarios_pastorales (
     CONSTRAINT fk_up_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pivote análogo, pero por centro/sede completo (issue #3: "usuarios por
+-- centro/sede"): quien administra un centro administra TODAS sus pastorales,
+-- sin tener que asignarse una por una. Auth::pastoralesPermitidas() hace la
+-- unión de esta tabla con usuarios_pastorales. FK a centros, creada más abajo.
+CREATE TABLE IF NOT EXISTS usuarios_centros (
+    usuario_id INT UNSIGNED      NOT NULL,
+    centro_id  SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (usuario_id, centro_id),
+    CONSTRAINT fk_uc_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_uc_centro  FOREIGN KEY (centro_id)  REFERENCES centros(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Bitácora de acciones. Registra escrituras y también CONSULTAS de datos
 -- personales, que es lo que permite responder a una solicitud de acceso.
 -- Ver docs/PRIVACIDAD.md
@@ -395,8 +407,11 @@ CREATE TABLE IF NOT EXISTS horarios (
 -- Coro, catequesis, caridad, jóvenes, ministros MESC... Cada una puede tener
 -- uno o más coordinadores (usuarios_pastorales) con permiso para crear
 -- contenido, pero no para publicarlo directamente: eso queda para admin/editor.
+-- centro_id (issue #3, "contenido propio por pastoral") liga la pastoral a su
+-- sede o centro; NULL en las que ya existían antes de este campo.
 CREATE TABLE IF NOT EXISTS pastorales (
     id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    centro_id          SMALLINT UNSIGNED NULL,
     slug               VARCHAR(80)  NOT NULL,
     nombre             VARCHAR(120) NOT NULL,
     descripcion_corta  VARCHAR(255) NULL,
@@ -414,7 +429,9 @@ CREATE TABLE IF NOT EXISTS pastorales (
     activa             TINYINT(1)   NOT NULL DEFAULT 1,
     created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_pas_slug (slug)
+    UNIQUE KEY uq_pas_slug (slug),
+    KEY idx_pas_centro (centro_id),
+    CONSTRAINT fk_pas_centro FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Actividades comunitarias y de apoyo social de cada pastoral.
@@ -429,6 +446,24 @@ CREATE TABLE IF NOT EXISTS pastoral_actividades (
     PRIMARY KEY (id),
     KEY idx_pta_pastoral (pastoral_id),
     CONSTRAINT fk_pta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Documentación descargable de cada pastoral (issue #3): reglamentos, guías,
+-- formatos. archivo guarda la ruta bajo uploads/, igual convención que
+-- avisos.archivo_pdf.
+CREATE TABLE IF NOT EXISTS pastoral_documentos (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    titulo      VARCHAR(160)     NOT NULL,
+    archivo     VARCHAR(255)     NOT NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)       NOT NULL DEFAULT 1,
+    usuario_id  INT UNSIGNED     NULL,
+    created_at  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_pdo_pastoral (pastoral_id),
+    CONSTRAINT fk_pdo_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pdo_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

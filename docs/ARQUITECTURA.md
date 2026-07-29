@@ -438,6 +438,48 @@ Reglas sin excepción:
   ambos casos se revalida en el servidor.
 - `pastoral_id NULL` significa contenido parroquial global. Un coordinador nunca lo toca.
 
+### Alcance por centro/sede (issue #3)
+
+Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,
+NULL en las que ya existían antes de este campo). El issue pidió, además de "usuarios
+administradores de la pastoral" (ya cubierto por `usuarios_pastorales`), "usuarios por
+centro/sede": alguien que administra San Pío de Pietrelcina completo no debería tener que
+marcar, una por una, cada pastoral que ese centro tenga hoy o llegue a tener mañana.
+
+`usuarios_centros` es la tabla pivote análoga a `usuarios_pastorales`.
+`Auth::pastoralesPermitidas()` calcula la **unión** de ambas fuentes con un solo `UNION`
+SQL — pastorales asignadas directo, más las de cualquier centro que el usuario administre
+completo — y cachea el resultado ya unido en sesión, exactamente igual que antes. Ningún
+otro método de `Auth` ni de `Controller` cambió: `puedeSobrePastoral()`,
+`requireAlcancePastoral()` y `filtroPastoralSql()` siguen leyendo `pastoralesPermitidas()`
+sin saber que ahora tiene dos orígenes. `Auth::centrosPermitidos()` expone aparte los
+centros asignados directo, para el formulario de usuarios y para mostrar qué centro
+administra alguien; no se usa para autorizar nada por sí solo.
+
+### Contenido propio por pastoral (issue #3)
+
+La ficha pública de una pastoral (`pastorales/publico/detalle.php`) reúne, todo filtrado
+por su propio `pastoral_id`: sus avisos vigentes (`AvisoModel::publicadosPorPastoral()`,
+reutiliza la misma condición `VIGENTE` de la sección de avisos), sus próximos eventos
+(`EventoModel::proximos($limite, $pastoralId)`) con un enlace a su propio calendario
+mensual completo en `/eventos?pastoral=slug`, y sus documentos descargables
+(`pastoral_documentos`, solo agregar/quitar — para cambiar uno se sube uno nuevo, no hay
+edición de archivo). El centro/sede al que pertenece se muestra en la tarjeta de
+información.
+
+**Deliberadamente no hay un "organigrama de esta pastoral" aparte.**
+`organigrama_nodos.pastoral_id` ya existe desde antes de este issue: cada nodo del
+organigrama general puede ligarse a una pastoral. Duplicar esa misma información
+filtrada dentro de la ficha de cada pastoral sería mostrar dos veces lo mismo con dos
+caminos de código distintos, sin que nadie lo haya pedido.
+
+**`/eventos?pastoral=slug`** reutiliza el calendario general en vez de duplicarlo:
+`EventoModel::delMes()`/`proximos()` reciben un `$pastoralId` opcional,
+`EventoPublicoController` resuelve el slug con `pastoralSolicitada()` (si no resuelve a
+una pastoral activa, se ignora el filtro — la página cae en el calendario completo en vez
+de mostrar uno vacío), y `calendario.js` propaga el filtro leyendo `data-pastoral` del
+contenedor tanto en el fetch AJAX como al reescribir los enlaces de mes anterior/siguiente.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se

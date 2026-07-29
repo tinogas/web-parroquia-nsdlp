@@ -106,6 +106,7 @@ define('PERMISOS', [
         'carrusel.ver', 'carrusel.editar',
         'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -121,6 +122,7 @@ define('PERMISOS', [
         'galeria.ver', 'galeria.crear', 'galeria.eliminar',
         'pastorales.ver', 'pastorales.editar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
         'cursos.ver',
     ],
 

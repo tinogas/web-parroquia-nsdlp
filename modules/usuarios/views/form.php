@@ -97,6 +97,32 @@
                         </div>
                         <?php endif; ?>
                     </div>
+
+                    <div class="mb-0 mt-3">
+                        <label class="form-label fw-semibold">Centros o sedes que administra completos</label>
+                        <div class="form-text mb-2">
+                            Quien administra un centro/sede administra todas sus pastorales, sin tener que
+                            marcarlas una por una arriba. También solo aplica al rol «Coordinador de pastoral».
+                        </div>
+                        <?php if (!$centros): ?>
+                        <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>
+                        <?php else: ?>
+                        <div class="row row-cols-1 row-cols-sm-2 g-1">
+                            <?php foreach ($centros as $centro): ?>
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="centros[]"
+                                           value="<?= (int) $centro['id'] ?>" id="cen<?= (int) $centro['id'] ?>"
+                                           <?= in_array((int) $centro['id'], $centrosAsignados, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="cen<?= (int) $centro['id'] ?>">
+                                        <?= e($centro['nombre']) ?>
+                                    </label>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
                     <?php endif; ?>
 
                 </div>

@@ -52,6 +52,15 @@ Pivote. Una persona puede coordinar varias pastorales a la vez, que es lo habitu
 Clave primaria compuesta `(usuario_id, pastoral_id)`, ambas foráneas con
 `ON DELETE CASCADE`.
 
+### `usuarios_centros`
+
+Pivote análogo, pero por centro/sede completo (issue #3, "usuarios por centro/sede"):
+quien administra un centro administra todas sus pastorales sin que alguien tenga que
+marcarlas una por una en `usuarios_pastorales`. Clave primaria compuesta
+`(usuario_id, centro_id)`, ambas foráneas con `ON DELETE CASCADE`.
+`Auth::pastoralesPermitidas()` calcula la unión de ambas tablas (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)).
+
 ### `auditoria`
 
 Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `admin_real_id` (FK a
@@ -200,16 +209,25 @@ Recurrencia semanal, no fechas concretas.
 
 ### `pastorales`
 
-`slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`, `descripcion` MEDIUMTEXT,
-`imagen`, `icono` (clase de Bootstrap Icons), `responsable_nombre`, `contacto_email`,
-`contacto_telefono`, `dia_reunion`, `hora_reunion`, `lugar_reunion`,
-`acepta_voluntarios`, `orden`, `activa`.
+`centro_id` (issue #3: FK a `centros`, `ON DELETE SET NULL`, NULL en las que ya existían
+antes de este campo), `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
+`descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
+`responsable_nombre`, `contacto_email`, `contacto_telefono`, `dia_reunion`,
+`hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
 
 ### `pastoral_actividades`
 
 Actividades comunitarias y de apoyo social de cada pastoral. `pastoral_id`, `titulo`,
 `descripcion`, `tipo` ENUM(`comunitaria`, `apoyo_social`, `formacion`, `liturgica`),
 `orden`, `activa`. Foránea con `ON DELETE CASCADE`.
+
+### `pastoral_documentos`
+
+Documentación descargable de cada pastoral (issue #3): reglamentos, guías, formatos.
+`pastoral_id` (FK, `ON DELETE CASCADE`), `titulo`, `archivo` (ruta bajo `uploads/`, misma
+convención que `avisos.archivo_pdf`; solo PDF por ahora), `orden`, `activo`, `usuario_id`
+(FK a `usuarios`, `ON DELETE SET NULL`, quién lo subió), `created_at`. Sin edición desde el
+panel más allá de agregar o quitar: para cambiar un documento se sube uno nuevo.
 
 ---
 
@@ -315,12 +333,13 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 
 | Grupo | Tablas |
 |---|---|
-| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `respaldos_log`, `configuracion` |
+| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
+| Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 23 tablas** (24 de las diez etapas del plan original, más `respaldos_log` y
-`centros`, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`).
+**Total: 25 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+`centros`, `usuarios_centros` y `pastoral_documentos`, menos `sacramento_campos`,
+`solicitudes_sacramento` y `solicitudes_bitacora`).

@@ -43,11 +43,11 @@ class PastoralModel extends Model
     {
         $this->execute(
             'INSERT INTO pastorales
-                (slug, nombre, descripcion_corta, descripcion, imagen, icono, responsable_nombre,
+                (centro_id, slug, nombre, descripcion_corta, descripcion, imagen, icono, responsable_nombre,
                  contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
                  acepta_voluntarios, orden, activa)
              VALUES
-                (:slug, :nombre, :descCorta, :desc, :imagen, :icono, :responsable,
+                (:centro, :slug, :nombre, :descCorta, :desc, :imagen, :icono, :responsable,
                  :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
                  :voluntarios, :orden, :activa)',
             $this->parametros($datos)
@@ -59,7 +59,7 @@ class PastoralModel extends Model
     {
         return $this->execute(
             'UPDATE pastorales
-                SET slug = :slug, nombre = :nombre, descripcion_corta = :descCorta,
+                SET centro_id = :centro, slug = :slug, nombre = :nombre, descripcion_corta = :descCorta,
                     descripcion = :desc, imagen = :imagen, icono = :icono,
                     responsable_nombre = :responsable, contacto_email = :email,
                     contacto_telefono = :telefono, dia_reunion = :diaReunion,
@@ -146,9 +146,55 @@ class PastoralModel extends Model
         return $this->execute('DELETE FROM pastoral_actividades WHERE id = :id', [':id' => $id]);
     }
 
+    // ── Documentos descargables (issue #3) ──────────────────────────────
+
+    public function documentos(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM pastoral_documentos WHERE pastoral_id = :id ORDER BY orden, id',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function documentosActivos(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM pastoral_documentos WHERE pastoral_id = :id AND activo = 1 ORDER BY orden, id',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function documentoPorId(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM pastoral_documentos WHERE id = :id', [':id' => $id]);
+    }
+
+    public function crearDocumento(array $datos, int $usuarioId): int
+    {
+        $this->execute(
+            'INSERT INTO pastoral_documentos (pastoral_id, titulo, archivo, orden, activo, usuario_id)
+             VALUES (:pastoral, :titulo, :archivo, :orden, :activo, :usuario)',
+            [
+                ':pastoral' => $datos['pastoral_id'],
+                ':titulo'   => $datos['titulo'],
+                ':archivo'  => $datos['archivo'],
+                ':orden'    => $datos['orden'],
+                ':activo'   => $datos['activo'],
+                ':usuario'  => $usuarioId,
+            ]
+        );
+        return $this->lastInsertId();
+    }
+
+    public function eliminarDocumento(int $id): int
+    {
+        return $this->execute('DELETE FROM pastoral_documentos WHERE id = :id', [':id' => $id]);
+    }
+
     private function parametros(array $datos): array
     {
         return [
+            ':centro'      => $datos['centro_id'],
             ':slug'        => $datos['slug'],
             ':nombre'      => $datos['nombre'],
             ':descCorta'   => $datos['descripcion_corta'],

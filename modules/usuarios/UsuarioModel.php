@@ -18,11 +18,13 @@ class UsuarioModel extends Model
     {
         return $this->fetchAll(
             "SELECT u.*,
-                    GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ') AS pastorales_nombres
+                    (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
+                       FROM usuarios_pastorales up JOIN pastorales p ON p.id = up.pastoral_id
+                      WHERE up.usuario_id = u.id) AS pastorales_nombres,
+                    (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
+                       FROM usuarios_centros uc JOIN centros c ON c.id = uc.centro_id
+                      WHERE uc.usuario_id = u.id) AS centros_nombres
                FROM usuarios u
-               LEFT JOIN usuarios_pastorales up ON up.usuario_id = u.id
-               LEFT JOIN pastorales p ON p.id = up.pastoral_id
-              GROUP BY u.id
               ORDER BY u.nombre"
         );
     }
@@ -51,6 +53,16 @@ class UsuarioModel extends Model
             [':id' => $id]
         );
         return array_map(static fn (array $f): int => (int) $f['pastoral_id'], $filas);
+    }
+
+    /** IDs de centro/sede asignados completos (issue #3, "usuarios por centro/sede"). */
+    public function centrosDe(int $id): array
+    {
+        $filas = $this->fetchAll(
+            'SELECT centro_id FROM usuarios_centros WHERE usuario_id = :id',
+            [':id' => $id]
+        );
+        return array_map(static fn (array $f): int => (int) $f['centro_id'], $filas);
     }
 
     public function emailExiste(string $email, ?int $excluirId = null): bool
@@ -86,6 +98,7 @@ class UsuarioModel extends Model
             );
             $id = $this->lastInsertId();
             $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
             return $id;
         } catch (Throwable $e) {
@@ -116,6 +129,7 @@ class UsuarioModel extends Model
 
             $this->execute($sql, $params);
             $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
         } catch (Throwable $e) {
             $this->rollback();
@@ -136,6 +150,17 @@ class UsuarioModel extends Model
             $this->execute(
                 'INSERT INTO usuarios_pastorales (usuario_id, pastoral_id) VALUES (:uid, :pid)',
                 [':uid' => $usuarioId, ':pid' => $pid]
+            );
+        }
+    }
+
+    private function sincronizarCentros(int $usuarioId, array $centroIds): void
+    {
+        $this->execute('DELETE FROM usuarios_centros WHERE usuario_id = :id', [':id' => $usuarioId]);
+        foreach (array_unique($centroIds) as $cid) {
+            $this->execute(
+                'INSERT INTO usuarios_centros (usuario_id, centro_id) VALUES (:uid, :cid)',
+                [':uid' => $usuarioId, ':cid' => $cid]
             );
         }
     }

@@ -45,6 +45,20 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     </div>
 
                     <div class="mb-3">
+                        <label for="centro_id" class="form-label fw-semibold">Sede o centro</label>
+                        <select name="centro_id" id="centro_id" class="form-select">
+                            <option value="">Sin asignar</option>
+                            <?php foreach ($centros as $centro): ?>
+                            <option value="<?= (int) $centro['id'] ?>"
+                                <?= (!$esNueva && (int) ($pastoral['centro_id'] ?? 0) === (int) $centro['id']) ? 'selected' : '' ?>>
+                                <?= e($centro['nombre']) ?> (<?= e(CentroModel::TIPOS[$centro['tipo']] ?? $centro['tipo']) ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">A qué sede o centro pertenece esta pastoral.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="descripcion_corta" class="form-label fw-semibold">Descripción breve</label>
                         <input type="text" name="descripcion_corta" id="descripcion_corta" class="form-control"
                                value="<?= e($esNueva ? '' : (string) $pastoral['descripcion_corta']) ?>" maxlength="255">
@@ -98,6 +112,40 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#actividadNueva">
                         <i class="bi bi-plus-lg me-1"></i>Agregar actividad
+                    </button>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <h2 class="h6 fw-bold mb-3">Documentos descargables</h2>
+
+                    <?php if (!$documentos): ?>
+                    <p class="text-muted small mb-3">Todavía no hay documentos.</p>
+                    <?php else: ?>
+                    <ul class="list-group list-group-flush mb-3">
+                        <?php foreach ($documentos as $documento): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <a href="<?= e(url_activo($documento['archivo'])) ?>" target="_blank" class="text-decoration-none">
+                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i><?= e($documento['titulo']) ?>
+                            </a>
+                            <form method="POST" accept-charset="UTF-8"
+                                  action="<?= e(url_post('admin', 'pastorales', 'documentoEliminar')) ?>" class="m-0"
+                                  onsubmit="return confirm('¿Eliminar este documento?');">
+                                <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                <input type="hidden" name="id" value="<?= (int) $documento['id'] ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                            data-bs-target="#documentoNuevo">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar documento
                     </button>
                 </div>
             </div>
@@ -267,4 +315,39 @@ foreach ($actividades as $actividad) {
     $dibujarModalActividad('actividad' . (int) $actividad['id'], $actividad, (int) $pastoral['id'], $csrf);
 }
 ?>
+
+<div class="modal fade" id="documentoNuevo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" accept-charset="UTF-8" enctype="multipart/form-data"
+              action="<?= e(url_post('admin', 'pastorales', 'documentoGuardar')) ?>" class="modal-content">
+            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+            <input type="hidden" name="pastoral_id" value="<?= (int) $pastoral['id'] ?>">
+
+            <div class="modal-header border-0 pb-0">
+                <h2 class="h6 modal-title fw-bold">Nuevo documento</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Título</label>
+                    <input type="text" name="titulo" class="form-control form-control-sm" maxlength="160" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Archivo</label>
+                    <input type="file" name="archivo" class="form-control form-control-sm" accept="application/pdf" required>
+                    <div class="form-text">Solo PDF, hasta 8 MB.</div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Orden</label>
+                    <input type="number" name="orden" class="form-control form-control-sm" value="0" min="0" max="999">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-check-lg me-1"></i>Subir
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <?php endif; ?>

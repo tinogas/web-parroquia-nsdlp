@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
 
 class PastoralController extends Controller
 {
@@ -37,6 +38,7 @@ class PastoralController extends Controller
         $this->render('pastorales/form', [
             'titulo'   => 'Nueva pastoral',
             'pastoral' => null,
+            'centros'  => (new CentroModel())->activos(),
         ]);
     }
 
@@ -55,7 +57,9 @@ class PastoralController extends Controller
         $this->render('pastorales/form', [
             'titulo'      => $pastoral['nombre'],
             'pastoral'    => $pastoral,
+            'centros'     => (new CentroModel())->activos(),
             'actividades' => $this->modelo->actividades((int) $pastoral['id']),
+            'documentos'  => $this->modelo->documentos((int) $pastoral['id']),
             'scriptExtra' => $this->scriptEditor(),
         ]);
     }
@@ -101,6 +105,7 @@ class PastoralController extends Controller
         }
 
         $datos = [
+            'centro_id'          => $this->postIntONull('centro_id'),
             'slug'               => $slug,
             'nombre'             => $nombre,
             'descripcion_corta'  => $this->postStr('descripcion_corta') ?: null,
@@ -235,6 +240,86 @@ class PastoralController extends Controller
         Session::flash('success', 'Actividad eliminada.');
 
         $this->redirect(url_admin('pastorales', 'editar', ['id' => $actividad['pastoral_id']]));
+    }
+
+    // ── Documentos descargables ─────────────────────────────────────────
+
+    public function documentoGuardar(): void
+    {
+        $this->requirePermiso('documentos.crear');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $pastoralId = $this->postInt('pastoral_id');
+        $pastoral   = $this->modelo->porId($pastoralId);
+        if (!$pastoral) {
+            Session::flash('error', 'No encontramos esa pastoral.');
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral($pastoralId);
+
+        $titulo = $this->postStr('titulo');
+        if ($titulo === '') {
+            Session::flash('error', 'El documento necesita un título.');
+            $this->redirect(url_admin('pastorales', 'editar', ['id' => $pastoralId]));
+            return;
+        }
+
+        try {
+            $archivo = Upload::documento('archivo', 'pastorales', 'documento');
+        } catch (RuntimeException $e) {
+            Session::flash('error', 'No se pudo subir el documento: ' . $e->getMessage());
+            $this->redirect(url_admin('pastorales', 'editar', ['id' => $pastoralId]));
+            return;
+        }
+        if (!$archivo) {
+            Session::flash('error', 'Elige un archivo PDF para subir.');
+            $this->redirect(url_admin('pastorales', 'editar', ['id' => $pastoralId]));
+            return;
+        }
+
+        $id = $this->modelo->crearDocumento([
+            'pastoral_id' => $pastoralId,
+            'titulo'      => $titulo,
+            'archivo'     => $archivo,
+            'orden'       => $this->postInt('orden'),
+            'activo'      => 1,
+        ], (int) Auth::usuario()['id']);
+        $this->auditoria('crear', 'pastoral_documentos', $id, $titulo);
+        Session::flash('success', 'Documento agregado.');
+
+        $this->redirect(url_admin('pastorales', 'editar', ['id' => $pastoralId]));
+    }
+
+    public function documentoEliminar(): void
+    {
+        $this->requirePermiso('documentos.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $documento = $this->modelo->documentoPorId($id);
+        if (!$documento) {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $documento['pastoral_id']);
+
+        Upload::borrar($documento['archivo']);
+        $this->modelo->eliminarDocumento($id);
+        $this->auditoria('eliminar', 'pastoral_documentos', $id, $documento['titulo']);
+        Session::flash('success', 'Documento eliminado.');
+
+        $this->redirect(url_admin('pastorales', 'editar', ['id' => $documento['pastoral_id']]));
     }
 
     private function scriptEditor(): string
