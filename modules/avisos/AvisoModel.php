@@ -58,12 +58,22 @@ class AvisoModel extends Model
         return $this->fetchOne('SELECT * FROM avisos WHERE id = :id', [':id' => $id]);
     }
 
-    /** Detalle público: solo publicados. */
+    /**
+     * Condición SQL de vigencia, compartida por toda consulta pública: además
+     * de publicado=1 y fecha_publicacion <= hoy (ya existían desde la etapa 5
+     * y funcionan como "visible desde"), vigente_hasta es el "visible hasta"
+     * del issue #3 — nulo significa sin fecha de baja. Con esto, un aviso se
+     * publica y despublica solo, sin que nadie tenga que volver a tocarlo.
+     */
+    private const VIGENTE = "publicado = 1 AND fecha_publicacion <= CURDATE()
+                             AND (vigente_hasta IS NULL OR vigente_hasta >= CURDATE())";
+
+    /** Detalle público: solo publicados y vigentes. */
     public function porSlugPublicado(string $slug): ?array
     {
         return $this->fetchOne(
             'SELECT a.*, u.nombre AS autor FROM avisos a LEFT JOIN usuarios u ON u.id = a.usuario_id
-              WHERE a.slug = :slug AND a.publicado = 1',
+              WHERE a.slug = :slug AND ' . self::VIGENTE,
             [':slug' => $slug]
         );
     }
@@ -72,8 +82,8 @@ class AvisoModel extends Model
     public function publicados(int $pagina, int $porPagina = 9): array
     {
         return $this->paginar(
-            "SELECT * FROM avisos WHERE publicado = 1 AND fecha_publicacion <= CURDATE()
-              ORDER BY fecha_publicacion DESC, id DESC",
+            'SELECT * FROM avisos WHERE ' . self::VIGENTE . '
+              ORDER BY fecha_publicacion DESC, id DESC',
             [],
             $pagina,
             $porPagina
@@ -84,8 +94,8 @@ class AvisoModel extends Model
     public function paraSitemap(): array
     {
         return $this->fetchAll(
-            "SELECT slug, COALESCE(updated_at, created_at) AS modificado
-               FROM avisos WHERE publicado = 1 AND fecha_publicacion <= CURDATE()"
+            'SELECT slug, COALESCE(updated_at, created_at) AS modificado
+               FROM avisos WHERE ' . self::VIGENTE
         );
     }
 
@@ -93,7 +103,7 @@ class AvisoModel extends Model
     public function recientes(int $limite = 3): array
     {
         return $this->fetchAll(
-            'SELECT * FROM avisos WHERE publicado = 1 AND fecha_publicacion <= CURDATE()
+            'SELECT * FROM avisos WHERE ' . self::VIGENTE . '
               ORDER BY fecha_publicacion DESC, id DESC LIMIT ' . max(1, $limite)
         );
     }
@@ -108,10 +118,10 @@ class AvisoModel extends Model
         $this->execute(
             'INSERT INTO avisos
                 (slug, titulo, resumen, contenido, imagen, tipo, archivo_pdf, pastoral_id,
-                 fecha_publicacion, destacado, publicado, usuario_id)
+                 fecha_publicacion, vigente_hasta, destacado, publicado, usuario_id)
              VALUES
                 (:slug, :titulo, :resumen, :contenido, :imagen, :tipo, :pdf, :pastoral,
-                 :fecha, :destacado, :publicado, :usuario)',
+                 :fecha, :vigenteHasta, :destacado, :publicado, :usuario)',
             $this->parametros($datos) + [':usuario' => $usuarioId]
         );
         return $this->lastInsertId();
@@ -123,8 +133,8 @@ class AvisoModel extends Model
             'UPDATE avisos
                 SET slug = :slug, titulo = :titulo, resumen = :resumen, contenido = :contenido,
                     imagen = :imagen, tipo = :tipo, archivo_pdf = :pdf, pastoral_id = :pastoral,
-                    fecha_publicacion = :fecha, destacado = :destacado, publicado = :publicado,
-                    updated_at = NOW()
+                    fecha_publicacion = :fecha, vigente_hasta = :vigenteHasta,
+                    destacado = :destacado, publicado = :publicado, updated_at = NOW()
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -138,17 +148,18 @@ class AvisoModel extends Model
     private function parametros(array $datos): array
     {
         return [
-            ':slug'      => $datos['slug'],
-            ':titulo'    => $datos['titulo'],
-            ':resumen'   => $datos['resumen'],
-            ':contenido' => $datos['contenido'],
-            ':imagen'    => $datos['imagen'],
-            ':tipo'      => $datos['tipo'],
-            ':pdf'       => $datos['archivo_pdf'],
-            ':pastoral'  => $datos['pastoral_id'],
-            ':fecha'     => $datos['fecha_publicacion'],
-            ':destacado' => $datos['destacado'],
-            ':publicado' => $datos['publicado'],
+            ':slug'         => $datos['slug'],
+            ':titulo'       => $datos['titulo'],
+            ':resumen'      => $datos['resumen'],
+            ':contenido'    => $datos['contenido'],
+            ':imagen'       => $datos['imagen'],
+            ':tipo'         => $datos['tipo'],
+            ':pdf'          => $datos['archivo_pdf'],
+            ':pastoral'     => $datos['pastoral_id'],
+            ':fecha'        => $datos['fecha_publicacion'],
+            ':vigenteHasta' => $datos['vigente_hasta'],
+            ':destacado'    => $datos['destacado'],
+            ':publicado'    => $datos['publicado'],
         ];
     }
 }

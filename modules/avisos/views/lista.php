@@ -57,6 +57,9 @@
                         <?php else: ?>
                             <span class="badge bg-warning-subtle text-warning-emphasis">Borrador</span>
                         <?php endif; ?>
+                        <?php if ($aviso['vigente_hasta'] && $aviso['vigente_hasta'] < date('Y-m-d')): ?>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis" title="Ya pasó su fecha 'Visible hasta'; no se muestra en el sitio.">Vencido</span>
+                        <?php endif; ?>
                     </td>
                     <td class="text-end text-nowrap">
                         <?php if ($aviso['publicado']): ?>

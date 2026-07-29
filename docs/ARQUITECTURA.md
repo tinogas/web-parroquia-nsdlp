@@ -369,6 +369,24 @@ ellos decidan. La separación existe para la etapa 6: el rol coordinador tendrá
 para que un editor lo revise, sin tocar un solo controlador de esta etapa. Se aplicó el
 mismo patrón a `galeria.publicar`, independiente de `galeria.editar`.
 
+### Vigencia de avisos (issue #3)
+
+`publicado` es binario y manual: alguien tiene que volver a apagarlo. `avisos.vigente_hasta`
+(DATE NULL) añade una ventana de tiempo sobre ese flag, para boletines y comunicados con
+fecha de caducidad natural ("hasta el domingo de posadas") que nadie quiere estar
+recordando despublicar a mano. `AvisoModel::VIGENTE` es la condición SQL compartida por
+toda consulta pública (`publicados()`, `porSlugPublicado()`, `recientes()`,
+`paraSitemap()`): `publicado = 1 AND fecha_publicacion <= CURDATE() AND (vigente_hasta IS
+NULL OR vigente_hasta >= CURDATE())`. `fecha_publicacion` ya era el "visible desde";
+`vigente_hasta` es el "visible hasta". El listado del panel (`AvisoModel::listar()`)
+deliberadamente **no** usa esta condición: un aviso vencido sigue editable — el panel le
+agrega el badge "Vencido" para que quede claro por qué ya no se ve en el sitio, sin que eso
+le impida a un editor reabrirlo extendiendo la fecha.
+
+No se replicó el mismo campo en `eventos`: un evento ya tiene su propio ciclo de vida
+(`fecha_inicio`/`fecha_fin`), y ocultar automáticamente los que ya pasaron trabajaría contra
+el interés de conservar un registro histórico de lo organizado.
+
 ## Roles y permisos
 
 ```

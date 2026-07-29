@@ -215,6 +215,12 @@ CREATE TABLE IF NOT EXISTS galeria_imagenes (
 -- borrador. pastoral_id NULL significa aviso parroquial global, que un
 -- coordinador nunca podrá tocar. FK real a pastorales: se crea más abajo, en
 -- este mismo script.
+--
+-- Vigencia (issue #3): fecha_publicacion ya funcionaba como "visible desde"
+-- (una fecha futura no se muestra hasta llegar ese día); vigente_hasta es el
+-- "visible hasta" que faltaba. Con las dos, un aviso se publica y despublica
+-- solo según su ventana de vigencia, sin que nadie tenga que tocar el flag
+-- publicado dos veces. NULL en vigente_hasta = sin fecha de baja.
 CREATE TABLE IF NOT EXISTS avisos (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     slug              VARCHAR(160) NOT NULL,
@@ -226,6 +232,7 @@ CREATE TABLE IF NOT EXISTS avisos (
     archivo_pdf       VARCHAR(255) NULL,
     pastoral_id       TINYINT UNSIGNED NULL,
     fecha_publicacion DATE         NOT NULL,
+    vigente_hasta     DATE         NULL,
     destacado         TINYINT(1)   NOT NULL DEFAULT 0,
     publicado         TINYINT(1)   NOT NULL DEFAULT 0,
     vistas            INT UNSIGNED NOT NULL DEFAULT 0,

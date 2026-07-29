@@ -269,12 +269,24 @@ Hoy es contenido público informativo. En fase 2 es el ancla del aula virtual: l
 
 Boletín semanal y noticias. `slug` con `uq_avi_slug`, `titulo`, `resumen` VARCHAR(300),
 `contenido` MEDIUMTEXT, `imagen`, `tipo` ENUM(`noticia`, `boletin`, `comunicado`),
-`archivo_pdf` para el boletín, `pastoral_id`, `fecha_publicacion`, `destacado`,
-`publicado`, `vistas`, `usuario_id`.
+`archivo_pdf` para el boletín, `pastoral_id`, `fecha_publicacion`, `vigente_hasta`,
+`destacado`, `publicado`, `vistas`, `usuario_id`.
 
 `publicado` arranca en **0**: todo entra como borrador. `pastoral_id NULL` significa aviso
 parroquial global, que un coordinador nunca puede tocar. Índices
 `idx_avi_pub (publicado, fecha_publicacion)` e `idx_avi_pastoral`.
+
+**Vigencia (issue #3).** `fecha_publicacion` es el "visible desde" (ya existía: una fecha
+futura no se muestra hasta llegar ese día); `vigente_hasta` DATE NULL es el "visible hasta"
+que agrega el issue #3. `AvisoModel::VIGENTE` combina ambas en una sola condición SQL
+reutilizada por `publicados()`, `porSlugPublicado()`, `recientes()` y `paraSitemap()`:
+`publicado = 1 AND fecha_publicacion <= CURDATE() AND (vigente_hasta IS NULL OR
+vigente_hasta >= CURDATE())`. NULL en `vigente_hasta` significa sin fecha de baja. El
+listado del panel (`listar()`) **no** aplica esta condición — un editor debe poder ver y
+reeditar un aviso vencido, solo el público deja de verlo. Deliberadamente no se aplicó el
+mismo mecanismo a `eventos`: un evento ya tiene su propio ciclo de vida natural
+(`fecha_inicio`/`fecha_fin`) y ocultar automáticamente los pasados eliminaría el registro
+histórico de lo que la parroquia ha organizado.
 
 ### `eventos`
 
