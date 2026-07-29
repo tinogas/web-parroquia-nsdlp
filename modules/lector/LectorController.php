@@ -1,8 +1,13 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/lector/LectorModel.php';
-require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
+/**
+ * LectorController — Exclusivo de la pastoral "Lectores": ninguna acción
+ * muestra ni acepta otra pastoral (a diferencia de MESC, que sí sirve a
+ * cualquiera). pastoralIdOFallar() resuelve esa única pastoral y corta el
+ * flujo con un mensaje claro si todavía no existe.
+ */
 class LectorController extends Controller
 {
     private LectorModel $modelo;
@@ -18,6 +23,11 @@ class LectorController extends Controller
     {
         $this->requirePermiso('lector.ver');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $anio = $this->getInt('anio', (int) date('Y'));
         $mes  = $this->getInt('mes', (int) date('n'));
         if ($mes < 1 || $mes > 12) { $mes = (int) date('n'); }
@@ -28,7 +38,7 @@ class LectorController extends Controller
         $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
         $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $this->filtroPastoralSql());
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
 
         $this->render('lector/turnos', [
             'titulo'          => 'Calendario de lectores',
@@ -45,15 +55,19 @@ class LectorController extends Controller
     {
         $this->requirePermiso('lector.crear');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('lector/turno_form', [
-            'titulo'              => 'Nuevo turno',
-            'turno'               => null,
-            'pastorales'          => $pastorales,
-            'lectoresPorPastoral' => $this->lectoresActivosDeTodasLasPastorales($pastorales),
-            'asignados'           => [],
-            'fechaSugerida'       => $this->getStr('fecha'),
-            'colores'             => $this->modelo->coloresLiturgicos(),
+            'titulo'          => 'Nuevo turno',
+            'turno'           => null,
+            'pastoralId'      => $pastoralId,
+            'lectores'        => $this->modelo->lectoresActivos($pastoralId),
+            'asignados'       => [],
+            'fechaSugerida'   => $this->getStr('fecha'),
+            'colores'         => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -69,18 +83,17 @@ class LectorController extends Controller
         }
         $this->requireAlcancePastoral((int) $turno['pastoral_id']);
 
-        $pastorales = $this->pastoralesDisponibles();
         $this->render('lector/turno_form', [
-            'titulo'              => $turno['descripcion'],
-            'turno'               => $turno,
-            'pastorales'          => $pastorales,
-            'lectoresPorPastoral' => $this->lectoresActivosDeTodasLasPastorales($pastorales),
-            'asignados'           => array_map(
+            'titulo'          => $turno['descripcion'],
+            'turno'           => $turno,
+            'pastoralId'      => (int) $turno['pastoral_id'],
+            'lectores'        => $this->modelo->lectoresActivos((int) $turno['pastoral_id']),
+            'asignados'       => array_map(
                 static fn (array $l): int => (int) $l['id'],
                 $this->modelo->lectoresDeTurno((int) $turno['id'])
             ),
-            'fechaSugerida'       => '',
-            'colores'             => $this->modelo->coloresLiturgicos(),
+            'fechaSugerida'   => '',
+            'colores'         => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -108,11 +121,8 @@ class LectorController extends Controller
             return;
         }
 
-        try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdLectorValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
-            $this->redirect($id ? url_admin('lector', 'turno_editar', ['id' => $id]) : url_admin('lector', 'turno_nuevo'));
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
             return;
         }
 
@@ -177,11 +187,15 @@ class LectorController extends Controller
     {
         $this->requirePermiso('lector.ver');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('lector/lectores_lista', [
             'titulo'     => 'Catálogo de lectores',
-            'pastorales' => $pastorales,
-            'lectores'   => $this->lectoresDeTodasLasPastorales($pastorales),
+            'pastoralId' => $pastoralId,
+            'lectores'   => $this->modelo->lectores($pastoralId),
         ]);
     }
 
@@ -197,7 +211,10 @@ class LectorController extends Controller
         $existente = $id ? $this->modelo->lectorPorId($id) : null;
         $this->requirePermiso($existente ? 'lector.editar' : 'lector.crear');
 
-        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->postInt('pastoral_id');
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
         $this->requireAlcancePastoral($pastoralId);
 
         $nombre = $this->postStr('nombre');
@@ -253,48 +270,25 @@ class LectorController extends Controller
 
     // ── Privados ─────────────────────────────────────────────────────────
 
-    /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
-    private function pastoralIdLectorValidado(): int
+    /**
+     * Resuelve la pastoral de Lectores, la única que administra este
+     * módulo. Si todavía no existe (instalación nueva) o el usuario no
+     * tiene alcance sobre ella, corta el flujo con un mensaje claro.
+     */
+    private function pastoralIdOFallar(): ?int
     {
-        $enviado = $this->postIntONull('pastoral_id');
-        if ($enviado === null) {
-            throw new RuntimeException('Selecciona la pastoral de Lectores.');
+        $pastoralId = $this->modelo->pastoralId();
+        if ($pastoralId === null) {
+            Session::flash('error', 'Todavía no existe la pastoral "Lectores". Créala primero desde Pastorales.');
+            $this->redirect(url_admin('pastorales'));
+            return null;
         }
-        if (Auth::tieneAlcanceGlobal() || in_array($enviado, Auth::pastoralesPermitidas(), true)) {
-            return $enviado;
+        if (!Auth::puedeSobrePastoral($pastoralId)) {
+            Session::flash('error', 'No administras la pastoral de Lectores.');
+            $this->redirect(url_admin('panel'));
+            return null;
         }
-        throw new RuntimeException('Selecciona una de tus pastorales.');
-    }
-
-    private function pastoralesDisponibles(): array
-    {
-        $todas = (new PastoralModel())->paraSelector();
-        if (Auth::tieneAlcanceGlobal()) {
-            return $todas;
-        }
-        $propias = Auth::pastoralesPermitidas();
-        return array_values(array_filter($todas, static fn (array $p): bool => in_array((int) $p['id'], $propias, true)));
-    }
-
-    private function lectoresDeTodasLasPastorales(array $pastorales): array
-    {
-        $porPastoral = [];
-        foreach ($pastorales as $pastoral) {
-            $porPastoral[(int) $pastoral['id']] = [
-                'pastoral' => $pastoral,
-                'lectores' => $this->modelo->lectores((int) $pastoral['id']),
-            ];
-        }
-        return $porPastoral;
-    }
-
-    private function lectoresActivosDeTodasLasPastorales(array $pastorales): array
-    {
-        $porPastoral = [];
-        foreach ($pastorales as $pastoral) {
-            $porPastoral[(int) $pastoral['id']] = $this->modelo->lectoresActivos((int) $pastoral['id']);
-        }
-        return $porPastoral;
+        return $pastoralId;
     }
 
     /** Cuadrícula del mes en semanas de 7 casillas, calcada de MescController. */

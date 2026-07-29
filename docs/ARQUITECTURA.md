@@ -684,6 +684,15 @@ color litúrgico es el mismo calendario para toda la parroquia, no un dato propi
 módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
 catálogo de MESC directamente.
 
+Igual que Catequesis (arriba), Lector también es de una sola pastoral, sin selector:
+`LectorModel::pastoralId()` la resuelve por `slug = 'lectores'` y
+`LectorController::pastoralIdOFallar()` corta el flujo si no existe o el usuario no
+tiene alcance sobre ella. La primera versión de este módulo copió el selector
+multi-pastoral de MESC tal cual (igual que le pasó a Catequesis) y por eso ofrecía
+Catecismo y MESC como opciones válidas para dar de alta un lector o un turno — un
+administrador con acceso a las tres pastorales las veía todas mezcladas. Corregido de
+la misma forma en ambos módulos.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se

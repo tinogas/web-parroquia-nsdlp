@@ -13,26 +13,9 @@
     </a>
 </div>
 
-<?php if (!$pastorales): ?>
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-        <p class="text-muted mb-0">No administras la pastoral de Lectores todavía.</p>
-    </div>
-</div>
-<?php endif; ?>
-
-<?php foreach ($pastorales as $pastoral): ?>
-<?php
-$pid   = (int) $pastoral['id'];
-$lista = $lectores[$pid]['lectores'] ?? [];
-?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
-        <?php if (count($pastorales) > 1): ?>
-        <h2 class="h6 fw-bold mb-3"><?= e($pastoral['nombre']) ?></h2>
-        <?php endif; ?>
-
-        <?php if (!$lista): ?>
+        <?php if (!$lectores): ?>
         <p class="text-muted small mb-3">Todavía no hay lectores registrados.</p>
         <?php else: ?>
         <div class="table-responsive mb-3">
@@ -41,7 +24,7 @@ $lista = $lectores[$pid]['lectores'] ?? [];
                     <tr><th>Nombre</th><th class="d-none d-md-table-cell">Contacto</th><th>&nbsp;</th></tr>
                 </thead>
                 <tbody>
-                <?php foreach ($lista as $lector): ?>
+                <?php foreach ($lectores as $lector): ?>
                     <tr class="<?= $lector['activo'] ? '' : 'text-muted' ?>">
                         <td><?= e($lector['nombre']) ?><?= $lector['activo'] ? '' : ' (inactivo)' ?></td>
                         <td class="d-none d-md-table-cell small">
@@ -60,13 +43,11 @@ $lista = $lectores[$pid]['lectores'] ?? [];
         </div>
         <?php endif; ?>
 
-        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                data-bs-target="#lectorNuevo<?= $pid ?>">
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#lectorNuevo">
             <i class="bi bi-plus-lg me-1"></i>Agregar lector
         </button>
     </div>
 </div>
-<?php endforeach; ?>
 
 <?php
 $dibujarModalLector = static function (string $idModal, ?array $lector, int $pastoralId, string $csrf) {
@@ -126,11 +107,8 @@ $dibujarModalLector = static function (string $idModal, ?array $lector, int $pas
     <?php
 };
 
-foreach ($pastorales as $pastoral) {
-    $pid = (int) $pastoral['id'];
-    $dibujarModalLector('lectorNuevo' . $pid, null, $pid, $csrf);
-    foreach (($lectores[$pid]['lectores'] ?? []) as $lector) {
-        $dibujarModalLector('lector' . (int) $lector['id'], $lector, $pid, $csrf);
-    }
+$dibujarModalLector('lectorNuevo', null, $pastoralId, $csrf);
+foreach ($lectores as $lector) {
+    $dibujarModalLector('lector' . (int) $lector['id'], $lector, $pastoralId, $csrf);
 }
 ?>

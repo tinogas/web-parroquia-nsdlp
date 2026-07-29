@@ -11,6 +11,12 @@ require_once BASE_PATH . '/core/Model.php';
  */
 class LectorModel extends Model
 {
+    /** La única pastoral que administra este módulo, resuelta por slug (no por id fijo: los id no se siembran en install.sql). */
+    public function pastoralId(): ?int
+    {
+        return $this->fetchColumn("SELECT id FROM pastorales WHERE slug = 'lectores'") ?: null;
+    }
+
     // ── Lectores ─────────────────────────────────────────────────────────
 
     public function lectores(int $pastoralId): array
@@ -74,15 +80,12 @@ class LectorModel extends Model
     // ── Turnos ───────────────────────────────────────────────────────────
 
     /** Turnos del mes, con los nombres de sus lectores ya concatenados, para el calendario. */
-    public function turnosDelMes(int $anio, int $mes, ?array $pastoralesPermitidas = null): array
+    public function turnosDelMes(int $anio, int $mes, int $pastoralId): array
     {
         $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
         $siguienteAnio = $mes === 12 ? $anio + 1 : $anio;
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
-
-        [$condicionPastoral, $params] = $this->condicionPastoral($pastoralesPermitidas, 't.pastoral_id');
-        $condicionPastoral = $condicionPastoral !== '' ? " AND {$condicionPastoral}" : '';
 
         return $this->fetchAll(
             "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
@@ -91,9 +94,9 @@ class LectorModel extends Model
                       WHERE tl.turno_id = t.id) AS lectores_nombres
                FROM lector_turnos t
                LEFT JOIN mesc_colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin{$condicionPastoral}
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
               ORDER BY t.fecha, t.hora",
-            [':inicio' => $inicio, ':fin' => $fin] + $params
+            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
         );
     }
 
