@@ -689,6 +689,50 @@ sesión como un coordinador con una pastoral ya asignada por la interfaz:
    formulario). **Cualquier filtro nuevo en el panel debe evitar los nombres reservados
    del Router: `area`, `modulo`, `accion`, `slug`.**
 
+## Respaldos de la base de datos
+
+Añadido después de cerrar las diez etapas del plan original, a petición explícita del
+párroco/administrador. Replica el módulo `modules/backups` de `C:\xampp\htdocs\inventario`
+—el mismo proyecto de referencia del resto de la arquitectura— adaptado a las convenciones
+propias de este repositorio.
+
+**Volcado en PHP puro, sin `mysqldump`.** `RespaldoModel::generarDump()` recorre
+`SHOW TABLES`, y por cada una escribe `DROP TABLE IF EXISTS` + `SHOW CREATE TABLE` (la
+estructura) y los datos en lotes de 200 filas vía `INSERT INTO ... VALUES` (para no
+construir una sola sentencia gigante), leyendo con `PDOStatement::fetch()` en vez de
+`fetchAll()` para no acumular la tabla completa en un arreglo de PHP. Es la misma razón que
+justifica no depender de `mysqldump` en el resto del proyecto: un hosting de cPanel sin SSH
+tampoco suele permitir `exec()`/`shell_exec()`, así que un volcado nativo vía PDO es la
+única vía verdaderamente portable. Ver `docs/DESPLIEGUE.md`.
+
+**Sin restauración automática, a propósito.** El panel solo genera, descarga y elimina
+archivos `.sql`; para restaurar se importa desde phpMyAdmin, igual que en el proyecto de
+referencia. Automatizar la restauración reintroduciría por la puerta trasera el mismo
+riesgo (ejecutar SQL arbitrario desde la aplicación) que justifica no tener acceso SSH.
+
+**`backups/` es una carpeta de infraestructura, con nombre en inglés como `uploads/` o
+`assets/`**, no una excepción al "todo en español": las clases (`RespaldoModel`,
+`RespaldoController`), la tabla (`respaldos_log`), las claves de permiso (`respaldos.*`) y
+el texto de la interfaz sí lo respetan. La carpeta se crea sola en el primer respaldo
+(`mkdir` recursivo) y está bloqueada por HTTP en `.htaccess`, igual que `config/`, `core/`,
+`modules/`, `shared/`, `docs/` y `cli/`.
+
+**`respaldos.*` es exclusivo de administrador**, igual que `usuarios.*` y `auditoria.*`:
+sin entradas propias en la matriz de `config/app.php` para los demás roles, llega solo por
+el comodín de `ROL_ADMIN`.
+
+**`respaldos_log` une con `usuarios` en vez de desnormalizar el nombre**, igual que
+`auditoria` — a diferencia del proyecto de referencia, que sí guarda `usuario_nombre` como
+columna propia. Con el volumen de respaldos de una parroquia (generados a mano, sin cron),
+la diferencia de rendimiento es irrelevante, y seguir el patrón ya establecido en
+`auditoria` es más consistente que introducir uno nuevo solo para este módulo.
+
+**Efecto autorreferencial, heredado del proyecto de referencia y aceptado tal cual:** como
+`SHOW TABLES` se ejecuta después de que la tabla `respaldos_log` ya existe, cada respaldo
+incluye una copia de su propio historial —incluidas las filas de respaldos anteriores—.
+No es un error: es simplemente lo que implica volcar "todas las tablas" de una base de
+datos que incluye la tabla que registra los volcados.
+
 ## SEO
 
 Todas las entidades con URL pública llevan `slug` con índice único, generado por

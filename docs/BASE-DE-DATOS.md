@@ -1,7 +1,8 @@
 # Base de datos
 
-Diccionario de las 24 tablas del sistema. El esquema real vive en `install.sql`; este
-documento explica el porqué de cada tabla y sus columnas relevantes.
+Diccionario de las 25 tablas del sistema (24 de las diez etapas del plan original, más
+`respaldos_log` añadida después). El esquema real vive en `install.sql`; este documento
+explica el porqué de cada tabla y sus columnas relevantes.
 
 ## Convenciones
 
@@ -58,6 +59,18 @@ Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `accion` VARCHAR
 
 Registra escrituras **y también lecturas de datos personales**, incluidas las
 exportaciones a CSV. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
+
+### `respaldos_log`
+
+Historial de respaldos de la base de datos (`modules/respaldos`), añadido tras cerrar las
+diez etapas del plan original. `archivo` VARCHAR(180) — el nombre del `.sql` dentro de
+`backups/`, fuera del control de versiones —, `tamano_bytes`, `num_tablas`,
+`num_registros`, `usuario_id` (FK a `usuarios`, `ON DELETE SET NULL`), `estado`
+ENUM(`completado`, `error`), `notas` (mensaje de error si aplica) y `created_at`.
+
+El archivo físico no vive en la base de datos, solo su referencia; `RespaldoModel` verifica
+con `is_file()` si todavía existe antes de ofrecer la descarga. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Respaldos de la base de datos".
 
 ### `configuracion`
 
@@ -312,11 +325,11 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 
 | Grupo | Tablas |
 |---|---|
-| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `configuracion` |
+| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
 | Sacramentos | `sacramentos`, `sacramento_campos`, `solicitudes_sacramento`, `solicitudes_bitacora` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 24 tablas.**
+**Total: 25 tablas** (24 de las diez etapas del plan original, más `respaldos_log`).

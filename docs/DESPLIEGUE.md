@@ -57,7 +57,8 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 7. **Ajustar `RewriteBase`** en `.htaccess` a `/`.
 
 8. **Permisos de escritura** en `uploads/` y sus subcarpetas: 755 para directorios y 644
-   para archivos. Nunca 777.
+   para archivos. Nunca 777. `backups/` la crea sola el módulo de respaldos en el primer
+   uso, con los mismos permisos.
 
 9. **Ejecutar `setup.php`**, crear la cuenta de administrador y **borrar el archivo**.
    Mientras exista, cualquiera puede crear un administrador.
@@ -91,6 +92,8 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 - [ ] Una imagen subida desde el panel se ve en el sitio.
 - [ ] `https://dominio/uploads/prueba.php` devuelve 403 y no ejecuta nada.
 - [ ] `https://dominio/cli/purgar_solicitudes.php` devuelve 403 y no ejecuta nada.
+- [ ] `https://dominio/backups/algo.sql` devuelve 403, aunque no se conozca el nombre real.
+- [ ] Generar un respaldo desde el panel funciona y el archivo se puede descargar.
 - [ ] `setup.php` ya no existe.
 - [ ] `config/database.php` no es accesible por HTTP.
 - [ ] `sitemap.xml` se genera, incluye el contenido publicado y usa el dominio real.
@@ -114,6 +117,8 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
 - [ ] `config/database.php` fuera de `.git` (revisar `.gitignore`) y no accesible por HTTP.
 - [ ] `cli/purgar_solicitudes.php` no accesible por HTTP (403) — solo debe poder invocarse
       desde el cron.
+- [ ] `backups/` no accesible por HTTP (403), y los `.sql` que contenga no terminan nunca
+      en un repositorio público ni en un correo sin cifrar.
 - [ ] HTTPS forzado y certificado válido; `session.cookie_samesite=Strict` y
       `cookie_httponly` activos (ya vienen en `.htaccess`, confirmar que el hosting no los
       sobrescribe).
@@ -150,12 +155,17 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
 ## Respaldos
 
 Sin acceso SSH no hay `cron` con `mysqldump` cómodo, pero cPanel tiene su propio
-programador de tareas y su asistente de respaldos.
+programador de tareas y su asistente de respaldos. El panel además trae su propio módulo
+de respaldos (**Administración → Respaldos**, solo administrador): genera un `.sql` con
+estructura y datos vía PDO —sin `mysqldump`, por la misma razón de siempre— y se descarga
+en un clic. Es cómodo para un respaldo puntual antes de un cambio grande, pero no sustituye
+lo de abajo: no cubre `uploads/` ni corre solo.
 
 Como mínimo:
 
 - Respaldo completo semanal de la cuenta desde el asistente de cPanel.
-- Exportación mensual de la base de datos desde phpMyAdmin, guardada fuera del hosting.
+- Exportación mensual de la base de datos desde phpMyAdmin, guardada fuera del hosting (o
+  un respaldo generado desde **Administración → Respaldos** y descargado a un lugar seguro).
 - Copia de `uploads/` junto con la base de datos: un respaldo del contenido sin las
   imágenes no sirve de nada.
 

@@ -83,10 +83,11 @@ define('PERMISOS', [
 
     ROL_ADMIN => ['*'],
 
-    // usuarios.*, auditoria.* y configuracion.* no aparecen en ningún otro
-    // rol de esta matriz, a propósito: el plan reserva la gestión de cuentas,
-    // la configuración global y la bitácora completa exclusivamente al
-    // administrador. Llegan solo por el comodín '*' de arriba.
+    // usuarios.*, auditoria.*, configuracion.* y respaldos.* no aparecen en
+    // ningún otro rol de esta matriz, a propósito: el plan reserva la gestión
+    // de cuentas, la configuración global, la bitácora completa y los
+    // respaldos de la base de datos exclusivamente al administrador. Llegan
+    // solo por el comodín '*' de arriba.
     ROL_EDITOR => [
         'panel.ver',
         'bloques.ver', 'bloques.editar',

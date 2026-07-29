@@ -113,7 +113,7 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('configuracion.ver') || Auth::tienePermiso('usuarios.ver')
-                || Auth::tienePermiso('auditoria.ver')): ?>
+                || Auth::tienePermiso('auditoria.ver') || Auth::tienePermiso('respaldos.ver')): ?>
         <div class="sidebar-section mt-2">Administración</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('configuracion.ver')): ?>
@@ -129,6 +129,11 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('auditoria.ver')): ?>
         <a href="<?= e(url_admin('auditoria')) ?>" class="sidebar-link <?= $activo('auditoria') ?>">
             <i class="bi bi-journal-text"></i> Auditoría
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('respaldos.ver')): ?>
+        <a href="<?= e(url_admin('respaldos')) ?>" class="sidebar-link <?= $activo('respaldos') ?>">
+            <i class="bi bi-database-fill-gear"></i> Respaldos
         </a>
         <?php endif; ?>
 

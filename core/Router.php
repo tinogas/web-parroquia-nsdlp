@@ -51,6 +51,7 @@ class Router
         'inscripciones' => ['clase' => 'InscripcionCursoController', 'archivo' => 'modules/cursos/InscripcionCursoController.php'],
         'usuarios'      => ['clase' => 'UsuarioController',       'archivo' => 'modules/usuarios/UsuarioController.php'],
         'auditoria'     => ['clase' => 'AuditoriaController',     'archivo' => 'modules/auditoria/AuditoriaController.php'],
+        'respaldos'     => ['clase' => 'RespaldoController',      'archivo' => 'modules/respaldos/RespaldoController.php'],
     ];
 
     /**

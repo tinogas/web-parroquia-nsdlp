@@ -74,6 +74,25 @@ CREATE TABLE IF NOT EXISTS auditoria (
     KEY idx_aud_tabla   (tabla_ref, registro_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Historial de respaldos de la base de datos (modules/respaldos). El archivo
+-- .sql vive en backups/, fuera del control de versiones; esta tabla es lo que
+-- permite listarlos, descargarlos y borrarlos desde el panel. usuario_id sin
+-- desnormalizar el nombre: se une con usuarios, igual que auditoria.
+CREATE TABLE IF NOT EXISTS respaldos_log (
+    id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    archivo       VARCHAR(180)    NOT NULL,
+    tamano_bytes  BIGINT UNSIGNED NULL,
+    num_tablas    SMALLINT UNSIGNED NULL,
+    num_registros INT UNSIGNED    NULL,
+    usuario_id    INT UNSIGNED    NULL,
+    estado        ENUM('completado','error') NOT NULL DEFAULT 'completado',
+    notas         VARCHAR(255)    NULL,
+    created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_rlog_fecha (created_at),
+    CONSTRAINT fk_rlog_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Datos globales de la parroquia, en pares clave/valor. Las claves se siembran
 -- aquí y el panel solo edita el valor: son las que las vistas esperan encontrar.
 CREATE TABLE IF NOT EXISTS configuracion (

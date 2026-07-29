@@ -14,7 +14,7 @@ RewriteEngine On
 RewriteBase /WebParroquia/
 
 # ---- Carpetas de código: nunca accesibles por HTTP ----
-RewriteRule ^(config|core|modules|shared|docs|cli)/ - [F,L]
+RewriteRule ^(config|core|modules|shared|docs|cli|backups)/ - [F,L]
 
 # ---- Lo que existe en disco se sirve tal cual (assets, uploads) ----
 RewriteCond %{REQUEST_FILENAME} -f [OR]
