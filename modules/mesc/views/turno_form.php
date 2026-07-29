@@ -73,6 +73,24 @@ if ($pastoralFija !== null) {
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label for="color_liturgico_id" class="form-label fw-semibold">
+                    Color litúrgico <span class="text-muted fw-normal">(opcional)</span>
+                </label>
+                <select name="color_liturgico_id" id="color_liturgico_id" class="form-select">
+                    <option value="">Sin asignar</option>
+                    <?php foreach ($colores as $color): ?>
+                    <option value="<?= (int) $color['id'] ?>"
+                        <?= (!$esNuevo && (int) ($turno['color_liturgico_id'] ?? 0) === (int) $color['id']) ? 'selected' : '' ?>>
+                        <?= e($color['nombre']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="form-text">
+                    <a href="<?= e(url_admin('mesc', 'colores')) ?>" target="_blank">Ver el significado de cada color</a>.
+                </div>
+            </div>
+
             <label class="form-label fw-semibold">Ministros asignados</label>
             <?php foreach ($pastorales as $pastoral): ?>
             <?php

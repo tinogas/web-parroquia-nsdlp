@@ -271,11 +271,12 @@ class MescModel extends Model
         $condicionPastoral = $condicionPastoral !== '' ? " AND {$condicionPastoral}" : '';
 
         return $this->fetchAll(
-            "SELECT t.*,
+            "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
                     (SELECT GROUP_CONCAT(m.nombre ORDER BY m.nombre SEPARATOR ', ')
                        FROM mesc_turno_ministros tm JOIN mesc_ministros m ON m.id = tm.ministro_id
                       WHERE tm.turno_id = t.id) AS ministros_nombres
                FROM mesc_turnos t
+               LEFT JOIN mesc_colores_liturgicos c ON c.id = t.color_liturgico_id
               WHERE t.fecha >= :inicio AND t.fecha < :fin{$condicionPastoral}
               ORDER BY t.fecha, t.hora",
             [':inicio' => $inicio, ':fin' => $fin] + $params
@@ -303,13 +304,14 @@ class MescModel extends Model
         $this->beginTransaction();
         try {
             $this->execute(
-                'INSERT INTO mesc_turnos (pastoral_id, fecha, hora, descripcion, usuario_id)
-                 VALUES (:pastoral, :fecha, :hora, :descripcion, :usuario)',
+                'INSERT INTO mesc_turnos (pastoral_id, fecha, hora, descripcion, color_liturgico_id, usuario_id)
+                 VALUES (:pastoral, :fecha, :hora, :descripcion, :color, :usuario)',
                 [
                     ':pastoral'    => $datos['pastoral_id'],
                     ':fecha'       => $datos['fecha'],
                     ':hora'        => $datos['hora'],
                     ':descripcion' => $datos['descripcion'],
+                    ':color'       => $datos['color_liturgico_id'] ?? null,
                     ':usuario'     => $usuarioId,
                 ]
             );
@@ -328,11 +330,14 @@ class MescModel extends Model
         $this->beginTransaction();
         try {
             $filas = $this->execute(
-                'UPDATE mesc_turnos SET fecha = :fecha, hora = :hora, descripcion = :descripcion WHERE id = :id',
+                'UPDATE mesc_turnos
+                    SET fecha = :fecha, hora = :hora, descripcion = :descripcion, color_liturgico_id = :color
+                  WHERE id = :id',
                 [
                     ':fecha'       => $datos['fecha'],
                     ':hora'        => $datos['hora'],
                     ':descripcion' => $datos['descripcion'],
+                    ':color'       => $datos['color_liturgico_id'] ?? null,
                     ':id'          => $id,
                 ]
             );
@@ -348,6 +353,53 @@ class MescModel extends Model
     public function eliminarTurno(int $id): int
     {
         return $this->execute('DELETE FROM mesc_turnos WHERE id = :id', [':id' => $id]);
+    }
+
+    // ── Colores litúrgicos ───────────────────────────────────────────────
+
+    public function coloresLiturgicos(): array
+    {
+        return $this->fetchAll('SELECT * FROM mesc_colores_liturgicos ORDER BY orden, nombre');
+    }
+
+    public function colorLiturgicoPorId(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM mesc_colores_liturgicos WHERE id = :id', [':id' => $id]);
+    }
+
+    public function crearColorLiturgico(array $datos): int
+    {
+        $this->execute(
+            'INSERT INTO mesc_colores_liturgicos (nombre, color_hex, significado, orden)
+             VALUES (:nombre, :hex, :significado, :orden)',
+            [
+                ':nombre'      => $datos['nombre'],
+                ':hex'         => $datos['color_hex'],
+                ':significado' => $datos['significado'],
+                ':orden'       => $datos['orden'],
+            ]
+        );
+        return $this->lastInsertId();
+    }
+
+    public function actualizarColorLiturgico(int $id, array $datos): int
+    {
+        return $this->execute(
+            'UPDATE mesc_colores_liturgicos SET nombre = :nombre, color_hex = :hex, significado = :significado, orden = :orden
+              WHERE id = :id',
+            [
+                ':nombre'      => $datos['nombre'],
+                ':hex'         => $datos['color_hex'],
+                ':significado' => $datos['significado'],
+                ':orden'       => $datos['orden'],
+                ':id'          => $id,
+            ]
+        );
+    }
+
+    public function eliminarColorLiturgico(int $id): int
+    {
+        return $this->execute('DELETE FROM mesc_colores_liturgicos WHERE id = :id', [':id' => $id]);
     }
 
     private function sincronizarMinistrosDeTurno(int $turnoId, array $ministroIds): void

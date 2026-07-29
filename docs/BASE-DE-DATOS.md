@@ -233,10 +233,11 @@ panel más allá de agregar o quitar: para cambiar un documento se sube uno nuev
 
 ## MESC — Ministros Extraordinarios de la Comunión
 
-> **Dato sensible.** De las seis tablas de este bloque, solo `mesc_visitas` (y su ruta,
+> **Dato sensible.** De las siete tablas de este bloque, solo `mesc_visitas` (y su ruta,
 > `mesc_rutas`/`mesc_ruta_visitas`) guarda el único dato de salud que trata el sistema.
-> `mesc_ministros`/`mesc_turnos`/`mesc_turno_ministros` son un catálogo operativo normal,
-> sin esa protección reforzada. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Dato
+> `mesc_ministros`/`mesc_turnos`/`mesc_turno_ministros`/`mesc_colores_liturgicos` son un
+> catálogo operativo normal, sin esa protección reforzada. Ver
+> [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Dato
 > sensible: MESC".
 
 ### `mesc_visitas`
@@ -276,11 +277,20 @@ Aparte de `personas` a propósito: `personas` es el equipo pastoral que se muest
 público, con foto y semblanza; un ministro MESC es un voluntario interno que no
 necesariamente forma parte de esa vitrina. Índice `idx_mmi_pastoral (pastoral_id, activo)`.
 
+### `mesc_colores_liturgicos`
+
+Catálogo de referencia: los cinco colores litúrgicos de la Iglesia (blanco, verde,
+morado, rojo, rosa), cada uno con `nombre`, `color_hex` y `significado` (texto explicativo
+de cuándo se usa cada uno). `orden` controla en qué secuencia aparecen. Mantenimiento
+libre desde el panel — no está codificado en PHP — para que la parroquia pueda ajustar el
+texto o agregar alguno si hiciera falta.
+
 ### `mesc_turnos` y `mesc_turno_ministros`
 
 Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
 `hora` NULL, `descripcion` (texto libre, "Misa de 12:00" — no hay FK a `horarios` ni a
-`eventos`; ver [`ARQUITECTURA.md`](ARQUITECTURA.md)), `usuario_id`, `created_at`.
+`eventos`; ver [`ARQUITECTURA.md`](ARQUITECTURA.md)), `color_liturgico_id` (FK a
+`mesc_colores_liturgicos`, `ON DELETE SET NULL`, opcional), `usuario_id`, `created_at`.
 `mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`, de 1 a N ministros por
 turno. `MescController::turnoGuardar()` revalida cada `ministro_id` recibido contra
 `ministrosActivos()` de esa pastoral antes de guardar: un ministro dado de baja no puede
@@ -393,12 +403,13 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
-| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` |
+| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 31 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 32 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
-`mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos` y `mesc_turno_ministros`, menos
-`sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`).
+`mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` y
+`mesc_colores_liturgicos`, menos `sacramento_campos`, `solicitudes_sacramento` y
+`solicitudes_bitacora`).

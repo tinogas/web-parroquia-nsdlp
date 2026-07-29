@@ -562,18 +562,43 @@ CREATE TABLE IF NOT EXISTS mesc_ministros (
 -- dominical, que es justo lo que horarios evita. descripcion (texto libre,
 -- "Misa de 12:00", "Velorio familia X") es más simple y no depende de que
 -- ese horario o evento exista formalmente en el sistema.
+-- Colores litúrgicos de la Iglesia (issue #3, calendario de turnos): catálogo
+-- de referencia —blanco, verde, morado, rojo, rosa— para etiquetar cada turno
+-- según el tiempo o fiesta del día. Mantenimiento libre desde el panel: la
+-- tradición reconoce estos cinco, pero nada impide que la parroquia ajuste el
+-- texto o el tono exacto. significado se muestra tal cual como referencia en
+-- el propio módulo, no solo como ayuda del formulario.
+CREATE TABLE IF NOT EXISTS mesc_colores_liturgicos (
+    id          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre      VARCHAR(30)  NOT NULL,
+    color_hex   VARCHAR(7)   NOT NULL,
+    significado VARCHAR(400) NOT NULL,
+    orden       TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_mcl_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO mesc_colores_liturgicos (nombre, color_hex, significado, orden) VALUES
+('Blanco', '#f4f1ea', 'Significa pureza, alegría y luz. Se usa en fiestas grandes como la Navidad, la Pascua y en las celebraciones de la Virgen y de los santos que no fueron mártires.', 10),
+('Verde',  '#2e7d46', 'Representa la esperanza y la vida de cada día. Se usa durante el Tiempo Ordinario, que son las semanas largas del año donde no se celebra una fiesta especial.', 20),
+('Morado', '#6a4c93', 'Es el signo de la penitencia, la espera y la humildad. Se viste en la Cuaresma y en el Adviento, que son los tiempos de preparación antes de la Pascua y la Navidad.', 30),
+('Rojo',   '#b23a2e', 'Simboliza el fuego del Espíritu Santo y la sangre de los mártires. Se usa en el día de Pentecostés, en Viernes Santo y en las fiestas de los apóstoles y mártires.', 40),
+('Rosa',   '#e0a8c0', 'Muestra un poco de alegría en medio de un tiempo serio. Se puede usar solo dos veces al año: el tercer domingo de Adviento y el cuarto domingo de Cuaresma.', 50);
+
 CREATE TABLE IF NOT EXISTS mesc_turnos (
-    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pastoral_id TINYINT UNSIGNED NOT NULL,
-    fecha       DATE         NOT NULL,
-    hora        TIME         NULL,
-    descripcion VARCHAR(160) NOT NULL,
-    usuario_id  INT UNSIGNED NULL,
-    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id         TINYINT UNSIGNED NOT NULL,
+    fecha               DATE         NOT NULL,
+    hora                TIME         NULL,
+    descripcion         VARCHAR(160) NOT NULL,
+    color_liturgico_id  TINYINT UNSIGNED NULL,
+    usuario_id          INT UNSIGNED NULL,
+    created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_mtu_pastoral_fecha (pastoral_id, fecha),
-    CONSTRAINT fk_mtu_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
-    CONSTRAINT fk_mtu_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+    CONSTRAINT fk_mtu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)             ON DELETE CASCADE,
+    CONSTRAINT fk_mtu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)               ON DELETE SET NULL,
+    CONSTRAINT fk_mtu_color    FOREIGN KEY (color_liturgico_id) REFERENCES mesc_colores_liturgicos(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- De 1 a N ministros por turno (issue #3).

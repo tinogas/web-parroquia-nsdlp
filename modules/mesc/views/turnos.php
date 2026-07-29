@@ -1,3 +1,16 @@
+<?php
+if (!function_exists('mesc_texto_legible')) {
+    /** Blanco o negro según qué tan clara es la casilla, para que el texto del turno siempre se lea. */
+    function mesc_texto_legible(string $hex): string
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) !== 6) { return '#fff'; }
+        [$r, $g, $b] = [hexdec(substr($hex, 0, 2)), hexdec(substr($hex, 2, 2)), hexdec(substr($hex, 4, 2))];
+        $luminancia = 0.299 * $r + 0.587 * $g + 0.114 * $b;
+        return $luminancia > 150 ? '#212529' : '#fff';
+    }
+}
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
         <nav aria-label="Ubicación">
@@ -8,11 +21,24 @@
         </nav>
         <h1 class="h4 fw-bold mb-0">Calendario de turnos</h1>
     </div>
-    <?php if (Auth::tienePermiso('mesc.crear')): ?>
-    <a href="<?= e(url_admin('mesc', 'turno_nuevo')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nuevo turno
-    </a>
-    <?php endif; ?>
+    <div class="d-flex gap-2">
+        <a href="<?= e(url_admin('mesc', 'colores')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-palette me-1"></i>Colores litúrgicos
+        </a>
+        <?php if (Auth::tienePermiso('mesc.crear')): ?>
+        <a href="<?= e(url_admin('mesc', 'turno_nuevo')) ?>" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo turno
+        </a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="alert alert-warning small d-flex gap-2 align-items-start">
+    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+    <div>
+        En caso de necesidad, consiga entre los compañeros un <strong>cambio de turno</strong>, y dé aviso a la
+        Coordinación para evitar malentendidos. Gracias por su colaboración.
+    </div>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -44,9 +70,12 @@
                             <?php if ($celda): ?>
                             <div class="numero-dia"><?= $celda['dia'] ?></div>
                             <?php foreach ($celda['turnos'] as $turno): ?>
+                            <?php $fondo = $turno['color_hex'] ?: '#1e4d8b'; ?>
                             <a href="<?= e(url_admin('mesc', 'turno_editar', ['id' => $turno['id']])) ?>"
-                               class="evento-punto d-block" style="background:#1e4d8b"
-                               title="<?= e($turno['descripcion'] . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados')) ?>">
+                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
+                               title="<?= e($turno['descripcion']
+                                          . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
+                                          . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados')) ?>">
                                 <?= e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') ?><?= e($turno['descripcion']) ?>
                             </a>
                             <?php endforeach; ?>

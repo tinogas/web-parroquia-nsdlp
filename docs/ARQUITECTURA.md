@@ -556,6 +556,23 @@ el acoplamiento—. Los estilos (`.calendario-tabla`, `.numero-dia`, `.evento-pu
 copiaron de `assets/css/publico.css` a `assets/css/app.css` porque el panel carga una
 hoja de estilos distinta a la del sitio público.
 
+**Colores litúrgicos, como catálogo de mantenimiento, no como constante en PHP.**
+`mesc_colores_liturgicos` (blanco, verde, morado, rojo, rosa, con su significado) es
+editable desde el panel en `mesc/colores` en vez de vivir hardcodeado en el código: el
+propio equipo pastoral puede ajustar el texto o el tono exacto sin tocar una línea de PHP.
+Cada turno referencia opcionalmente un color (`color_liturgico_id`, `ON DELETE SET NULL`
+— borrar un color no rompe los turnos que ya lo tenían, solo los deja sin etiqueta), y el
+calendario usa ese `color_hex` como fondo de la casilla. `mesc_texto_legible()` en
+`turnos.php` calcula la luminancia percibida del color (fórmula estándar
+`0.299R + 0.587G + 0.114B`) para decidir si el texto va en blanco o en negro — el blanco
+litúrgico (`#f4f1ea`) necesita texto oscuro encima, el resto necesita texto claro, y
+hardcodear un solo color de texto para todos habría vuelto ilegible alguno de los dos.
+
+**La nota de "consiga un cambio de turno entre compañeros"** viene del calendario que la
+parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba de la
+cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
+los turnos, no de uno en particular.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se

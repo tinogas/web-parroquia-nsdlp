@@ -438,12 +438,13 @@ class MescController extends Controller
 
         $pastorales = $this->pastoralesDisponibles();
         $this->render('mesc/turno_form', [
-            'titulo'          => 'Nuevo turno',
-            'turno'           => null,
-            'pastorales'      => $pastorales,
+            'titulo'               => 'Nuevo turno',
+            'turno'                => null,
+            'pastorales'           => $pastorales,
             'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
-            'asignados'       => [],
-            'fechaSugerida'   => $this->getStr('fecha'),
+            'asignados'            => [],
+            'fechaSugerida'        => $this->getStr('fecha'),
+            'colores'              => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -470,6 +471,7 @@ class MescController extends Controller
                 $this->modelo->ministrosDeTurno((int) $turno['id'])
             ),
             'fechaSugerida'        => '',
+            'colores'              => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -512,11 +514,17 @@ class MescController extends Controller
             $idsValidos
         ));
 
+        $colorId = $this->postIntONull('color_liturgico_id');
+        if ($colorId !== null && !$this->modelo->colorLiturgicoPorId($colorId)) {
+            $colorId = null;
+        }
+
         $datos = [
-            'pastoral_id' => $pastoralId,
-            'fecha'       => $fecha,
-            'hora'        => $this->postStr('hora') ?: null,
-            'descripcion' => $descripcion,
+            'pastoral_id'        => $pastoralId,
+            'fecha'              => $fecha,
+            'hora'               => $this->postStr('hora') ?: null,
+            'descripcion'        => $descripcion,
+            'color_liturgico_id' => $colorId,
         ];
 
         if ($existente) {
@@ -552,6 +560,83 @@ class MescController extends Controller
         }
 
         $this->redirect(url_admin('mesc', 'turnos'));
+    }
+
+    // ── Colores litúrgicos ───────────────────────────────────────────────
+    // Catálogo de referencia (issue #3): a diferencia del resto del módulo,
+    // no tiene alcance por pastoral —es un catálogo compartido por cualquier
+    // pastoral que registre turnos—, así que solo exige el permiso mesc.*.
+
+    public function colores(): void
+    {
+        $this->requirePermiso('mesc.ver');
+
+        $this->render('mesc/colores_lista', [
+            'titulo'  => 'Colores litúrgicos',
+            'colores' => $this->modelo->coloresLiturgicos(),
+        ]);
+    }
+
+    public function colorGuardar(): void
+    {
+        $id        = $this->postInt('id');
+        $this->requirePermiso($id ? 'mesc.editar' : 'mesc.crear');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'colores'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $nombre = $this->postStr('nombre');
+        $hex    = $this->postStr('color_hex');
+        $significado = $this->postStr('significado');
+        if ($nombre === '' || !preg_match('/^#[0-9a-fA-F]{6}$/', $hex) || $significado === '') {
+            Session::flash('error', 'El color necesita nombre, un tono válido (#rrggbb) y su significado.');
+            $this->redirect(url_admin('mesc', 'colores'));
+            return;
+        }
+
+        $datos = [
+            'nombre'      => $nombre,
+            'color_hex'   => $hex,
+            'significado' => $significado,
+            'orden'       => $this->postInt('orden'),
+        ];
+
+        $existente = $id ? $this->modelo->colorLiturgicoPorId($id) : null;
+        if ($existente) {
+            $this->modelo->actualizarColorLiturgico($id, $datos);
+            $this->auditoria('editar', 'mesc_colores_liturgicos', $id, $nombre);
+            Session::flash('success', 'Color actualizado.');
+        } else {
+            $id = $this->modelo->crearColorLiturgico($datos);
+            $this->auditoria('crear', 'mesc_colores_liturgicos', $id, $nombre);
+            Session::flash('success', 'Color agregado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'colores'));
+    }
+
+    public function colorEliminar(): void
+    {
+        $this->requirePermiso('mesc.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'colores'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id    = $this->postInt('id');
+        $color = $this->modelo->colorLiturgicoPorId($id);
+        if ($color) {
+            $this->modelo->eliminarColorLiturgico($id);
+            $this->auditoria('eliminar', 'mesc_colores_liturgicos', $id, $color['nombre']);
+            Session::flash('success', 'Color eliminado. Los turnos que lo usaban quedan sin color asignado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'colores'));
     }
 
     // ── Privados ─────────────────────────────────────────────────────────
