@@ -28,7 +28,10 @@ class PersonaModel extends Model
             "SELECT p.*,
                     (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ', ')
                        FROM persona_pastorales pp JOIN pastorales pa ON pa.id = pp.pastoral_id
-                      WHERE pp.persona_id = p.id) AS pastorales_nombres
+                      WHERE pp.persona_id = p.id) AS pastorales_nombres,
+                    (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
+                       FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
+                      WHERE pc.persona_id = p.id) AS centros_nombres
                FROM personas p
               ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre"
         );
@@ -69,6 +72,16 @@ class PersonaModel extends Model
         return array_map(static fn (array $f): int => (int) $f['pastoral_id'], $filas);
     }
 
+    /** IDs de centro/sede asignados, para marcar las casillas del formulario. */
+    public function centrosDe(int $id): array
+    {
+        $filas = $this->fetchAll(
+            'SELECT centro_id FROM persona_centros WHERE persona_id = :id',
+            [':id' => $id]
+        );
+        return array_map(static fn (array $f): int => (int) $f['centro_id'], $filas);
+    }
+
     public function crear(array $datos): int
     {
         $this->beginTransaction();
@@ -80,6 +93,7 @@ class PersonaModel extends Model
             );
             $id = $this->lastInsertId();
             $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
             return $id;
         } catch (Throwable $e) {
@@ -100,6 +114,7 @@ class PersonaModel extends Model
                 $this->parametros($datos) + [':id' => $id]
             );
             $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
             return $filas;
         } catch (Throwable $e) {
@@ -120,6 +135,17 @@ class PersonaModel extends Model
             $this->execute(
                 'INSERT INTO persona_pastorales (persona_id, pastoral_id) VALUES (:pid, :pastoral)',
                 [':pid' => $personaId, ':pastoral' => $pid]
+            );
+        }
+    }
+
+    private function sincronizarCentros(int $personaId, array $centroIds): void
+    {
+        $this->execute('DELETE FROM persona_centros WHERE persona_id = :id', [':id' => $personaId]);
+        foreach (array_unique($centroIds) as $cid) {
+            $this->execute(
+                'INSERT INTO persona_centros (persona_id, centro_id) VALUES (:pid, :centro)',
+                [':pid' => $personaId, ':centro' => $cid]
             );
         }
     }

@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
 
 class PersonaController extends Controller
 {
@@ -27,10 +28,12 @@ class PersonaController extends Controller
         $this->requirePermiso('personas.editar');
 
         $this->render('personas/form', [
-            'titulo'     => 'Nueva persona',
-            'persona'    => null,
-            'pastorales' => (new PastoralModel())->paraSelector(),
-            'asignadas'  => [],
+            'titulo'           => 'Nueva persona',
+            'persona'          => null,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => [],
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => [],
         ]);
     }
 
@@ -46,10 +49,12 @@ class PersonaController extends Controller
         }
 
         $this->render('personas/form', [
-            'titulo'     => $persona['nombre'],
-            'persona'    => $persona,
-            'pastorales' => (new PastoralModel())->paraSelector(),
-            'asignadas'  => $this->modelo->pastoralesDe((int) $persona['id']),
+            'titulo'           => $persona['nombre'],
+            'persona'          => $persona,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => $this->modelo->pastoralesDe((int) $persona['id']),
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => $this->modelo->centrosDe((int) $persona['id']),
         ]);
     }
 
@@ -90,6 +95,10 @@ class PersonaController extends Controller
             'intval',
             array_filter((array) ($_POST['pastorales'] ?? []), 'is_numeric')
         )));
+        $centros = array_values(array_unique(array_map(
+            'intval',
+            array_filter((array) ($_POST['centros'] ?? []), 'is_numeric')
+        )));
 
         $datos = [
             'nombre'     => $nombre,
@@ -102,6 +111,7 @@ class PersonaController extends Controller
             'orden'      => $this->postInt('orden'),
             'activo'     => $this->postBool('activo'),
             'pastorales' => $pastorales,
+            'centros'    => $centros,
         ];
 
         if ($actual) {

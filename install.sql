@@ -375,6 +375,17 @@ CREATE TABLE IF NOT EXISTS persona_pastorales (
     CONSTRAINT fk_pp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pivote análogo, pero por centro/sede: alguien del equipo puede estar
+-- adscrito a más de un centro (igual que usuarios_centros para el rol
+-- coordinador). FK real a centros, creada más abajo.
+CREATE TABLE IF NOT EXISTS persona_centros (
+    persona_id SMALLINT UNSIGNED NOT NULL,
+    centro_id  SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (persona_id, centro_id),
+    CONSTRAINT fk_pc_persona FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_centro  FOREIGN KEY (centro_id)  REFERENCES centros(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Árbol autorreferenciado de hasta 4 niveles. Un nodo puede apuntar a una
 -- persona, a una pastoral, o a ninguna de las dos y ser solo un título de
 -- agrupación ("Consejo Pastoral").
