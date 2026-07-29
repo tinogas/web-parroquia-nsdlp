@@ -51,7 +51,7 @@ class CatequesisController extends Controller
         }
 
         try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdValidado();
+            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdCatequesisValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
             $this->redirect(url_admin('catequesis'));
@@ -149,7 +149,7 @@ class CatequesisController extends Controller
         }
 
         try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdValidado();
+            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdCatequesisValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
             $this->redirect(url_admin('catequesis', 'actividades'));
@@ -226,7 +226,7 @@ class CatequesisController extends Controller
         $this->validarCsrf();
 
         try {
-            $pastoralId = $this->pastoralIdValidado();
+            $pastoralId = $this->pastoralIdCatequesisValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
             $this->redirect(url_admin('catequesis', 'documentos'));
@@ -292,7 +292,7 @@ class CatequesisController extends Controller
     // ── Privados ─────────────────────────────────────────────────────────
 
     /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
-    private function pastoralIdValidado(): int
+    private function pastoralIdCatequesisValidado(): int
     {
         $enviado = $this->postIntONull('pastoral_id');
         if ($enviado === null) {

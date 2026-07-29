@@ -109,7 +109,7 @@ class LectorController extends Controller
         }
 
         try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdValidado();
+            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdLectorValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('lector', 'turno_editar', ['id' => $id]) : url_admin('lector', 'turno_nuevo'));
@@ -254,7 +254,7 @@ class LectorController extends Controller
     // ── Privados ─────────────────────────────────────────────────────────
 
     /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
-    private function pastoralIdValidado(): int
+    private function pastoralIdLectorValidado(): int
     {
         $enviado = $this->postIntONull('pastoral_id');
         if ($enviado === null) {
