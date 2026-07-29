@@ -29,7 +29,7 @@ class UsuarioController extends Controller
 
         $this->render('usuarios/form', [
             'titulo'     => 'Nuevo usuario',
-            'usuario'    => null,
+            'cuenta'     => null,
             'pastorales' => (new PastoralModel())->paraSelector(),
             'asignadas'  => [],
         ]);
@@ -39,18 +39,24 @@ class UsuarioController extends Controller
     {
         $this->requirePermiso('usuarios.editar');
 
-        $usuario = $this->modelo->porId($this->getInt('id'));
-        if (!$usuario) {
+        $cuenta = $this->modelo->porId($this->getInt('id'));
+        if (!$cuenta) {
             Session::flash('error', 'No encontramos a ese usuario.');
             $this->redirect(url_admin('usuarios'));
             return;
         }
 
         $this->render('usuarios/form', [
-            'titulo'     => $usuario['nombre'],
-            'usuario'    => $usuario,
+            'titulo'     => $cuenta['nombre'],
+            // OJO: 'usuario' es una clave reservada de Controller::render() —
+            // guarda ahí SIEMPRE al administrador con sesión activa (la usa el
+            // navbar). Usarla para la cuenta que se está editando la pisa en
+            // silencio con Auth::usuario(), y el formulario termina mostrando
+            // los datos de quien tiene la sesión abierta en vez de los de la
+            // cuenta editada. De ahí el nombre 'cuenta' en vez de 'usuario'.
+            'cuenta'     => $cuenta,
             'pastorales' => (new PastoralModel())->paraSelector(),
-            'asignadas'  => $this->modelo->pastoralesDe((int) $usuario['id']),
+            'asignadas'  => $this->modelo->pastoralesDe((int) $cuenta['id']),
         ]);
     }
 

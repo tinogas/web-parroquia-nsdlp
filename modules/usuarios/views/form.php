@@ -1,4 +1,4 @@
-<?php $esNuevo = $usuario === null; ?>
+<?php $esNuevo = $cuenta === null; ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
     <div>
@@ -10,7 +10,7 @@
                 <li class="breadcrumb-item active" aria-current="page"><?= $esNuevo ? 'Nuevo' : 'Editar' ?></li>
             </ol>
         </nav>
-        <h1 class="h4 fw-bold mb-0"><?= $esNuevo ? 'Nuevo usuario' : e($usuario['nombre']) ?></h1>
+        <h1 class="h4 fw-bold mb-0"><?= $esNuevo ? 'Nuevo usuario' : e($cuenta['nombre']) ?></h1>
     </div>
     <a href="<?= e(url_admin('usuarios')) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver
@@ -20,7 +20,7 @@
 <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'usuarios', 'guardar')) ?>"
       enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-    <input type="hidden" name="id" value="<?= $esNuevo ? 0 : (int) $usuario['id'] ?>">
+    <input type="hidden" name="id" value="<?= $esNuevo ? 0 : (int) $cuenta['id'] ?>">
 
     <div class="row g-4">
         <div class="col-lg-8">
@@ -31,14 +31,14 @@
                         <div class="col-md-7">
                             <label for="nombre" class="form-label fw-semibold">Nombre completo</label>
                             <input type="text" name="nombre" id="nombre" class="form-control"
-                                   value="<?= e($esNuevo ? '' : $usuario['nombre']) ?>" maxlength="120" required>
+                                   value="<?= e($esNuevo ? '' : $cuenta['nombre']) ?>" maxlength="120" required>
                         </div>
                         <div class="col-md-5">
                             <label for="rol" class="form-label fw-semibold">Rol</label>
                             <select name="rol" id="rol" class="form-select">
                                 <?php foreach (ROLES_NOMBRES as $valor => $etiqueta): ?>
                                 <option value="<?= e($valor) ?>"
-                                    <?= (!$esNuevo && $usuario['rol'] === $valor) ? 'selected' : '' ?>>
+                                    <?= (!$esNuevo && $cuenta['rol'] === $valor) ? 'selected' : '' ?>>
                                     <?= e($etiqueta) ?>
                                 </option>
                                 <?php endforeach; ?>
@@ -50,13 +50,13 @@
                         <div class="col-md-7">
                             <label for="email" class="form-label fw-semibold">Correo electrónico</label>
                             <input type="email" name="email" id="email" class="form-control"
-                                   value="<?= e($esNuevo ? '' : $usuario['email']) ?>" required>
+                                   value="<?= e($esNuevo ? '' : $cuenta['email']) ?>" required>
                             <div class="form-text">Con este correo se inicia sesión.</div>
                         </div>
                         <div class="col-md-5">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
-                                   value="<?= e($esNuevo ? '' : (string) $usuario['telefono']) ?>">
+                                   value="<?= e($esNuevo ? '' : (string) $cuenta['telefono']) ?>">
                         </div>
                     </div>
 
@@ -71,7 +71,7 @@
                         </div>
                     </div>
 
-                    <?php if ($esNuevo || $usuario['rol'] === ROL_COORDINADOR): ?>
+                    <?php if ($esNuevo || $cuenta['rol'] === ROL_COORDINADOR): ?>
                     <div class="mb-0">
                         <label class="form-label fw-semibold">Pastorales que administra</label>
                         <div class="form-text mb-2">
@@ -109,16 +109,16 @@
                     <?php
                     $ci_nombre   = 'foto';
                     $ci_etiqueta = 'Fotografía';
-                    $ci_actual   = $esNuevo ? '' : (string) $usuario['foto'];
+                    $ci_actual   = $esNuevo ? '' : (string) $cuenta['foto'];
                     $ci_ayuda    = 'Se muestra junto a su nombre en el panel.';
                     require BASE_PATH . '/shared/views/parciales/campo_imagen.php';
                     ?>
 
-                    <?php $esPropio = !$esNuevo && (int) $usuario['id'] === (int) Auth::usuario()['id']; ?>
+                    <?php $esPropio = !$esNuevo && (int) $cuenta['id'] === (int) Auth::usuario()['id']; ?>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch"
                                name="activo" id="activo" value="1"
-                               <?= ($esNuevo || $usuario['activo']) ? 'checked' : '' ?>
+                               <?= ($esNuevo || $cuenta['activo']) ? 'checked' : '' ?>
                                <?= $esPropio ? 'disabled' : '' ?>>
                         <label class="form-check-label fw-semibold" for="activo">Activo</label>
                         <?php if ($esPropio): ?>
