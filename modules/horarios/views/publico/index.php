@@ -13,21 +13,22 @@
 <div class="row g-4">
     <?php foreach ($porCentro as $grupo): ?>
         <?php $icono = $grupo['tipo'] === 'sede' ? 'bi-building' : ($grupo['tipo'] === 'centro' ? 'bi-geo-alt' : 'bi-calendar3'); ?>
-        <div class="col-lg-6">
+        <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
                     <h2 class="h6 fw-bold mb-3">
                         <i class="bi <?= e($icono) ?> text-dorado me-1"></i><?= e($grupo['nombre']) ?>
                     </h2>
-                    <?php foreach ($grupo['dias'] as $dia => $horariosDelDia): ?>
+                    <?php foreach ($grupo['porTipo'] as $tipo => $horariosDelTipo): ?>
                     <div class="mb-3">
-                        <p class="horario-dia-titulo mb-1"><?= e(ucfirst(nombre_dia((int) $dia))) ?></p>
+                        <p class="horario-grupo-titulo mb-1">
+                            <i class="bi <?= e(HorarioModel::TIPOS[$tipo][1] ?? 'bi-calendar3') ?> me-1"></i>
+                            <?= e(HorarioModel::TIPOS[$tipo][0] ?? $tipo) ?>
+                        </p>
                         <ul class="list-unstyled mb-0 lista-horarios">
-                            <?php foreach ($horariosDelDia as $horario): ?>
+                            <?php foreach ($horariosDelTipo as $horario): ?>
                             <li>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis">
-                                    <?= e(HorarioModel::TIPOS[$horario['tipo']][0] ?? $horario['tipo']) ?>
-                                </span>
+                                <span class="dia"><?= e(ucfirst(nombre_dia((int) $horario['dia_semana']))) ?></span>
                                 <span class="hora">
                                     <?= e(hora_corta($horario['hora'])) ?>
                                     <?php if ($horario['hora_fin']): ?> – <?= e(hora_corta($horario['hora_fin'])) ?><?php endif; ?>

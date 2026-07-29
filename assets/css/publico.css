@@ -287,13 +287,17 @@
     padding-bottom: 0;
 }
 
-.horario-dia-titulo {
+.horario-grupo-titulo {
     font-weight: 600;
-    text-transform: capitalize;
     font-size: .78rem;
     letter-spacing: .03em;
     color: var(--azul-oscuro);
     opacity: .75;
+}
+
+.lista-horarios .dia {
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 .lista-horarios .hora {
