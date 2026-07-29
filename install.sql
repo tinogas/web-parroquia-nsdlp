@@ -428,92 +428,23 @@ CREATE TABLE IF NOT EXISTS pastoral_actividades (
 -- SACRAMENTOS
 -- ------------------------------------------------------------
 
--- Catálogo. Semillas: bautizo, primera comunión, confirmación, matrimonio,
--- confesión, unción de enfermos.
+-- Catálogo puramente informativo (issue #3: se eliminó el formulario de
+-- solicitud en línea, junto con sacramento_campos, solicitudes_sacramento y
+-- solicitudes_bitacora — ver docs/ARQUITECTURA.md). Semillas: bautizo,
+-- primera comunión, confirmación, matrimonio, confesión, unción de enfermos.
 CREATE TABLE IF NOT EXISTS sacramentos (
-    id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    slug               VARCHAR(60)  NOT NULL,
-    nombre             VARCHAR(80)  NOT NULL,
-    descripcion        MEDIUMTEXT   NULL,
-    requisitos         MEDIUMTEXT   NULL,
-    documentos         MEDIUMTEXT   NULL,
-    aportacion         VARCHAR(80)  NULL,
-    imagen             VARCHAR(255) NULL,
-    acepta_solicitudes TINYINT(1)   NOT NULL DEFAULT 1,
-    requiere_tutor     TINYINT(1)   NOT NULL DEFAULT 0,
-    orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo             TINYINT(1)   NOT NULL DEFAULT 1,
+    id          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug        VARCHAR(60)  NOT NULL,
+    nombre      VARCHAR(80)  NOT NULL,
+    descripcion MEDIUMTEXT   NULL,
+    requisitos  MEDIUMTEXT   NULL,
+    documentos  MEDIUMTEXT   NULL,
+    aportacion  VARCHAR(80)  NULL,
+    imagen      VARCHAR(255) NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     UNIQUE KEY uq_sac_slug (slug)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Campos adicionales que pide cada sacramento en su formulario: es lo que
--- permite agregar "nombre del padrino" a Confirmación sin tocar el esquema.
--- Los marcados dato_sensible=1 solo se muestran a admin y secretaría.
-CREATE TABLE IF NOT EXISTS sacramento_campos (
-    id            SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    sacramento_id TINYINT UNSIGNED NOT NULL,
-    nombre_campo  VARCHAR(40)  NOT NULL,
-    etiqueta      VARCHAR(120) NOT NULL,
-    tipo          ENUM('texto','textarea','fecha','telefono','email','seleccion','checkbox')
-                               NOT NULL DEFAULT 'texto',
-    opciones      VARCHAR(255) NULL,
-    requerido     TINYINT(1)   NOT NULL DEFAULT 0,
-    dato_sensible TINYINT(1)   NOT NULL DEFAULT 0,
-    orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo        TINYINT(1)   NOT NULL DEFAULT 1,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_scp (sacramento_id, nombre_campo),
-    CONSTRAINT fk_scp_sacramento FOREIGN KEY (sacramento_id) REFERENCES sacramentos(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- La tabla más delicada del sistema: datos personales, con frecuencia de
--- menores. es_menor se calcula en el servidor a partir de fecha_nacimiento,
--- nunca se confía en lo que mande el formulario. Ver docs/PRIVACIDAD.md
-CREATE TABLE IF NOT EXISTS solicitudes_sacramento (
-    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    folio              VARCHAR(20)  NOT NULL,
-    sacramento_id      TINYINT UNSIGNED NOT NULL,
-    nombre_solicitante VARCHAR(150) NOT NULL,
-    fecha_nacimiento   DATE         NULL,
-    es_menor           TINYINT(1)   NOT NULL DEFAULT 0,
-    telefono           VARCHAR(20)  NULL,
-    email              VARCHAR(150) NULL,
-    direccion          VARCHAR(255) NULL,
-    tutor_nombre       VARCHAR(150) NULL,
-    tutor_parentesco   VARCHAR(60)  NULL,
-    tutor_telefono     VARCHAR(20)  NULL,
-    fecha_preferida    DATE         NULL,
-    notas              TEXT         NULL,
-    datos_extra        JSON         NULL,
-    estado             ENUM('pendiente','en_revision','aprobada','rechazada','cancelada','completada')
-                                    NOT NULL DEFAULT 'pendiente',
-    motivo_estado      VARCHAR(255) NULL,
-    atendida_por       INT UNSIGNED NULL,
-    atendida_at        DATETIME     NULL,
-    consentimiento     TINYINT(1)   NOT NULL DEFAULT 0,
-    consentimiento_ip  VARCHAR(45)  NULL,
-    aviso_version      VARCHAR(20)  NULL,
-    origen             ENUM('web','panel') NOT NULL DEFAULT 'web',
-    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_sol_folio (folio),
-    KEY idx_sol_estado (estado, created_at),
-    KEY idx_sol_sac (sacramento_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Historial de cambios de estado: "¿quién aprobó esto y cuándo?" sin adivinar.
-CREATE TABLE IF NOT EXISTS solicitudes_bitacora (
-    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    solicitud_id    INT UNSIGNED NOT NULL,
-    usuario_id      INT UNSIGNED NULL,
-    estado_anterior VARCHAR(20)  NULL,
-    estado_nuevo    VARCHAR(20)  NOT NULL,
-    comentario      VARCHAR(255) NULL,
-    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_solb_solicitud (solicitud_id),
-    CONSTRAINT fk_solb_solicitud FOREIGN KEY (solicitud_id) REFERENCES solicitudes_sacramento(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -629,8 +560,7 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
     ('meta_descripcion',         '',   'seo'),
     ('og_imagen',                '',   'seo'),
 
-    ('aviso_privacidad_version', '1.0', 'legal'),
-    ('retencion_meses_solicitudes', '36', 'legal');
+    ('aviso_privacidad_version', '1.0', 'legal');
 
 -- ------------------------------------------------------------
 -- SEMILLAS DE BLOQUES DE CONTENIDO
@@ -681,13 +611,13 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, contenid
 -- parroquia son los requisitos y documentos, que quedan en blanco para que
 -- la parroquia los capture desde el panel antes de publicar el sitio.
 
-INSERT IGNORE INTO sacramentos (slug, nombre, acepta_solicitudes, requiere_tutor, orden) VALUES
-    ('bautizo',            'Bautizo',                   1, 1, 10),
-    ('primera-comunion',   'Primera Comunión',           1, 1, 20),
-    ('confirmacion',       'Confirmación',                1, 1, 30),
-    ('matrimonio',         'Matrimonio',                 1, 0, 40),
-    ('confesion',          'Confesión',                  0, 0, 50),
-    ('uncion-enfermos',    'Unción de los Enfermos',     1, 0, 60);
+INSERT IGNORE INTO sacramentos (slug, nombre, orden) VALUES
+    ('bautizo',          'Bautizo',                 10),
+    ('primera-comunion', 'Primera Comunión',        20),
+    ('confirmacion',     'Confirmación',            30),
+    ('matrimonio',       'Matrimonio',               40),
+    ('confesion',        'Confesión',                50),
+    ('uncion-enfermos',  'Unción de los Enfermos',   60);
 
 -- ------------------------------------------------------------
 -- AVISO DE PRIVACIDAD (BORRADOR)
@@ -703,15 +633,13 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 <h2>Responsable del tratamiento</h2>
 <p>La [DENOMINACION LEGAL DE LA ASOCIACION RELIGIOSA], con domicilio en [DOMICILIO COMPLETO], es responsable del uso y proteccion de sus datos personales.</p>
 <h2>Datos que recabamos</h2>
-<p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, domicilio, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
+<p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
 <p>No solicitamos datos patrimoniales ni datos personales sensibles.</p>
 <h2>Para que usamos sus datos</h2>
 <p>Finalidades necesarias para el tramite solicitado:</p>
 <ul>
-<li>Atender y dar seguimiento a solicitudes de sacramentos.</li>
 <li>Registrar inscripciones a cursos y catequesis.</li>
 <li>Responder los mensajes que nos envia por el formulario de contacto.</li>
-<li>Integrar los registros sacramentales que la parroquia debe conservar.</li>
 </ul>
 <p>Finalidades adicionales, que no son necesarias y a las que puede oponerse:</p>
 <ul>
@@ -720,14 +648,14 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 <h2>Datos de menores de edad</h2>
 <p>Cuando el solicitante es menor de edad, el padre, la madre o el tutor debe otorgar el consentimiento y proporcionar sus propios datos de contacto. No publicamos nombres ni fotografias de menores en este sitio sin autorizacion expresa por escrito.</p>
 <h2>Transferencias</h2>
-<p>No transferimos sus datos a terceros, salvo a la [DIOCESIS O ARQUIDIOCESIS] cuando la normativa eclesiastica lo requiera para el registro del sacramento, y a las autoridades competentes cuando exista una obligacion legal.</p>
+<p>No transferimos sus datos a terceros, salvo a las autoridades competentes cuando exista una obligacion legal.</p>
 <h2>Como ejercer sus derechos</h2>
 <p>Usted puede acceder a sus datos, rectificarlos si son inexactos, cancelarlos u oponerse a su uso. Tambien puede revocar el consentimiento que nos otorgo.</p>
 <p>Para ello, escriba a <strong>[CORREO DE CONTACTO]</strong> o acuda a la oficina parroquial en el domicilio senalado, durante el horario de atencion. Le pediremos identificarse y describir con claridad que dato desea corregir o eliminar. Responderemos en un plazo maximo de veinte dias habiles.</p>
 <h2>Conservacion de los datos</h2>
-<p>Los datos de solicitudes e inscripciones ya atendidas se conservan el tiempo indicado en la configuracion del sitio, y despues se anonimizan: se conservan solo las cifras, sin los datos que identifican a la persona. Los registros sacramentales se conservan de forma permanente por obligacion eclesiastica.</p>
+<p>Conservamos los datos de sus inscripciones solo el tiempo necesario para el curso o la actividad de que se trate. Puede solicitar su cancelacion en cualquier momento por los medios indicados en la seccion "Como ejercer sus derechos".</p>
 <h2>Cambios a este aviso</h2>
-<p>Cualquier modificacion se publicara en esta misma pagina. Cada solicitud que recibimos queda asociada a la version del aviso que estaba vigente al momento de enviarla.</p>
+<p>Cualquier modificacion se publicara en esta misma pagina. Cada inscripcion o mensaje que recibimos queda asociado a la version del aviso que estaba vigente al momento de enviarlo.</p>
 <p><em>Ultima actualizacion: [FECHA].</em></p>',
 'Aviso de privacidad de la parroquia: que datos recabamos, para que los usamos y como ejercer sus derechos.',
 0, 100);

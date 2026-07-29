@@ -2,7 +2,7 @@
 
 Sitio web público y sistema de administración de contenido a la medida para la Parroquia
 Nuestra Señora de la Paz. Permite al equipo parroquial publicar avisos, eventos, horarios
-de misas y actividades de las pastorales, y recibir solicitudes de sacramentos e
+de misas, información de sacramentos y actividades de las pastorales, y recibir
 inscripciones a cursos, todo desde un panel de administración con usuarios y roles.
 
 ## Estado
@@ -130,7 +130,7 @@ Cuatro reglas que el proyecto no negocia:
    en subcarpeta o en la raíz de un dominio.
 4. **Los datos personales de menores no se publican nunca.** Ver
    [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) antes de agregar cualquier vista pública
-   que toque solicitudes, inscripciones o fotografías.
+   que toque inscripciones, mensajes o fotografías.
 
 ## Licencia
 

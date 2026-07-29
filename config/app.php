@@ -48,8 +48,8 @@ if (APP_DEBUG) {
 // ------------------------------------------------------------
 // Protección de datos personales
 // ------------------------------------------------------------
-// Versión del aviso de privacidad vigente. Cada solicitud, inscripción y
-// mensaje guarda la versión que la persona aceptó; sin esto no se puede
+// Versión del aviso de privacidad vigente. Cada inscripción y mensaje guarda
+// la versión que la persona aceptó; sin esto no se puede
 // demostrar a qué dio su consentimiento. Al publicar un aviso nuevo hay que
 // incrementar esta constante y la clave 'aviso_privacidad_version' de la
 // tabla configuracion. Ver docs/PRIVACIDAD.md
@@ -128,7 +128,6 @@ define('PERMISOS', [
     ROL_SECRETARIA => [
         'panel.ver',
         'mensajes.ver', 'mensajes.editar',
-        'solicitudes.ver', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
         'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],

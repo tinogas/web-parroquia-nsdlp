@@ -72,13 +72,8 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('solicitudes.ver') || Auth::tienePermiso('inscripciones.ver')): ?>
+        <?php if (Auth::tienePermiso('inscripciones.ver')): ?>
         <div class="sidebar-section mt-2">Trámites</div>
-        <?php endif; ?>
-        <?php if (Auth::tienePermiso('solicitudes.ver')): ?>
-        <a href="<?= e(url_admin('solicitudes')) ?>" class="sidebar-link <?= $activo('solicitudes') ?>">
-            <i class="bi bi-file-earmark-text"></i> Solicitudes
-        </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('inscripciones.ver')): ?>
         <a href="<?= e(url_admin('inscripciones')) ?>" class="sidebar-link <?= $activo('inscripciones') ?>">

@@ -53,9 +53,7 @@ class ConfiguracionModel extends Model
                                  'La que aparece cuando alguien comparte el sitio en redes. Horizontal, de 1200 × 630 píxeles.'],
 
         'aviso_privacidad_version'    => ['Versión del aviso de privacidad', 'solo_lectura', 'legal',
-                                          'Se cambia en config/app.php al publicar un aviso nuevo. Cada solicitud guarda la versión que aceptó la persona.'],
-        'retencion_meses_solicitudes' => ['Conservar solicitudes (meses)',   'numero',       'legal',
-                                          'Pasado ese plazo, los datos personales de las solicitudes ya atendidas se pueden anonimizar.'],
+                                          'Se cambia en config/app.php al publicar un aviso nuevo. Cada inscripción y mensaje guarda la versión que aceptó la persona.'],
     ];
 
     /** Claves cuyo valor es una ruta de imagen subida. */

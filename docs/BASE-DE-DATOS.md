@@ -1,8 +1,10 @@
 # Base de datos
 
-Diccionario de las 26 tablas del sistema (24 de las diez etapas del plan original, más
-`respaldos_log` y `centros` añadidas después, en el issue #3). El esquema real vive en
-`install.sql`; este documento explica el porqué de cada tabla y sus columnas relevantes.
+Diccionario de las 23 tablas del sistema: las 24 de las diez etapas del plan original, más
+`respaldos_log` y `centros` (issue #3), menos `sacramento_campos`, `solicitudes_sacramento`
+y `solicitudes_bitacora` (también issue #3: se eliminó el formulario de solicitud en línea
+de sacramentos). El esquema real vive en `install.sql`; este documento explica el porqué de
+cada tabla y sus columnas relevantes.
 
 ## Convenciones
 
@@ -90,7 +92,7 @@ Pares clave-valor globales, agrupados por `grupo` (`general`, `contacto`, `redes
 Claves sembradas: `parroquia_nombre`, `parroquia_diocesis`, `direccion`, `ciudad`, `cp`,
 `telefono`, `whatsapp`, `email`, `mapa_embed`, `latitud`, `longitud`, `horario_oficina`,
 `facebook`, `instagram`, `youtube`, `logo`, `favicon`, `og_imagen`, `meta_descripcion`,
-`aviso_privacidad_version`, `organigrama_imagen`, `retencion_meses_solicitudes`.
+`aviso_privacidad_version`, `organigrama_imagen`.
 
 ---
 
@@ -211,65 +213,23 @@ Actividades comunitarias y de apoyo social de cada pastoral. `pastoral_id`, `tit
 
 ---
 
-## Sacramentos y solicitudes
+## Sacramentos
 
 ### `sacramentos`
 
-Catálogo. `slug` con `uq_sac_slug`, `nombre`, `descripcion`, `requisitos` MEDIUMTEXT,
-`documentos` MEDIUMTEXT, `aportacion`, `imagen`, `acepta_solicitudes`, `requiere_tutor`,
-`orden`, `activo`.
+Catálogo puramente informativo (issue #3: se eliminaron `acepta_solicitudes` y
+`requiere_tutor`, junto con todo el formulario de solicitud en línea). `slug` con
+`uq_sac_slug`, `nombre`, `descripcion`, `requisitos` MEDIUMTEXT, `documentos` MEDIUMTEXT,
+`aportacion`, `imagen`, `orden`, `activo`.
 
 Semillas: bautizo, primera comunión, confirmación, matrimonio, confesión, unción de
 enfermos.
 
-### `sacramento_campos`
-
-Define qué campos adicionales pide cada sacramento en su formulario. `sacramento_id`,
-`nombre_campo`, `etiqueta`, `tipo` ENUM(`texto`, `textarea`, `fecha`, `telefono`, `email`,
-`seleccion`, `checkbox`), `opciones`, `requerido`, `dato_sensible`, `orden`, `activo`.
-Único `uq_scp (sacramento_id, nombre_campo)`.
-
-Es lo que permite que el párroco agregue "nombre del padrino" a Confirmación sin tocar el
-esquema. Los campos marcados con `dato_sensible = 1` solo se muestran a administrador y
-secretaría.
-
-### `solicitudes_sacramento`
-
-La tabla más delicada del sistema: contiene datos personales, con frecuencia de menores.
-
-| Columna | Tipo | Notas |
-|---|---|---|
-| `folio` | VARCHAR(20) | `uq_sol_folio`; formato `BAU-2026-00001` |
-| `sacramento_id` | TINYINT UNSIGNED | |
-| `nombre_solicitante` | VARCHAR(150) | |
-| `fecha_nacimiento` | DATE | |
-| `es_menor` | TINYINT(1) | Calculado en el servidor, no confiado al cliente |
-| `telefono`, `email`, `direccion` | | |
-| `tutor_nombre`, `tutor_parentesco`, `tutor_telefono` | | Obligatorios si `es_menor = 1` |
-| `fecha_preferida` | DATE NULL | |
-| `notas` | TEXT | |
-| `datos_extra` | JSON NULL | Respuestas de `sacramento_campos` |
-| `estado` | ENUM | `pendiente`, `en_revision`, `aprobada`, `rechazada`, `cancelada`, `completada` |
-| `motivo_estado` | VARCHAR(255) | |
-| `atendida_por`, `atendida_at` | | |
-| `consentimiento` | TINYINT(1) | Sin él no se inserta |
-| `consentimiento_ip` | VARCHAR(45) | |
-| `aviso_version` | VARCHAR(20) | Versión del aviso de privacidad aceptada |
-| `origen` | ENUM | `web` o `panel` |
-
-Índices `idx_sol_estado (estado, created_at)` e `idx_sol_sac (sacramento_id)`.
-
-Sobre `datos_extra JSON`: la decisión y su trade-off están explicados en
-[`ARQUITECTURA.md`](ARQUITECTURA.md#campos-de-sacramento-configurables). En resumen, no es
-cómodo de buscar, y se acepta porque las búsquedas reales son por folio, nombre,
-sacramento y estado, que son columnas reales.
-
-### `solicitudes_bitacora`
-
-Historial de cambios de estado: `solicitud_id`, `usuario_id`, `estado_anterior`,
-`estado_nuevo`, `comentario`, `created_at`. Foránea con `ON DELETE CASCADE`.
-
-Permite responder "¿quién aprobó esto y cuándo?" sin adivinar.
+> Hasta el issue #3, aquí vivían también `sacramento_campos`, `solicitudes_sacramento` y
+> `solicitudes_bitacora` (formulario de solicitud en línea, con folio, bandeja de estados y
+> campos configurables por sacramento). Se eliminaron las tres tablas por completo. Ver
+> [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sacramentos: catálogo puramente
+> informativo".
 
 ---
 
@@ -346,9 +306,9 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
-| Sacramentos | `sacramentos`, `sacramento_campos`, `solicitudes_sacramento`, `solicitudes_bitacora` |
+| Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 26 tablas** (24 de las diez etapas del plan original, más `respaldos_log` y
-`centros`).
+**Total: 23 tablas** (24 de las diez etapas del plan original, más `respaldos_log` y
+`centros`, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`).

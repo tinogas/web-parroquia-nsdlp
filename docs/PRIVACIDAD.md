@@ -3,14 +3,14 @@
 ## Por qué este documento existe
 
 Un sitio parroquial parece inofensivo hasta que se mira lo que realmente maneja: nombres,
-fechas de nacimiento, domicilios y teléfonos de niños que se preparan para su primera
-comunión o su confirmación, y de sus padres. Son datos personales de **menores de edad**,
-la categoría que la Ley Federal de Protección de Datos Personales en Posesión de los
-Particulares (LFPDPPP) trata con más cuidado.
+fechas de nacimiento, teléfonos y correos de niños inscritos a catequesis o a un curso, y
+de sus padres. Son datos personales de **menores de edad**, la categoría que la Ley
+Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) trata
+con más cuidado.
 
 Las reglas de este documento **no son recomendaciones**. Son requisitos del sistema, y
 están implementadas en el código. Cualquiera que agregue una vista pública que toque
-solicitudes, inscripciones o fotografías debe leer esto antes.
+inscripciones, mensajes o fotografías debe leer esto antes.
 
 ## Aviso de privacidad
 
@@ -38,7 +38,7 @@ persona, no hay forma de demostrar a qué dio su consentimiento.
 
 Por eso existe la constante `AVISO_VERSION` en `config/app.php`, espejada en la clave
 `aviso_privacidad_version` de la tabla `configuracion`. Cada registro de
-`solicitudes_sacramento`, `inscripciones_curso` y `mensajes_contacto` guarda tres columnas:
+`inscripciones_curso` y `mensajes_contacto` guarda tres columnas:
 
 | Columna | Qué guarda |
 |---|---|
@@ -75,12 +75,8 @@ Si la fecha de nacimiento capturada implica menos de 18 años:
 Solo se pide lo que hace falta para el trámite.
 
 **No se pide** CURP, RFC, número de seguridad social, ni ningún dato sensible en el
-sentido de la ley: origen étnico, estado de salud, creencias distintas a la propia
-participación sacramental, preferencias sexuales u opiniones políticas.
-
-Si el registro sacramental exigiera un dato adicional, se agrega mediante
-`sacramento_campos` marcándolo con `dato_sensible = 1`. Esos campos solo se muestran a los
-roles de administrador y secretaría.
+sentido de la ley: origen étnico, estado de salud, creencias religiosas, preferencias
+sexuales u opiniones políticas.
 
 ## Qué nunca se publica
 
@@ -92,8 +88,8 @@ administre:
 pública filtra `WHERE publicada = 1 AND autorizacion_imagen = 1`. Una fotografía sin
 autorización registrada no puede llegar al sitio ni por descuido.
 
-**Listas de inscritos, solicitudes o folios.** Viven exclusivamente en el panel
-autenticado. No hay ni habrá una vista pública de "quiénes se inscribieron".
+**Listas de inscritos o folios.** Viven exclusivamente en el panel autenticado. No hay ni
+habrá una vista pública de "quiénes se inscribieron".
 
 **Domicilios y teléfonos particulares** de feligreses o del equipo pastoral. En la tabla
 `personas` se publica únicamente el correo institucional.
@@ -116,8 +112,7 @@ actividades, pero no tiene por qué ver las actas de nacimiento de los niños de
 La función `auditoria()` se llama **también en la lectura** de datos personales, no solo
 al escribirlos:
 
-- Al abrir el listado de solicitudes o de inscripciones: `accion = 'consultar'`.
-- Al abrir el detalle de una solicitud.
+- Al abrir el listado o el detalle de una inscripción a un curso: `accion = 'consultar'`.
 - En **cada exportación a CSV**, que es el punto por donde los datos salen del sistema.
 
 Es lo que permite responder con hechos si alguien pregunta quién consultó su información.
@@ -125,25 +120,25 @@ Es lo que permite responder con hechos si alguien pregunta quién consultó su i
 **Impersonación ("Usar como…").** El administrador puede operar el panel con la sesión de
 otra cuenta, incluida secretaría. Sin más, eso podría volver ambigua la pregunta "¿quién
 consultó este dato?": la fila de auditoría mostraría a secretaría, aunque quien realmente
-haya abierto la solicitud fuera el administrador actuando como ella. La columna
+haya abierto el registro fuera el administrador actuando como ella. La columna
 `admin_real_id` de `auditoria` resuelve esto: queda el administrador real detrás de
 cualquier consulta o exportación hecha durante una impersonación. Ver
 [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Impersonación".
 
 ## Retención
 
-Los datos no se conservan indefinidamente. La clave `retencion_meses_solicitudes` de la
-tabla `configuracion` fija el plazo, con 36 meses por defecto.
+**Pendiente, no implementado.** La fase 1 original tenía un mecanismo de retención
+—`configuracion.retencion_meses_solicitudes` y la acción `solicitudes.purgar`, que
+anonimizaba (nunca borraba) las solicitudes de sacramento ya cerradas— pero se eliminó por
+completo junto con el formulario de solicitud en línea (issue #3, ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)).
 
-La acción `solicitudes.purgar` del panel **anonimiza, no borra**, los registros vencidos
-que ya estén en estado `completada` o `rechazada`:
-
-- Se vacían `nombre_solicitante`, `telefono`, `email`, `direccion`, los campos de tutor y
-  `datos_extra`.
-- Se conservan `folio`, `sacramento_id`, `estado` y las fechas, para poder seguir
-  contando cuántos bautizos hubo en un año.
-
-La operación queda registrada en la auditoría.
+Hoy **no existe ningún mecanismo automático de retención o anonimización** para los datos
+que el sitio sigue recolectando (`inscripciones_curso`, `mensajes_contacto`). Si la
+parroquia decide que hace falta uno, hay que construirlo de nuevo — el patrón ya probado
+(anonimizar campos personales, conservar folio/estado/fechas para estadística, dejar
+constancia en la auditoría) sigue siendo válido como referencia, pero el código que lo
+implementaba ya no existe.
 
 ## Transporte
 
@@ -161,7 +156,7 @@ excusa: los certificados son gratuitos y cPanel los emite en dos clics.
 - [ ] Un envío sin consentimiento se rechaza del lado del servidor.
 - [ ] Una fecha de nacimiento de menor exige los datos del tutor.
 - [ ] La galería pública no muestra imágenes sin `autorizacion_imagen`.
-- [ ] Ninguna URL pública devuelve datos de solicitudes o inscripciones.
-- [ ] Un usuario con rol coordinador no puede abrir el módulo de solicitudes.
+- [ ] Ninguna URL pública devuelve datos de inscripciones.
+- [ ] Un usuario con rol coordinador no puede abrir el módulo de inscripciones.
 - [ ] La auditoría registra la consulta y la exportación de datos personales.
 - [ ] HTTPS está activo y forzado.

@@ -66,22 +66,17 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 10. **Instalar el certificado SSL** —cPanel ofrece Let's Encrypt gratuito— y activar la
     redirección forzada a HTTPS.
 
-11. **Programar la purga de solicitudes vencidas** en *Cron Jobs* de cPanel (no requiere
-    SSH: esa herramienta existe también en las cuentas sin acceso a terminal). Una vez al
-    día basta:
-    ```
-    php -f /home/usuario/public_html/cli/purgar_solicitudes.php
-    ```
-    Sustituir la ruta por la real de la cuenta. Sin este paso, el plazo de retención de
-    `docs/PRIVACIDAD.md` depende de que alguien entre al panel y pulse "Purgar vencidas" a
-    mano — el botón sigue ahí como respaldo si el hosting no ofreciera *Cron Jobs*.
-
-12. **Sustituir el dominio de ejemplo** en `robots.txt` (la línea `Sitemap:`) por el
+11. **Sustituir el dominio de ejemplo** en `robots.txt` (la línea `Sitemap:`) por el
     dominio real: es un archivo estático, no se genera solo como `sitemap.xml`.
 
-13. **Cargar el contenido real** desde el panel: datos de la parroquia, horarios, equipo
+12. **Cargar el contenido real** desde el panel: datos de la parroquia, horarios, equipo
     pastoral, pastorales, y los textos de los bloques. Los datos de contacto y redes
     sociales alimentan también los datos estructurados `Church` de la portada.
+
+> **Nota:** el `cli/purgar_solicitudes.php` que mencionaban versiones anteriores de esta
+> guía ya no existe — se eliminó junto con el formulario de solicitud de sacramentos
+> (issue #3). Hoy no hay ningún respaldo automático de retención de datos que programar en
+> *Cron Jobs*. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Retención".
 
 ## Verificación posterior al despliegue
 
@@ -91,7 +86,6 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 - [ ] El panel exige contraseña y la sesión se mantiene.
 - [ ] Una imagen subida desde el panel se ve en el sitio.
 - [ ] `https://dominio/uploads/prueba.php` devuelve 403 y no ejecuta nada.
-- [ ] `https://dominio/cli/purgar_solicitudes.php` devuelve 403 y no ejecuta nada.
 - [ ] `https://dominio/backups/algo.sql` devuelve 403, aunque no se conozca el nombre real.
 - [ ] Generar un respaldo desde el panel funciona y el archivo se puede descargar.
 - [ ] Restaurar ese mismo respaldo funciona y deja además un respaldo de seguridad nuevo
@@ -117,8 +111,6 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
 - [ ] `setup.php` borrado. Mientras exista, cualquiera que lo encuentre crea un
       administrador.
 - [ ] `config/database.php` fuera de `.git` (revisar `.gitignore`) y no accesible por HTTP.
-- [ ] `cli/purgar_solicitudes.php` no accesible por HTTP (403) — solo debe poder invocarse
-      desde el cron.
 - [ ] `backups/` no accesible por HTTP (403), y los `.sql` que contenga no terminan nunca
       en un repositorio público ni en un correo sin cifrar.
 - [ ] HTTPS forzado y certificado válido; `session.cookie_samesite=Strict` y
@@ -134,7 +126,7 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
       avisos, eventos, pastorales, sacramentos, cursos, páginas) se guarda sin la etiqueta:
       `core/SanitizadorHtml.php` la retira al guardar, no al mostrar.
 - [ ] Un POST sin `_csrf` válido responde 403 en cualquier formulario del panel y en los
-      formularios públicos con envío (contacto, solicitudes, inscripciones).
+      formularios públicos con envío (contacto, inscripciones).
 - [ ] Las cabeceras `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y
       `Content-Security-Policy` llegan en la respuesta (`curl -I` a cualquier página).
 

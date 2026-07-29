@@ -70,10 +70,10 @@ whitelist de dos valores y `publico` por defecto.
 área pública   inicio · nosotros · horarios · sacramentos · pastorales · cursos
                avisos · eventos · contacto · pagina · sitemap
 
-área admin     auth · panel · configuracion · bloques · paginas · personas
-               organigrama · horarios · sacramentos · solicitudes · pastorales
+área admin     auth · panel · configuracion · bloques · paginas · personas · centros
+               organigrama · horarios · sacramentos · pastorales
                cursos · inscripciones · avisos · eventos · galeria · carrusel
-               mensajes · usuarios · auditoria
+               mensajes · usuarios · auditoria · respaldos
 ```
 
 Flujo de `dispatch()`:
@@ -102,9 +102,8 @@ helpers `url_publica()` y `url_admin()`; ningún código debe construir URLs a m
 /quienes-somos                   → area=publico&modulo=nosotros
 /pastorales                      → area=publico&modulo=pastorales
 /pastorales/coro                 → area=publico&modulo=pastorales&slug=coro&accion=ver
-/sacramentos/bautizo/solicitar   → area=publico&modulo=sacramentos&slug=bautizo&accion=solicitar
 /avisos?pagina=2                 → area=publico&modulo=avisos
-/admin/solicitudes/ver?id=12     → area=admin&modulo=solicitudes&accion=ver
+/admin/inscripciones/ver?id=12   → area=admin&modulo=inscripciones&accion=ver
 ```
 
 Orden de las reglas: primero dejar pasar los archivos y directorios que existen (assets y
@@ -300,27 +299,14 @@ registros y un mantenimiento imposible. Por eso hay dos tablas con semánticas d
 El costo aceptado es que una celebración especial que además es misa se captura dos veces.
 Ocurre pocas veces al año.
 
-### Campos de sacramento configurables
+### Campos de sacramento configurables (eliminado en el issue #3)
 
-Cada sacramento pide datos distintos: el bautizo pide padrinos, el matrimonio pide dos
-contrayentes y expediente prematrimonial. Las opciones eran:
-
-| Opción | Problema |
-|---|---|
-| Una columna por cada dato posible | Tabla de sesenta columnas, casi todas nulas |
-| Tabla entidad-atributo-valor | JOINs incómodos para un volumen bajo |
-| **Columnas fijas + JSON** ← elegida | — |
-
-Se usan columnas reales para lo común —nombre, fecha de nacimiento, contacto, tutor,
-estado, consentimiento: todo lo que se filtra, ordena y audita— y una columna
-`datos_extra` de tipo JSON para lo variable, con la tabla `sacramento_campos` definiendo
-qué se pide en cada caso. Así el párroco agrega "nombre del padrino" a Confirmación desde
-el panel, sin que nadie toque el esquema.
-
-**Trade-off explícito**: `datos_extra` no es cómodo de buscar ni de indexar. Se acepta
-porque son cientos de registros al año y las búsquedas reales son por folio, nombre,
-sacramento y estado, que son columnas reales. Si el hosting resultara tener MySQL anterior
-a 5.7, la columna pasa a `TEXT` y el código PHP no cambia.
+Existió en la fase 1 original: columnas fijas + una columna `datos_extra` JSON para lo
+variable, con `sacramento_campos` definiendo qué campo pedía cada sacramento en su
+formulario de solicitud. Se eliminó por completo junto con el formulario que lo usaba —
+ver "Sacramentos: catálogo puramente informativo", más abajo—. Se deja esta nota porque el
+trade-off en sí (columnas fijas para lo que se filtra/ordena/audita, JSON solo para lo
+variable) puede volver a ser relevante si otro módulo necesita algo parecido.
 
 ### Un usuario puede coordinar varias pastorales
 
@@ -550,53 +536,37 @@ como contenido parroquial general (`pastoral_id NULL`). Solo `pastoral_actividad
 significa nada y la asignación de un coordinador tampoco. Comprobado borrando una pastoral
 con un aviso asociado: el aviso siguió existiendo, con `pastoral_id` en `NULL`.
 
-## Sacramentos y solicitudes
+## Sacramentos: catálogo puramente informativo
 
-La pieza de más valor operativo del sistema, y la más delicada legalmente: recibe
-solicitudes de bautizo, primera comunión, confirmación, matrimonio y unción de enfermos
-directamente desde el sitio, con frecuencia de menores de edad.
+En la fase 1 original (etapa 7), esta sección recibía solicitudes de bautizo, primera
+comunión, confirmación, matrimonio y unción de enfermos directamente desde el sitio, con
+folio, bandeja de estados y campos configurables por sacramento (`sacramento_campos`).
+**El issue #3 eliminó todo ese formulario en línea**, a petición explícita del
+administrador: la sección queda como información de requisitos, documentos y aportación,
+y para llevar a cabo el trámite la persona se acerca a la oficina parroquial.
 
-**El folio no se deriva del slug.** `SacramentoModel::prefijoFolio()` usa un mapa
-explícito (`bautizo`→`BAU`, `confirmacion`→`CNF`, `confesion`→`CNS`…) en vez de tomar las
-tres primeras letras del slug: "confirmacion" y "confesion" comparten esas tres letras
-("CON"), lo que habría hecho indistinguibles sus folios para la secretaría. Un sacramento
-nuevo que se cree desde el panel —el catálogo lo permite en principio, aunque solo existen
-los seis universales— cae en una derivación genérica de respaldo, con el riesgo aceptado
-de coincidir con otro.
+Se eliminaron por completo: `SolicitudController`, `SolicitudModel`, las tablas
+`solicitudes_sacramento`, `solicitudes_bitacora` y `sacramento_campos`, las columnas
+`acepta_solicitudes` y `requiere_tutor` de `sacramentos`, el permiso `solicitudes.*` (con
+lo que `ROL_SECRETARIA` pierde ese permiso, aunque conserva `inscripciones.*` y
+`mensajes.*`), el módulo admin `solicitudes` del Router, y `cli/purgar_solicitudes.php`
+—la única pieza de retención automática que existía en todo el sistema—. El texto sembrado
+del aviso de privacidad (`install.sql`) se reescribió para no describir un trámite que ya
+no existe. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
-**El catálogo es fijo, el contenido es editable.** No hay acción para crear ni borrar un
-sacramento: los seis se siembran en `install.sql` y solo se edita su descripción,
-requisitos, documentos e imagen. Es la misma filosofía que `bloques_contenido`, aplicada
-aquí porque agregar un séptimo sacramento no es algo que vaya a pasar en la práctica.
+**Lo que queda:** `SacramentoModel` es un CRUD de catálogo puro (`todos`, `porId`,
+`porSlugActivo`, `activos`, `crear`, `actualizar`, `eliminar`), igual de sencillo que
+`PastoralModel` sin sus actividades. El catálogo sigue siendo fijo —no hay acción para
+crear ni borrar un sacramento, los seis se siembran en `install.sql`— por la misma razón
+que `bloques_contenido`: agregar un séptimo sacramento no es algo que vaya a pasar en la
+práctica.
 
-**El menor de edad se calcula en el servidor**, siempre, a partir de la fecha de
-nacimiento — nunca se confía en lo que el formulario indique. La sección de tutor se
-muestra **siempre** en el formulario público (con la nota "completa esto solo si el
-solicitante es menor"), en vez de mostrarla u ocultarla con JavaScript según la fecha
-capturada: así funciona igual con o sin JavaScript, y el control real de todos modos
-ocurre en el servidor al validar, no en la vista.
-
-**Solo la lectura respeta el flag `dato_sensible`.** El formulario público pide todos los
-campos configurados de un sacramento sin distinción; ese flag únicamente decide qué se
-muestra al ver la solicitud en el panel — es una barrera de visualización para admin y
-secretaría, no una barrera de captura.
-
-**Auditoría de lectura, no solo de escritura.** `SolicitudController::index()` y `::ver()`
-llaman `auditoria('consultar', …)` antes de mostrar nada, incluida la exportación a CSV.
-Verificado: cada apertura de una solicitud deja una fila en `auditoria` con su folio.
-
-**La purga anonimiza, nunca borra.** `SolicitudModel::purgarVencidas()` vacía nombre,
-contacto, tutor y `datos_extra` de las solicitudes ya cerradas (aprobada→completada,
-rechazada, cancelada) más viejas que `configuracion.retencion_meses_solicitudes`, pero
-conserva folio, sacramento, estado y fechas para poder seguir contando cuántos bautizos
-hubo en un año. Verificado con una solicitud cerrada de 40 meses: la purga la anonimizó
-sin tocar una solicitud abierta más reciente.
-
-**Separación de roles, verificada de punta a punta.** `secretaria` administra
-`solicitudes.*` pero no puede tocar el catálogo de sacramentos (`sacramentos.editar`);
-`editor` administra el catálogo pero no ve una sola solicitud. Es el reflejo exacto de
-"quién ve datos personales" contra "quién edita el sitio" que exige
-[`PRIVACIDAD.md`](PRIVACIDAD.md).
+**Consecuencia para el resto del sistema:** con esto, `inscripciones_curso` (cursos y
+catequesis) queda como la **única** fuente de datos de menores que recibe el sitio en
+línea. `docs/PRIVACIDAD.md` se actualizó para reflejar esto: ya no hay ningún mecanismo de
+retención/anonimización automática en el sistema (existía solo para solicitudes); si la
+parroquia decide que `inscripciones_curso` necesita uno, habría que construirlo de nuevo,
+no reactivarlo.
 
 ## Cursos e inscripciones
 
@@ -605,8 +575,8 @@ entregas y calificaciones quedan fuera de esta fase), pero ya resuelve el proble
 inmediato: publicar cursos con temario y recibir inscripciones con control de cupo.
 
 **El correo es obligatorio aquí, a diferencia de otros formularios públicos.** En
-contacto y en solicitudes de sacramento basta teléfono o correo; en la inscripción a un
-curso el correo es la clave que evita una doble inscripción accidental
+contacto basta teléfono o correo; en la inscripción a un curso el correo es la clave que
+evita una doble inscripción accidental
 (`uq_ins_curso_email` es único por `curso_id` + `email`, y `InscripcionCursoModel::yaInscrito()`
 lo comprueba antes de insertar). Verificado: el mismo correo intentando inscribirse dos
 veces al mismo curso recibe el mensaje de rechazo explicando por qué el campo es
@@ -671,7 +641,7 @@ protección no pedida para un caso que, si ocurre, se corrige por SQL directo �
 cualquier otra cuenta de administración de un sitio pequeño.
 
 **La auditoría es de solo lectura y no audita su propia consulta.** A diferencia de
-`solicitudes` e `inscripciones_curso`, `AuditoriaController::index()` no llama a
+`inscripciones_curso`, `AuditoriaController::index()` no llama a
 `auditoria('consultar', …)`: el listado ya ES la bitácora, y una fila por cada vez que
 alguien la revisa no aporta nada, solo la infla. Sí se audita la exportación a CSV, igual
 que en el resto del panel.
