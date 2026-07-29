@@ -59,19 +59,28 @@ CREATE TABLE IF NOT EXISTS usuarios_pastorales (
 -- Bitácora de acciones. Registra escrituras y también CONSULTAS de datos
 -- personales, que es lo que permite responder a una solicitud de acceso.
 -- Ver docs/PRIVACIDAD.md
+--
+-- admin_real_id: si la acción ocurrió durante una impersonación ("Usar
+-- como…"), aquí queda el administrador real detrás del teclado; usuario_id
+-- ya guarda la identidad efectiva de la sesión en ese momento (la de la
+-- cuenta impersonada). Permite distinguir "lo hizo la secretaria" de "lo
+-- hizo el admin actuando como la secretaria". NULL en el uso normal, sin
+-- impersonación.
 CREATE TABLE IF NOT EXISTS auditoria (
-    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    usuario_id  INT UNSIGNED    NULL,
-    accion      VARCHAR(40)     NOT NULL,
-    tabla_ref   VARCHAR(60)     NULL,
-    registro_id INT UNSIGNED    NULL,
-    ip          VARCHAR(45)     NULL,
-    descripcion VARCHAR(255)    NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    usuario_id    INT UNSIGNED    NULL,
+    admin_real_id INT UNSIGNED    NULL,
+    accion        VARCHAR(40)     NOT NULL,
+    tabla_ref     VARCHAR(60)     NULL,
+    registro_id   INT UNSIGNED    NULL,
+    ip            VARCHAR(45)     NULL,
+    descripcion   VARCHAR(255)    NULL,
+    created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_aud_usuario (usuario_id),
     KEY idx_aud_fecha   (created_at),
-    KEY idx_aud_tabla   (tabla_ref, registro_id)
+    KEY idx_aud_tabla   (tabla_ref, registro_id),
+    CONSTRAINT fk_aud_admin_real FOREIGN KEY (admin_real_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Historial de respaldos Y restauraciones de la base de datos

@@ -123,4 +123,68 @@ class Auth
             return [];
         }
     }
+
+    // ── Impersonación ("Usar como…") ────────────────────────────────────
+    //
+    // Permite al administrador operar temporalmente con la sesión de otro
+    // usuario, sin conocer su contraseña: para ver el panel exactamente como
+    // lo ve un coordinador o secretaría, o para resolver una duda de soporte
+    // sin pedir la contraseña de nadie. No se anida —el controlador rechaza
+    // impersonar si ya se está impersonando a alguien— y nunca se puede
+    // impersonar a otro administrador. Ver docs/ARQUITECTURA.md.
+
+    public static function estaImpersonando(): bool
+    {
+        return (bool) Session::get('_impersonando', false);
+    }
+
+    /**
+     * Cambia la sesión a la identidad de $objetivo, conservando la del
+     * administrador real en claves aparte para poder volver.
+     */
+    public static function iniciarImpersonacion(array $objetivo): void
+    {
+        $real = self::usuario();
+
+        Session::set('_impersonando',      true);
+        Session::set('_admin_real_id',     $real['id']);
+        Session::set('_admin_real_nombre', $real['nombre']);
+        Session::set('_admin_real_email',  $real['email']);
+
+        Session::set('usuario_id',         $objetivo['id']);
+        Session::set('usuario_nombre',     $objetivo['nombre']);
+        Session::set('usuario_email',      $objetivo['email']);
+        Session::set('usuario_rol',        $objetivo['rol']);
+        Session::set('usuario_foto',       $objetivo['foto'] ?? null);
+        Session::set('usuario_pastorales', self::cargarPastorales((int) $objetivo['id']));
+    }
+
+    /** Restaura la sesión del administrador real y borra el rastro de la impersonación. */
+    public static function terminarImpersonacion(): void
+    {
+        Session::set('usuario_id',         Session::get('_admin_real_id'));
+        Session::set('usuario_nombre',     Session::get('_admin_real_nombre'));
+        Session::set('usuario_email',      Session::get('_admin_real_email'));
+        Session::set('usuario_rol',        ROL_ADMIN);
+        Session::set('usuario_foto',       null);
+        Session::set('usuario_pastorales', []);
+
+        Session::delete('_impersonando');
+        Session::delete('_admin_real_id');
+        Session::delete('_admin_real_nombre');
+        Session::delete('_admin_real_email');
+    }
+
+    /** El administrador real detrás de la impersonación activa, o null si no aplica. */
+    public static function adminReal(): ?array
+    {
+        if (!self::estaImpersonando()) {
+            return null;
+        }
+        return [
+            'id'     => Session::get('_admin_real_id'),
+            'nombre' => Session::get('_admin_real_nombre'),
+            'email'  => Session::get('_admin_real_email'),
+        ];
+    }
 }

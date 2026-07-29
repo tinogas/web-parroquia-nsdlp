@@ -36,9 +36,10 @@ class AuditoriaModel extends Model
         $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
 
         return $this->paginar(
-            "SELECT a.*, u.nombre AS usuario_nombre
+            "SELECT a.*, u.nombre AS usuario_nombre, r.nombre AS admin_real_nombre
                FROM auditoria a
                LEFT JOIN usuarios u ON u.id = a.usuario_id
+               LEFT JOIN usuarios r ON r.id = a.admin_real_id
                {$where}
               ORDER BY a.created_at DESC",
             $params,

@@ -27,6 +27,17 @@ class UsuarioModel extends Model
         );
     }
 
+    /** Cuentas activas y no administradoras, para el selector de "Usar como…". */
+    public function paraImpersonar(): array
+    {
+        return $this->fetchAll(
+            "SELECT id, nombre, email, rol FROM usuarios
+              WHERE activo = 1 AND rol != :admin
+              ORDER BY nombre",
+            [':admin' => ROL_ADMIN]
+        );
+    }
+
     public function porId(int $id): ?array
     {
         return $this->fetchOne('SELECT * FROM usuarios WHERE id = :id', [':id' => $id]);

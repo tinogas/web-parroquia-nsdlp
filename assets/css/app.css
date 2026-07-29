@@ -92,6 +92,30 @@ body {
     .main-content  { margin-left: 0; padding: 1rem; }
 }
 
+/* ---- Aviso de "Usar como…" (impersonación) ---- */
+
+.banner-impersonando {
+    position: fixed;
+    top: var(--navbar-alto);
+    left: 0;
+    right: 0;
+    z-index: 1035;
+    background: var(--color-dorado);
+    color: var(--color-oscuro);
+    padding: .4rem 1rem;
+    text-align: center;
+    font-size: .9rem;
+}
+
+body.impersonando .main-content {
+    margin-top: calc(var(--navbar-alto) + 40px);
+}
+
+body.impersonando .sidebar {
+    top: calc(var(--navbar-alto) + 40px);
+    height: calc(100vh - var(--navbar-alto) - 40px);
+}
+
 /* ---- Pantalla de acceso ---- */
 
 .pantalla-acceso {

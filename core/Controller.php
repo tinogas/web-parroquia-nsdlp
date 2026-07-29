@@ -290,20 +290,26 @@ class Controller
      * Deja constancia de una acción. Se llama también al CONSULTAR datos
      * personales, no solo al modificarlos: es lo que permite responder a una
      * solicitud de acceso. Ver docs/PRIVACIDAD.md
+     *
+     * usuario_id queda con la identidad efectiva de la sesión (la impersonada,
+     * si aplica); admin_real_id, con el administrador real detrás si la acción
+     * ocurrió durante un "Usar como…". Así se distingue "lo hizo la
+     * secretaria" de "lo hizo el admin actuando como la secretaria".
      */
     protected function auditoria(string $accion, string $tabla = '', int $id = 0, string $desc = ''): void
     {
         try {
             Database::getInstance()->prepare(
-                'INSERT INTO auditoria (usuario_id, accion, tabla_ref, registro_id, ip, descripcion)
-                 VALUES (:uid, :accion, :tabla, :rid, :ip, :desc)'
+                'INSERT INTO auditoria (usuario_id, admin_real_id, accion, tabla_ref, registro_id, ip, descripcion)
+                 VALUES (:uid, :adminReal, :accion, :tabla, :rid, :ip, :desc)'
             )->execute([
-                ':uid'    => Auth::usuario()['id'],
-                ':accion' => $accion,
-                ':tabla'  => $tabla ?: null,
-                ':rid'    => $id ?: null,
-                ':ip'     => $_SERVER['REMOTE_ADDR'] ?? null,
-                ':desc'   => $desc ?: null,
+                ':uid'       => Auth::usuario()['id'],
+                ':adminReal' => Auth::adminReal()['id'] ?? null,
+                ':accion'    => $accion,
+                ':tabla'     => $tabla ?: null,
+                ':rid'       => $id ?: null,
+                ':ip'        => $_SERVER['REMOTE_ADDR'] ?? null,
+                ':desc'      => $desc ?: null,
             ]);
         } catch (Exception $e) {
             // Una falla al auditar no debe interrumpir la operación del usuario.

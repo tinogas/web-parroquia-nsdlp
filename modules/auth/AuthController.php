@@ -47,6 +47,68 @@ class AuthController extends Controller
         $this->redirect(url_admin('auth', 'login'));
     }
 
+    /**
+     * "Usar como…": el administrador opera temporalmente con la sesión de
+     * otro usuario, sin conocer su contraseña. requirePermiso() ya bloquea
+     * esto para cualquier sesión impersonada (ningún rol no-admin tiene
+     * usuarios.impersonar), pero el chequeo de estaImpersonando() se deja
+     * explícito: la impersonación nunca se anida.
+     */
+    public function impersonar(): void
+    {
+        $this->requirePermiso('usuarios.impersonar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+        $this->validarCsrf();
+
+        if (Auth::estaImpersonando()) {
+            Session::flash('error', 'Ya estás usando otra cuenta. Vuelve a tu sesión de administrador primero.');
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+
+        require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+        $objetivo = (new UsuarioModel())->porId($this->postInt('usuario_id'));
+
+        if (!$objetivo || !$objetivo['activo'] || $objetivo['rol'] === ROL_ADMIN) {
+            Session::flash('error', 'No puedes usar esa cuenta.');
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+
+        Auth::iniciarImpersonacion($objetivo);
+        $this->auditoria('impersonar_iniciar', 'usuarios', (int) $objetivo['id'], 'Usando como: ' . $objetivo['email']);
+        Session::flash('success', 'Ahora estás usando el panel como ' . $objetivo['nombre'] . '.');
+        $this->redirect(url_admin('panel'));
+    }
+
+    /** Vuelve a la sesión real de administrador. Nunca se gatea con requirePermiso(): tiene que
+     *  funcionar sin importar qué pueda o no hacer el rol de la cuenta que se estaba usando. */
+    public function terminarImpersonacion(): void
+    {
+        $this->requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+        $this->validarCsrf();
+
+        if (!Auth::estaImpersonando()) {
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+
+        $impersonado = Auth::usuario();
+        Auth::terminarImpersonacion();
+        $this->auditoria('impersonar_terminar', 'usuarios', (int) $impersonado['id'], 'Dejó de usar: ' . $impersonado['email']);
+        Session::flash('success', 'Volviste a tu sesión de administrador.');
+        $this->redirect(url_admin('panel'));
+    }
+
     /** El acceso tiene pantalla propia: no lleva el sidebar del panel. */
     private function mostrarFormulario(): void
     {

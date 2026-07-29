@@ -122,6 +122,14 @@ al escribirlos:
 
 Es lo que permite responder con hechos si alguien pregunta quién consultó su información.
 
+**Impersonación ("Usar como…").** El administrador puede operar el panel con la sesión de
+otra cuenta, incluida secretaría. Sin más, eso podría volver ambigua la pregunta "¿quién
+consultó este dato?": la fila de auditoría mostraría a secretaría, aunque quien realmente
+haya abierto la solicitud fuera el administrador actuando como ella. La columna
+`admin_real_id` de `auditoria` resuelve esto: queda el administrador real detrás de
+cualquier consulta o exportación hecha durante una impersonación. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Impersonación".
+
 ## Retención
 
 Los datos no se conservan indefinidamente. La clave `retencion_meses_solicitudes` de la

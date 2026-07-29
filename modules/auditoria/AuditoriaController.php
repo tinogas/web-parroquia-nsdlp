@@ -54,11 +54,12 @@ class AuditoriaController extends Controller
 
         $salida = fopen('php://output', 'w');
         fputs($salida, "\xEF\xBB\xBF");
-        fputcsv($salida, ['Fecha', 'Usuario', 'Acción', 'Tabla', 'Registro', 'IP', 'Descripción']);
+        fputcsv($salida, ['Fecha', 'Usuario', 'Actuando como (admin)', 'Acción', 'Tabla', 'Registro', 'IP', 'Descripción']);
         foreach ($filas as $fila) {
             fputcsv($salida, [
                 $fila['created_at'],
                 $fila['usuario_nombre'] ?? '—',
+                $fila['admin_real_nombre'] ?? '',
                 $fila['accion'],
                 $fila['tabla_ref'] ?? '',
                 $fila['registro_id'] ?? '',

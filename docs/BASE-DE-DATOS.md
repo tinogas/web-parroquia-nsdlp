@@ -52,13 +52,18 @@ Clave primaria compuesta `(usuario_id, pastoral_id)`, ambas foráneas con
 
 ### `auditoria`
 
-Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `accion` VARCHAR(40),
-`tabla_ref` VARCHAR(60), `registro_id`, `ip` VARCHAR(45), `descripcion` VARCHAR(255) y
-`created_at`. Índices `idx_aud_fecha (created_at)` e
-`idx_aud_tabla (tabla_ref, registro_id)`.
+Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `admin_real_id` (FK a
+`usuarios`, `ON DELETE SET NULL`), `accion` VARCHAR(40), `tabla_ref` VARCHAR(60),
+`registro_id`, `ip` VARCHAR(45), `descripcion` VARCHAR(255) y `created_at`. Índices
+`idx_aud_fecha (created_at)` e `idx_aud_tabla (tabla_ref, registro_id)`.
 
 Registra escrituras **y también lecturas de datos personales**, incluidas las
 exportaciones a CSV. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
+
+`admin_real_id` solo se llena durante una impersonación ("Usar como…", ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)): `usuario_id` queda con la identidad efectiva de la
+sesión en ese momento (la cuenta impersonada), y `admin_real_id` con el administrador real
+detrás. NULL en el uso normal, sin impersonación.
 
 ### `respaldos_log`
 

@@ -689,6 +689,49 @@ sesión como un coordinador con una pastoral ya asignada por la interfaz:
    formulario). **Cualquier filtro nuevo en el panel debe evitar los nombres reservados
    del Router: `area`, `modulo`, `accion`, `slug`.**
 
+## Impersonación ("Usar como…")
+
+Añadido junto con la restauración de respaldos, también a petición del administrador y
+también replicando `C:\xampp\htdocs\inventory school` —ahí la función existe con ese mismo
+nombre en la interfaz, "Use as…"—. Deja que el administrador opere el panel con la sesión
+de otra cuenta sin conocer su contraseña: para ver el panel tal cual lo ve un coordinador o
+secretaría, o para resolver una duda de soporte.
+
+**La sesión se sobrescribe, no se crea una segunda.** `Auth::iniciarImpersonacion()` guarda
+la identidad real del administrador en claves de sesión aparte (`_admin_real_id`,
+`_admin_real_nombre`, `_admin_real_email`) y sobrescribe `usuario_id`/`usuario_nombre`/
+`usuario_email`/`usuario_rol`/`usuario_foto`/`usuario_pastorales` con los de la cuenta
+objetivo —recargando sus pastorales reales, no las del administrador—. A partir de ahí,
+`Auth::tienePermiso()` y `Auth::tieneAlcanceGlobal()` ven exactamente el rol impersonado:
+mientras se actúa como un coordinador, el panel se comporta como si ese coordinador hubiera
+iniciado sesión, incluidas sus limitaciones (sin publicar, acotado a sus pastorales, sin
+`usuarios.*`/`auditoria.*`/`respaldos.*`). Para recuperar el acceso de administrador hay que
+volver primero.
+
+**Nunca se anida, y nunca se impersona a otro administrador.** `AuthController::impersonar()`
+exige `usuarios.impersonar` (que ningún rol impersonado tiene, por construcción: solo
+`ROL_ADMIN` lo trae por el comodín de la matriz) y además comprueba explícitamente
+`Auth::estaImpersonando()` como defensa en profundidad, por si algún día alguien agregara
+ese permiso a otro rol sin pensar en este efecto. La cuenta objetivo debe estar activa y su
+rol no puede ser `admin`.
+
+**`admin_real_id` en `auditoria`, para distinguir "lo hizo la secretaria" de "lo hizo el
+administrador actuando como la secretaria".** `Controller::auditoria()` sigue llenando
+`usuario_id` con la identidad efectiva de la sesión (la impersonada, si aplica), y ahora
+también `admin_real_id` con `Auth::adminReal()['id']` cuando corresponde. La bandeja de
+auditoría (`docs/ARQUITECTURA.md`, sección "Usuarios, roles y auditoría") muestra "admin
+real: …" bajo el nombre del usuario en esas filas. Verificado extremo a extremo: crear un
+aviso mientras se impersona a un coordinador queda auditado con `usuario_id` = coordinador
+y `admin_real_id` = administrador.
+
+**El banner fijo y el propio menú "Usar como…" viven en `layout_admin.php`**, no en un
+módulo aparte: es la única vista que envuelve todas las pantallas del panel, así que es el
+único lugar donde tanto el aviso persistente como el selector de cuentas tienen sentido.
+El selector de candidatos (`UsuarioModel::paraImpersonar()`, activos y sin rol admin) se
+consulta directamente ahí, con una búsqueda por nombre o correo enteramente en JavaScript
+del lado del cliente —sin ida y vuelta al servidor— porque la lista de usuarios de una
+parroquia nunca va a ser tan grande como para justificar un buscador con backend.
+
 ## Respaldos y restauración de la base de datos
 
 Añadido después de cerrar las diez etapas del plan original, a petición explícita del

@@ -91,7 +91,14 @@
             <?php foreach ($listado['filas'] as $fila): ?>
                 <tr>
                     <td class="text-nowrap small text-muted"><?= e(fecha_con_dia($fila['created_at'])) ?></td>
-                    <td><?= e($fila['usuario_nombre'] ?? 'Sistema') ?></td>
+                    <td>
+                        <?= e($fila['usuario_nombre'] ?? 'Sistema') ?>
+                        <?php if (!empty($fila['admin_real_nombre'])): ?>
+                        <div class="small text-muted" title="Acción hecha durante una impersonación (&quot;Usar como…&quot;)">
+                            <i class="bi bi-person-badge me-1"></i>admin real: <?= e($fila['admin_real_nombre']) ?>
+                        </div>
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php
                         $clase = match ($fila['accion']) {
