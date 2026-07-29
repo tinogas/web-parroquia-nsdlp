@@ -11,7 +11,7 @@ class HorarioPublicoController extends ControllerPublico
             'metaTitulo'      => 'Horarios',
             'metaDescripcion' => 'Horarios de misas, confesiones, adoración eucarística y oficina parroquial.',
             'urlCanonica'     => url_publica('horarios'),
-            'porTipo'         => (new HorarioModel())->vigentesPorTipo(),
+            'porCentro'       => (new HorarioModel())->vigentesPorCentro(),
             'bloques'         => (new BloqueModel())->porZona('horarios'),
         ]);
     }

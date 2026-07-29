@@ -408,9 +408,13 @@ CREATE TABLE IF NOT EXISTS organigrama_nodos (
 
 -- Recurrencia semanal, no fechas concretas: una misa dominical no es un
 -- evento, es un patrón que se repite. vigente_desde/vigente_hasta cubre los
--- horarios de temporada (Cuaresma, verano) sin duplicar la tabla.
+-- horarios de temporada (Cuaresma, verano) sin duplicar la tabla. centro_id
+-- (issue #3) agrupa los horarios por sede/centro en la vista pública; NULL
+-- en los que no son de un lugar concreto. lugar sigue siendo texto libre
+-- para el detalle dentro de ese centro ("Capilla lateral", por ejemplo).
 CREATE TABLE IF NOT EXISTS horarios (
     id            TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    centro_id     SMALLINT UNSIGNED NULL,
     tipo          ENUM('misa','confesion','adoracion','oficina','otro')
                                    NOT NULL DEFAULT 'misa',
     dia_semana    TINYINT UNSIGNED NOT NULL,   -- 0=domingo … 6=sábado
@@ -423,7 +427,9 @@ CREATE TABLE IF NOT EXISTS horarios (
     orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo        TINYINT(1)       NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    KEY idx_hor_tipo_dia (tipo, dia_semana, hora)
+    KEY idx_hor_tipo_dia (tipo, dia_semana, hora),
+    KEY idx_hor_centro (centro_id),
+    CONSTRAINT fk_hor_centro FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Coro, catequesis, caridad, jóvenes, ministros MESC... Cada una puede tener

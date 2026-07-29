@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/horarios/HorarioModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
 
 class HorarioController extends Controller
 {
@@ -28,6 +29,7 @@ class HorarioController extends Controller
         $this->render('horarios/form', [
             'titulo'  => 'Nuevo horario',
             'horario' => null,
+            'centros' => (new CentroModel())->activos(),
         ]);
     }
 
@@ -45,6 +47,7 @@ class HorarioController extends Controller
         $this->render('horarios/form', [
             'titulo'  => 'Editar horario',
             'horario' => $horario,
+            'centros' => (new CentroModel())->activos(),
         ]);
     }
 
@@ -69,6 +72,7 @@ class HorarioController extends Controller
         }
 
         $datos = [
+            'centro_id'     => $this->postIntONull('centro_id'),
             'tipo'          => $this->postStr('tipo'),
             'dia_semana'    => $dia,
             'hora'          => $hora,

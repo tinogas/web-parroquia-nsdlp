@@ -299,6 +299,37 @@ registros y un mantenimiento imposible. Por eso hay dos tablas con semánticas d
 El costo aceptado es que una celebración especial que además es misa se captura dos veces.
 Ocurre pocas veces al año.
 
+### Horarios: agrupado público por sede/centro, no por tipo (issue #3)
+
+`horarios` gana `centro_id` (FK a `centros`, `ON DELETE SET NULL`, NULL para un horario
+sin sede/centro asignado). Antes la página pública agrupaba en tarjetas por `tipo`
+(misa, confesión, adoración…); una parroquia con varios centros —el templo principal y
+las capillas dependientes— necesitaba primero saber **dónde** es cada horario, y solo
+después a qué hora y de qué tipo es.
+
+`HorarioModel::vigentesPorCentro()` reemplaza a la antigua `vigentesPorTipo()` y arma
+una estructura de tres niveles — centro → día → horarios del día — en vez de devolver
+una lista plana:
+
+- **Nivel 1, sede/centro**: una tarjeta por cada fila de `centros` que tenga al menos
+  un horario vigente, ordenadas sede primero y luego centros por su propio `orden`. Los
+  horarios sin `centro_id` se agrupan aparte, al final, bajo "Otros horarios".
+- **Nivel 2, día**: dentro de cada centro, un subtítulo por día con
+  `MOD(dia_semana + 6, 7)` en el `ORDER BY` —el mismo truco que ya usa el calendario de
+  turnos MESC— para que el recorrido empiece en lunes y termine en domingo, sin alterar
+  el valor 0=domingo…6=sábado que la columna guarda.
+- **Nivel 3, hora**: los horarios de un mismo día, ordenados de la mañana a la noche;
+  `tipo` se imprime como una etiqueta (`badge`) en cada uno, ya no como criterio de
+  agrupación.
+
+El array de "día" es asociativo (día ⇒ horarios) y su orden es el de inserción, que ya
+llega lunes-primero desde la consulta SQL: la vista solo debe recorrerlo con `foreach`,
+nunca reordenarlo con `ksort()`, o volvería a poner domingo primero.
+
+El listado de administración (`HorarioModel::todos()`) no cambia su orden por `tipo`:
+ahí sigue siendo más útil para editar en bloque (todas las misas juntas, todas las
+confesiones juntas) que agrupado por centro.
+
 ### Campos de sacramento configurables (eliminado en el issue #3)
 
 Existió en la fase 1 original: columnas fijas + una columna `datos_extra` JSON para lo

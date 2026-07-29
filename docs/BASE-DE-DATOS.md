@@ -207,6 +207,7 @@ Recurrencia semanal, no fechas concretas.
 
 | Columna | Tipo | Notas |
 |---|---|---|
+| `centro_id` | SMALLINT UNSIGNED NULL | issue #3: FK a `centros`, `ON DELETE SET NULL`. NULL = horario sin sede/centro asignado |
 | `tipo` | ENUM | `misa`, `confesion`, `adoracion`, `oficina`, `otro` |
 | `dia_semana` | TINYINT UNSIGNED | 0 = domingo … 6 = sábado |
 | `hora` | TIME | |
@@ -217,7 +218,15 @@ Recurrencia semanal, no fechas concretas.
 | `vigente_hasta` | DATE NULL | |
 | `orden`, `activo` | | |
 
-Índice `idx_hor_tipo_dia (tipo, dia_semana, hora)`.
+Índices `idx_hor_tipo_dia (tipo, dia_semana, hora)` e `idx_hor_centro (centro_id)`.
+
+**Agrupado público (`HorarioModel::vigentesPorCentro()`)**: el sitio público ya no
+agrupa por `tipo`; agrupa por sede/centro (issue #3) y, dentro de cada uno, por día
+—de lunes a domingo, con `MOD(dia_semana + 6, 7)` para reordenar sin tocar el valor
+guardado— y de la mañana a la noche dentro de cada día. El `tipo` se muestra como
+etiqueta en cada horario, no como criterio de agrupación. Los horarios sin
+`centro_id` se agrupan aparte, al final, bajo "Otros horarios". El listado de admin
+(`todos()`) conserva el orden por `tipo` para facilitar la edición masiva.
 
 ### `pastorales`
 

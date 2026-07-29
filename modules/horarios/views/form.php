@@ -51,6 +51,20 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="centro_id" class="form-label fw-semibold">Sede o centro</label>
+                        <select name="centro_id" id="centro_id" class="form-select">
+                            <option value="">Sin asignar</option>
+                            <?php foreach ($centros as $centro): ?>
+                            <option value="<?= (int) $centro['id'] ?>"
+                                <?= (!$esNuevo && (int) ($horario['centro_id'] ?? 0) === (int) $centro['id']) ? 'selected' : '' ?>>
+                                <?= e($centro['nombre']) ?> (<?= e(CentroModel::TIPOS[$centro['tipo']] ?? $centro['tipo']) ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">En la página pública, los horarios se agrupan por sede o centro.</div>
+                    </div>
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label for="hora" class="form-label fw-semibold">Hora</label>
