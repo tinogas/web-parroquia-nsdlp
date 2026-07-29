@@ -640,6 +640,16 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) V
     ('contacto_intro',     'contacto',    'Contacto',
      'Texto introductorio de la página de contacto, antes del formulario.', 10);
 
+-- A diferencia de los bloques de arriba, este sí trae contenido de fábrica: el
+-- enlace a la arquidiócesis tiene sentido desde el primer día, no hay que
+-- esperar a que alguien lo capture. El admin puede editarlo o agregar más
+-- enlaces como cualquier otro bloque de texto.
+INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, contenido, orden) VALUES
+    ('ligas_interes', 'inicio', 'Ligas de interés',
+     'Enlaces a sitios externos de interés. Aparece al final de la portada.',
+     '<ul><li><a href="https://www.arquidiocesisdehermosillo.org/" target="_blank" rel="noopener">Arquidiócesis de Hermosillo</a></li></ul>',
+     90);
+
 -- ------------------------------------------------------------
 -- SEMILLAS DE SACRAMENTOS
 -- ------------------------------------------------------------

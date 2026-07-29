@@ -195,9 +195,18 @@ El resultado: portada, quiénes somos, horarios y contacto son estructuralmente
 inmutables —siempre se ven bien— con su texto e imágenes 100 % editables. Y `paginas`
 cubre lo imprevisto sin abrir la puerta a romper lo esencial.
 
-Las semillas de `bloques_contenido` se reinsertan con `INSERT IGNORE` al arrancar el
-modelo, siguiendo el patrón `ensureTable()` del módulo de empresa en inventario. Así, si
-una versión futura añade una clave nueva, aparece sola sin necesidad de migrar.
+Las semillas de `bloques_contenido` usan `INSERT IGNORE` en `install.sql`, igual que el
+resto de las tablas del proyecto — a diferencia del patrón `ensureTable()` de
+`EmpresaModel` en `inventario`, que sí reinserta en tiempo de ejecución, `BloqueModel` no
+lo hace. Mientras el sitio no esté en producción esto no importa (`install.sql` se
+reimporta entero al cerrar cada etapa, ver "Actualizaciones posteriores" en
+`docs/DESPLIEGUE.md`); una clave nueva que se agregue después de desplegar sí necesitaría
+su propio `INSERT IGNORE` aplicado a mano, como cualquier otro cambio de esquema en
+producción.
+
+Casi todos los bloques se siembran con `contenido` vacío, para que el administrador lo
+llene. `ligas_interes` es la excepción: trae ya un enlace a la arquidiócesis porque tiene
+sentido desde el primer día, no hay que esperar a que alguien lo capture.
 
 **Lectura**: `core/Config.php` carga la tabla `configuracion` una sola vez por petición y
 la deja en memoria. El pie del sitio necesita el teléfono, la dirección y las redes en

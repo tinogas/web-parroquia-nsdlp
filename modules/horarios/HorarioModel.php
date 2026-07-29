@@ -10,7 +10,7 @@ class HorarioModel extends Model
 {
     /** tipo => [nombre visible, icono] */
     public const TIPOS = [
-        'misa'      => ['Misa',                    'bi-cup-hot'],
+        'misa'      => ['Misa',                    'bi-clock-fill'],
         'confesion' => ['Confesión',                'bi-chat-heart'],
         'adoracion' => ['Adoración eucarística',    'bi-brightness-high'],
         'oficina'   => ['Oficina parroquial',       'bi-building'],
