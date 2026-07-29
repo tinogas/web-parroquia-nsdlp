@@ -198,6 +198,169 @@ class MescModel extends Model
         return $this->execute('DELETE FROM mesc_rutas WHERE id = :id', [':id' => $id]);
     }
 
+    // ── Ministros ────────────────────────────────────────────────────────
+
+    public function ministros(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM mesc_ministros WHERE pastoral_id = :id ORDER BY nombre',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function ministrosActivos(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM mesc_ministros WHERE pastoral_id = :id AND activo = 1 ORDER BY nombre',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function ministroPorId(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM mesc_ministros WHERE id = :id', [':id' => $id]);
+    }
+
+    public function crearMinistro(array $datos): int
+    {
+        $this->execute(
+            'INSERT INTO mesc_ministros (pastoral_id, nombre, telefono, activo)
+             VALUES (:pastoral, :nombre, :telefono, :activo)',
+            [
+                ':pastoral' => $datos['pastoral_id'],
+                ':nombre'   => $datos['nombre'],
+                ':telefono' => $datos['telefono'],
+                ':activo'   => $datos['activo'],
+            ]
+        );
+        return $this->lastInsertId();
+    }
+
+    public function actualizarMinistro(int $id, array $datos): int
+    {
+        return $this->execute(
+            'UPDATE mesc_ministros SET nombre = :nombre, telefono = :telefono, activo = :activo WHERE id = :id',
+            [
+                ':nombre'   => $datos['nombre'],
+                ':telefono' => $datos['telefono'],
+                ':activo'   => $datos['activo'],
+                ':id'       => $id,
+            ]
+        );
+    }
+
+    public function eliminarMinistro(int $id): int
+    {
+        return $this->execute('DELETE FROM mesc_ministros WHERE id = :id', [':id' => $id]);
+    }
+
+    // ── Turnos ───────────────────────────────────────────────────────────
+
+    /**
+     * Turnos del mes, con los nombres de sus ministros ya concatenados, para
+     * el calendario. $pastoralesPermitidas: null = alcance global.
+     */
+    public function turnosDelMes(int $anio, int $mes, ?array $pastoralesPermitidas = null): array
+    {
+        $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
+        $siguienteAnio = $mes === 12 ? $anio + 1 : $anio;
+        $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
+        $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
+
+        [$condicionPastoral, $params] = $this->condicionPastoral($pastoralesPermitidas, 't.pastoral_id');
+        $condicionPastoral = $condicionPastoral !== '' ? " AND {$condicionPastoral}" : '';
+
+        return $this->fetchAll(
+            "SELECT t.*,
+                    (SELECT GROUP_CONCAT(m.nombre ORDER BY m.nombre SEPARATOR ', ')
+                       FROM mesc_turno_ministros tm JOIN mesc_ministros m ON m.id = tm.ministro_id
+                      WHERE tm.turno_id = t.id) AS ministros_nombres
+               FROM mesc_turnos t
+              WHERE t.fecha >= :inicio AND t.fecha < :fin{$condicionPastoral}
+              ORDER BY t.fecha, t.hora",
+            [':inicio' => $inicio, ':fin' => $fin] + $params
+        );
+    }
+
+    public function turnoPorId(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM mesc_turnos WHERE id = :id', [':id' => $id]);
+    }
+
+    public function ministrosDeTurno(int $turnoId): array
+    {
+        return $this->fetchAll(
+            'SELECT m.* FROM mesc_turno_ministros tm
+               JOIN mesc_ministros m ON m.id = tm.ministro_id
+              WHERE tm.turno_id = :turno
+              ORDER BY m.nombre',
+            [':turno' => $turnoId]
+        );
+    }
+
+    public function crearTurno(array $datos, array $ministroIds, int $usuarioId): int
+    {
+        $this->beginTransaction();
+        try {
+            $this->execute(
+                'INSERT INTO mesc_turnos (pastoral_id, fecha, hora, descripcion, usuario_id)
+                 VALUES (:pastoral, :fecha, :hora, :descripcion, :usuario)',
+                [
+                    ':pastoral'    => $datos['pastoral_id'],
+                    ':fecha'       => $datos['fecha'],
+                    ':hora'        => $datos['hora'],
+                    ':descripcion' => $datos['descripcion'],
+                    ':usuario'     => $usuarioId,
+                ]
+            );
+            $turnoId = $this->lastInsertId();
+            $this->sincronizarMinistrosDeTurno($turnoId, $ministroIds);
+            $this->commit();
+            return $turnoId;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
+    }
+
+    public function actualizarTurno(int $id, array $datos, array $ministroIds): int
+    {
+        $this->beginTransaction();
+        try {
+            $filas = $this->execute(
+                'UPDATE mesc_turnos SET fecha = :fecha, hora = :hora, descripcion = :descripcion WHERE id = :id',
+                [
+                    ':fecha'       => $datos['fecha'],
+                    ':hora'        => $datos['hora'],
+                    ':descripcion' => $datos['descripcion'],
+                    ':id'          => $id,
+                ]
+            );
+            $this->sincronizarMinistrosDeTurno($id, $ministroIds);
+            $this->commit();
+            return $filas;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
+    }
+
+    public function eliminarTurno(int $id): int
+    {
+        return $this->execute('DELETE FROM mesc_turnos WHERE id = :id', [':id' => $id]);
+    }
+
+    private function sincronizarMinistrosDeTurno(int $turnoId, array $ministroIds): void
+    {
+        $this->execute('DELETE FROM mesc_turno_ministros WHERE turno_id = :id', [':id' => $turnoId]);
+        foreach (array_unique($ministroIds) as $ministroId) {
+            $this->execute(
+                'INSERT INTO mesc_turno_ministros (turno_id, ministro_id) VALUES (:turno, :ministro)',
+                [':turno' => $turnoId, ':ministro' => $ministroId]
+            );
+        }
+    }
+
     /**
      * Orden sugerido por vecino más cercano (heurística greedy sobre
      * distancia Haversine), partiendo de $origen si se da (normalmente la

@@ -537,6 +537,54 @@ CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
     CONSTRAINT fk_mrv_visita FOREIGN KEY (visita_id) REFERENCES mesc_visitas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Catálogo de ministros MESC (issue #3, "calendario de turnos"): a diferencia
+-- de mesc_visitas, esto NO es un dato sensible por sí mismo —es la lista de
+-- quién sirve, no de quién recibe la visita—, así que es una tabla simple sin
+-- las mismas protecciones reforzadas. Se modela aparte de personas (que es el
+-- equipo pastoral PÚBLICO mostrado en "Quiénes somos" con foto y semblanza):
+-- un ministro MESC es un voluntario interno, no necesariamente parte de esa
+-- vitrina pública.
+CREATE TABLE IF NOT EXISTS mesc_ministros (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    nombre      VARCHAR(150) NOT NULL,
+    telefono    VARCHAR(20)  NULL,
+    activo      TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mmi_pastoral (pastoral_id, activo),
+    CONSTRAINT fk_mmi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Un turno cubre una misa o evento en una fecha concreta. Deliberadamente sin
+-- FK a horarios ni a eventos: horarios es recurrencia semanal (no una fecha),
+-- y atarlo a eventos obligaría a que exista un evento formal para cada misa
+-- dominical, que es justo lo que horarios evita. descripcion (texto libre,
+-- "Misa de 12:00", "Velorio familia X") es más simple y no depende de que
+-- ese horario o evento exista formalmente en el sistema.
+CREATE TABLE IF NOT EXISTS mesc_turnos (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    fecha       DATE         NOT NULL,
+    hora        TIME         NULL,
+    descripcion VARCHAR(160) NOT NULL,
+    usuario_id  INT UNSIGNED NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mtu_pastoral_fecha (pastoral_id, fecha),
+    CONSTRAINT fk_mtu_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mtu_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- De 1 a N ministros por turno (issue #3).
+CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
+    turno_id    INT UNSIGNED      NOT NULL,
+    ministro_id SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (turno_id, ministro_id),
+    CONSTRAINT fk_mtm_turno    FOREIGN KEY (turno_id)    REFERENCES mesc_turnos(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_mtm_ministro FOREIGN KEY (ministro_id) REFERENCES mesc_ministros(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- SACRAMENTOS
 -- ------------------------------------------------------------

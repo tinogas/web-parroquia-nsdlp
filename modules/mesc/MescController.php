@@ -325,6 +325,235 @@ class MescController extends Controller
         $this->redirect(url_admin('mesc', 'rutas'));
     }
 
+    // ── Ministros ────────────────────────────────────────────────────────
+
+    public function ministros(): void
+    {
+        $this->requirePermiso('mesc.ver');
+
+        $pastorales = $this->pastoralesDisponibles();
+        $this->render('mesc/ministros_lista', [
+            'titulo'     => 'Ministros MESC',
+            'pastorales' => $pastorales,
+            'ministros'  => $this->ministrosDeTodasLasPastorales($pastorales),
+        ]);
+    }
+
+    public function ministroGuardar(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'ministros'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $existente = $id ? $this->modelo->ministroPorId($id) : null;
+        $this->requirePermiso($existente ? 'mesc.editar' : 'mesc.crear');
+
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->postInt('pastoral_id');
+        $this->requireAlcancePastoral($pastoralId);
+
+        $nombre = $this->postStr('nombre');
+        if ($nombre === '') {
+            Session::flash('error', 'El ministro necesita un nombre.');
+            $this->redirect(url_admin('mesc', 'ministros'));
+            return;
+        }
+
+        $datos = [
+            'pastoral_id' => $pastoralId,
+            'nombre'      => $nombre,
+            'telefono'    => $this->postStr('telefono') ?: null,
+            'activo'      => $this->postBool('activo'),
+        ];
+
+        if ($existente) {
+            $this->modelo->actualizarMinistro($id, $datos);
+            $this->auditoria('editar', 'mesc_ministros', $id, $nombre);
+            Session::flash('success', 'Ministro actualizado.');
+        } else {
+            $id = $this->modelo->crearMinistro($datos);
+            $this->auditoria('crear', 'mesc_ministros', $id, $nombre);
+            Session::flash('success', 'Ministro agregado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'ministros'));
+    }
+
+    public function ministroEliminar(): void
+    {
+        $this->requirePermiso('mesc.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'ministros'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id       = $this->postInt('id');
+        $ministro = $this->modelo->ministroPorId($id);
+        if ($ministro) {
+            $this->requireAlcancePastoral((int) $ministro['pastoral_id']);
+            $this->modelo->eliminarMinistro($id);
+            $this->auditoria('eliminar', 'mesc_ministros', $id, $ministro['nombre']);
+            Session::flash('success', 'Ministro eliminado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'ministros'));
+    }
+
+    // ── Turnos ───────────────────────────────────────────────────────────
+
+    public function turnos(): void
+    {
+        $this->requirePermiso('mesc.ver');
+
+        $anio = $this->getInt('anio', (int) date('Y'));
+        $mes  = $this->getInt('mes', (int) date('n'));
+        if ($mes < 1 || $mes > 12) { $mes = (int) date('n'); }
+        if ($anio < 2000 || $anio > 2100) { $anio = (int) date('Y'); }
+
+        $mesAnterior   = $mes === 1 ? 12 : $mes - 1;
+        $anioAnterior  = $mes === 1 ? $anio - 1 : $anio;
+        $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
+        $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $this->filtroPastoralSql());
+
+        $this->render('mesc/turnos', [
+            'titulo'          => 'Calendario de turnos',
+            'anio'            => $anio,
+            'mes'             => $mes,
+            'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
+            'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
+            'urlMesAnterior'  => url_admin('mesc', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
+            'urlMesSiguiente' => url_admin('mesc', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
+        ]);
+    }
+
+    public function turnoNuevo(): void
+    {
+        $this->requirePermiso('mesc.crear');
+
+        $pastorales = $this->pastoralesDisponibles();
+        $this->render('mesc/turno_form', [
+            'titulo'          => 'Nuevo turno',
+            'turno'           => null,
+            'pastorales'      => $pastorales,
+            'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
+            'asignados'       => [],
+            'fechaSugerida'   => $this->getStr('fecha'),
+        ]);
+    }
+
+    public function turnoEditar(): void
+    {
+        $this->requirePermiso('mesc.editar');
+
+        $turno = $this->modelo->turnoPorId($this->getInt('id'));
+        if (!$turno) {
+            Session::flash('error', 'No encontramos ese turno.');
+            $this->redirect(url_admin('mesc', 'turnos'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $turno['pastoral_id']);
+
+        $pastorales = $this->pastoralesDisponibles();
+        $this->render('mesc/turno_form', [
+            'titulo'               => $turno['descripcion'],
+            'turno'                => $turno,
+            'pastorales'           => $pastorales,
+            'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
+            'asignados'            => array_map(
+                static fn (array $m): int => (int) $m['id'],
+                $this->modelo->ministrosDeTurno((int) $turno['id'])
+            ),
+            'fechaSugerida'        => '',
+        ]);
+    }
+
+    public function turnoGuardar(): void
+    {
+        $id        = $this->postInt('id');
+        $existente = $id ? $this->modelo->turnoPorId($id) : null;
+
+        $this->requirePermiso($existente ? 'mesc.editar' : 'mesc.crear');
+        if ($existente) {
+            $this->requireAlcancePastoral((int) $existente['pastoral_id']);
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'turnos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $fecha       = $this->postStr('fecha');
+        $descripcion = $this->postStr('descripcion');
+        if ($fecha === '' || $descripcion === '') {
+            Session::flash('error', 'El turno necesita fecha y descripción.');
+            $this->redirect($id ? url_admin('mesc', 'turno_editar', ['id' => $id]) : url_admin('mesc', 'turno_nuevo'));
+            return;
+        }
+
+        try {
+            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdMescValidado();
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+            $this->redirect($id ? url_admin('mesc', 'turno_editar', ['id' => $id]) : url_admin('mesc', 'turno_nuevo'));
+            return;
+        }
+
+        $ministrosDisponibles = $this->modelo->ministrosActivos($pastoralId);
+        $idsValidos           = array_map(static fn (array $m): int => (int) $m['id'], $ministrosDisponibles);
+        $ministroIds          = array_values(array_intersect(
+            array_map('intval', array_filter((array) ($_POST['ministros'] ?? []), 'is_numeric')),
+            $idsValidos
+        ));
+
+        $datos = [
+            'pastoral_id' => $pastoralId,
+            'fecha'       => $fecha,
+            'hora'        => $this->postStr('hora') ?: null,
+            'descripcion' => $descripcion,
+        ];
+
+        if ($existente) {
+            $this->modelo->actualizarTurno($id, $datos, $ministroIds);
+            $this->auditoria('editar', 'mesc_turnos', $id, $descripcion);
+            Session::flash('success', 'Turno actualizado.');
+        } else {
+            $id = $this->modelo->crearTurno($datos, $ministroIds, (int) Auth::usuario()['id']);
+            $this->auditoria('crear', 'mesc_turnos', $id, $descripcion);
+            Session::flash('success', 'Turno registrado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'turnos', ['anio' => (int) substr($fecha, 0, 4), 'mes' => (int) substr($fecha, 5, 2)]));
+    }
+
+    public function turnoEliminar(): void
+    {
+        $this->requirePermiso('mesc.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('mesc', 'turnos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id    = $this->postInt('id');
+        $turno = $this->modelo->turnoPorId($id);
+        if ($turno) {
+            $this->requireAlcancePastoral((int) $turno['pastoral_id']);
+            $this->modelo->eliminarTurno($id);
+            $this->auditoria('eliminar', 'mesc_turnos', $id, $turno['descripcion']);
+            Session::flash('success', 'Turno eliminado.');
+        }
+
+        $this->redirect(url_admin('mesc', 'turnos'));
+    }
+
     // ── Privados ─────────────────────────────────────────────────────────
 
     /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
@@ -364,5 +593,73 @@ class MescController extends Controller
         return '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">'
              . '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>'
              . '<script src="' . e(url_activo('assets/js/mapa_mesc.js')) . '?v=' . e(APP_VERSION) . '"></script>';
+    }
+
+    /** @param array $pastorales de pastoralesDisponibles(): id => nombre, ya acotadas al alcance del usuario */
+    private function ministrosDeTodasLasPastorales(array $pastorales): array
+    {
+        $porPastoral = [];
+        foreach ($pastorales as $pastoral) {
+            $porPastoral[(int) $pastoral['id']] = [
+                'pastoral' => $pastoral,
+                'ministros' => $this->modelo->ministros((int) $pastoral['id']),
+            ];
+        }
+        return $porPastoral;
+    }
+
+    private function ministrosActivosDeTodasLasPastorales(array $pastorales): array
+    {
+        $porPastoral = [];
+        foreach ($pastorales as $pastoral) {
+            $porPastoral[(int) $pastoral['id']] = $this->modelo->ministrosActivos((int) $pastoral['id']);
+        }
+        return $porPastoral;
+    }
+
+    /** Cuadrícula del mes en semanas de 7 casillas, análoga a EventoPublicoController pero sobre fecha DATE. */
+    private function construirCalendarioTurnos(int $anio, int $mes, array $turnosDelMes): array
+    {
+        $turnosPorDia = [];
+        foreach ($turnosDelMes as $turno) {
+            $dia = (int) substr((string) $turno['fecha'], 8, 2);
+            $turnosPorDia[$dia][] = $turno;
+        }
+
+        $primerDia    = new DateTimeImmutable(sprintf('%04d-%02d-01', $anio, $mes));
+        $diasEnMes    = (int) $primerDia->format('t');
+        $diaSemanaIni = (int) $primerDia->format('w');
+        $hoy          = date('Y-m-d');
+
+        $semanas = [];
+        $semana  = array_fill(0, $diaSemanaIni, null);
+
+        for ($dia = 1; $dia <= $diasEnMes; $dia++) {
+            $fecha    = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
+            $semana[] = [
+                'dia'    => $dia,
+                'fecha'  => $fecha,
+                'turnos' => $turnosPorDia[$dia] ?? [],
+                'hoy'    => $fecha === $hoy,
+            ];
+            if (count($semana) === 7) {
+                $semanas[] = $semana;
+                $semana    = [];
+            }
+        }
+        if ($semana) {
+            while (count($semana) < 7) {
+                $semana[] = null;
+            }
+            $semanas[] = $semana;
+        }
+        return $semanas;
+    }
+
+    private function nombreMes(int $mes): string
+    {
+        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                  'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return ucfirst($meses[$mes - 1] ?? '');
     }
 }

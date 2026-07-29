@@ -3,7 +3,13 @@
         <h1 class="h4 fw-bold mb-1">MESC — Visitas a enfermos</h1>
         <p class="text-muted mb-0 small">Registro para llevar la comunión. Datos de salud: visibles solo aquí.</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar3 me-1"></i>Turnos
+        </a>
+        <a href="<?= e(url_admin('mesc', 'ministros')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-people me-1"></i>Ministros
+        </a>
         <a href="<?= e(url_admin('mesc', 'rutas')) ?>" class="btn btn-outline-secondary">
             <i class="bi bi-signpost-2 me-1"></i>Rutas
         </a>

@@ -330,3 +330,64 @@ body.impersonando .sidebar {
 .lista-etapas li.hecha::marker {
     content: '✓ ';
 }
+
+/* ---- Calendario de turnos MESC (issue #3) ---- */
+
+.calendario-tabla {
+    table-layout: fixed;
+}
+
+.calendario-tabla th {
+    background: rgba(30, 77, 139, .05);
+    font-size: .72rem;
+    letter-spacing: .04em;
+    color: #6c757d;
+    border-color: rgba(0, 0, 0, .06) !important;
+}
+
+.calendario-tabla td {
+    height: 5.5rem;
+    vertical-align: top;
+    padding: .35rem;
+    border-color: rgba(0, 0, 0, .06) !important;
+    overflow: hidden;
+}
+
+.calendario-tabla td.dia-hoy {
+    background: rgba(201, 162, 39, .08);
+}
+
+.numero-dia {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: .2rem;
+}
+
+.dia-hoy .numero-dia {
+    color: var(--color-primario);
+}
+
+.evento-punto {
+    display: block;
+    font-size: .68rem;
+    color: #fff;
+    border-radius: .25rem;
+    padding: .1rem .35rem;
+    margin-bottom: .15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.evento-punto:hover {
+    filter: brightness(1.1);
+    color: #fff;
+}
+
+@media (max-width: 575.98px) {
+    .calendario-tabla td { height: 3.5rem; padding: .2rem; }
+    .numero-dia { font-size: .7rem; }
+    .evento-punto { font-size: 0; padding: 0; height: .4rem; border-radius: 50%; }
+}

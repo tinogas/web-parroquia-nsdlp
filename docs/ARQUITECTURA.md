@@ -519,6 +519,43 @@ generación de PDF (cero dependencias, ver la introducción de este documento), 
 genera en PHP puro con `fputcsv()` y se abre en cualquier hoja de cálculo. `rutaExportar()`
 antepone un BOM UTF-8 para que Excel no destroce los acentos.
 
+### MESC: calendario de turnos (issue #3)
+
+A diferencia de `mesc_visitas`, los turnos (`mesc_turnos`/`mesc_turno_ministros`) **no**
+son un dato sensible: es la lista pública-para-el-equipo de quién sirve en qué misa, no de
+quién recibe una visita. Aun así vive enteramente dentro del panel, sin controlador
+público, porque nadie pidió exponerlo fuera del equipo pastoral.
+
+**`mesc_ministros` es una entidad aparte de `personas`.** `personas` alimenta el equipo
+pastoral público de "Quiénes somos" (foto, cargo, semblanza); un ministro MESC es un
+voluntario interno que no necesariamente pertenece a esa vitrina, y forzar que lo fuera
+habría acoplado dos cosas que cambian por separado.
+
+**Un turno no tiene FK a `horarios` ni a `eventos`.** `horarios` es recurrencia semanal
+sin fecha concreta ("domingos a las 12:00"), mientras que un turno cubre una **ocurrencia**
+concreta de esa misa ("el domingo 3 de agosto"). Atarlo a `horarios` no resolvería la
+fecha; atarlo a `eventos` obligaría a crear un evento formal para cada misa dominical, que
+es justo la duplicación que `horarios` existe para evitar. `mesc_turnos.descripcion` es
+texto libre ("Misa de 12:00", "Velorio familia González") — más simple y no depende de que
+ese horario o evento exista formalmente en el sistema.
+
+**Revalidación de ministros activos, igual que el resto del sistema nunca confía en el
+POST.** `MescController::turnoGuardar()` cruza los IDs recibidos contra
+`MescModel::ministrosActivos()` de la pastoral (`array_intersect`) antes de guardar: un
+ministro dado de baja no puede colarse en un turno nuevo por más que se manipule el
+formulario, sin necesidad de una validación aparte en el modelo.
+
+**El calendario es una cuadrícula renderizada 100% en servidor**, sin AJAX: a diferencia
+del calendario público de eventos (`calendario.js`, con fetch y sin recargar), aquí cada
+clic en "mes anterior/siguiente" es un enlace normal que recarga la página. El panel admin
+no tiene el mismo volumen de tráfico que justifique la complejidad de un endpoint JSON
+aparte; `MescController::construirCalendarioTurnos()` es una cuadrícula de semanas
+análoga a `EventoPublicoController::construirCalendario()`, deliberadamente duplicada en
+vez de compartida —cruzar la frontera pública/admin por una función de 20 líneas no vale
+el acoplamiento—. Los estilos (`.calendario-tabla`, `.numero-dia`, `.evento-punto`) se
+copiaron de `assets/css/publico.css` a `assets/css/app.css` porque el panel carga una
+hoja de estilos distinta a la del sitio público.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se
