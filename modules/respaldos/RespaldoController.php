@@ -3,10 +3,10 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/respaldos/RespaldoModel.php';
 
 /**
- * RespaldoController — Generar, descargar y eliminar respaldos de la base de
- * datos. Exclusivo de administrador: ver docs/ARQUITECTURA.md, sección
- * "Usuarios, roles y auditoría" — respaldos.* no aparece en la matriz de
- * ningún otro rol, igual que usuarios.* y auditoria.*.
+ * RespaldoController — Generar, descargar, restaurar y eliminar respaldos de
+ * la base de datos. Exclusivo de administrador: ver docs/ARQUITECTURA.md,
+ * sección "Usuarios, roles y auditoría" — respaldos.* no aparece en la
+ * matriz de ningún otro rol, igual que usuarios.* y auditoria.*.
  */
 class RespaldoController extends Controller
 {
@@ -70,6 +70,47 @@ class RespaldoController extends Controller
         header('Cache-Control: no-store');
         readfile($ruta);
         exit;
+    }
+
+    public function restaurar(): void
+    {
+        $this->requirePermiso('respaldos.restaurar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('respaldos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        // La casilla de confirmación ya deshabilita el botón en la vista,
+        // pero un POST crudo podría saltársela: se revalida en el servidor.
+        if (!$this->postBool('confirmo')) {
+            Session::flash('error', 'Debes confirmar que entiendes que esto reemplaza todos los datos actuales.');
+            $this->redirect(url_admin('respaldos'));
+            return;
+        }
+
+        $id = $this->postInt('id');
+
+        try {
+            $resultado = $this->modelo->restaurar($id, (int) Auth::usuario()['id']);
+            $this->auditoria(
+                'restaurar',
+                'respaldos_log',
+                $id,
+                "Restauración completa: {$resultado['sentencias']} sentencia(s). Respaldo de seguridad: {$resultado['seguridad']}"
+            );
+            Session::flash(
+                'success',
+                "Base de datos restaurada ({$resultado['sentencias']} sentencias). "
+                    . "Se generó un respaldo de seguridad del estado anterior: {$resultado['seguridad']}."
+            );
+        } catch (RuntimeException $e) {
+            $this->auditoria('restaurar', 'respaldos_log', $id, 'Error: ' . $e->getMessage());
+            Session::flash('error', $e->getMessage());
+        }
+
+        $this->redirect(url_admin('respaldos'));
     }
 
     public function eliminar(): void

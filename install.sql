@@ -74,12 +74,21 @@ CREATE TABLE IF NOT EXISTS auditoria (
     KEY idx_aud_tabla   (tabla_ref, registro_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Historial de respaldos de la base de datos (modules/respaldos). El archivo
--- .sql vive en backups/, fuera del control de versiones; esta tabla es lo que
--- permite listarlos, descargarlos y borrarlos desde el panel. usuario_id sin
--- desnormalizar el nombre: se une con usuarios, igual que auditoria.
+-- Historial de respaldos Y restauraciones de la base de datos
+-- (modules/respaldos). El archivo .sql vive en backups/, fuera del control de
+-- versiones; esta tabla es lo que permite listarlos, descargarlos y
+-- borrarlos desde el panel. usuario_id sin desnormalizar el nombre: se une
+-- con usuarios, igual que auditoria.
+--
+-- tipo distingue una fila "respaldo" (generó un .sql nuevo) de una fila
+-- "restauracion" (ejecutó sobre la base uno ya existente); en una fila de
+-- restauración, archivo es el .sql que se restauró, y notas anota el nombre
+-- del respaldo de seguridad automático tomado justo antes, por si hay que
+-- revertir. num_registros se reutiliza para el número de sentencias SQL
+-- ejecutadas cuando tipo='restauracion'.
 CREATE TABLE IF NOT EXISTS respaldos_log (
     id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    tipo          ENUM('respaldo','restauracion') NOT NULL DEFAULT 'respaldo',
     archivo       VARCHAR(180)    NOT NULL,
     tamano_bytes  BIGINT UNSIGNED NULL,
     num_tablas    SMALLINT UNSIGNED NULL,

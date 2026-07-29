@@ -62,15 +62,20 @@ exportaciones a CSV. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
 ### `respaldos_log`
 
-Historial de respaldos de la base de datos (`modules/respaldos`), añadido tras cerrar las
-diez etapas del plan original. `archivo` VARCHAR(180) — el nombre del `.sql` dentro de
-`backups/`, fuera del control de versiones —, `tamano_bytes`, `num_tablas`,
-`num_registros`, `usuario_id` (FK a `usuarios`, `ON DELETE SET NULL`), `estado`
-ENUM(`completado`, `error`), `notas` (mensaje de error si aplica) y `created_at`.
+Historial de respaldos **y restauraciones** de la base de datos (`modules/respaldos`),
+añadido tras cerrar las diez etapas del plan original. `tipo` ENUM(`respaldo`,
+`restauracion`), `archivo` VARCHAR(180) — el nombre del `.sql` dentro de `backups/`, fuera
+del control de versiones —, `tamano_bytes`, `num_tablas`, `num_registros` (en una fila de
+restauración, el número de sentencias SQL ejecutadas), `usuario_id` (FK a `usuarios`,
+`ON DELETE SET NULL`), `estado` ENUM(`completado`, `error`), `notas` (mensaje de error, o el
+nombre del respaldo de seguridad automático previo si aplica) y `created_at`.
 
 El archivo físico no vive en la base de datos, solo su referencia; `RespaldoModel` verifica
-con `is_file()` si todavía existe antes de ofrecer la descarga. Ver
-[`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Respaldos de la base de datos".
+con `is_file()` si todavía existe antes de ofrecer la descarga o la restauración. Esta misma
+tabla queda **excluida** del volcado que ella describe (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Respaldos y restauración de la base de
+datos"): incluirla causaba que restaurar un respaldo viejo borrara la fila del respaldo de
+seguridad recién creado para esa misma restauración.
 
 ### `configuracion`
 

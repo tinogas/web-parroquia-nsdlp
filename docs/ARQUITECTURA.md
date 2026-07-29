@@ -689,15 +689,16 @@ sesión como un coordinador con una pastoral ya asignada por la interfaz:
    formulario). **Cualquier filtro nuevo en el panel debe evitar los nombres reservados
    del Router: `area`, `modulo`, `accion`, `slug`.**
 
-## Respaldos de la base de datos
+## Respaldos y restauración de la base de datos
 
 Añadido después de cerrar las diez etapas del plan original, a petición explícita del
-párroco/administrador. Replica el módulo `modules/backups` de `C:\xampp\htdocs\inventario`
-—el mismo proyecto de referencia del resto de la arquitectura— adaptado a las convenciones
-propias de este repositorio.
+párroco/administrador. El proyecto de referencia correcto para este módulo es
+`C:\xampp\htdocs\inventory school` —no `C:\xampp\htdocs\inventario`, que también tiene un
+módulo `backups` pero sin restauración—, adaptado a las convenciones propias de este
+repositorio.
 
 **Volcado en PHP puro, sin `mysqldump`.** `RespaldoModel::generarDump()` recorre
-`SHOW TABLES`, y por cada una escribe `DROP TABLE IF EXISTS` + `SHOW CREATE TABLE` (la
+`SHOW TABLES`, y por cada tabla escribe `DROP TABLE IF EXISTS` + `SHOW CREATE TABLE` (la
 estructura) y los datos en lotes de 200 filas vía `INSERT INTO ... VALUES` (para no
 construir una sola sentencia gigante), leyendo con `PDOStatement::fetch()` en vez de
 `fetchAll()` para no acumular la tabla completa en un arreglo de PHP. Es la misma razón que
@@ -705,10 +706,47 @@ justifica no depender de `mysqldump` en el resto del proyecto: un hosting de cPa
 tampoco suele permitir `exec()`/`shell_exec()`, así que un volcado nativo vía PDO es la
 única vía verdaderamente portable. Ver `docs/DESPLIEGUE.md`.
 
-**Sin restauración automática, a propósito.** El panel solo genera, descarga y elimina
-archivos `.sql`; para restaurar se importa desde phpMyAdmin, igual que en el proyecto de
-referencia. Automatizar la restauración reintroduciría por la puerta trasera el mismo
-riesgo (ejecutar SQL arbitrario desde la aplicación) que justifica no tener acceso SSH.
+**Restauración solo de un respaldo que el propio panel generó**, nunca de un `.sql` subido:
+`RespaldoController::restaurar()` recibe el `id` de una fila existente en `respaldos_log`,
+no un archivo. No hay forma de ejecutar SQL arbitrario que no haya salido de "Generar
+respaldo ahora" primero.
+
+**`respaldos_log` queda fuera del propio volcado, a propósito — y esto no es cosmético,
+es lo que evita un bug real.** La primera versión sí la incluía (como hace el proyecto de
+referencia), y al restaurar un respaldo viejo el `DROP TABLE`/`CREATE TABLE` de esa tabla
+en el `.sql` restaurado borraba la fila del **respaldo de seguridad que se acababa de crear
+segundos antes** para poder deshacer la restauración: el archivo seguía físicamente en
+`backups/`, pero su registro en el historial desaparecía junto con el resto de filas más
+nuevas que la foto que se estaba restaurando, y con él la manera fácil de encontrarlo desde
+el panel. Se corrigió excluyendo `respaldos_log` de `SHOW TABLES` antes de volcar
+(`array_diff` en `generarDump()`): es metadata de esta herramienta, no contenido de la
+parroquia, y no tiene sentido que una restauración se borre a sí misma su propia red de
+seguridad. Verificado con datos reales: tras restaurar, la fila del respaldo de seguridad
+sobrevive y sigue siendo descargable desde el panel.
+
+**Respaldo de seguridad automático antes de restaurar, reutilizando `crear()` tal cual.**
+`RespaldoModel::restaurar()` llama a `crear()` como primer paso, antes de tocar nada; si la
+restauración falla a medio camino, el mensaje de error indica cuántas sentencias alcanzaron
+a ejecutarse y el nombre exacto de ese respaldo de seguridad para volver atrás. No hay
+transacción envolviendo la restauración: no serviría de nada, porque el `.sql` mezcla DDL
+(`DROP`/`CREATE TABLE`), que en MySQL confirma de forma implícita y rompería cualquier
+transacción a la mitad.
+
+**Separador de sentencias propio, no `explode(';', ...)` ni multi-statement de PDO.**
+`RespaldoModel::dividirSentencias()` recorre el `.sql` carácter por carácter llevando un
+estado "dentro de una cadena" que se activa/desactiva con `'`, tratando `\` como escape
+dentro de una cadena (consume el siguiente carácter sin evaluarlo) — así un aviso cuyo
+contenido incluya un punto y coma no corta la sentencia a la mitad. Verificado con un texto
+que combina punto y coma y comilla simple dentro del mismo campo. No se usa el
+multi-statement de PDO porque con sentencias preparadas nativas
+(`ATTR_EMULATE_PREPARES=false`) no es confiable.
+
+**Confirmación con casilla obligatoria, sin repetir contraseña.** La vista deshabilita el
+botón "Restaurar" hasta marcar "Entiendo que esto reemplaza todos los datos actuales", y el
+controlador revalida esa confirmación en el servidor (`postBool('confirmo')`) por si un
+POST crudo se saltara el JS. No se pide contraseña como en otras acciones destructivas de
+otros proyectos de referencia: se consideró que el respaldo de seguridad automático ya es
+suficiente red antes de esta operación, acotada además a solo administrador.
 
 **`backups/` es una carpeta de infraestructura, con nombre en inglés como `uploads/` o
 `assets/`**, no una excepción al "todo en español": las clases (`RespaldoModel`,
@@ -719,19 +757,17 @@ el texto de la interfaz sí lo respetan. La carpeta se crea sola en el primer re
 
 **`respaldos.*` es exclusivo de administrador**, igual que `usuarios.*` y `auditoria.*`:
 sin entradas propias en la matriz de `config/app.php` para los demás roles, llega solo por
-el comodín de `ROL_ADMIN`.
+el comodín de `ROL_ADMIN`. `respaldos.restaurar` es un permiso propio, separado de
+`respaldos.crear`, aunque hoy solo el administrador tenga ninguno de los dos.
 
-**`respaldos_log` une con `usuarios` en vez de desnormalizar el nombre**, igual que
-`auditoria` — a diferencia del proyecto de referencia, que sí guarda `usuario_nombre` como
-columna propia. Con el volumen de respaldos de una parroquia (generados a mano, sin cron),
-la diferencia de rendimiento es irrelevante, y seguir el patrón ya establecido en
-`auditoria` es más consistente que introducir uno nuevo solo para este módulo.
-
-**Efecto autorreferencial, heredado del proyecto de referencia y aceptado tal cual:** como
-`SHOW TABLES` se ejecuta después de que la tabla `respaldos_log` ya existe, cada respaldo
-incluye una copia de su propio historial —incluidas las filas de respaldos anteriores—.
-No es un error: es simplemente lo que implica volcar "todas las tablas" de una base de
-datos que incluye la tabla que registra los volcados.
+**`respaldos_log` distingue `tipo` (`respaldo` / `restauracion`) y une con `usuarios` en vez
+de desnormalizar el nombre**, igual que `auditoria` — a diferencia del proyecto de
+referencia, que sí guarda `usuario_nombre` como columna propia. Con el volumen de respaldos
+de una parroquia (generados a mano, sin cron), la diferencia de rendimiento es irrelevante,
+y seguir el patrón ya establecido en `auditoria` es más consistente que introducir uno
+nuevo. En una fila `tipo='restauracion'`, `archivo` referencia el `.sql` de un respaldo
+ajeno (el que se restauró), no uno propio: `RespaldoModel::eliminar()` por eso solo borra el
+archivo físico cuando `tipo='respaldo'`, nunca para una fila de restauración.
 
 ## SEO
 

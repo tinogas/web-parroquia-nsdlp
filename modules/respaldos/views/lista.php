@@ -37,8 +37,9 @@ $formatoTamano = function (?int $bytes): string {
 <div class="alert alert-info">
     <i class="bi bi-info-circle me-1"></i>
     El respaldo incluye la estructura y todos los datos de la base <code><?= e(DB_NAME) ?></code>.
-    Descárgalo y guárdalo en un lugar seguro, fuera del hosting. Para restaurarlo,
-    impórtalo desde phpMyAdmin: este panel no reescribe la base de datos automáticamente.
+    Descárgalo y guárdalo en un lugar seguro, fuera del hosting. También puedes restaurarlo
+    directamente desde este panel: antes de tocar nada se genera un respaldo de seguridad
+    del estado actual, por si hay que volver atrás.
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -53,6 +54,7 @@ $formatoTamano = function (?int $bytes): string {
             <thead class="table-light">
                 <tr>
                     <th>Fecha</th>
+                    <th>Tipo</th>
                     <th class="d-none d-md-table-cell">Archivo</th>
                     <th class="d-none d-lg-table-cell text-end">Tamaño</th>
                     <th class="d-none d-lg-table-cell text-end">Tablas</th>
@@ -64,9 +66,20 @@ $formatoTamano = function (?int $bytes): string {
             </thead>
             <tbody>
             <?php foreach ($respaldos as $respaldo): ?>
-                <?php $existe = $respaldo['estado'] === 'completado' && is_file(BASE_PATH . '/backups/' . $respaldo['archivo']); ?>
+                <?php
+                $esRespaldo = $respaldo['tipo'] === 'respaldo';
+                $existe     = $respaldo['estado'] === 'completado'
+                    && is_file(BASE_PATH . '/backups/' . $respaldo['archivo']);
+                ?>
                 <tr>
                     <td class="small text-nowrap"><?= e(fecha_con_dia($respaldo['created_at'])) ?></td>
+                    <td>
+                        <?php if ($esRespaldo): ?>
+                        <span class="badge bg-primary-subtle text-primary-emphasis">Respaldo</span>
+                        <?php else: ?>
+                        <span class="badge bg-warning-subtle text-warning-emphasis">Restauración</span>
+                        <?php endif; ?>
+                    </td>
                     <td class="d-none d-md-table-cell small font-monospace"><?= e($respaldo['archivo']) ?></td>
                     <td class="d-none d-lg-table-cell text-end small"><?= e($formatoTamano($respaldo['tamano_bytes'] !== null ? (int) $respaldo['tamano_bytes'] : null)) ?></td>
                     <td class="d-none d-lg-table-cell text-end small"><?= $respaldo['num_tablas'] !== null ? (int) $respaldo['num_tablas'] : '—' ?></td>
@@ -82,16 +95,22 @@ $formatoTamano = function (?int $bytes): string {
                         <?php endif; ?>
                     </td>
                     <td class="text-end text-nowrap">
-                        <?php if ($existe): ?>
+                        <?php if ($esRespaldo && $existe): ?>
                         <a href="<?= e(url_admin('respaldos', 'descargar', ['id' => $respaldo['id']])) ?>"
                            class="btn btn-sm btn-outline-success" title="Descargar">
                             <i class="bi bi-download"></i>
                         </a>
-                        <?php elseif ($respaldo['estado'] === 'completado'): ?>
+                        <?php if (Auth::tienePermiso('respaldos.restaurar')): ?>
+                        <button type="button" class="btn btn-sm btn-outline-warning" title="Restaurar"
+                                data-bs-toggle="modal" data-bs-target="#restaurar<?= (int) $respaldo['id'] ?>">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <?php endif; ?>
+                        <?php elseif ($esRespaldo && $respaldo['estado'] === 'completado'): ?>
                         <span class="badge bg-secondary-subtle text-secondary-emphasis">sin archivo</span>
                         <?php endif; ?>
                         <?php if (Auth::tienePermiso('respaldos.eliminar')): ?>
-                        <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar del historial"
                                 data-bs-toggle="modal" data-bs-target="#borrar<?= (int) $respaldo['id'] ?>">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -105,20 +124,71 @@ $formatoTamano = function (?int $bytes): string {
     <?php endif; ?>
 </div>
 
-<?php if (Auth::tienePermiso('respaldos.eliminar')): ?>
 <?php foreach ($respaldos as $respaldo): ?>
+    <?php $esRespaldo = $respaldo['tipo'] === 'respaldo'; ?>
+    <?php $existe = $respaldo['estado'] === 'completado' && is_file(BASE_PATH . '/backups/' . $respaldo['archivo']); ?>
+
+    <?php if ($esRespaldo && $existe && Auth::tienePermiso('respaldos.restaurar')): ?>
+    <div class="modal fade" id="restaurar<?= (int) $respaldo['id'] ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h2 class="h6 modal-title fw-bold">Restaurar respaldo</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        Esto <strong>reemplaza todos los datos actuales</strong> con los de
+                        <strong><?= e($respaldo['archivo']) ?></strong>. No se puede deshacer a mano, aunque el
+                        sistema genera automáticamente un respaldo de seguridad del estado presente antes de
+                        empezar, por si hay que volver atrás.
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmo<?= (int) $respaldo['id'] ?>"
+                               onchange="document.getElementById('btnRestaurar<?= (int) $respaldo['id'] ?>').disabled = !this.checked;">
+                        <label class="form-check-label" for="confirmo<?= (int) $respaldo['id'] ?>">
+                            Entiendo que esto reemplaza todos los datos actuales y quiero continuar.
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="POST" accept-charset="UTF-8"
+                          action="<?= e(url_post('admin', 'respaldos', 'restaurar')) ?>" class="m-0"
+                          onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span>Restaurando…';">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <input type="hidden" name="id" value="<?= (int) $respaldo['id'] ?>">
+                        <input type="hidden" name="confirmo" value="1">
+                        <button type="submit" id="btnRestaurar<?= (int) $respaldo['id'] ?>" class="btn btn-warning" disabled>
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (Auth::tienePermiso('respaldos.eliminar')): ?>
     <div class="modal fade" id="borrar<?= (int) $respaldo['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h2 class="h6 modal-title fw-bold">Eliminar respaldo</h2>
+                    <h2 class="h6 modal-title fw-bold">Eliminar del historial</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    <?php if ($esRespaldo): ?>
                     <p class="mb-0">
                         Se borrará el archivo <strong><?= e($respaldo['archivo']) ?></strong> y su registro en el
                         historial. No se puede deshacer.
                     </p>
+                    <?php else: ?>
+                    <p class="mb-0">
+                        Se borrará este registro del historial. El archivo <strong><?= e($respaldo['archivo']) ?></strong>
+                        pertenece a otro respaldo y no se toca.
+                    </p>
+                    <?php endif; ?>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -134,5 +204,5 @@ $formatoTamano = function (?int $bytes): string {
             </div>
         </div>
     </div>
+    <?php endif; ?>
 <?php endforeach; ?>
-<?php endif; ?>

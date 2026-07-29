@@ -94,6 +94,8 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 - [ ] `https://dominio/cli/purgar_solicitudes.php` devuelve 403 y no ejecuta nada.
 - [ ] `https://dominio/backups/algo.sql` devuelve 403, aunque no se conozca el nombre real.
 - [ ] Generar un respaldo desde el panel funciona y el archivo se puede descargar.
+- [ ] Restaurar ese mismo respaldo funciona y deja además un respaldo de seguridad nuevo
+      (probar esto en un momento sin visitas reales al sitio, no en horas pico).
 - [ ] `setup.php` ya no existe.
 - [ ] `config/database.php` no es accesible por HTTP.
 - [ ] `sitemap.xml` se genera, incluye el contenido publicado y usa el dominio real.
@@ -157,8 +159,10 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
 Sin acceso SSH no hay `cron` con `mysqldump` cómodo, pero cPanel tiene su propio
 programador de tareas y su asistente de respaldos. El panel además trae su propio módulo
 de respaldos (**Administración → Respaldos**, solo administrador): genera un `.sql` con
-estructura y datos vía PDO —sin `mysqldump`, por la misma razón de siempre— y se descarga
-en un clic. Es cómodo para un respaldo puntual antes de un cambio grande, pero no sustituye
+estructura y datos vía PDO —sin `mysqldump`, por la misma razón de siempre—, se descarga en
+un clic, y **también se puede restaurar directamente desde ahí** (antes de reemplazar nada,
+genera solo un respaldo de seguridad del estado actual, por si hay que volver atrás). Es
+cómodo para un respaldo o una reversión puntual antes de un cambio grande, pero no sustituye
 lo de abajo: no cubre `uploads/` ni corre solo.
 
 Como mínimo:
