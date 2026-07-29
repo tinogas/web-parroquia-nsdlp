@@ -472,6 +472,35 @@ Reglas sin excepción:
   ambos casos se revalida en el servidor.
 - `pastoral_id NULL` significa contenido parroquial global. Un coordinador nunca lo toca.
 
+### Administrador y Consulta por pastoral (revisión de módulos)
+
+`ROL_COORDINADOR` es genérico: sirve para cualquier pastoral, sin importar cuál. Pero las
+pastorales con un módulo propio y dedicado —MESC, Catequesis, Lector, calcadas unas de
+otras— ganaron además un par de roles con nombre explícito cada una:
+`ROL_ADMIN_MESC`/`ROL_CONSULTA_MESC`, `ROL_ADMIN_CATEQUESIS`/`ROL_CONSULTA_CATEQUESIS`,
+`ROL_ADMIN_LECTOR`/`ROL_CONSULTA_LECTOR`.
+
+- **Administrador de X** tiene el mismo alcance de contenido que Coordinador (avisos,
+  eventos, galería, `pastoral_actividades`/`pastoral_documentos` de su pastoral) más
+  control total (`ver`/`crear`/`editar`/`eliminar`) del módulo específico de esa
+  pastoral. Es, en la práctica, "Coordinador con nombre puesto": mismo mecanismo de
+  alcance, para que crear la cuenta dé de una vez claridad sobre qué administra, en vez
+  de un rol abstracto más una asignación de pastoral aparte.
+- **Consulta de X** es de solo lectura: únicamente el permiso `X.ver` (además de
+  `panel.ver`). Pensado para que un ministro, catequista o lector de a pie entre al
+  panel solo a ver su propio calendario o los documentos de su pastoral, sin poder
+  editar nada.
+
+Los seis roles reutilizan exactamente el mismo mecanismo de alcance que Coordinador
+(`usuarios_pastorales`/`usuarios_centros`, cacheado en sesión por `Auth::cargarPastorales()`
+al iniciar sesión, sin distinción de rol): al crear la cuenta hay que asignarle la
+pastoral correspondiente, igual que a un coordinador. La constante
+`ROLES_CON_ALCANCE_PASTORAL` en `config/app.php` agrupa los siete roles que necesitan
+este checklist (Coordinador más los seis nuevos), para que el formulario de usuarios
+(`modules/usuarios/views/form.php`) y su guardado (`UsuarioController::guardar()`) no
+repitan `=== ROL_COORDINADOR` en cada punto — un error fácil de cometer si un rol nuevo
+se agrega en un solo lugar y se olvida el otro.
+
 ### Alcance por centro/sede (issue #3)
 
 Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,
@@ -606,6 +635,35 @@ hardcodear un solo color de texto para todos habría vuelto ilegible alguno de l
 parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba de la
 cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
 los turnos, no de uno en particular.
+
+### Catequesis y Lector: MESC como plantilla para módulos dedicados (revisión de módulos)
+
+Dos módulos nuevos, `modules/catequesis/` y `modules/lector/`, replican deliberadamente el
+patrón de MESC —módulo propio y separado para una pastoral específica, sin controlador
+público, `pastoral_id` siempre obligatorio y validado con la misma copia local de
+`pastoralIdMescValidado()` (nunca acepta `null`, a diferencia de avisos/eventos)— en vez
+de ampliar el sistema genérico de "contenido propio por pastoral"
+(`pastoral_actividades`/`pastoral_documentos`). La razón es la misma que hizo a MESC un
+módulo aparte: cada uno necesita columnas y pantallas que ese sistema genérico no tiene
+y que no tendría sentido forzar sobre *todas* las pastorales.
+
+**Catequesis** (pastoral "Catecismo"): `catequesis_maestros` agrega justo lo que
+`pastoral_actividades`/`personas` no tienen, el sacramento que cada catequista prepara
+(ENUM acotado a `primera_comunion`/`confirmacion`, no el catálogo completo de
+`sacramentos`); `catequesis_actividades` es un tablero con vigencia y `publicado` propios,
+como un mini-`eventos`, distinto de la lista fija sin fechas de `pastoral_actividades`;
+`catequesis_documentos` sí es una copia directa de `pastoral_documentos` (mismo patrón de
+subida vía `Upload::documento()`), separada solo porque el módulo entero vive aparte.
+
+**Lector** (pastoral "Lectores"): recorta MESC a sus dos piezas no sensibles y
+extrapolables —`lector_turnos`/`lector_turno_lectores` calcan
+`mesc_turnos`/`mesc_turno_ministros` entrada por entrada, y `lector_lectores` calca
+`mesc_ministros`—, y deja fuera lo que no aplica: nada de `mesc_rutas`/`mesc_visitas`, un
+lector proclama la Palabra en misa, no reparte comunión a domicilio. `lector_turnos.color_liturgico_id`
+apunta al catálogo `mesc_colores_liturgicos` en vez de duplicarlo: el significado de cada
+color litúrgico es el mismo calendario para toda la parroquia, no un dato propio de un
+módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
+catálogo de MESC directamente.
 
 ### Moderación
 

@@ -71,12 +71,12 @@
                         </div>
                     </div>
 
-                    <?php if ($esNuevo || $cuenta['rol'] === ROL_COORDINADOR): ?>
+                    <?php if ($esNuevo || in_array($cuenta['rol'], ROLES_CON_ALCANCE_PASTORAL, true)): ?>
                     <div class="mb-0">
                         <label class="form-label fw-semibold">Pastorales que administra</label>
                         <div class="form-text mb-2">
-                            Solo se guarda si el rol es «Coordinador de pastoral»; con cualquier otro rol se ignora,
-                            porque ese rol es el único cuyo acceso queda acotado a sus propias pastorales.
+                            Solo se guarda con un rol acotado por pastoral (Coordinador, o Administrador/Consulta de
+                            MESC, Catequesis o Lector); con cualquier otro rol se ignora.
                         </div>
                         <?php if (!$pastorales): ?>
                         <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
@@ -102,7 +102,7 @@
                         <label class="form-label fw-semibold">Centros o sedes que administra completos</label>
                         <div class="form-text mb-2">
                             Quien administra un centro/sede administra todas sus pastorales, sin tener que
-                            marcarlas una por una arriba. También solo aplica al rol «Coordinador de pastoral».
+                            marcarlas una por una arriba. Aplica a los mismos roles que arriba.
                         </div>
                         <?php if (!$centros): ?>
                         <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>

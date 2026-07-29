@@ -39,7 +39,7 @@ Cuentas del panel de administración.
 | `nombre` | VARCHAR(120) | |
 | `email` | VARCHAR(150) | `uq_usr_email`; es el identificador de acceso |
 | `password_hash` | VARCHAR(255) | bcrypt con coste 12 |
-| `rol` | ENUM | `admin`, `editor`, `coordinador`, `secretaria` |
+| `rol` | ENUM | `admin`, `editor`, `coordinador`, `secretaria`, y el par administrador/consulta de cada pastoral con módulo propio: `admin_mesc`/`consulta_mesc`, `admin_catequesis`/`consulta_catequesis`, `admin_lector`/`consulta_lector` |
 | `foto` | VARCHAR(255) | Opcional |
 | `telefono` | VARCHAR(20) | |
 | `activo` | TINYINT(1) | Baja lógica |
@@ -322,16 +322,69 @@ texto o agregar alguno si hiciera falta.
 ### `mesc_turnos` y `mesc_turno_ministros`
 
 Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
-`hora` NULL, `color_liturgico_id` (FK a `mesc_colores_liturgicos`, `ON DELETE SET NULL`,
-opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a `eventos` (ver
-[`ARQUITECTURA.md`](ARQUITECTURA.md)) y sin columna de descripción propia: el turno se
-identifica por su fecha, hora y los ministros que lo cubren, que ya basta en la práctica;
-`MescController::etiquetaTurno()` arma un texto de referencia a partir de fecha y hora
-donde hace falta un título. `mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`,
-de 1 a N ministros por turno. `MescController::turnoGuardar()` revalida cada
-`ministro_id` recibido contra `ministrosActivos()` de esa pastoral antes de guardar: un
-ministro dado de baja no puede colarse en un turno nuevo aunque se manipule el
-formulario.
+`hora` NULL, `descripcion` VARCHAR(160) (qué se cubre: "Misa", "Santísimo", "Hora Santa",
+"Misa de Niños"…), `color_liturgico_id` (FK a `mesc_colores_liturgicos`,
+`ON DELETE SET NULL`, opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a
+`eventos` (ver [`ARQUITECTURA.md`](ARQUITECTURA.md)): un turno es una ocurrencia concreta,
+no la recurrencia semanal de `horarios` ni un evento formal. `mesc_turno_ministros` es el
+pivote `(turno_id, ministro_id)`, de 1 a N ministros por turno.
+`MescController::turnoGuardar()` revalida cada `ministro_id` recibido contra
+`ministrosActivos()` de esa pastoral antes de guardar: un ministro dado de baja no puede
+colarse en un turno nuevo aunque se manipule el formulario.
+
+---
+
+## Catequesis — maestros, tablero de actividades y documentos
+
+Módulo dedicado para la pastoral de Catecismo, calcado del patrón de MESC (módulo propio
+para una pastoral específica, sin controlador público) pero mucho más pequeño: no hay
+datos sensibles ni rutas.
+
+### `catequesis_maestros`
+
+Catequistas, uno por sacramento que preparan. `pastoral_id` (FK a `pastorales`,
+`ON DELETE CASCADE`), `nombre`, `sacramento` ENUM(`primera_comunion`, `confirmacion`) —no
+es FK al catálogo `sacramentos`: un catequista no prepara bautizos ni bodas, así que la
+lista se acota a las dos opciones reales en vez de abrir las seis del catálogo general—,
+`telefono`, `email`, `orden`, `activo`.
+
+### `catequesis_actividades`
+
+El "tablero o calendario" (issue de revisión de módulos): a diferencia de
+`pastoral_actividades` (lista fija de qué hace la pastoral, sin fechas),
+`catequesis_actividades` tiene vigencia y se publica o no, como un mini-evento —mismas
+columnas que `eventos`—: `pastoral_id`, `titulo`, `descripcion`, `fecha_inicio` (NOT
+NULL), `fecha_fin` (NULL = sin fecha de término), `publicado`, `orden`, `usuario_id`,
+`created_at`. Índice `idx_cta_publicado (publicado, fecha_inicio)`.
+
+### `catequesis_documentos`
+
+Documentos descargables, mismo patrón que `pastoral_documentos`: `pastoral_id`, `titulo`,
+`archivo` (ruta bajo `uploads/catequesis/AAAA/MM/`, solo PDF vía `Upload::documento()`),
+`orden`, `activo`, `usuario_id`, `created_at`. Sin columna de edición: como en
+`pastoral_documentos`, un documento se sube o se borra, no se reemplaza in situ.
+
+---
+
+## Lector — turnos y catálogo de lectores
+
+Módulo dedicado para la pastoral de Lectores, calcado de
+`mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: un
+lector proclama la Palabra en misa, no reparte comunión a domicilio.
+
+### `lector_lectores`
+
+Catálogo de lectores. `pastoral_id` (FK, `ON DELETE CASCADE`), `nombre`, `telefono`,
+`email`, `orden`, `activo`.
+
+### `lector_turnos` y `lector_turno_lectores`
+
+Calendario de turnos, misma forma que `mesc_turnos`: `pastoral_id`, `fecha`, `hora`,
+`descripcion`, `color_liturgico_id`, `usuario_id`, `created_at`. `color_liturgico_id`
+reutiliza el catálogo **de MESC** (`mesc_colores_liturgicos`) en vez de duplicarlo: el
+significado litúrgico de cada color es el mismo para toda la parroquia, no un dato propio
+de este módulo. `lector_turno_lectores` es el pivote `(turno_id, lector_id)`, de 1 a N
+lectores por turno (una lectura puede repartirse entre dos personas).
 
 ---
 
@@ -441,13 +494,17 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
+| Catequesis | `catequesis_maestros`, `catequesis_actividades`, `catequesis_documentos` |
+| Lector | `lector_lectores`, `lector_turnos`, `lector_turno_lectores` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 34 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 40 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `persona_pastorales`, `persona_centros`,
 `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
-`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` y `mesc_colores_liturgicos`,
+`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos`,
+`catequesis_maestros`, `catequesis_actividades`, `catequesis_documentos`,
+`lector_lectores`, `lector_turnos` y `lector_turno_lectores`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`).
