@@ -288,13 +288,16 @@ texto o agregar alguno si hiciera falta.
 ### `mesc_turnos` y `mesc_turno_ministros`
 
 Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
-`hora` NULL, `descripcion` (texto libre, "Misa de 12:00" — no hay FK a `horarios` ni a
-`eventos`; ver [`ARQUITECTURA.md`](ARQUITECTURA.md)), `color_liturgico_id` (FK a
-`mesc_colores_liturgicos`, `ON DELETE SET NULL`, opcional), `usuario_id`, `created_at`.
-`mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`, de 1 a N ministros por
-turno. `MescController::turnoGuardar()` revalida cada `ministro_id` recibido contra
-`ministrosActivos()` de esa pastoral antes de guardar: un ministro dado de baja no puede
-colarse en un turno nuevo aunque se manipule el formulario.
+`hora` NULL, `color_liturgico_id` (FK a `mesc_colores_liturgicos`, `ON DELETE SET NULL`,
+opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a `eventos` (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)) y sin columna de descripción propia: el turno se
+identifica por su fecha, hora y los ministros que lo cubren, que ya basta en la práctica;
+`MescController::etiquetaTurno()` arma un texto de referencia a partir de fecha y hora
+donde hace falta un título. `mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`,
+de 1 a N ministros por turno. `MescController::turnoGuardar()` revalida cada
+`ministro_id` recibido contra `ministrosActivos()` de esa pastoral antes de guardar: un
+ministro dado de baja no puede colarse en un turno nuevo aunque se manipule el
+formulario.
 
 ---
 

@@ -70,13 +70,16 @@ if (!function_exists('mesc_texto_legible')) {
                             <?php if ($celda): ?>
                             <div class="numero-dia"><?= $celda['dia'] ?></div>
                             <?php foreach ($celda['turnos'] as $turno): ?>
-                            <?php $fondo = $turno['color_hex'] ?: '#1e4d8b'; ?>
+                            <?php
+                            $fondo   = $turno['color_hex'] ?: '#1e4d8b';
+                            $texto   = trim(($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . ($turno['ministros_nombres'] ?: ''));
+                            $tooltip = ($turno['color_nombre'] ? 'Color ' . $turno['color_nombre'] : '')
+                                     . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados');
+                            ?>
                             <a href="<?= e(url_admin('mesc', 'turno_editar', ['id' => $turno['id']])) ?>"
                                class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
-                               title="<?= e($turno['descripcion']
-                                          . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                          . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados')) ?>">
-                                <?= e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') ?><?= e($turno['descripcion']) ?>
+                               title="<?= e(trim($tooltip, ' —')) ?>">
+                                <?= e($texto ?: 'Turno') ?>
                             </a>
                             <?php endforeach; ?>
                             <?php endif; ?>

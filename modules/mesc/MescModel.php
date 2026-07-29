@@ -304,15 +304,14 @@ class MescModel extends Model
         $this->beginTransaction();
         try {
             $this->execute(
-                'INSERT INTO mesc_turnos (pastoral_id, fecha, hora, descripcion, color_liturgico_id, usuario_id)
-                 VALUES (:pastoral, :fecha, :hora, :descripcion, :color, :usuario)',
+                'INSERT INTO mesc_turnos (pastoral_id, fecha, hora, color_liturgico_id, usuario_id)
+                 VALUES (:pastoral, :fecha, :hora, :color, :usuario)',
                 [
-                    ':pastoral'    => $datos['pastoral_id'],
-                    ':fecha'       => $datos['fecha'],
-                    ':hora'        => $datos['hora'],
-                    ':descripcion' => $datos['descripcion'],
-                    ':color'       => $datos['color_liturgico_id'] ?? null,
-                    ':usuario'     => $usuarioId,
+                    ':pastoral' => $datos['pastoral_id'],
+                    ':fecha'    => $datos['fecha'],
+                    ':hora'     => $datos['hora'],
+                    ':color'    => $datos['color_liturgico_id'] ?? null,
+                    ':usuario'  => $usuarioId,
                 ]
             );
             $turnoId = $this->lastInsertId();
@@ -331,14 +330,13 @@ class MescModel extends Model
         try {
             $filas = $this->execute(
                 'UPDATE mesc_turnos
-                    SET fecha = :fecha, hora = :hora, descripcion = :descripcion, color_liturgico_id = :color
+                    SET fecha = :fecha, hora = :hora, color_liturgico_id = :color
                   WHERE id = :id',
                 [
-                    ':fecha'       => $datos['fecha'],
-                    ':hora'        => $datos['hora'],
-                    ':descripcion' => $datos['descripcion'],
-                    ':color'       => $datos['color_liturgico_id'] ?? null,
-                    ':id'          => $id,
+                    ':fecha' => $datos['fecha'],
+                    ':hora'  => $datos['hora'],
+                    ':color' => $datos['color_liturgico_id'] ?? null,
+                    ':id'    => $id,
                 ]
             );
             $this->sincronizarMinistrosDeTurno($id, $ministroIds);
