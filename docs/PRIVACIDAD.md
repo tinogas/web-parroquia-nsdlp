@@ -74,9 +74,39 @@ Si la fecha de nacimiento capturada implica menos de 18 años:
 
 Solo se pide lo que hace falta para el trámite.
 
-**No se pide** CURP, RFC, número de seguridad social, ni ningún dato sensible en el
-sentido de la ley: origen étnico, estado de salud, creencias religiosas, preferencias
-sexuales u opiniones políticas.
+**No se pide** CURP, RFC, número de seguridad social, ni datos sensibles en el sentido de
+la ley —origen étnico, creencias religiosas, preferencias sexuales, opiniones políticas—,
+con una única excepción documentada abajo: el estado de salud en el registro de MESC.
+
+## Dato sensible: MESC (issue #3)
+
+El módulo de Ministros Extraordinarios de la Comunión (`mesc_visitas`) registra visitas a
+enfermos para llevarles la comunión. El solo hecho de que alguien aparezca ahí revela que
+está enfermo, que la LFPDPPP clasifica como **dato personal sensible** (Art. 3, fr. VI),
+con un estándar de protección más alto que el de cualquier otro dato que maneja este
+sitio, empezando por el consentimiento: debe ser **expreso**, no basta uno tácito o
+implícito como el de una casilla web.
+
+Por diseño, este módulo **no tiene ningún formulario público**: nadie llena su propio
+registro de MESC en el sitio. El alta la hace el equipo pastoral desde el panel, después
+de que la familia solicita la visita **en persona o por teléfono**, momento en el que se
+obtiene ese consentimiento expreso fuera del sistema — igual que ya ocurre hoy en la
+práctica pastoral real, sin necesidad de digitalizarlo. Por eso `mesc_visitas` no tiene
+columnas de `consentimiento`/`consentimiento_ip`/`aviso_version` como sí las tiene
+`inscripciones_curso`: ese patrón asume un formulario web que aquí no existe.
+
+Protecciones en el código:
+
+- **Nunca se expone públicamente.** `MescModel` no tiene un solo método de lectura sin
+  autenticación; a diferencia de avisos, eventos o galería, no hay `MescPublicoController`.
+- **Alcance más estrecho que el resto del contenido pastoral.** Se rige por
+  `requireAlcancePastoral()`, igual que avisos o eventos, pero el permiso `mesc.*` **no**
+  se concede a secretaría (que sí ve inscripciones y mensajes): es una actividad de la
+  propia pastoral de MESC, no un trámite administrativo general, y cuantas menos cuentas
+  puedan verlo, mejor.
+- **El aviso de privacidad** (`paginas.aviso-de-privacidad`) menciona esta finalidad y su
+  base de consentimiento por separado del resto. Ver la plantilla sembrada en
+  `install.sql`.
 
 ## Qué nunca se publica
 
@@ -106,6 +136,11 @@ habrá una vista pública de "quiénes se inscribieron".
 El rol de secretaría existe precisamente para esto: separar a quien administra trámites de
 quien edita la web. Un coordinador de pastoral juvenil publica avisos y sube fotos de sus
 actividades, pero no tiene por qué ver las actas de nacimiento de los niños de catequesis.
+
+Esta tabla no aplica a MESC: ahí la regla es distinta (ver la sección "Dato sensible:
+MESC" arriba). Un coordinador **sí** ve las visitas, pero únicamente de la pastoral de
+MESC que tenga asignada; secretaría **no** las ve, aunque sí vea el resto de datos
+personales del sitio.
 
 ## Trazabilidad
 
@@ -159,4 +194,5 @@ excusa: los certificados son gratuitos y cPanel los emite en dos clics.
 - [ ] Ninguna URL pública devuelve datos de inscripciones.
 - [ ] Un usuario con rol coordinador no puede abrir el módulo de inscripciones.
 - [ ] La auditoría registra la consulta y la exportación de datos personales.
+- [ ] Ningún rol distinto de administrador o coordinador de la pastoral de MESC puede ver `mesc_visitas`.
 - [ ] HTTPS está activo y forzado.

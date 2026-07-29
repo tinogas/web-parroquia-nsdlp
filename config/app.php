@@ -107,6 +107,7 @@ define('PERMISOS', [
         'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -123,6 +124,12 @@ define('PERMISOS', [
         'pastorales.ver', 'pastorales.editar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        // mesc.* también respeta el alcance por pastoral: solo quien administra
+        // la pastoral de Ministros Extraordinarios de la Comunión (directo o
+        // por centro/sede) ve o toca estas visitas. No se le da a secretaría:
+        // es una actividad de la propia pastoral, no un trámite administrativo,
+        // y es el primer dato sensible (estado de salud) que maneja el sistema.
+        'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'cursos.ver',
     ],
 

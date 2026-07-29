@@ -46,6 +46,7 @@ class Router
         'galeria'       => ['clase' => 'GaleriaController',       'archivo' => 'modules/galeria/GaleriaController.php'],
         'carrusel'      => ['clase' => 'CarruselController',      'archivo' => 'modules/carrusel/CarruselController.php'],
         'pastorales'    => ['clase' => 'PastoralController',      'archivo' => 'modules/pastorales/PastoralController.php'],
+        'mesc'          => ['clase' => 'MescController',          'archivo' => 'modules/mesc/MescController.php'],
         'sacramentos'   => ['clase' => 'SacramentoController',    'archivo' => 'modules/sacramentos/SacramentoController.php'],
         'cursos'        => ['clase' => 'CursoController',         'archivo' => 'modules/cursos/CursoController.php'],
         'inscripciones' => ['clase' => 'InscripcionCursoController', 'archivo' => 'modules/cursos/InscripcionCursoController.php'],

@@ -33,7 +33,7 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
-                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')): ?>
+                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver') || Auth::tienePermiso('mesc.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -59,6 +59,11 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('pastorales.ver')): ?>
         <a href="<?= e(url_admin('pastorales')) ?>" class="sidebar-link <?= $activo('pastorales') ?>">
             <i class="bi bi-people"></i> Pastorales
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('mesc.ver')): ?>
+        <a href="<?= e(url_admin('mesc')) ?>" class="sidebar-link <?= $activo('mesc') ?>">
+            <i class="bi bi-heart-pulse"></i> MESC
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>

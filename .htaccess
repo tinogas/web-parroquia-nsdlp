@@ -47,7 +47,14 @@ RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/([a-z0-9-]+)/?$   index.php?area=publico&
     # ajenos. Se admite 'unsafe-inline' porque las vistas usan atributos style
     # y algún script embebido; aun así, un <script src="…"> inyectado no se
     # ejecutaría.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    #
+    # img-src suma cdn.jsdelivr.net (iconos de Leaflet, issue #3) y
+    # *.tile.openstreetmap.org (los tiles del mapa del módulo MESC, para
+    # marcar la dirección de una visita). Deliberadamente NO se usa Google
+    # Maps para esto: enviar la ubicación de un enfermo a un servicio de
+    # terceros de pago choca con la misma lógica que ya evitó reCAPTCHA. Ver
+    # docs/ARQUITECTURA.md.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
 </IfModule>
 
 # ---- PHP: ocultar versión y errores en producción ----

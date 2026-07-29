@@ -467,6 +467,77 @@ CREATE TABLE IF NOT EXISTS pastoral_documentos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- MESC — MINISTROS EXTRAORDINARIOS DE LA COMUNIÓN
+-- ------------------------------------------------------------
+-- Issue #3. Registro de visitas a enfermos para llevar la comunión, con los
+-- mismos datos que tenía la extinta solicitud de unción de enfermos (folio,
+-- estado y bitácora de aprobación NO se heredan: aquí no hay formulario
+-- público ni flujo de revisión, es una herramienta 100% interna del panel).
+-- pastoral_id es obligatoria y NUNCA null —a diferencia de avisos/eventos—
+-- porque esta actividad siempre pertenece a la pastoral de MESC, jamás es
+-- contenido parroquial general.
+--
+-- direccion (texto) es lo único obligatorio para ubicar al enfermo.
+-- latitud/longitud quedan NULL si solo se capturó la dirección a mano, sin
+-- fijar el pin en el mapa (issue #3: "en mapa (pin) o captura manual" son
+-- alternativas, no un requisito doble).
+--
+-- OJO — dato sensible: el solo hecho de aparecer aquí revela que la persona
+-- está enferma, lo que la LFPDPPP trata como dato sensible (Art. 3, fr. VI).
+-- El consentimiento para tratarlo se obtiene en persona, al solicitar la
+-- visita —no hay formulario web que lo capture—, así que no hay columnas de
+-- consentimiento aquí. Ver docs/PRIVACIDAD.md.
+CREATE TABLE IF NOT EXISTS mesc_visitas (
+    id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id            TINYINT UNSIGNED NOT NULL,
+    nombre_enfermo         VARCHAR(150) NOT NULL,
+    direccion              VARCHAR(255) NOT NULL,
+    latitud                DECIMAL(10,7) NULL,
+    longitud               DECIMAL(10,7) NULL,
+    telefono               VARCHAR(20)  NULL,
+    solicitante_nombre     VARCHAR(150) NULL,
+    solicitante_parentesco VARCHAR(60)  NULL,
+    solicitante_telefono   VARCHAR(20)  NULL,
+    notas                  TEXT         NULL,
+    activo                 TINYINT(1)   NOT NULL DEFAULT 1,
+    usuario_id             INT UNSIGNED NULL,
+    created_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at             DATETIME     NULL,
+    PRIMARY KEY (id),
+    KEY idx_mvi_pastoral (pastoral_id, activo),
+    CONSTRAINT fk_mvi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mvi_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Una ruta es un recorrido para un grupo de visitas activas, en el orden que
+-- MescModel::ordenSugerido() calcula (vecino más cercano sobre distancia
+-- Haversine, partiendo de la parroquia) y que sigue siendo editable después:
+-- mesc_ruta_visitas.orden se puede reacomodar a mano antes de exportar el
+-- CSV final. "Óptima" es una aproximación geométrica en línea recta, no una
+-- ruta real por calles ni de tráfico —el proyecto no depende de ningún
+-- servicio de mapas de pago para calcularla—.
+CREATE TABLE IF NOT EXISTS mesc_rutas (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    nombre      VARCHAR(150) NOT NULL,
+    usuario_id  INT UNSIGNED NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mru_pastoral (pastoral_id),
+    CONSTRAINT fk_mru_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mru_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
+    ruta_id   INT UNSIGNED NOT NULL,
+    visita_id INT UNSIGNED NOT NULL,
+    orden     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (ruta_id, visita_id),
+    CONSTRAINT fk_mrv_ruta   FOREIGN KEY (ruta_id)   REFERENCES mesc_rutas(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_mrv_visita FOREIGN KEY (visita_id) REFERENCES mesc_visitas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SACRAMENTOS
 -- ------------------------------------------------------------
 
@@ -676,12 +747,13 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 <p>La [DENOMINACION LEGAL DE LA ASOCIACION RELIGIOSA], con domicilio en [DOMICILIO COMPLETO], es responsable del uso y proteccion de sus datos personales.</p>
 <h2>Datos que recabamos</h2>
 <p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
-<p>No solicitamos datos patrimoniales ni datos personales sensibles.</p>
+<p>No solicitamos datos patrimoniales. La unica excepcion a que no tratemos datos personales sensibles es el estado de salud, y unicamente para coordinar la visita de los Ministros Extraordinarios de la Comunion a personas enfermas: ver mas abajo.</p>
 <h2>Para que usamos sus datos</h2>
 <p>Finalidades necesarias para el tramite solicitado:</p>
 <ul>
 <li>Registrar inscripciones a cursos y catequesis.</li>
 <li>Responder los mensajes que nos envia por el formulario de contacto.</li>
+<li>Coordinar la visita de un Ministro Extraordinario de la Comunion a una persona enferma.</li>
 </ul>
 <p>Finalidades adicionales, que no son necesarias y a las que puede oponerse:</p>
 <ul>
@@ -689,6 +761,8 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 </ul>
 <h2>Datos de menores de edad</h2>
 <p>Cuando el solicitante es menor de edad, el padre, la madre o el tutor debe otorgar el consentimiento y proporcionar sus propios datos de contacto. No publicamos nombres ni fotografias de menores en este sitio sin autorizacion expresa por escrito.</p>
+<h2>Datos de salud: visitas de los Ministros Extraordinarios de la Comunion</h2>
+<p>Cuando una persona enferma o su familia solicita la visita de un Ministro Extraordinario de la Comunion, recabamos su nombre, direccion, telefono y los datos de quien solicita la visita en su nombre. Este es un dato personal sensible por revelar un estado de salud, y por eso su tratamiento requiere su consentimiento expreso, que se otorga de viva voz o por telefono al momento de solicitar la visita, no a traves de este sitio web. Este registro nunca se publica ni se comparte fuera del equipo pastoral que coordina las visitas.</p>
 <h2>Transferencias</h2>
 <p>No transferimos sus datos a terceros, salvo a las autoridades competentes cuando exista una obligacion legal.</p>
 <h2>Como ejercer sus derechos</h2>

@@ -231,6 +231,40 @@ panel más allá de agregar o quitar: para cambiar un documento se sube uno nuev
 
 ---
 
+## MESC — Ministros Extraordinarios de la Comunión
+
+> **Dato sensible.** Estas tres tablas guardan el único dato de salud que trata el
+> sistema. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Dato sensible: MESC".
+
+### `mesc_visitas`
+
+Registro de visitas a enfermos para llevarles la comunión (issue #3). `pastoral_id`
+(FK a `pastorales`, `ON DELETE CASCADE`, **NOT NULL** —a diferencia de avisos/eventos,
+nunca es contenido parroquial general—), `nombre_enfermo`, `direccion` (obligatoria),
+`latitud`/`longitud` DECIMAL(10,7) NULL (solo si se marcó el pin en el mapa),
+`telefono`, `solicitante_nombre`/`solicitante_parentesco`/`solicitante_telefono` (quien
+pide la visita en nombre del enfermo), `notas`, `activo` (deja de entrar en el cálculo de
+rutas nuevas sin borrar el historial), `usuario_id` (FK, `ON DELETE SET NULL`),
+`created_at`, `updated_at`.
+
+No hereda `folio`, `estado` ni las columnas de consentimiento de la extinta
+`solicitudes_sacramento`: no hay formulario público ni bandeja de aprobación, es una
+herramienta interna del panel. Índice `idx_mvi_pastoral (pastoral_id, activo)`.
+
+### `mesc_rutas` y `mesc_ruta_visitas`
+
+Una ruta agrupa visitas activas en un orden concreto para un recorrido. `mesc_rutas`:
+`pastoral_id` (FK), `nombre`, `usuario_id` (quién la generó), `created_at`.
+`mesc_ruta_visitas`: pivote `(ruta_id, visita_id)` con `orden` — la única columna que se
+edita después de generar la ruta, para ajustarla a mano.
+
+`MescModel::ordenSugerido()` calcula el orden inicial con una heurística de vecino más
+cercano sobre distancia Haversine (línea recta, no ruta real por calles), partiendo de
+`configuracion.latitud`/`longitud` si están configuradas. Sin API de mapas de pago: ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md).
+
+---
+
 ## Sacramentos
 
 ### `sacramentos`
@@ -336,10 +370,12 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
+| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 25 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
-`centros`, `usuarios_centros` y `pastoral_documentos`, menos `sacramento_campos`,
-`solicitudes_sacramento` y `solicitudes_bitacora`).
+**Total: 28 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+`centros`, `usuarios_centros`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas` y
+`mesc_ruta_visitas`, menos `sacramento_campos`, `solicitudes_sacramento` y
+`solicitudes_bitacora`).

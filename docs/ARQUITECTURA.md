@@ -480,6 +480,45 @@ una pastoral activa, se ignora el filtro — la página cae en el calendario com
 de mostrar uno vacío), y `calendario.js` propaga el filtro leyendo `data-pastoral` del
 contenedor tanto en el fetch AJAX como al reescribir los enlaces de mes anterior/siguiente.
 
+### MESC: visitas a enfermos y rutas (issue #3)
+
+`modules/mesc/` es, a propósito, el único módulo del sitio **sin ningún controlador
+público**: `MescModel` no tiene una sola consulta que no pase por
+`requirePermiso('mesc.*')` + `requireAlcancePastoral()`. La razón está en
+[`PRIVACIDAD.md`](PRIVACIDAD.md): el solo hecho de aparecer en `mesc_visitas` revela un
+estado de salud, el primer dato sensible en sentido estricto de la LFPDPPP que maneja el
+sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas` es **obligatorio**, a diferencia de
+avisos o eventos: esta actividad nunca es "contenido parroquial general", siempre
+pertenece a la pastoral de MESC. `MescController::pastoralIdMescValidado()` es una
+variante de `Controller::pastoralIdValidado()` que nunca acepta `null`, ni siquiera para
+un administrador.
+
+**Mapa: Leaflet + OpenStreetMap, sin llave de API.** El formulario de una visita
+(`mesc/views/form.php`) incluye un mapa (`assets/js/mapa_mesc.js`) donde marcar el pin es
+enteramente opcional — el campo obligatorio sigue siendo la dirección de texto. Se eligió
+Leaflet/OSM en vez de Google Maps por la misma razón que ya evitó reCAPTCHA (ver más
+abajo): enviar la ubicación de un enfermo a un servicio de terceros de pago no es
+aceptable cuando hay una alternativa gratuita igual de funcional. `.htaccess` amplía la
+CSP (`img-src`) para permitir los tiles de `*.tile.openstreetmap.org` y los iconos del
+marcador servidos desde `cdn.jsdelivr.net`; no se tocó `Permissions-Policy` — la
+geolocalización del navegador sigue bloqueada en todo el sitio, así que el pin siempre se
+coloca a mano, nunca por GPS.
+
+**"Ruta óptima" es una aproximación geométrica, no una ruta real.**
+`MescModel::ordenSugerido()` aplica una heurística de **vecino más cercano** (greedy)
+sobre distancia **Haversine** en línea recta, partiendo de `configuracion.latitud`/
+`longitud` si están configuradas. Las visitas sin pin en el mapa no tienen con qué
+calcular cercanía, así que se agregan al final en el orden en que se registraron. Esto es
+deliberadamente simple: una ruta por calles reales exigiría un servicio externo de
+enrutamiento (con costo, límites de uso o ambos), y el propio issue permite que el
+resultado sea "modificable después de generado" — `mesc_ruta_visitas.orden` es editable a
+mano en `mesc/ruta_editar` antes de exportar.
+
+**El "archivo" es un CSV**, no un PDF: el proyecto no depende de ninguna librería de
+generación de PDF (cero dependencias, ver la introducción de este documento), y un CSV se
+genera en PHP puro con `fputcsv()` y se abre en cualquier hoja de cálculo. `rutaExportar()`
+antepone un BOM UTF-8 para que Excel no destroce los acentos.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se
