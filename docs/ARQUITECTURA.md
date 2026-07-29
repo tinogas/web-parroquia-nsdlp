@@ -315,8 +315,8 @@ columnas de tres en tres (sede, centro 1, centro 2…), en vez de devolver una l
   un horario vigente, ordenadas sede primero y luego centros por su propio `orden`. Los
   horarios sin `centro_id` se agrupan aparte, al final, bajo "Otros horarios".
 - **Nivel 2, tipo**: dentro de cada centro, un subtítulo por tipo en el orden
-  `ORDEN_PUBLICO` —confesión antes que misa—, no el orden de `TIPOS` que usa el admin
-  (ahí misa va primero, porque es lo más frecuente de dar de alta).
+  `ORDEN_PUBLICO` —misa arriba, confesión al final—, no el orden de `TIPOS` que usa el
+  admin (ahí misa también va primero, pero por ser lo más frecuente de dar de alta).
 - **Nivel 3, día y hora**: los horarios de un mismo tipo, ordenados de lunes a domingo
   —no domingo primero, que es como queda `dia_semana` tal cual, con
   `MOD(dia_semana + 6, 7)` en el `ORDER BY`, el mismo truco que ya usa el calendario de
@@ -325,7 +325,7 @@ columnas de tres en tres (sede, centro 1, centro 2…), en vez de devolver una l
   misas de domingo, por ejemplo).
 
 El array de "tipo" (`porTipo`) es asociativo (tipo ⇒ horarios) y su orden es el de
-inserción, que ya llega confesión-primero desde la consulta SQL: la vista solo debe
+inserción, que ya llega misa-primero desde la consulta SQL: la vista solo debe
 recorrerlo con `foreach`, nunca reordenarlo, o perdería el orden pedido.
 
 El listado de administración (`HorarioModel::todos()`) no cambia: sigue ordenado por

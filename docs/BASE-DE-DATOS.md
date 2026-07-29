@@ -222,7 +222,7 @@ Recurrencia semanal, no fechas concretas.
 
 **Agrupado público (`HorarioModel::vigentesPorCentro()`)**: el sitio público agrupa
 primero por sede/centro (issue #3, una columna por cada una) y, dentro de cada
-columna, por tipo —confesión antes que misa, orden distinto al de `TIPOS` que usa el
+columna, por tipo —misa arriba, confesión al final, orden distinto al de `TIPOS` que usa el
 admin— y dentro de cada tipo por día y hora, de lunes a domingo (`MOD(dia_semana + 6, 7)`
 para reordenar sin tocar el valor guardado) y de la mañana a la noche. Los horarios sin
 `centro_id` se agrupan aparte, al final, bajo "Otros horarios". El listado de admin

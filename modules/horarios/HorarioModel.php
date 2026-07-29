@@ -17,8 +17,8 @@ class HorarioModel extends Model
         'otro'      => ['Otro',                     'bi-calendar3'],
     ];
 
-    /** Orden del tipo en la página pública: confesiones antes que misas. */
-    private const ORDEN_PUBLICO = ['confesion', 'misa', 'adoracion', 'oficina', 'otro'];
+    /** Orden del tipo en la página pública: misas arriba, confesiones al final. */
+    private const ORDEN_PUBLICO = ['misa', 'confesion', 'adoracion', 'oficina', 'otro'];
 
     public function todos(): array
     {
@@ -45,8 +45,8 @@ class HorarioModel extends Model
      * propio orden. Un horario sin centro asignado se agrupa aparte, al
      * final, bajo la clave 'sin_centro'.
      *
-     * Nivel 2, tipo: confesiones antes que misas (ORDEN_PUBLICO), no el
-     * orden de TIPOS que usa el admin.
+     * Nivel 2, tipo: misas arriba, confesiones al final (ORDEN_PUBLICO), no
+     * el orden de TIPOS que usa el admin.
      *
      * Dentro de cada tipo los horarios quedan ordenados de lunes a domingo
      * —no domingo primero, que es como queda dia_semana tal cual— y de la
@@ -56,8 +56,8 @@ class HorarioModel extends Model
      * tener varios en un mismo día (tres misas de domingo, por ejemplo).
      *
      * 'porTipo' es un array asociativo tipo => horarios; el orden de sus
-     * claves es el de inserción (el de la consulta, ya confesión-primero),
-     * así que la vista solo debe recorrerlo con foreach, nunca reordenarlo.
+     * claves es el de inserción (el de la consulta, ya misa-primero), así
+     * que la vista solo debe recorrerlo con foreach, nunca reordenarlo.
      */
     public function vigentesPorCentro(): array
     {
