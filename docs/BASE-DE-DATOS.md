@@ -232,14 +232,15 @@ Recurrencia semanal, no fechas concretas.
 
 Índices `idx_hor_tipo_dia (tipo, dia_semana, hora)` e `idx_hor_centro (centro_id)`.
 
-**Agrupado público (`HorarioModel::vigentesPorCentro()`)**: el sitio público agrupa
-primero por sede/centro (issue #3, una columna por cada una) y, dentro de cada
-columna, por tipo —misa arriba, confesión al final, orden distinto al de `TIPOS` que usa el
-admin— y dentro de cada tipo por día y hora, de lunes a domingo (`MOD(dia_semana + 6, 7)`
-para reordenar sin tocar el valor guardado) y de la mañana a la noche. Los horarios sin
-`centro_id` se agrupan aparte, al final, bajo "Otros horarios". El listado de admin
-(`todos()`) conserva el orden por `tipo` (misa primero) y sin agrupar por centro, para
-facilitar la edición masiva.
+**Agrupado público (`HorarioModel::vigentesPorTipo(?int $centroId = null)`)**: el sitio
+público agrupa por tipo —misa arriba, confesión al final, orden distinto al de `TIPOS`
+que usa el admin— y dentro de cada tipo por día y hora, de lunes a domingo
+(`MOD(dia_semana + 6, 7)` para reordenar sin tocar el valor guardado) y de la mañana a
+la noche. `$centroId` es un filtro opcional (`?centro=` en la URL, validado contra
+`centros.activo`): `null` mezcla todas las sedes/centros dentro de cada tipo (mostrando
+el nombre del centro como etiqueta en cada horario); un id concreto acota todo a esa
+sola sede/centro. El listado de admin (`todos()`) conserva el orden por `tipo` (misa
+primero) y sin agrupar ni filtrar por centro, para facilitar la edición masiva.
 
 ### `pastorales`
 

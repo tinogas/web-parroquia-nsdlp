@@ -299,39 +299,43 @@ registros y un mantenimiento imposible. Por eso hay dos tablas con semánticas d
 El costo aceptado es que una celebración especial que además es misa se captura dos veces.
 Ocurre pocas veces al año.
 
-### Horarios: agrupado público por sede/centro, luego tipo (issue #3)
+### Horarios: agrupado público por tipo, con filtro de sede/centro (issue #3)
 
 `horarios` gana `centro_id` (FK a `centros`, `ON DELETE SET NULL`, NULL para un horario
-sin sede/centro asignado). Antes la página pública agrupaba en tarjetas por `tipo`
-(misa, confesión, adoración…); una parroquia con varios centros —el templo principal y
-las capillas dependientes— necesitaba primero saber **dónde** es cada horario, y luego
-de qué tipo es y a qué hora.
+sin sede/centro asignado). La página pública pasó por dos diseños antes de este: primero
+agrupaba en tarjetas por `tipo` (misa, confesión…); luego, cuando se agregó `centro_id`,
+pasó a agrupar por sede/centro y el tipo bajó a subtítulo. En el uso real eso resultó
+menos útil que agrupar por tipo con un **filtro** de sede/centro aparte: un visitante
+normalmente ya sabe qué tipo de horario busca (misa, confesión…) y quiere ver ese tipo
+para su sede o para todas a la vez, no navegar centro por centro para encontrarlo.
 
-`HorarioModel::vigentesPorCentro()` reemplaza a la antigua `vigentesPorTipo()` y arma
-una estructura de tres niveles — centro → tipo → horarios del tipo— pensada para
-columnas de tres en tres (sede, centro 1, centro 2…), en vez de devolver una lista plana:
+`HorarioModel::vigentesPorTipo(?int $centroId = null)` es el método vigente:
 
-- **Nivel 1, sede/centro**: una columna por cada fila de `centros` que tenga al menos
-  un horario vigente, ordenadas sede primero y luego centros por su propio `orden`. Los
-  horarios sin `centro_id` se agrupan aparte, al final, bajo "Otros horarios".
-- **Nivel 2, tipo**: dentro de cada centro, un subtítulo por tipo en el orden
-  `ORDEN_PUBLICO` —misa arriba, confesión al final—, no el orden de `TIPOS` que usa el
-  admin (ahí misa también va primero, pero por ser lo más frecuente de dar de alta).
-- **Nivel 3, día y hora**: los horarios de un mismo tipo, ordenados de lunes a domingo
-  —no domingo primero, que es como queda `dia_semana` tal cual, con
-  `MOD(dia_semana + 6, 7)` en el `ORDER BY`, el mismo truco que ya usa el calendario de
-  turnos MESC— y de la mañana a la noche dentro de cada día. La vista muestra día y hora
-  en cada horario porque un mismo tipo puede repetirse varias veces en un mismo día (tres
-  misas de domingo, por ejemplo).
-
-El array de "tipo" (`porTipo`) es asociativo (tipo ⇒ horarios) y su orden es el de
-inserción, que ya llega misa-primero desde la consulta SQL: la vista solo debe
-recorrerlo con `foreach`, nunca reordenarlo, o perdería el orden pedido.
+- Agrupa por tipo, en el orden `ORDEN_PUBLICO` —misa arriba, confesión al final—, no el
+  orden de `TIPOS` que usa el admin (ahí misa también va primero, pero por ser lo más
+  frecuente de dar de alta). El array devuelto es tipo ⇒ horarios, y su orden de claves
+  ya llega misa-primero desde la consulta SQL: la vista solo debe recorrerlo con
+  `foreach` —nunca iterar `HorarioModel::TIPOS` en su lugar para decidir el orden de las
+  tarjetas—, o el orden dependería de una coincidencia entre dos constantes en vez de
+  ser explícito.
+- Dentro de cada tipo, los horarios quedan ordenados de lunes a domingo —no domingo
+  primero, que es como queda `dia_semana` tal cual, con `MOD(dia_semana + 6, 7)` en el
+  `ORDER BY`, el mismo truco que ya usa el calendario de turnos MESC— y de la mañana a
+  la noche. La vista muestra el centro de cada horario como etiqueta (`badge`), pero
+  solo cuando el filtro está en "Todos": con un centro ya elegido, repetir su nombre en
+  cada fila sería ruido.
+- `$centroId` es el filtro: `null` = todos los centros mezclados dentro de cada tipo; un
+  id concreto acota la consulta a esa sola sede/centro (`AND h.centro_id = :centro`).
+  `HorarioPublicoController` lee `?centro=` de la URL y lo valida contra
+  `CentroModel::activos()` —un id que no exista cae de vuelta a "Todos" en silencio, no
+  a un error—, y arma el `<select>` del filtro con esas mismas opciones. El filtro es un
+  formulario `GET` sin JavaScript: funciona igual con o sin JS, y el resultado es una URL
+  compartible (`/horarios?centro=3`).
 
 El listado de administración (`HorarioModel::todos()`) no cambia: sigue ordenado por
-`tipo` en el orden de `TIPOS` (misa primero) y sin agrupar por centro, porque ahí es más
-útil editar en bloque (todas las misas juntas, todas las confesiones juntas) que
-navegar columna por columna.
+`tipo` en el orden de `TIPOS` (misa primero) y sin agrupar ni filtrar por centro, porque
+ahí es más útil editar en bloque (todas las misas juntas, todas las confesiones juntas)
+que separar por sede.
 
 ### Campos de sacramento configurables (eliminado en el issue #3)
 
