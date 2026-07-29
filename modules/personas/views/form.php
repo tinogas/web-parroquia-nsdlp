@@ -77,6 +77,56 @@
 
                 </div>
             </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <label class="form-label fw-semibold">Pastorales</label>
+                    <div class="form-text mb-2">Muchas personas del equipo llevan más de una pastoral a la vez.</div>
+                    <?php if (!$pastorales): ?>
+                    <p class="text-muted small mb-0">Todavía no hay pastorales dadas de alta.</p>
+                    <?php else: ?>
+                    <div class="row row-cols-1 row-cols-sm-2 g-1">
+                        <?php foreach ($pastorales as $pastoral): ?>
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                       value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
+                                       <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
+                                    <?= e($pastoral['nombre']) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <label class="form-label fw-semibold">Sede o centros</label>
+                    <div class="form-text mb-2">También puede estar adscrita a más de un centro a la vez.</div>
+                    <?php if (!$centros): ?>
+                    <p class="text-muted small mb-0">Todavía no hay sede ni centros dados de alta.</p>
+                    <?php else: ?>
+                    <div class="row row-cols-1 row-cols-sm-2 g-1">
+                        <?php foreach ($centros as $centro): ?>
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="centros[]"
+                                       value="<?= (int) $centro['id'] ?>" id="cen<?= (int) $centro['id'] ?>"
+                                       <?= in_array((int) $centro['id'], $centrosAsignados, true) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="cen<?= (int) $centro['id'] ?>">
+                                    <?= e($centro['nombre']) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
 
         <div class="col-lg-4">

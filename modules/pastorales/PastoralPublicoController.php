@@ -2,6 +2,9 @@
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/bloques/BloqueModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
+require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
+require_once BASE_PATH . '/modules/eventos/EventoModel.php';
 
 class PastoralPublicoController extends ControllerPublico
 {
@@ -27,13 +30,19 @@ class PastoralPublicoController extends ControllerPublico
             return;
         }
 
+        $pastoralId = (int) $pastoral['id'];
+
         $this->render('pastorales/publico/detalle', [
             'metaTitulo'      => $pastoral['nombre'],
             'metaDescripcion' => $pastoral['descripcion_corta'] ?: resumen($pastoral['descripcion']),
             'ogImagen'        => $pastoral['imagen'] ?: null,
             'urlCanonica'     => url_publica('pastorales', ['slug' => $pastoral['slug']]),
             'pastoral'        => $pastoral,
-            'actividades'     => $modelo->actividadesActivas((int) $pastoral['id']),
+            'centro'          => $pastoral['centro_id'] ? (new CentroModel())->porId((int) $pastoral['centro_id']) : null,
+            'actividades'     => $modelo->actividadesActivas($pastoralId),
+            'avisos'          => (new AvisoModel())->publicadosPorPastoral($pastoralId),
+            'documentos'      => $modelo->documentosActivos($pastoralId),
+            'proximosEventos' => (new EventoModel())->proximos(4, $pastoralId),
         ]);
     }
 

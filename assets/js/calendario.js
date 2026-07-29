@@ -89,7 +89,11 @@
 
     function cargarMes(anio, mes, urlDestino) {
         var base = window.APP_URL || '';
-        fetch(base + '/index.php?area=publico&modulo=eventos&accion=datos&anio=' + anio + '&mes=' + mes)
+        var query = 'anio=' + anio + '&mes=' + mes;
+        if (contenedor.dataset.pastoral) {
+            query += '&pastoral=' + encodeURIComponent(contenedor.dataset.pastoral);
+        }
+        fetch(base + '/index.php?area=publico&modulo=eventos&accion=datos&' + query)
             .then(function (respuesta) {
                 return respuesta.ok ? respuesta.json() : Promise.reject(new Error('respuesta no válida'));
             })

@@ -27,7 +27,7 @@
             <li>Horarios, equipo pastoral y organigrama</li>
             <li>Avisos, eventos, galería y carrusel</li>
             <li>Pastorales</li>
-            <li>Sacramentos y solicitudes</li>
+            <li>Sacramentos</li>
             <li>Cursos e inscripciones</li>
             <li>Usuarios, roles y auditoría</li>
             <li>Posicionamiento y publicación</li>

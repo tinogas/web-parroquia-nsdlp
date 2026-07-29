@@ -1,6 +1,8 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
 
 class PersonaController extends Controller
 {
@@ -26,8 +28,12 @@ class PersonaController extends Controller
         $this->requirePermiso('personas.editar');
 
         $this->render('personas/form', [
-            'titulo'  => 'Nueva persona',
-            'persona' => null,
+            'titulo'           => 'Nueva persona',
+            'persona'          => null,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => [],
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => [],
         ]);
     }
 
@@ -43,8 +49,12 @@ class PersonaController extends Controller
         }
 
         $this->render('personas/form', [
-            'titulo'  => $persona['nombre'],
-            'persona' => $persona,
+            'titulo'           => $persona['nombre'],
+            'persona'          => $persona,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => $this->modelo->pastoralesDe((int) $persona['id']),
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => $this->modelo->centrosDe((int) $persona['id']),
         ]);
     }
 
@@ -81,16 +91,27 @@ class PersonaController extends Controller
             Session::flash('warning', 'Se guardó, pero la foto no: ' . $e->getMessage());
         }
 
+        $pastorales = array_values(array_unique(array_map(
+            'intval',
+            array_filter((array) ($_POST['pastorales'] ?? []), 'is_numeric')
+        )));
+        $centros = array_values(array_unique(array_map(
+            'intval',
+            array_filter((array) ($_POST['centros'] ?? []), 'is_numeric')
+        )));
+
         $datos = [
-            'nombre'    => $nombre,
-            'cargo'     => $this->postStr('cargo') ?: null,
-            'tipo'      => $this->postStr('tipo'),
-            'semblanza' => $this->postStr('semblanza') ?: null,
-            'foto'      => $foto,
-            'email'     => $this->postStr('email') ?: null,
-            'telefono'  => $this->postStr('telefono') ?: null,
-            'orden'     => $this->postInt('orden'),
-            'activo'    => $this->postBool('activo'),
+            'nombre'     => $nombre,
+            'cargo'      => $this->postStr('cargo') ?: null,
+            'tipo'       => $this->postStr('tipo'),
+            'semblanza'  => $this->postStr('semblanza') ?: null,
+            'foto'       => $foto,
+            'email'      => $this->postStr('email') ?: null,
+            'telefono'   => $this->postStr('telefono') ?: null,
+            'orden'      => $this->postInt('orden'),
+            'activo'     => $this->postBool('activo'),
+            'pastorales' => $pastorales,
+            'centros'    => $centros,
         ];
 
         if ($actual) {

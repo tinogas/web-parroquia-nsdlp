@@ -287,9 +287,13 @@
     padding-bottom: 0;
 }
 
-.lista-horarios .dia {
+.horario-dia-titulo {
     font-weight: 600;
     text-transform: capitalize;
+    font-size: .78rem;
+    letter-spacing: .03em;
+    color: var(--azul-oscuro);
+    opacity: .75;
 }
 
 .lista-horarios .hora {

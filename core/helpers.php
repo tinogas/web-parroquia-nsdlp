@@ -285,4 +285,20 @@ if (!function_exists('e')) {
 
         return $cache[$slug];
     }
+
+    /**
+     * Cruz latina (la de Cristo: travesaño en el tercio superior, no un "+"
+     * centrado) como SVG inline. Bootstrap Icons 1.11 no trae ningún ícono
+     * de temática religiosa —ni "cross" ni "church"—, así que en vez de
+     * agregar una librería nueva solo por un ícono, se dibuja a mano con el
+     * mismo criterio visual que el resto (hereda color con currentColor, se
+     * ajusta como texto con 1em).
+     */
+    function icono_cruz(string $clases = ''): string
+    {
+        $clase = $clases !== '' ? ' class="' . e($clases) . '"' : '';
+        return '<svg' . $clase . ' xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" '
+             . 'viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-0.125em">'
+             . '<path d="M7 0h2v4h2v2H9v10H7V6H3V4h4z"/></svg>';
+    }
 }

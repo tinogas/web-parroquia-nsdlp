@@ -76,11 +76,21 @@ $puedePublicar = Auth::tienePermiso('avisos.publicar');
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="fecha_publicacion" class="form-label fw-semibold">Fecha</label>
-                        <input type="date" name="fecha_publicacion" id="fecha_publicacion" class="form-control"
-                               value="<?= e($esNuevo ? date('Y-m-d') : (string) $aviso['fecha_publicacion']) ?>">
-                        <div class="form-text">Una fecha futura no se mostrará en el sitio hasta llegar ese día.</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="fecha_publicacion" class="form-label fw-semibold">Visible desde</label>
+                            <input type="date" name="fecha_publicacion" id="fecha_publicacion" class="form-control"
+                                   value="<?= e($esNuevo ? date('Y-m-d') : (string) $aviso['fecha_publicacion']) ?>">
+                            <div class="form-text">Una fecha futura no se mostrará en el sitio hasta llegar ese día.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vigente_hasta" class="form-label fw-semibold">
+                                Visible hasta <span class="text-muted fw-normal">(opcional)</span>
+                            </label>
+                            <input type="date" name="vigente_hasta" id="vigente_hasta" class="form-control"
+                                   value="<?= e($esNuevo ? '' : (string) $aviso['vigente_hasta']) ?>">
+                            <div class="form-text">Pasada esta fecha, deja de mostrarse solo, sin despublicarlo a mano.</div>
+                        </div>
                     </div>
 
                     <?php

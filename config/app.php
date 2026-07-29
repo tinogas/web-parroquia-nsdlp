@@ -48,8 +48,8 @@ if (APP_DEBUG) {
 // ------------------------------------------------------------
 // Protección de datos personales
 // ------------------------------------------------------------
-// Versión del aviso de privacidad vigente. Cada solicitud, inscripción y
-// mensaje guarda la versión que la persona aceptó; sin esto no se puede
+// Versión del aviso de privacidad vigente. Cada inscripción y mensaje guarda
+// la versión que la persona aceptó; sin esto no se puede
 // demostrar a qué dio su consentimiento. Al publicar un aviso nuevo hay que
 // incrementar esta constante y la clave 'aviso_privacidad_version' de la
 // tabla configuracion. Ver docs/PRIVACIDAD.md
@@ -93,6 +93,7 @@ define('PERMISOS', [
         'bloques.ver', 'bloques.editar',
         'paginas.ver', 'paginas.editar',
         'horarios.ver', 'horarios.editar',
+        'centros.ver', 'centros.editar',
         'personas.ver', 'personas.editar',
         'organigrama.ver', 'organigrama.editar',
         // El editor no toca la configuración global: los datos de contacto, el
@@ -105,6 +106,8 @@ define('PERMISOS', [
         'carrusel.ver', 'carrusel.editar',
         'pastorales.ver', 'pastorales.crear', 'pastorales.editar', 'pastorales.eliminar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -120,6 +123,13 @@ define('PERMISOS', [
         'galeria.ver', 'galeria.crear', 'galeria.eliminar',
         'pastorales.ver', 'pastorales.editar',
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        // mesc.* también respeta el alcance por pastoral: solo quien administra
+        // la pastoral de Ministros Extraordinarios de la Comunión (directo o
+        // por centro/sede) ve o toca estas visitas. No se le da a secretaría:
+        // es una actividad de la propia pastoral, no un trámite administrativo,
+        // y es el primer dato sensible (estado de salud) que maneja el sistema.
+        'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'cursos.ver',
     ],
 
@@ -127,7 +137,6 @@ define('PERMISOS', [
     ROL_SECRETARIA => [
         'panel.ver',
         'mensajes.ver', 'mensajes.editar',
-        'solicitudes.ver', 'solicitudes.cambiar_estado', 'solicitudes.exportar',
         'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],

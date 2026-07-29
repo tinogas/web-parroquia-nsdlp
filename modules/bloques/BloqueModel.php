@@ -97,8 +97,18 @@ class BloqueModel extends Model
         return self::ZONAS[$zona][0] ?? ucfirst($zona);
     }
 
+    /**
+     * Devuelve el marcado del ícono ya listo para imprimir, no solo el
+     * nombre de una clase: "sacramentos" usa icono_cruz() (SVG propio,
+     * Bootstrap Icons no tiene ningún ícono de temática religiosa), el
+     * resto sigue con su clase de Bootstrap Icons de siempre.
+     */
     public static function iconoZona(string $zona): string
     {
-        return self::ZONAS[$zona][1] ?? 'bi-file-text';
+        if ($zona === 'sacramentos') {
+            return icono_cruz();
+        }
+        $clase = self::ZONAS[$zona][1] ?? 'bi-file-text';
+        return '<i class="bi ' . $clase . '"></i>';
     }
 }

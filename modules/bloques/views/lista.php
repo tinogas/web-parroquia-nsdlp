@@ -17,7 +17,7 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-bottom py-3">
         <h2 class="h6 fw-bold mb-0">
-            <i class="bi <?= e(BloqueModel::iconoZona($zona)) ?> text-primary me-1"></i>
+            <span class="text-primary me-1"><?= BloqueModel::iconoZona($zona) ?></span>
             <?= e(BloqueModel::nombreZona($zona)) ?>
         </h2>
     </div>

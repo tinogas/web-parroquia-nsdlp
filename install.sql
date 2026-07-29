@@ -56,6 +56,18 @@ CREATE TABLE IF NOT EXISTS usuarios_pastorales (
     CONSTRAINT fk_up_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pivote análogo, pero por centro/sede completo (issue #3: "usuarios por
+-- centro/sede"): quien administra un centro administra TODAS sus pastorales,
+-- sin tener que asignarse una por una. Auth::pastoralesPermitidas() hace la
+-- unión de esta tabla con usuarios_pastorales. FK a centros, creada más abajo.
+CREATE TABLE IF NOT EXISTS usuarios_centros (
+    usuario_id INT UNSIGNED      NOT NULL,
+    centro_id  SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (usuario_id, centro_id),
+    CONSTRAINT fk_uc_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_uc_centro  FOREIGN KEY (centro_id)  REFERENCES centros(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Bitácora de acciones. Registra escrituras y también CONSULTAS de datos
 -- personales, que es lo que permite responder a una solicitud de acceso.
 -- Ver docs/PRIVACIDAD.md
@@ -215,6 +227,12 @@ CREATE TABLE IF NOT EXISTS galeria_imagenes (
 -- borrador. pastoral_id NULL significa aviso parroquial global, que un
 -- coordinador nunca podrá tocar. FK real a pastorales: se crea más abajo, en
 -- este mismo script.
+--
+-- Vigencia (issue #3): fecha_publicacion ya funcionaba como "visible desde"
+-- (una fecha futura no se muestra hasta llegar ese día); vigente_hasta es el
+-- "visible hasta" que faltaba. Con las dos, un aviso se publica y despublica
+-- solo según su ventana de vigencia, sin que nadie tenga que tocar el flag
+-- publicado dos veces. NULL en vigente_hasta = sin fecha de baja.
 CREATE TABLE IF NOT EXISTS avisos (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     slug              VARCHAR(160) NOT NULL,
@@ -226,6 +244,7 @@ CREATE TABLE IF NOT EXISTS avisos (
     archivo_pdf       VARCHAR(255) NULL,
     pastoral_id       TINYINT UNSIGNED NULL,
     fecha_publicacion DATE         NOT NULL,
+    vigente_hasta     DATE         NULL,
     destacado         TINYINT(1)   NOT NULL DEFAULT 0,
     publicado         TINYINT(1)   NOT NULL DEFAULT 0,
     vistas            INT UNSIGNED NOT NULL DEFAULT 0,
@@ -300,6 +319,30 @@ CREATE TABLE IF NOT EXISTS intentos_formulario (
 -- PARROQUIA
 -- ------------------------------------------------------------
 
+-- La sede parroquial y los centros que dependen de ella, en un solo catálogo:
+-- "sede" y "centro" son el mismo tipo de dato, distinguidos por tipo. Sin
+-- tabla aparte para la sede -hoy hay una sola, pero forzar esa cardinalidad
+-- en el esquema es una regla que nadie pidió.
+CREATE TABLE IF NOT EXISTS centros (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tipo        ENUM('sede','centro') NOT NULL DEFAULT 'centro',
+    nombre      VARCHAR(150)      NOT NULL,
+    direccion   VARCHAR(255)      NULL,
+    telefono    VARCHAR(20)       NULL,
+    descripcion TEXT              NULL,
+    imagen      VARCHAR(255)      NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_cen_tipo (tipo, activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO centros (tipo, nombre, orden) VALUES
+    ('sede',   'Parroquia Nuestra Señora de la Paz', 10),
+    ('centro', 'San Pío de Pietrelcina',             20),
+    ('centro', 'Jesús el Señor',                     30);
+
 -- Párroco, vicarios, diáconos, religiosos, laicos y personal. Borrado lógico:
 -- se desactivan (dejaron el cargo), no se borran. Un delete real sí está
 -- permitido para corregir un alta por error (organigrama_nodos.persona_id
@@ -319,6 +362,28 @@ CREATE TABLE IF NOT EXISTS personas (
     created_at DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_per_tipo (tipo, orden)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pivote: una misma persona del equipo pastoral suele llevar más de una
+-- pastoral a la vez (catequesis y liturgia, por ejemplo), igual que ya pasa
+-- con usuarios_pastorales. FK real a pastorales, creada más abajo.
+CREATE TABLE IF NOT EXISTS persona_pastorales (
+    persona_id  SMALLINT UNSIGNED NOT NULL,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    PRIMARY KEY (persona_id, pastoral_id),
+    CONSTRAINT fk_pp_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_pp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pivote análogo, pero por centro/sede: alguien del equipo puede estar
+-- adscrito a más de un centro (igual que usuarios_centros para el rol
+-- coordinador). FK real a centros, creada más abajo.
+CREATE TABLE IF NOT EXISTS persona_centros (
+    persona_id SMALLINT UNSIGNED NOT NULL,
+    centro_id  SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (persona_id, centro_id),
+    CONSTRAINT fk_pc_persona FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_centro  FOREIGN KEY (centro_id)  REFERENCES centros(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Árbol autorreferenciado de hasta 4 niveles. Un nodo puede apuntar a una
@@ -343,9 +408,13 @@ CREATE TABLE IF NOT EXISTS organigrama_nodos (
 
 -- Recurrencia semanal, no fechas concretas: una misa dominical no es un
 -- evento, es un patrón que se repite. vigente_desde/vigente_hasta cubre los
--- horarios de temporada (Cuaresma, verano) sin duplicar la tabla.
+-- horarios de temporada (Cuaresma, verano) sin duplicar la tabla. centro_id
+-- (issue #3) agrupa los horarios por sede/centro en la vista pública; NULL
+-- en los que no son de un lugar concreto. lugar sigue siendo texto libre
+-- para el detalle dentro de ese centro ("Capilla lateral", por ejemplo).
 CREATE TABLE IF NOT EXISTS horarios (
     id            TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    centro_id     SMALLINT UNSIGNED NULL,
     tipo          ENUM('misa','confesion','adoracion','oficina','otro')
                                    NOT NULL DEFAULT 'misa',
     dia_semana    TINYINT UNSIGNED NOT NULL,   -- 0=domingo … 6=sábado
@@ -358,14 +427,19 @@ CREATE TABLE IF NOT EXISTS horarios (
     orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo        TINYINT(1)       NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    KEY idx_hor_tipo_dia (tipo, dia_semana, hora)
+    KEY idx_hor_tipo_dia (tipo, dia_semana, hora),
+    KEY idx_hor_centro (centro_id),
+    CONSTRAINT fk_hor_centro FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Coro, catequesis, caridad, jóvenes, ministros MESC... Cada una puede tener
 -- uno o más coordinadores (usuarios_pastorales) con permiso para crear
 -- contenido, pero no para publicarlo directamente: eso queda para admin/editor.
+-- centro_id (issue #3, "contenido propio por pastoral") liga la pastoral a su
+-- sede o centro; NULL en las que ya existían antes de este campo.
 CREATE TABLE IF NOT EXISTS pastorales (
     id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    centro_id          SMALLINT UNSIGNED NULL,
     slug               VARCHAR(80)  NOT NULL,
     nombre             VARCHAR(120) NOT NULL,
     descripcion_corta  VARCHAR(255) NULL,
@@ -383,7 +457,9 @@ CREATE TABLE IF NOT EXISTS pastorales (
     activa             TINYINT(1)   NOT NULL DEFAULT 1,
     created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_pas_slug (slug)
+    UNIQUE KEY uq_pas_slug (slug),
+    KEY idx_pas_centro (centro_id),
+    CONSTRAINT fk_pas_centro FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Actividades comunitarias y de apoyo social de cada pastoral.
@@ -400,96 +476,189 @@ CREATE TABLE IF NOT EXISTS pastoral_actividades (
     CONSTRAINT fk_pta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Documentación descargable de cada pastoral (issue #3): reglamentos, guías,
+-- formatos. archivo guarda la ruta bajo uploads/, igual convención que
+-- avisos.archivo_pdf.
+CREATE TABLE IF NOT EXISTS pastoral_documentos (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    titulo      VARCHAR(160)     NOT NULL,
+    archivo     VARCHAR(255)     NOT NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)       NOT NULL DEFAULT 1,
+    usuario_id  INT UNSIGNED     NULL,
+    created_at  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_pdo_pastoral (pastoral_id),
+    CONSTRAINT fk_pdo_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pdo_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- MESC — MINISTROS EXTRAORDINARIOS DE LA COMUNIÓN
+-- ------------------------------------------------------------
+-- Issue #3. Registro de visitas a enfermos para llevar la comunión, con los
+-- mismos datos que tenía la extinta solicitud de unción de enfermos (folio,
+-- estado y bitácora de aprobación NO se heredan: aquí no hay formulario
+-- público ni flujo de revisión, es una herramienta 100% interna del panel).
+-- pastoral_id es obligatoria y NUNCA null —a diferencia de avisos/eventos—
+-- porque esta actividad siempre pertenece a la pastoral de MESC, jamás es
+-- contenido parroquial general.
+--
+-- direccion (texto) es lo único obligatorio para ubicar al enfermo.
+-- latitud/longitud quedan NULL si solo se capturó la dirección a mano, sin
+-- fijar el pin en el mapa (issue #3: "en mapa (pin) o captura manual" son
+-- alternativas, no un requisito doble).
+--
+-- OJO — dato sensible: el solo hecho de aparecer aquí revela que la persona
+-- está enferma, lo que la LFPDPPP trata como dato sensible (Art. 3, fr. VI).
+-- El consentimiento para tratarlo se obtiene en persona, al solicitar la
+-- visita —no hay formulario web que lo capture—, así que no hay columnas de
+-- consentimiento aquí. Ver docs/PRIVACIDAD.md.
+CREATE TABLE IF NOT EXISTS mesc_visitas (
+    id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id            TINYINT UNSIGNED NOT NULL,
+    nombre_enfermo         VARCHAR(150) NOT NULL,
+    direccion              VARCHAR(255) NOT NULL,
+    latitud                DECIMAL(10,7) NULL,
+    longitud               DECIMAL(10,7) NULL,
+    telefono               VARCHAR(20)  NULL,
+    solicitante_nombre     VARCHAR(150) NULL,
+    solicitante_parentesco VARCHAR(60)  NULL,
+    solicitante_telefono   VARCHAR(20)  NULL,
+    notas                  TEXT         NULL,
+    activo                 TINYINT(1)   NOT NULL DEFAULT 1,
+    usuario_id             INT UNSIGNED NULL,
+    created_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at             DATETIME     NULL,
+    PRIMARY KEY (id),
+    KEY idx_mvi_pastoral (pastoral_id, activo),
+    CONSTRAINT fk_mvi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mvi_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Una ruta es un recorrido para un grupo de visitas activas, en el orden que
+-- MescModel::ordenSugerido() calcula (vecino más cercano sobre distancia
+-- Haversine, partiendo de la parroquia) y que sigue siendo editable después:
+-- mesc_ruta_visitas.orden se puede reacomodar a mano antes de exportar el
+-- CSV final. "Óptima" es una aproximación geométrica en línea recta, no una
+-- ruta real por calles ni de tráfico —el proyecto no depende de ningún
+-- servicio de mapas de pago para calcularla—.
+CREATE TABLE IF NOT EXISTS mesc_rutas (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    nombre      VARCHAR(150) NOT NULL,
+    usuario_id  INT UNSIGNED NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mru_pastoral (pastoral_id),
+    CONSTRAINT fk_mru_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mru_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
+    ruta_id   INT UNSIGNED NOT NULL,
+    visita_id INT UNSIGNED NOT NULL,
+    orden     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (ruta_id, visita_id),
+    CONSTRAINT fk_mrv_ruta   FOREIGN KEY (ruta_id)   REFERENCES mesc_rutas(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_mrv_visita FOREIGN KEY (visita_id) REFERENCES mesc_visitas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Catálogo de ministros MESC (issue #3, "calendario de turnos"): a diferencia
+-- de mesc_visitas, esto NO es un dato sensible por sí mismo —es la lista de
+-- quién sirve, no de quién recibe la visita—, así que es una tabla simple sin
+-- las mismas protecciones reforzadas. Se modela aparte de personas (que es el
+-- equipo pastoral PÚBLICO mostrado en "Quiénes somos" con foto y semblanza):
+-- un ministro MESC es un voluntario interno, no necesariamente parte de esa
+-- vitrina pública.
+CREATE TABLE IF NOT EXISTS mesc_ministros (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    nombre      VARCHAR(150) NOT NULL,
+    telefono    VARCHAR(20)  NULL,
+    activo      TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mmi_pastoral (pastoral_id, activo),
+    CONSTRAINT fk_mmi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Un turno cubre una misa o evento en una fecha concreta. Deliberadamente sin
+-- FK a horarios ni a eventos: horarios es recurrencia semanal (no una fecha),
+-- y atarlo a eventos obligaría a que exista un evento formal para cada misa
+-- dominical, que es justo lo que horarios evita. descripcion (texto libre,
+-- "Misa", "Santísimo", "Hora Santa", "Misa de Niños") es más simple y no
+-- depende de que ese horario o evento exista formalmente en el sistema.
+-- Colores litúrgicos de la Iglesia (issue #3, calendario de turnos): catálogo
+-- de referencia —blanco, verde, morado, rojo, rosa— para etiquetar cada turno
+-- según el tiempo o fiesta del día. Mantenimiento libre desde el panel: la
+-- tradición reconoce estos cinco, pero nada impide que la parroquia ajuste el
+-- texto o el tono exacto. significado se muestra tal cual como referencia en
+-- el propio módulo, no solo como ayuda del formulario.
+CREATE TABLE IF NOT EXISTS mesc_colores_liturgicos (
+    id          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre      VARCHAR(30)  NOT NULL,
+    color_hex   VARCHAR(7)   NOT NULL,
+    significado VARCHAR(400) NOT NULL,
+    orden       TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_mcl_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO mesc_colores_liturgicos (nombre, color_hex, significado, orden) VALUES
+('Blanco', '#f4f1ea', 'Significa pureza, alegría y luz. Se usa en fiestas grandes como la Navidad, la Pascua y en las celebraciones de la Virgen y de los santos que no fueron mártires.', 10),
+('Verde',  '#2e7d46', 'Representa la esperanza y la vida de cada día. Se usa durante el Tiempo Ordinario, que son las semanas largas del año donde no se celebra una fiesta especial.', 20),
+('Morado', '#6a4c93', 'Es el signo de la penitencia, la espera y la humildad. Se viste en la Cuaresma y en el Adviento, que son los tiempos de preparación antes de la Pascua y la Navidad.', 30),
+('Rojo',   '#b23a2e', 'Simboliza el fuego del Espíritu Santo y la sangre de los mártires. Se usa en el día de Pentecostés, en Viernes Santo y en las fiestas de los apóstoles y mártires.', 40),
+('Rosa',   '#e0a8c0', 'Muestra un poco de alegría en medio de un tiempo serio. Se puede usar solo dos veces al año: el tercer domingo de Adviento y el cuarto domingo de Cuaresma.', 50);
+
+CREATE TABLE IF NOT EXISTS mesc_turnos (
+    id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id         TINYINT UNSIGNED NOT NULL,
+    fecha               DATE         NOT NULL,
+    hora                TIME         NULL,
+    descripcion         VARCHAR(160) NOT NULL,
+    color_liturgico_id  TINYINT UNSIGNED NULL,
+    usuario_id          INT UNSIGNED NULL,
+    created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mtu_pastoral_fecha (pastoral_id, fecha),
+    CONSTRAINT fk_mtu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)             ON DELETE CASCADE,
+    CONSTRAINT fk_mtu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)               ON DELETE SET NULL,
+    CONSTRAINT fk_mtu_color    FOREIGN KEY (color_liturgico_id) REFERENCES mesc_colores_liturgicos(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- De 1 a N ministros por turno (issue #3).
+CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
+    turno_id    INT UNSIGNED      NOT NULL,
+    ministro_id SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (turno_id, ministro_id),
+    CONSTRAINT fk_mtm_turno    FOREIGN KEY (turno_id)    REFERENCES mesc_turnos(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_mtm_ministro FOREIGN KEY (ministro_id) REFERENCES mesc_ministros(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- SACRAMENTOS
 -- ------------------------------------------------------------
 
--- Catálogo. Semillas: bautizo, primera comunión, confirmación, matrimonio,
--- confesión, unción de enfermos.
+-- Catálogo puramente informativo (issue #3: se eliminó el formulario de
+-- solicitud en línea, junto con sacramento_campos, solicitudes_sacramento y
+-- solicitudes_bitacora — ver docs/ARQUITECTURA.md). Semillas: bautizo,
+-- primera comunión, confirmación, matrimonio, confesión, unción de enfermos.
 CREATE TABLE IF NOT EXISTS sacramentos (
-    id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    slug               VARCHAR(60)  NOT NULL,
-    nombre             VARCHAR(80)  NOT NULL,
-    descripcion        MEDIUMTEXT   NULL,
-    requisitos         MEDIUMTEXT   NULL,
-    documentos         MEDIUMTEXT   NULL,
-    aportacion         VARCHAR(80)  NULL,
-    imagen             VARCHAR(255) NULL,
-    acepta_solicitudes TINYINT(1)   NOT NULL DEFAULT 1,
-    requiere_tutor     TINYINT(1)   NOT NULL DEFAULT 0,
-    orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo             TINYINT(1)   NOT NULL DEFAULT 1,
+    id          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    slug        VARCHAR(60)  NOT NULL,
+    nombre      VARCHAR(80)  NOT NULL,
+    descripcion MEDIUMTEXT   NULL,
+    requisitos  MEDIUMTEXT   NULL,
+    documentos  MEDIUMTEXT   NULL,
+    aportacion  VARCHAR(80)  NULL,
+    imagen      VARCHAR(255) NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     UNIQUE KEY uq_sac_slug (slug)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Campos adicionales que pide cada sacramento en su formulario: es lo que
--- permite agregar "nombre del padrino" a Confirmación sin tocar el esquema.
--- Los marcados dato_sensible=1 solo se muestran a admin y secretaría.
-CREATE TABLE IF NOT EXISTS sacramento_campos (
-    id            SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    sacramento_id TINYINT UNSIGNED NOT NULL,
-    nombre_campo  VARCHAR(40)  NOT NULL,
-    etiqueta      VARCHAR(120) NOT NULL,
-    tipo          ENUM('texto','textarea','fecha','telefono','email','seleccion','checkbox')
-                               NOT NULL DEFAULT 'texto',
-    opciones      VARCHAR(255) NULL,
-    requerido     TINYINT(1)   NOT NULL DEFAULT 0,
-    dato_sensible TINYINT(1)   NOT NULL DEFAULT 0,
-    orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo        TINYINT(1)   NOT NULL DEFAULT 1,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_scp (sacramento_id, nombre_campo),
-    CONSTRAINT fk_scp_sacramento FOREIGN KEY (sacramento_id) REFERENCES sacramentos(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- La tabla más delicada del sistema: datos personales, con frecuencia de
--- menores. es_menor se calcula en el servidor a partir de fecha_nacimiento,
--- nunca se confía en lo que mande el formulario. Ver docs/PRIVACIDAD.md
-CREATE TABLE IF NOT EXISTS solicitudes_sacramento (
-    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    folio              VARCHAR(20)  NOT NULL,
-    sacramento_id      TINYINT UNSIGNED NOT NULL,
-    nombre_solicitante VARCHAR(150) NOT NULL,
-    fecha_nacimiento   DATE         NULL,
-    es_menor           TINYINT(1)   NOT NULL DEFAULT 0,
-    telefono           VARCHAR(20)  NULL,
-    email              VARCHAR(150) NULL,
-    direccion          VARCHAR(255) NULL,
-    tutor_nombre       VARCHAR(150) NULL,
-    tutor_parentesco   VARCHAR(60)  NULL,
-    tutor_telefono     VARCHAR(20)  NULL,
-    fecha_preferida    DATE         NULL,
-    notas              TEXT         NULL,
-    datos_extra        JSON         NULL,
-    estado             ENUM('pendiente','en_revision','aprobada','rechazada','cancelada','completada')
-                                    NOT NULL DEFAULT 'pendiente',
-    motivo_estado      VARCHAR(255) NULL,
-    atendida_por       INT UNSIGNED NULL,
-    atendida_at        DATETIME     NULL,
-    consentimiento     TINYINT(1)   NOT NULL DEFAULT 0,
-    consentimiento_ip  VARCHAR(45)  NULL,
-    aviso_version      VARCHAR(20)  NULL,
-    origen             ENUM('web','panel') NOT NULL DEFAULT 'web',
-    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_sol_folio (folio),
-    KEY idx_sol_estado (estado, created_at),
-    KEY idx_sol_sac (sacramento_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Historial de cambios de estado: "¿quién aprobó esto y cuándo?" sin adivinar.
-CREATE TABLE IF NOT EXISTS solicitudes_bitacora (
-    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    solicitud_id    INT UNSIGNED NOT NULL,
-    usuario_id      INT UNSIGNED NULL,
-    estado_anterior VARCHAR(20)  NULL,
-    estado_nuevo    VARCHAR(20)  NOT NULL,
-    comentario      VARCHAR(255) NULL,
-    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_solb_solicitud (solicitud_id),
-    CONSTRAINT fk_solb_solicitud FOREIGN KEY (solicitud_id) REFERENCES solicitudes_sacramento(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -605,8 +774,7 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
     ('meta_descripcion',         '',   'seo'),
     ('og_imagen',                '',   'seo'),
 
-    ('aviso_privacidad_version', '1.0', 'legal'),
-    ('retencion_meses_solicitudes', '36', 'legal');
+    ('aviso_privacidad_version', '1.0', 'legal');
 
 -- ------------------------------------------------------------
 -- SEMILLAS DE BLOQUES DE CONTENIDO
@@ -640,6 +808,16 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) V
     ('contacto_intro',     'contacto',    'Contacto',
      'Texto introductorio de la página de contacto, antes del formulario.', 10);
 
+-- A diferencia de los bloques de arriba, este sí trae contenido de fábrica: el
+-- enlace a la arquidiócesis tiene sentido desde el primer día, no hay que
+-- esperar a que alguien lo capture. El admin puede editarlo o agregar más
+-- enlaces como cualquier otro bloque de texto.
+INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, contenido, orden) VALUES
+    ('ligas_interes', 'inicio', 'Ligas de interés',
+     'Enlaces a sitios externos de interés. Aparece al final de la portada.',
+     '<ul><li><a href="https://www.arquidiocesisdehermosillo.org/" target="_blank" rel="noopener">Arquidiócesis de Hermosillo</a></li></ul>',
+     90);
+
 -- ------------------------------------------------------------
 -- SEMILLAS DE SACRAMENTOS
 -- ------------------------------------------------------------
@@ -647,13 +825,13 @@ INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) V
 -- parroquia son los requisitos y documentos, que quedan en blanco para que
 -- la parroquia los capture desde el panel antes de publicar el sitio.
 
-INSERT IGNORE INTO sacramentos (slug, nombre, acepta_solicitudes, requiere_tutor, orden) VALUES
-    ('bautizo',            'Bautizo',                   1, 1, 10),
-    ('primera-comunion',   'Primera Comunión',           1, 1, 20),
-    ('confirmacion',       'Confirmación',                1, 1, 30),
-    ('matrimonio',         'Matrimonio',                 1, 0, 40),
-    ('confesion',          'Confesión',                  0, 0, 50),
-    ('uncion-enfermos',    'Unción de los Enfermos',     1, 0, 60);
+INSERT IGNORE INTO sacramentos (slug, nombre, orden) VALUES
+    ('bautizo',          'Bautizo',                 10),
+    ('primera-comunion', 'Primera Comunión',        20),
+    ('confirmacion',     'Confirmación',            30),
+    ('matrimonio',       'Matrimonio',               40),
+    ('confesion',        'Confesión',                50),
+    ('uncion-enfermos',  'Unción de los Enfermos',   60);
 
 -- ------------------------------------------------------------
 -- AVISO DE PRIVACIDAD (BORRADOR)
@@ -669,15 +847,14 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 <h2>Responsable del tratamiento</h2>
 <p>La [DENOMINACION LEGAL DE LA ASOCIACION RELIGIOSA], con domicilio en [DOMICILIO COMPLETO], es responsable del uso y proteccion de sus datos personales.</p>
 <h2>Datos que recabamos</h2>
-<p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, domicilio, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
-<p>No solicitamos datos patrimoniales ni datos personales sensibles.</p>
+<p>Segun el tramite que solicite, podemos recabar: nombre completo, fecha de nacimiento, telefono, correo electronico y los datos de sus padres, madres o tutores cuando el solicitante sea menor de edad.</p>
+<p>No solicitamos datos patrimoniales. La unica excepcion a que no tratemos datos personales sensibles es el estado de salud, y unicamente para coordinar la visita de los Ministros Extraordinarios de la Comunion a personas enfermas: ver mas abajo.</p>
 <h2>Para que usamos sus datos</h2>
 <p>Finalidades necesarias para el tramite solicitado:</p>
 <ul>
-<li>Atender y dar seguimiento a solicitudes de sacramentos.</li>
 <li>Registrar inscripciones a cursos y catequesis.</li>
 <li>Responder los mensajes que nos envia por el formulario de contacto.</li>
-<li>Integrar los registros sacramentales que la parroquia debe conservar.</li>
+<li>Coordinar la visita de un Ministro Extraordinario de la Comunion a una persona enferma.</li>
 </ul>
 <p>Finalidades adicionales, que no son necesarias y a las que puede oponerse:</p>
 <ul>
@@ -685,15 +862,17 @@ INSERT IGNORE INTO paginas (slug, titulo, contenido, meta_descripcion, publicada
 </ul>
 <h2>Datos de menores de edad</h2>
 <p>Cuando el solicitante es menor de edad, el padre, la madre o el tutor debe otorgar el consentimiento y proporcionar sus propios datos de contacto. No publicamos nombres ni fotografias de menores en este sitio sin autorizacion expresa por escrito.</p>
+<h2>Datos de salud: visitas de los Ministros Extraordinarios de la Comunion</h2>
+<p>Cuando una persona enferma o su familia solicita la visita de un Ministro Extraordinario de la Comunion, recabamos su nombre, direccion, telefono y los datos de quien solicita la visita en su nombre. Este es un dato personal sensible por revelar un estado de salud, y por eso su tratamiento requiere su consentimiento expreso, que se otorga de viva voz o por telefono al momento de solicitar la visita, no a traves de este sitio web. Este registro nunca se publica ni se comparte fuera del equipo pastoral que coordina las visitas.</p>
 <h2>Transferencias</h2>
-<p>No transferimos sus datos a terceros, salvo a la [DIOCESIS O ARQUIDIOCESIS] cuando la normativa eclesiastica lo requiera para el registro del sacramento, y a las autoridades competentes cuando exista una obligacion legal.</p>
+<p>No transferimos sus datos a terceros, salvo a las autoridades competentes cuando exista una obligacion legal.</p>
 <h2>Como ejercer sus derechos</h2>
 <p>Usted puede acceder a sus datos, rectificarlos si son inexactos, cancelarlos u oponerse a su uso. Tambien puede revocar el consentimiento que nos otorgo.</p>
 <p>Para ello, escriba a <strong>[CORREO DE CONTACTO]</strong> o acuda a la oficina parroquial en el domicilio senalado, durante el horario de atencion. Le pediremos identificarse y describir con claridad que dato desea corregir o eliminar. Responderemos en un plazo maximo de veinte dias habiles.</p>
 <h2>Conservacion de los datos</h2>
-<p>Los datos de solicitudes e inscripciones ya atendidas se conservan el tiempo indicado en la configuracion del sitio, y despues se anonimizan: se conservan solo las cifras, sin los datos que identifican a la persona. Los registros sacramentales se conservan de forma permanente por obligacion eclesiastica.</p>
+<p>Conservamos los datos de sus inscripciones solo el tiempo necesario para el curso o la actividad de que se trate. Puede solicitar su cancelacion en cualquier momento por los medios indicados en la seccion "Como ejercer sus derechos".</p>
 <h2>Cambios a este aviso</h2>
-<p>Cualquier modificacion se publicara en esta misma pagina. Cada solicitud que recibimos queda asociada a la version del aviso que estaba vigente al momento de enviarla.</p>
+<p>Cualquier modificacion se publicara en esta misma pagina. Cada inscripcion o mensaje que recibimos queda asociado a la version del aviso que estaba vigente al momento de enviarlo.</p>
 <p><em>Ultima actualizacion: [FECHA].</em></p>',
 'Aviso de privacidad de la parroquia: que datos recabamos, para que los usamos y como ejercer sus derechos.',
 0, 100);

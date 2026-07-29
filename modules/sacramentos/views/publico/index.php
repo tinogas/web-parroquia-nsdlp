@@ -16,11 +16,8 @@
         <a href="<?= e(url_publica('sacramentos', ['slug' => $sacramento['slug']])) ?>" class="text-decoration-none">
             <div class="card border-0 shadow-sm h-100 tarjeta-aviso text-center">
                 <div class="card-body p-4">
-                    <div class="fs-2 text-dorado mb-2"><i class="bi bi-droplet"></i></div>
+                    <div class="fs-2 text-dorado mb-2"><?= icono_cruz() ?></div>
                     <h2 class="h6 fw-bold mb-0 text-body"><?= e($sacramento['nombre']) ?></h2>
-                    <?php if ($sacramento['acepta_solicitudes']): ?>
-                    <span class="badge bg-success-subtle text-success-emphasis mt-2">Solicitud en línea</span>
-                    <?php endif; ?>
                 </div>
             </div>
         </a>

@@ -47,17 +47,12 @@
         </p>
         <?php endif; ?>
 
-        <?php if ($sacramento['acepta_solicitudes']): ?>
-        <a href="<?= e(url_publica('sacramentos', ['slug' => $sacramento['slug'], 'accion' => 'solicitar'])) ?>"
-           class="btn btn-primary btn-lg">
-            <i class="bi bi-send me-1"></i>Solicitar en línea
-        </a>
-        <?php else: ?>
-        <div class="alert alert-light border">
-            <i class="bi bi-info-circle me-1"></i>
-            Para este sacramento, acércate directamente a la oficina parroquial.
+        <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-info-circle me-1"></i>Para llevarlo a cabo, acércate directamente a la oficina parroquial.</span>
+            <a href="<?= e(url_publica('contacto')) ?>" class="btn btn-sm btn-outline-primary">
+                Ver horario y ubicación <i class="bi bi-arrow-right ms-1"></i>
+            </a>
         </div>
-        <?php endif; ?>
 
     </div>
 </div>

@@ -70,10 +70,10 @@ whitelist de dos valores y `publico` por defecto.
 área pública   inicio · nosotros · horarios · sacramentos · pastorales · cursos
                avisos · eventos · contacto · pagina · sitemap
 
-área admin     auth · panel · configuracion · bloques · paginas · personas
-               organigrama · horarios · sacramentos · solicitudes · pastorales
+área admin     auth · panel · configuracion · bloques · paginas · personas · centros
+               organigrama · horarios · sacramentos · pastorales
                cursos · inscripciones · avisos · eventos · galeria · carrusel
-               mensajes · usuarios · auditoria
+               mensajes · usuarios · auditoria · respaldos
 ```
 
 Flujo de `dispatch()`:
@@ -102,9 +102,8 @@ helpers `url_publica()` y `url_admin()`; ningún código debe construir URLs a m
 /quienes-somos                   → area=publico&modulo=nosotros
 /pastorales                      → area=publico&modulo=pastorales
 /pastorales/coro                 → area=publico&modulo=pastorales&slug=coro&accion=ver
-/sacramentos/bautizo/solicitar   → area=publico&modulo=sacramentos&slug=bautizo&accion=solicitar
 /avisos?pagina=2                 → area=publico&modulo=avisos
-/admin/solicitudes/ver?id=12     → area=admin&modulo=solicitudes&accion=ver
+/admin/inscripciones/ver?id=12   → area=admin&modulo=inscripciones&accion=ver
 ```
 
 Orden de las reglas: primero dejar pasar los archivos y directorios que existen (assets y
@@ -195,9 +194,18 @@ El resultado: portada, quiénes somos, horarios y contacto son estructuralmente
 inmutables —siempre se ven bien— con su texto e imágenes 100 % editables. Y `paginas`
 cubre lo imprevisto sin abrir la puerta a romper lo esencial.
 
-Las semillas de `bloques_contenido` se reinsertan con `INSERT IGNORE` al arrancar el
-modelo, siguiendo el patrón `ensureTable()` del módulo de empresa en inventario. Así, si
-una versión futura añade una clave nueva, aparece sola sin necesidad de migrar.
+Las semillas de `bloques_contenido` usan `INSERT IGNORE` en `install.sql`, igual que el
+resto de las tablas del proyecto — a diferencia del patrón `ensureTable()` de
+`EmpresaModel` en `inventario`, que sí reinserta en tiempo de ejecución, `BloqueModel` no
+lo hace. Mientras el sitio no esté en producción esto no importa (`install.sql` se
+reimporta entero al cerrar cada etapa, ver "Actualizaciones posteriores" en
+`docs/DESPLIEGUE.md`); una clave nueva que se agregue después de desplegar sí necesitaría
+su propio `INSERT IGNORE` aplicado a mano, como cualquier otro cambio de esquema en
+producción.
+
+Casi todos los bloques se siembran con `contenido` vacío, para que el administrador lo
+llene. `ligas_interes` es la excepción: trae ya un enlace a la arquidiócesis porque tiene
+sentido desde el primer día, no hay que esperar a que alguien lo capture.
 
 **Lectura**: `core/Config.php` carga la tabla `configuracion` una sola vez por petición y
 la deja en memoria. El pie del sitio necesita el teléfono, la dirección y las redes en
@@ -291,27 +299,45 @@ registros y un mantenimiento imposible. Por eso hay dos tablas con semánticas d
 El costo aceptado es que una celebración especial que además es misa se captura dos veces.
 Ocurre pocas veces al año.
 
-### Campos de sacramento configurables
+### Horarios: agrupado público por sede/centro, no por tipo (issue #3)
 
-Cada sacramento pide datos distintos: el bautizo pide padrinos, el matrimonio pide dos
-contrayentes y expediente prematrimonial. Las opciones eran:
+`horarios` gana `centro_id` (FK a `centros`, `ON DELETE SET NULL`, NULL para un horario
+sin sede/centro asignado). Antes la página pública agrupaba en tarjetas por `tipo`
+(misa, confesión, adoración…); una parroquia con varios centros —el templo principal y
+las capillas dependientes— necesitaba primero saber **dónde** es cada horario, y solo
+después a qué hora y de qué tipo es.
 
-| Opción | Problema |
-|---|---|
-| Una columna por cada dato posible | Tabla de sesenta columnas, casi todas nulas |
-| Tabla entidad-atributo-valor | JOINs incómodos para un volumen bajo |
-| **Columnas fijas + JSON** ← elegida | — |
+`HorarioModel::vigentesPorCentro()` reemplaza a la antigua `vigentesPorTipo()` y arma
+una estructura de tres niveles — centro → día → horarios del día — en vez de devolver
+una lista plana:
 
-Se usan columnas reales para lo común —nombre, fecha de nacimiento, contacto, tutor,
-estado, consentimiento: todo lo que se filtra, ordena y audita— y una columna
-`datos_extra` de tipo JSON para lo variable, con la tabla `sacramento_campos` definiendo
-qué se pide en cada caso. Así el párroco agrega "nombre del padrino" a Confirmación desde
-el panel, sin que nadie toque el esquema.
+- **Nivel 1, sede/centro**: una tarjeta por cada fila de `centros` que tenga al menos
+  un horario vigente, ordenadas sede primero y luego centros por su propio `orden`. Los
+  horarios sin `centro_id` se agrupan aparte, al final, bajo "Otros horarios".
+- **Nivel 2, día**: dentro de cada centro, un subtítulo por día con
+  `MOD(dia_semana + 6, 7)` en el `ORDER BY` —el mismo truco que ya usa el calendario de
+  turnos MESC— para que el recorrido empiece en lunes y termine en domingo, sin alterar
+  el valor 0=domingo…6=sábado que la columna guarda.
+- **Nivel 3, hora**: los horarios de un mismo día, ordenados de la mañana a la noche;
+  `tipo` se imprime como una etiqueta (`badge`) en cada uno, ya no como criterio de
+  agrupación.
 
-**Trade-off explícito**: `datos_extra` no es cómodo de buscar ni de indexar. Se acepta
-porque son cientos de registros al año y las búsquedas reales son por folio, nombre,
-sacramento y estado, que son columnas reales. Si el hosting resultara tener MySQL anterior
-a 5.7, la columna pasa a `TEXT` y el código PHP no cambia.
+El array de "día" es asociativo (día ⇒ horarios) y su orden es el de inserción, que ya
+llega lunes-primero desde la consulta SQL: la vista solo debe recorrerlo con `foreach`,
+nunca reordenarlo con `ksort()`, o volvería a poner domingo primero.
+
+El listado de administración (`HorarioModel::todos()`) no cambia su orden por `tipo`:
+ahí sigue siendo más útil para editar en bloque (todas las misas juntas, todas las
+confesiones juntas) que agrupado por centro.
+
+### Campos de sacramento configurables (eliminado en el issue #3)
+
+Existió en la fase 1 original: columnas fijas + una columna `datos_extra` JSON para lo
+variable, con `sacramento_campos` definiendo qué campo pedía cada sacramento en su
+formulario de solicitud. Se eliminó por completo junto con el formulario que lo usaba —
+ver "Sacramentos: catálogo puramente informativo", más abajo—. Se deja esta nota porque el
+trade-off en sí (columnas fijas para lo que se filtra/ordena/audita, JSON solo para lo
+variable) puede volver a ser relevante si otro módulo necesita algo parecido.
 
 ### Un usuario puede coordinar varias pastorales
 
@@ -374,6 +400,24 @@ ellos decidan. La separación existe para la etapa 6: el rol coordinador tendrá
 para que un editor lo revise, sin tocar un solo controlador de esta etapa. Se aplicó el
 mismo patrón a `galeria.publicar`, independiente de `galeria.editar`.
 
+### Vigencia de avisos (issue #3)
+
+`publicado` es binario y manual: alguien tiene que volver a apagarlo. `avisos.vigente_hasta`
+(DATE NULL) añade una ventana de tiempo sobre ese flag, para boletines y comunicados con
+fecha de caducidad natural ("hasta el domingo de posadas") que nadie quiere estar
+recordando despublicar a mano. `AvisoModel::VIGENTE` es la condición SQL compartida por
+toda consulta pública (`publicados()`, `porSlugPublicado()`, `recientes()`,
+`paraSitemap()`): `publicado = 1 AND fecha_publicacion <= CURDATE() AND (vigente_hasta IS
+NULL OR vigente_hasta >= CURDATE())`. `fecha_publicacion` ya era el "visible desde";
+`vigente_hasta` es el "visible hasta". El listado del panel (`AvisoModel::listar()`)
+deliberadamente **no** usa esta condición: un aviso vencido sigue editable — el panel le
+agrega el badge "Vencido" para que quede claro por qué ya no se ve en el sitio, sin que eso
+le impida a un editor reabrirlo extendiendo la fecha.
+
+No se replicó el mismo campo en `eventos`: un evento ya tiene su propio ciclo de vida
+(`fecha_inicio`/`fecha_fin`), y ocultar automáticamente los que ya pasaron trabajaría contra
+el interés de conservar un registro histórico de lo organizado.
+
 ## Roles y permisos
 
 ```
@@ -425,12 +469,159 @@ Reglas sin excepción:
   ambos casos se revalida en el servidor.
 - `pastoral_id NULL` significa contenido parroquial global. Un coordinador nunca lo toca.
 
+### Alcance por centro/sede (issue #3)
+
+Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,
+NULL en las que ya existían antes de este campo). El issue pidió, además de "usuarios
+administradores de la pastoral" (ya cubierto por `usuarios_pastorales`), "usuarios por
+centro/sede": alguien que administra San Pío de Pietrelcina completo no debería tener que
+marcar, una por una, cada pastoral que ese centro tenga hoy o llegue a tener mañana.
+
+`usuarios_centros` es la tabla pivote análoga a `usuarios_pastorales`.
+`Auth::pastoralesPermitidas()` calcula la **unión** de ambas fuentes con un solo `UNION`
+SQL — pastorales asignadas directo, más las de cualquier centro que el usuario administre
+completo — y cachea el resultado ya unido en sesión, exactamente igual que antes. Ningún
+otro método de `Auth` ni de `Controller` cambió: `puedeSobrePastoral()`,
+`requireAlcancePastoral()` y `filtroPastoralSql()` siguen leyendo `pastoralesPermitidas()`
+sin saber que ahora tiene dos orígenes. `Auth::centrosPermitidos()` expone aparte los
+centros asignados directo, para el formulario de usuarios y para mostrar qué centro
+administra alguien; no se usa para autorizar nada por sí solo.
+
+### Contenido propio por pastoral (issue #3)
+
+La ficha pública de una pastoral (`pastorales/publico/detalle.php`) reúne, todo filtrado
+por su propio `pastoral_id`: sus avisos vigentes (`AvisoModel::publicadosPorPastoral()`,
+reutiliza la misma condición `VIGENTE` de la sección de avisos), sus próximos eventos
+(`EventoModel::proximos($limite, $pastoralId)`) con un enlace a su propio calendario
+mensual completo en `/eventos?pastoral=slug`, y sus documentos descargables
+(`pastoral_documentos`, solo agregar/quitar — para cambiar uno se sube uno nuevo, no hay
+edición de archivo). El centro/sede al que pertenece se muestra en la tarjeta de
+información.
+
+**Deliberadamente no hay un "organigrama de esta pastoral" aparte.**
+`organigrama_nodos.pastoral_id` ya existe desde antes de este issue: cada nodo del
+organigrama general puede ligarse a una pastoral. Duplicar esa misma información
+filtrada dentro de la ficha de cada pastoral sería mostrar dos veces lo mismo con dos
+caminos de código distintos, sin que nadie lo haya pedido.
+
+**`/eventos?pastoral=slug`** reutiliza el calendario general en vez de duplicarlo:
+`EventoModel::delMes()`/`proximos()` reciben un `$pastoralId` opcional,
+`EventoPublicoController` resuelve el slug con `pastoralSolicitada()` (si no resuelve a
+una pastoral activa, se ignora el filtro — la página cae en el calendario completo en vez
+de mostrar uno vacío), y `calendario.js` propaga el filtro leyendo `data-pastoral` del
+contenedor tanto en el fetch AJAX como al reescribir los enlaces de mes anterior/siguiente.
+
+### MESC: visitas a enfermos y rutas (issue #3)
+
+`modules/mesc/` es, a propósito, el único módulo del sitio **sin ningún controlador
+público**: `MescModel` no tiene una sola consulta que no pase por
+`requirePermiso('mesc.*')` + `requireAlcancePastoral()`. La razón está en
+[`PRIVACIDAD.md`](PRIVACIDAD.md): el solo hecho de aparecer en `mesc_visitas` revela un
+estado de salud, el primer dato sensible en sentido estricto de la LFPDPPP que maneja el
+sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas` es **obligatorio**, a diferencia de
+avisos o eventos: esta actividad nunca es "contenido parroquial general", siempre
+pertenece a la pastoral de MESC. `MescController::pastoralIdMescValidado()` es una
+variante de `Controller::pastoralIdValidado()` que nunca acepta `null`, ni siquiera para
+un administrador.
+
+**Mapa: Leaflet + OpenStreetMap, sin llave de API.** El formulario de una visita
+(`mesc/views/form.php`) incluye un mapa (`assets/js/mapa_mesc.js`) donde marcar el pin es
+enteramente opcional — el campo obligatorio sigue siendo la dirección de texto. Se eligió
+Leaflet/OSM en vez de Google Maps por la misma razón que ya evitó reCAPTCHA (ver más
+abajo): enviar la ubicación de un enfermo a un servicio de terceros de pago no es
+aceptable cuando hay una alternativa gratuita igual de funcional. `.htaccess` amplía la
+CSP (`img-src`) para permitir los tiles de `*.tile.openstreetmap.org` y los iconos del
+marcador servidos desde `cdn.jsdelivr.net`; no se tocó `Permissions-Policy` — la
+geolocalización del navegador sigue bloqueada en todo el sitio, así que el pin siempre se
+coloca a mano, nunca por GPS.
+
+**"Ruta óptima" es una aproximación geométrica, no una ruta real.**
+`MescModel::ordenSugerido()` aplica una heurística de **vecino más cercano** (greedy)
+sobre distancia **Haversine** en línea recta, partiendo de `configuracion.latitud`/
+`longitud` si están configuradas. Las visitas sin pin en el mapa no tienen con qué
+calcular cercanía, así que se agregan al final en el orden en que se registraron. Esto es
+deliberadamente simple: una ruta por calles reales exigiría un servicio externo de
+enrutamiento (con costo, límites de uso o ambos), y el propio issue permite que el
+resultado sea "modificable después de generado" — `mesc_ruta_visitas.orden` es editable a
+mano en `mesc/ruta_editar` antes de exportar.
+
+**El "archivo" es un CSV**, no un PDF: el proyecto no depende de ninguna librería de
+generación de PDF (cero dependencias, ver la introducción de este documento), y un CSV se
+genera en PHP puro con `fputcsv()` y se abre en cualquier hoja de cálculo. `rutaExportar()`
+antepone un BOM UTF-8 para que Excel no destroce los acentos.
+
+### MESC: calendario de turnos (issue #3)
+
+A diferencia de `mesc_visitas`, los turnos (`mesc_turnos`/`mesc_turno_ministros`) **no**
+son un dato sensible: es la lista pública-para-el-equipo de quién sirve en qué misa, no de
+quién recibe una visita. Aun así vive enteramente dentro del panel, sin controlador
+público, porque nadie pidió exponerlo fuera del equipo pastoral.
+
+**`mesc_ministros` es una entidad aparte de `personas`.** `personas` alimenta el equipo
+pastoral público de "Quiénes somos" (foto, cargo, semblanza); un ministro MESC es un
+voluntario interno que no necesariamente pertenece a esa vitrina, y forzar que lo fuera
+habría acoplado dos cosas que cambian por separado.
+
+**Un turno no tiene FK a `horarios` ni a `eventos`.** `horarios` es recurrencia semanal
+sin fecha concreta ("domingos a las 12:00"), mientras que un turno cubre una **ocurrencia**
+concreta de esa misa ("el domingo 3 de agosto"). Atarlo a `horarios` no resolvería la
+fecha; atarlo a `eventos` obligaría a crear un evento formal para cada misa dominical, que
+es justo la duplicación que `horarios` existe para evitar. `mesc_turnos.descripcion` es
+texto libre ("Misa de 12:00", "Velorio familia González") — más simple y no depende de que
+ese horario o evento exista formalmente en el sistema.
+
+**Revalidación de ministros activos, igual que el resto del sistema nunca confía en el
+POST.** `MescController::turnoGuardar()` cruza los IDs recibidos contra
+`MescModel::ministrosActivos()` de la pastoral (`array_intersect`) antes de guardar: un
+ministro dado de baja no puede colarse en un turno nuevo por más que se manipule el
+formulario, sin necesidad de una validación aparte en el modelo.
+
+**El calendario es una cuadrícula renderizada 100% en servidor**, sin AJAX: a diferencia
+del calendario público de eventos (`calendario.js`, con fetch y sin recargar), aquí cada
+clic en "mes anterior/siguiente" es un enlace normal que recarga la página. El panel admin
+no tiene el mismo volumen de tráfico que justifique la complejidad de un endpoint JSON
+aparte; `MescController::construirCalendarioTurnos()` es una cuadrícula de semanas
+análoga a `EventoPublicoController::construirCalendario()`, deliberadamente duplicada en
+vez de compartida —cruzar la frontera pública/admin por una función de 20 líneas no vale
+el acoplamiento—. Los estilos (`.calendario-tabla`, `.numero-dia`, `.evento-punto`) se
+copiaron de `assets/css/publico.css` a `assets/css/app.css` porque el panel carga una
+hoja de estilos distinta a la del sitio público.
+
+**Colores litúrgicos, como catálogo de mantenimiento, no como constante en PHP.**
+`mesc_colores_liturgicos` (blanco, verde, morado, rojo, rosa, con su significado) es
+editable desde el panel en `mesc/colores` en vez de vivir hardcodeado en el código: el
+propio equipo pastoral puede ajustar el texto o el tono exacto sin tocar una línea de PHP.
+Cada turno referencia opcionalmente un color (`color_liturgico_id`, `ON DELETE SET NULL`
+— borrar un color no rompe los turnos que ya lo tenían, solo los deja sin etiqueta), y el
+calendario usa ese `color_hex` como fondo de la casilla. `mesc_texto_legible()` en
+`turnos.php` calcula la luminancia percibida del color (fórmula estándar
+`0.299R + 0.587G + 0.114B`) para decidir si el texto va en blanco o en negro — el blanco
+litúrgico (`#f4f1ea`) necesita texto oscuro encima, el resto necesita texto claro, y
+hardcodear un solo color de texto para todos habría vuelto ilegible alguno de los dos.
+
+**La nota de "consiga un cambio de turno entre compañeros"** viene del calendario que la
+parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba de la
+cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
+los turnos, no de uno en particular.
+
 ### Moderación
 
 Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se
 fuerza a 0 en todas sus escrituras y el panel del editor muestra una bandeja de
 "Pendientes de publicar". Con diez coordinadores con cuenta, esto es lo que evita que la
 web parroquial amanezca con cualquier cosa.
+
+## Ícono de sacramentos: SVG propio, no una librería nueva
+
+Bootstrap Icons 1.11 no tiene ningún ícono de temática religiosa —ni "cross" ni
+"church"—, así que el ícono de Sacramentos (antes `bi-droplet`, una gota) es un SVG
+inline propio: `icono_cruz()` en `core/helpers.php`, una cruz latina (travesaño en el
+tercio superior, no un "+" centrado) dibujada a mano con un solo `<path>`. Usa
+`fill="currentColor"` y `width/height: 1em` para comportarse como un ícono de fuente:
+hereda color y tamaño del texto que lo rodea, sin agregar ninguna dependencia nueva solo
+por un glifo. `BloqueModel::iconoZona()` decide entre este SVG (zona "sacramentos") o el
+`<i class="bi ...">` de siempre (el resto): por eso devuelve el marcado ya completo, no
+solo el nombre de una clase como antes.
 
 ## Antispam sin servicios de terceros
 
@@ -541,53 +732,37 @@ como contenido parroquial general (`pastoral_id NULL`). Solo `pastoral_actividad
 significa nada y la asignación de un coordinador tampoco. Comprobado borrando una pastoral
 con un aviso asociado: el aviso siguió existiendo, con `pastoral_id` en `NULL`.
 
-## Sacramentos y solicitudes
+## Sacramentos: catálogo puramente informativo
 
-La pieza de más valor operativo del sistema, y la más delicada legalmente: recibe
-solicitudes de bautizo, primera comunión, confirmación, matrimonio y unción de enfermos
-directamente desde el sitio, con frecuencia de menores de edad.
+En la fase 1 original (etapa 7), esta sección recibía solicitudes de bautizo, primera
+comunión, confirmación, matrimonio y unción de enfermos directamente desde el sitio, con
+folio, bandeja de estados y campos configurables por sacramento (`sacramento_campos`).
+**El issue #3 eliminó todo ese formulario en línea**, a petición explícita del
+administrador: la sección queda como información de requisitos, documentos y aportación,
+y para llevar a cabo el trámite la persona se acerca a la oficina parroquial.
 
-**El folio no se deriva del slug.** `SacramentoModel::prefijoFolio()` usa un mapa
-explícito (`bautizo`→`BAU`, `confirmacion`→`CNF`, `confesion`→`CNS`…) en vez de tomar las
-tres primeras letras del slug: "confirmacion" y "confesion" comparten esas tres letras
-("CON"), lo que habría hecho indistinguibles sus folios para la secretaría. Un sacramento
-nuevo que se cree desde el panel —el catálogo lo permite en principio, aunque solo existen
-los seis universales— cae en una derivación genérica de respaldo, con el riesgo aceptado
-de coincidir con otro.
+Se eliminaron por completo: `SolicitudController`, `SolicitudModel`, las tablas
+`solicitudes_sacramento`, `solicitudes_bitacora` y `sacramento_campos`, las columnas
+`acepta_solicitudes` y `requiere_tutor` de `sacramentos`, el permiso `solicitudes.*` (con
+lo que `ROL_SECRETARIA` pierde ese permiso, aunque conserva `inscripciones.*` y
+`mensajes.*`), el módulo admin `solicitudes` del Router, y `cli/purgar_solicitudes.php`
+—la única pieza de retención automática que existía en todo el sistema—. El texto sembrado
+del aviso de privacidad (`install.sql`) se reescribió para no describir un trámite que ya
+no existe. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
-**El catálogo es fijo, el contenido es editable.** No hay acción para crear ni borrar un
-sacramento: los seis se siembran en `install.sql` y solo se edita su descripción,
-requisitos, documentos e imagen. Es la misma filosofía que `bloques_contenido`, aplicada
-aquí porque agregar un séptimo sacramento no es algo que vaya a pasar en la práctica.
+**Lo que queda:** `SacramentoModel` es un CRUD de catálogo puro (`todos`, `porId`,
+`porSlugActivo`, `activos`, `crear`, `actualizar`, `eliminar`), igual de sencillo que
+`PastoralModel` sin sus actividades. El catálogo sigue siendo fijo —no hay acción para
+crear ni borrar un sacramento, los seis se siembran en `install.sql`— por la misma razón
+que `bloques_contenido`: agregar un séptimo sacramento no es algo que vaya a pasar en la
+práctica.
 
-**El menor de edad se calcula en el servidor**, siempre, a partir de la fecha de
-nacimiento — nunca se confía en lo que el formulario indique. La sección de tutor se
-muestra **siempre** en el formulario público (con la nota "completa esto solo si el
-solicitante es menor"), en vez de mostrarla u ocultarla con JavaScript según la fecha
-capturada: así funciona igual con o sin JavaScript, y el control real de todos modos
-ocurre en el servidor al validar, no en la vista.
-
-**Solo la lectura respeta el flag `dato_sensible`.** El formulario público pide todos los
-campos configurados de un sacramento sin distinción; ese flag únicamente decide qué se
-muestra al ver la solicitud en el panel — es una barrera de visualización para admin y
-secretaría, no una barrera de captura.
-
-**Auditoría de lectura, no solo de escritura.** `SolicitudController::index()` y `::ver()`
-llaman `auditoria('consultar', …)` antes de mostrar nada, incluida la exportación a CSV.
-Verificado: cada apertura de una solicitud deja una fila en `auditoria` con su folio.
-
-**La purga anonimiza, nunca borra.** `SolicitudModel::purgarVencidas()` vacía nombre,
-contacto, tutor y `datos_extra` de las solicitudes ya cerradas (aprobada→completada,
-rechazada, cancelada) más viejas que `configuracion.retencion_meses_solicitudes`, pero
-conserva folio, sacramento, estado y fechas para poder seguir contando cuántos bautizos
-hubo en un año. Verificado con una solicitud cerrada de 40 meses: la purga la anonimizó
-sin tocar una solicitud abierta más reciente.
-
-**Separación de roles, verificada de punta a punta.** `secretaria` administra
-`solicitudes.*` pero no puede tocar el catálogo de sacramentos (`sacramentos.editar`);
-`editor` administra el catálogo pero no ve una sola solicitud. Es el reflejo exacto de
-"quién ve datos personales" contra "quién edita el sitio" que exige
-[`PRIVACIDAD.md`](PRIVACIDAD.md).
+**Consecuencia para el resto del sistema:** con esto, `inscripciones_curso` (cursos y
+catequesis) queda como la **única** fuente de datos de menores que recibe el sitio en
+línea. `docs/PRIVACIDAD.md` se actualizó para reflejar esto: ya no hay ningún mecanismo de
+retención/anonimización automática en el sistema (existía solo para solicitudes); si la
+parroquia decide que `inscripciones_curso` necesita uno, habría que construirlo de nuevo,
+no reactivarlo.
 
 ## Cursos e inscripciones
 
@@ -596,8 +771,8 @@ entregas y calificaciones quedan fuera de esta fase), pero ya resuelve el proble
 inmediato: publicar cursos con temario y recibir inscripciones con control de cupo.
 
 **El correo es obligatorio aquí, a diferencia de otros formularios públicos.** En
-contacto y en solicitudes de sacramento basta teléfono o correo; en la inscripción a un
-curso el correo es la clave que evita una doble inscripción accidental
+contacto basta teléfono o correo; en la inscripción a un curso el correo es la clave que
+evita una doble inscripción accidental
 (`uq_ins_curso_email` es único por `curso_id` + `email`, y `InscripcionCursoModel::yaInscrito()`
 lo comprueba antes de insertar). Verificado: el mismo correo intentando inscribirse dos
 veces al mismo curso recibe el mensaje de rechazo explicando por qué el campo es
@@ -662,7 +837,7 @@ protección no pedida para un caso que, si ocurre, se corrige por SQL directo �
 cualquier otra cuenta de administración de un sitio pequeño.
 
 **La auditoría es de solo lectura y no audita su propia consulta.** A diferencia de
-`solicitudes` e `inscripciones_curso`, `AuditoriaController::index()` no llama a
+`inscripciones_curso`, `AuditoriaController::index()` no llama a
 `auditoria('consultar', …)`: el listado ya ES la bitácora, y una fila por cada vez que
 alguien la revisa no aporta nada, solo la infla. Sí se audita la exportación a CSV, igual
 que en el resto del panel.
@@ -811,6 +986,33 @@ y seguir el patrón ya establecido en `auditoria` es más consistente que introd
 nuevo. En una fila `tipo='restauracion'`, `archivo` referencia el `.sql` de un respaldo
 ajeno (el que se restauró), no uno propio: `RespaldoModel::eliminar()` por eso solo borra el
 archivo físico cuando `tipo='respaldo'`, nunca para una fila de restauración.
+
+## Sede y centros
+
+Primer pendiente del issue #3 (los que siguieron a la fase 1 original). La parroquia tiene
+una sede y, hoy, dos centros que dependen de ella (San Pío de Pietrelcina, Jesús el Señor).
+
+**Una sola tabla, no dos.** `centros` con una columna `tipo` ENUM(`sede`, `centro`)
+distingue el registro principal de los que dependen de él, igual que `horarios.tipo` o
+`respaldos_log.tipo` distinguen variantes de una misma clase de dato en el resto del
+proyecto. No hay una tabla `sede` separada con cardinalidad 1: forzar "solo puede haber una
+sede" en el esquema es una regla que nadie pidió, y que estorbaría el día que la parroquia
+tenga una segunda. La sede de hoy es simplemente la fila con `tipo='sede'`.
+
+**Sembrado con datos reales, no con anclas vacías.** A diferencia de la mayoría de
+`bloques_contenido`, esta tabla se siembra con los tres registros reales que ya existen
+(la sede y los dos centros nombrados), igual que las seis semillas de `sacramentos`: el
+administrador no debería tener que dar de alta a mano algo que ya se sabía desde el primer
+día.
+
+**`centros.*` es de alcance parroquial, no de pastoral: lo administra editor, no
+coordinador.** Igual que `horarios`/`personas`/`organigrama`, es información de toda la
+parroquia, no de una pastoral en particular — el coordinador nunca lo toca.
+
+**Sin dirección en mapa (lat/long) todavía.** Los centros solo llevan una dirección de
+texto libre. El mapa con selección de pin es un requisito de la visita a enfermos de MESC
+(la ubicación de la persona visitada, no la del centro), no de este catálogo; si más
+adelante un centro necesita su propio mapa, se agrega ahí cuando haga falta.
 
 ## SEO
 

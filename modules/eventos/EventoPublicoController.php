@@ -1,31 +1,36 @@
 <?php
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/modules/eventos/EventoModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 class EventoPublicoController extends ControllerPublico
 {
     public function index(): void
     {
         [$anio, $mes] = $this->mesSolicitado();
+        $pastoral      = $this->pastoralSolicitada();
+        $pastoralId    = $pastoral ? (int) $pastoral['id'] : null;
         $modelo        = new EventoModel();
-        $eventosDelMes = $modelo->delMes($anio, $mes);
+        $eventosDelMes = $modelo->delMes($anio, $mes, $pastoralId);
 
         $mesAnterior   = $mes === 1 ? 12 : $mes - 1;
         $anioAnterior  = $mes === 1 ? $anio - 1 : $anio;
         $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
         $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
+        $paramsPastoral = $pastoral ? ['pastoral' => $pastoral['slug']] : [];
 
         $this->render('eventos/publico/index', [
-            'metaTitulo'      => 'Eventos',
+            'metaTitulo'      => $pastoral ? 'Eventos de ' . $pastoral['nombre'] : 'Eventos',
             'metaDescripcion' => 'Calendario de celebraciones y actividades de la Parroquia Nuestra Señora de la Paz.',
-            'urlCanonica'     => url_publica('eventos'),
+            'urlCanonica'     => url_publica('eventos', $paramsPastoral),
             'anio'            => $anio,
             'mes'             => $mes,
             'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
             'semanas'         => $this->construirCalendario($anio, $mes, $eventosDelMes),
-            'proximos'        => $modelo->proximos(6),
-            'urlMesAnterior'  => url_publica('eventos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
-            'urlMesSiguiente' => url_publica('eventos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
+            'proximos'        => $modelo->proximos(6, $pastoralId),
+            'pastoral'        => $pastoral,
+            'urlMesAnterior'  => url_publica('eventos', ['anio' => $anioAnterior, 'mes' => $mesAnterior] + $paramsPastoral),
+            'urlMesSiguiente' => url_publica('eventos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente] + $paramsPastoral),
             'scriptExtra'     => '<script src="' . e(url_activo('assets/js/calendario.js'))
                                . '?v=' . e(APP_VERSION) . '"></script>',
         ]);
@@ -93,6 +98,8 @@ class EventoPublicoController extends ControllerPublico
     public function datos(): void
     {
         [$anio, $mes] = $this->mesSolicitado();
+        $pastoral   = $this->pastoralSolicitada();
+        $pastoralId = $pastoral ? (int) $pastoral['id'] : null;
 
         $eventos = array_map(static function (array $evento): array {
             return [
@@ -104,7 +111,7 @@ class EventoPublicoController extends ControllerPublico
                 'color'     => $evento['color'] ?: '#1e4d8b',
                 'url'       => url_publica('eventos', ['slug' => $evento['slug']]),
             ];
-        }, (new EventoModel())->delMes($anio, $mes));
+        }, (new EventoModel())->delMes($anio, $mes, $pastoralId));
 
         $this->json(['anio' => $anio, 'mes' => $mes, 'eventos' => $eventos]);
     }
@@ -120,6 +127,16 @@ class EventoPublicoController extends ControllerPublico
             $anio = (int) date('Y');
         }
         return [$anio, $mes];
+    }
+
+    /** ?pastoral=slug (issue #3): acota el calendario general al de una sola pastoral. */
+    private function pastoralSolicitada(): ?array
+    {
+        $slug = strtolower(trim((string) ($_GET['pastoral'] ?? '')));
+        if ($slug === '' || !preg_match('/^[a-z0-9\-]{1,80}$/', $slug)) {
+            return null;
+        }
+        return (new PastoralModel())->porSlugActiva($slug);
     }
 
     private function slug(): string

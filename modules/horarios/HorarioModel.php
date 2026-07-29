@@ -10,7 +10,7 @@ class HorarioModel extends Model
 {
     /** tipo => [nombre visible, icono] */
     public const TIPOS = [
-        'misa'      => ['Misa',                    'bi-cup-hot'],
+        'misa'      => ['Misa',                    'bi-clock-fill'],
         'confesion' => ['Confesión',                'bi-chat-heart'],
         'adoracion' => ['Adoración eucarística',    'bi-brightness-high'],
         'oficina'   => ['Oficina parroquial',       'bi-building'],
@@ -20,8 +20,10 @@ class HorarioModel extends Model
     public function todos(): array
     {
         return $this->fetchAll(
-            "SELECT * FROM horarios
-             ORDER BY FIELD(tipo, " . $this->ordenTipos() . "), dia_semana, hora"
+            "SELECT h.*, c.nombre AS centro_nombre
+               FROM horarios h
+               LEFT JOIN centros c ON c.id = h.centro_id
+              ORDER BY FIELD(h.tipo, " . $this->ordenTipos() . "), h.dia_semana, h.hora"
         );
     }
 
@@ -31,23 +33,45 @@ class HorarioModel extends Model
     }
 
     /**
-     * Para el sitio público: activos y vigentes hoy, agrupados por tipo.
-     * Un horario sin fechas de vigencia se considera siempre vigente.
+     * Para el sitio público: activos y vigentes hoy, agrupados por sede o
+     * centro (issue #3) y, dentro de cada uno, por día —de lunes a domingo,
+     * no domingo primero, que es como queda dia_semana ordenado tal cual— y
+     * de la mañana a la noche dentro de cada día. MOD(dia_semana + 6, 7) es
+     * el truco: convierte 0=domingo…6=sábado en 0=lunes…6=domingo para el
+     * ORDER BY, sin tocar el valor guardado. Un horario sin centro asignado
+     * se agrupa aparte, al final, bajo la clave 'sin_centro'.
+     *
+     * 'dias' es un array asociativo día => horarios; el orden de sus claves
+     * es el de inserción (el de la consulta, ya lunes-primero), así que la
+     * vista solo debe recorrerlo con foreach, nunca reordenarlo con ksort.
      */
-    public function vigentesPorTipo(): array
+    public function vigentesPorCentro(): array
     {
         $filas = $this->fetchAll(
-            "SELECT * FROM horarios
-              WHERE activo = 1
-                AND (vigente_desde IS NULL OR vigente_desde <= CURDATE())
-                AND (vigente_hasta IS NULL OR vigente_hasta >= CURDATE())
-              ORDER BY FIELD(tipo, " . $this->ordenTipos() . "), dia_semana, hora"
+            "SELECT h.*, c.nombre AS centro_nombre, c.tipo AS centro_tipo
+               FROM horarios h
+               LEFT JOIN centros c ON c.id = h.centro_id
+              WHERE h.activo = 1
+                AND (h.vigente_desde IS NULL OR h.vigente_desde <= CURDATE())
+                AND (h.vigente_hasta IS NULL OR h.vigente_hasta >= CURDATE())
+              ORDER BY (h.centro_id IS NULL), FIELD(c.tipo, 'sede', 'centro'), c.orden, c.nombre,
+                       MOD(h.dia_semana + 6, 7), h.hora"
         );
-        $porTipo = [];
+
+        $porCentro = [];
         foreach ($filas as $fila) {
-            $porTipo[$fila['tipo']][] = $fila;
+            $claveCentro = $fila['centro_id'] !== null ? (int) $fila['centro_id'] : 'sin_centro';
+            if (!isset($porCentro[$claveCentro])) {
+                $porCentro[$claveCentro] = [
+                    'nombre' => $fila['centro_nombre'] ?? 'Otros horarios',
+                    'tipo'   => $fila['centro_tipo'],
+                    'dias'   => [],
+                ];
+            }
+            $claveDia = (int) $fila['dia_semana'];
+            $porCentro[$claveCentro]['dias'][$claveDia][] = $fila;
         }
-        return $porTipo;
+        return $porCentro;
     }
 
     /**
@@ -102,8 +126,8 @@ class HorarioModel extends Model
     {
         $this->execute(
             'INSERT INTO horarios
-                (tipo, dia_semana, hora, hora_fin, lugar, nota, vigente_desde, vigente_hasta, orden, activo)
-             VALUES (:tipo, :dia, :hora, :horaFin, :lugar, :nota, :desde, :hasta, :orden, :activo)',
+                (centro_id, tipo, dia_semana, hora, hora_fin, lugar, nota, vigente_desde, vigente_hasta, orden, activo)
+             VALUES (:centro, :tipo, :dia, :hora, :horaFin, :lugar, :nota, :desde, :hasta, :orden, :activo)',
             $this->parametros($datos)
         );
         return $this->lastInsertId();
@@ -113,7 +137,7 @@ class HorarioModel extends Model
     {
         return $this->execute(
             'UPDATE horarios
-                SET tipo = :tipo, dia_semana = :dia, hora = :hora, hora_fin = :horaFin,
+                SET centro_id = :centro, tipo = :tipo, dia_semana = :dia, hora = :hora, hora_fin = :horaFin,
                     lugar = :lugar, nota = :nota, vigente_desde = :desde, vigente_hasta = :hasta,
                     orden = :orden, activo = :activo
               WHERE id = :id',
@@ -129,6 +153,7 @@ class HorarioModel extends Model
     private function parametros(array $datos): array
     {
         return [
+            ':centro'  => $datos['centro_id'],
             ':tipo'    => $datos['tipo'],
             ':dia'     => $datos['dia_semana'],
             ':hora'    => $datos['hora'],

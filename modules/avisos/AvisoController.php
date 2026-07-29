@@ -70,9 +70,17 @@ class AvisoController extends Controller
             $this->requireAlcancePastoral($existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null);
         }
 
-        $titulo = $this->postStr('titulo');
+        $titulo           = $this->postStr('titulo');
+        $fechaPublicacion = $this->postStr('fecha_publicacion') ?: date('Y-m-d');
+        $vigenteHasta     = $this->postStr('vigente_hasta') ?: null;
+
         if ($titulo === '' || !isset(AvisoModel::TIPOS[$this->postStr('tipo')])) {
             Session::flash('error', 'El aviso necesita título y tipo.');
+            $this->redirect($id ? url_admin('avisos', 'editar', ['id' => $id]) : url_admin('avisos', 'nuevo'));
+            return;
+        }
+        if ($vigenteHasta !== null && $vigenteHasta < $fechaPublicacion) {
+            Session::flash('error', '"Visible hasta" no puede ser anterior a "Visible desde".');
             $this->redirect($id ? url_admin('avisos', 'editar', ['id' => $id]) : url_admin('avisos', 'nuevo'));
             return;
         }
@@ -111,7 +119,8 @@ class AvisoController extends Controller
             'tipo'              => $this->postStr('tipo'),
             'archivo_pdf'       => $pdf,
             'pastoral_id'       => $pastoralId,
-            'fecha_publicacion' => $this->postStr('fecha_publicacion') ?: date('Y-m-d'),
+            'fecha_publicacion' => $fechaPublicacion,
+            'vigente_hasta'     => $vigenteHasta,
             'destacado'         => $this->postBool('destacado'),
             'publicado'         => $publicado,
         ];

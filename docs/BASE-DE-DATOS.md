@@ -1,8 +1,10 @@
 # Base de datos
 
-Diccionario de las 25 tablas del sistema (24 de las diez etapas del plan original, más
-`respaldos_log` añadida después). El esquema real vive en `install.sql`; este documento
-explica el porqué de cada tabla y sus columnas relevantes.
+Diccionario de las 23 tablas del sistema: las 24 de las diez etapas del plan original, más
+`respaldos_log` y `centros` (issue #3), menos `sacramento_campos`, `solicitudes_sacramento`
+y `solicitudes_bitacora` (también issue #3: se eliminó el formulario de solicitud en línea
+de sacramentos). El esquema real vive en `install.sql`; este documento explica el porqué de
+cada tabla y sus columnas relevantes.
 
 ## Convenciones
 
@@ -50,6 +52,15 @@ Pivote. Una persona puede coordinar varias pastorales a la vez, que es lo habitu
 Clave primaria compuesta `(usuario_id, pastoral_id)`, ambas foráneas con
 `ON DELETE CASCADE`.
 
+### `usuarios_centros`
+
+Pivote análogo, pero por centro/sede completo (issue #3, "usuarios por centro/sede"):
+quien administra un centro administra todas sus pastorales sin que alguien tenga que
+marcarlas una por una en `usuarios_pastorales`. Clave primaria compuesta
+`(usuario_id, centro_id)`, ambas foráneas con `ON DELETE CASCADE`.
+`Auth::pastoralesPermitidas()` calcula la unión de ambas tablas (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)).
+
 ### `auditoria`
 
 Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `admin_real_id` (FK a
@@ -90,7 +101,7 @@ Pares clave-valor globales, agrupados por `grupo` (`general`, `contacto`, `redes
 Claves sembradas: `parroquia_nombre`, `parroquia_diocesis`, `direccion`, `ciudad`, `cp`,
 `telefono`, `whatsapp`, `email`, `mapa_embed`, `latitud`, `longitud`, `horario_oficina`,
 `facebook`, `instagram`, `youtube`, `logo`, `favicon`, `og_imagen`, `meta_descripcion`,
-`aviso_privacidad_version`, `organigrama_imagen`, `retencion_meses_solicitudes`.
+`aviso_privacidad_version`, `organigrama_imagen`.
 
 ---
 
@@ -153,6 +164,14 @@ registrada no puede llegar al sitio ni por descuido.
 
 ## Parroquia
 
+### `centros`
+
+La sede parroquial y los centros que dependen de ella, en un solo catálogo: `tipo`
+ENUM(`sede`, `centro`), `nombre`, `direccion`, `telefono`, `descripcion`, `imagen`, `orden`,
+`activo`. Sembrada con los datos reales de la parroquia (issue #3): una fila `sede`
+("Parroquia Nuestra Señora de la Paz") y dos `centro` ("San Pío de Pietrelcina", "Jesús el
+Señor"). Ver [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sede y centros".
+
 ### `personas`
 
 Párroco, vicarios, diáconos, religiosos, laicos y personal. `nombre`, `cargo`, `tipo`
@@ -160,6 +179,18 @@ ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`, `staff`), `semblanza
 `email`, `telefono`, `orden`, `activo`.
 
 Solo se publica el correo institucional. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
+
+### `persona_pastorales`
+
+Pivote análogo a `usuarios_pastorales`: una persona del equipo suele llevar más de una
+pastoral a la vez (catequesis y liturgia, por ejemplo). Clave primaria compuesta
+`(persona_id, pastoral_id)`, ambas foráneas con `ON DELETE CASCADE`.
+
+### `persona_centros`
+
+Pivote análogo, pero por centro/sede: `(persona_id, centro_id)`, ambas foráneas con
+`ON DELETE CASCADE`. Igual que con las pastorales, alguien del equipo puede estar
+adscrito a más de un centro a la vez.
 
 ### `organigrama_nodos`
 
@@ -176,6 +207,7 @@ Recurrencia semanal, no fechas concretas.
 
 | Columna | Tipo | Notas |
 |---|---|---|
+| `centro_id` | SMALLINT UNSIGNED NULL | issue #3: FK a `centros`, `ON DELETE SET NULL`. NULL = horario sin sede/centro asignado |
 | `tipo` | ENUM | `misa`, `confesion`, `adoracion`, `oficina`, `otro` |
 | `dia_semana` | TINYINT UNSIGNED | 0 = domingo … 6 = sábado |
 | `hora` | TIME | |
@@ -186,14 +218,23 @@ Recurrencia semanal, no fechas concretas.
 | `vigente_hasta` | DATE NULL | |
 | `orden`, `activo` | | |
 
-Índice `idx_hor_tipo_dia (tipo, dia_semana, hora)`.
+Índices `idx_hor_tipo_dia (tipo, dia_semana, hora)` e `idx_hor_centro (centro_id)`.
+
+**Agrupado público (`HorarioModel::vigentesPorCentro()`)**: el sitio público ya no
+agrupa por `tipo`; agrupa por sede/centro (issue #3) y, dentro de cada uno, por día
+—de lunes a domingo, con `MOD(dia_semana + 6, 7)` para reordenar sin tocar el valor
+guardado— y de la mañana a la noche dentro de cada día. El `tipo` se muestra como
+etiqueta en cada horario, no como criterio de agrupación. Los horarios sin
+`centro_id` se agrupan aparte, al final, bajo "Otros horarios". El listado de admin
+(`todos()`) conserva el orden por `tipo` para facilitar la edición masiva.
 
 ### `pastorales`
 
-`slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`, `descripcion` MEDIUMTEXT,
-`imagen`, `icono` (clase de Bootstrap Icons), `responsable_nombre`, `contacto_email`,
-`contacto_telefono`, `dia_reunion`, `hora_reunion`, `lugar_reunion`,
-`acepta_voluntarios`, `orden`, `activa`.
+`centro_id` (issue #3: FK a `centros`, `ON DELETE SET NULL`, NULL en las que ya existían
+antes de este campo), `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
+`descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
+`responsable_nombre`, `contacto_email`, `contacto_telefono`, `dia_reunion`,
+`hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
 
 ### `pastoral_actividades`
 
@@ -201,67 +242,103 @@ Actividades comunitarias y de apoyo social de cada pastoral. `pastoral_id`, `tit
 `descripcion`, `tipo` ENUM(`comunitaria`, `apoyo_social`, `formacion`, `liturgica`),
 `orden`, `activa`. Foránea con `ON DELETE CASCADE`.
 
+### `pastoral_documentos`
+
+Documentación descargable de cada pastoral (issue #3): reglamentos, guías, formatos.
+`pastoral_id` (FK, `ON DELETE CASCADE`), `titulo`, `archivo` (ruta bajo `uploads/`, misma
+convención que `avisos.archivo_pdf`; solo PDF por ahora), `orden`, `activo`, `usuario_id`
+(FK a `usuarios`, `ON DELETE SET NULL`, quién lo subió), `created_at`. Sin edición desde el
+panel más allá de agregar o quitar: para cambiar un documento se sube uno nuevo.
+
 ---
 
-## Sacramentos y solicitudes
+## MESC — Ministros Extraordinarios de la Comunión
+
+> **Dato sensible.** De las siete tablas de este bloque, solo `mesc_visitas` (y su ruta,
+> `mesc_rutas`/`mesc_ruta_visitas`) guarda el único dato de salud que trata el sistema.
+> `mesc_ministros`/`mesc_turnos`/`mesc_turno_ministros`/`mesc_colores_liturgicos` son un
+> catálogo operativo normal, sin esa protección reforzada. Ver
+> [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Dato
+> sensible: MESC".
+
+### `mesc_visitas`
+
+Registro de visitas a enfermos para llevarles la comunión (issue #3). `pastoral_id`
+(FK a `pastorales`, `ON DELETE CASCADE`, **NOT NULL** —a diferencia de avisos/eventos,
+nunca es contenido parroquial general—), `nombre_enfermo`, `direccion` (obligatoria),
+`latitud`/`longitud` DECIMAL(10,7) NULL (solo si se marcó el pin en el mapa),
+`telefono`, `solicitante_nombre`/`solicitante_parentesco`/`solicitante_telefono` (quien
+pide la visita en nombre del enfermo), `notas`, `activo` (deja de entrar en el cálculo de
+rutas nuevas sin borrar el historial), `usuario_id` (FK, `ON DELETE SET NULL`),
+`created_at`, `updated_at`.
+
+No hereda `folio`, `estado` ni las columnas de consentimiento de la extinta
+`solicitudes_sacramento`: no hay formulario público ni bandeja de aprobación, es una
+herramienta interna del panel. Índice `idx_mvi_pastoral (pastoral_id, activo)`.
+
+### `mesc_rutas` y `mesc_ruta_visitas`
+
+Una ruta agrupa visitas activas en un orden concreto para un recorrido. `mesc_rutas`:
+`pastoral_id` (FK), `nombre`, `usuario_id` (quién la generó), `created_at`.
+`mesc_ruta_visitas`: pivote `(ruta_id, visita_id)` con `orden` — la única columna que se
+edita después de generar la ruta, para ajustarla a mano.
+
+`MescModel::ordenSugerido()` calcula el orden inicial con una heurística de vecino más
+cercano sobre distancia Haversine (línea recta, no ruta real por calles), partiendo de
+`configuracion.latitud`/`longitud` si están configuradas. Sin API de mapas de pago: ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md).
+
+### `mesc_ministros`
+
+Catálogo de quién sirve como Ministro Extraordinario de la Comunión (issue #3,
+"calendario de turnos"). `pastoral_id` (FK, `ON DELETE CASCADE`), `nombre`, `telefono`,
+`activo` (solo los activos se pueden asignar a un turno nuevo), `created_at`.
+
+Aparte de `personas` a propósito: `personas` es el equipo pastoral que se muestra en
+público, con foto y semblanza; un ministro MESC es un voluntario interno que no
+necesariamente forma parte de esa vitrina. Índice `idx_mmi_pastoral (pastoral_id, activo)`.
+
+### `mesc_colores_liturgicos`
+
+Catálogo de referencia: los cinco colores litúrgicos de la Iglesia (blanco, verde,
+morado, rojo, rosa), cada uno con `nombre`, `color_hex` y `significado` (texto explicativo
+de cuándo se usa cada uno). `orden` controla en qué secuencia aparecen. Mantenimiento
+libre desde el panel — no está codificado en PHP — para que la parroquia pueda ajustar el
+texto o agregar alguno si hiciera falta.
+
+### `mesc_turnos` y `mesc_turno_ministros`
+
+Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
+`hora` NULL, `color_liturgico_id` (FK a `mesc_colores_liturgicos`, `ON DELETE SET NULL`,
+opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a `eventos` (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md)) y sin columna de descripción propia: el turno se
+identifica por su fecha, hora y los ministros que lo cubren, que ya basta en la práctica;
+`MescController::etiquetaTurno()` arma un texto de referencia a partir de fecha y hora
+donde hace falta un título. `mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`,
+de 1 a N ministros por turno. `MescController::turnoGuardar()` revalida cada
+`ministro_id` recibido contra `ministrosActivos()` de esa pastoral antes de guardar: un
+ministro dado de baja no puede colarse en un turno nuevo aunque se manipule el
+formulario.
+
+---
+
+## Sacramentos
 
 ### `sacramentos`
 
-Catálogo. `slug` con `uq_sac_slug`, `nombre`, `descripcion`, `requisitos` MEDIUMTEXT,
-`documentos` MEDIUMTEXT, `aportacion`, `imagen`, `acepta_solicitudes`, `requiere_tutor`,
-`orden`, `activo`.
+Catálogo puramente informativo (issue #3: se eliminaron `acepta_solicitudes` y
+`requiere_tutor`, junto con todo el formulario de solicitud en línea). `slug` con
+`uq_sac_slug`, `nombre`, `descripcion`, `requisitos` MEDIUMTEXT, `documentos` MEDIUMTEXT,
+`aportacion`, `imagen`, `orden`, `activo`.
 
 Semillas: bautizo, primera comunión, confirmación, matrimonio, confesión, unción de
 enfermos.
 
-### `sacramento_campos`
-
-Define qué campos adicionales pide cada sacramento en su formulario. `sacramento_id`,
-`nombre_campo`, `etiqueta`, `tipo` ENUM(`texto`, `textarea`, `fecha`, `telefono`, `email`,
-`seleccion`, `checkbox`), `opciones`, `requerido`, `dato_sensible`, `orden`, `activo`.
-Único `uq_scp (sacramento_id, nombre_campo)`.
-
-Es lo que permite que el párroco agregue "nombre del padrino" a Confirmación sin tocar el
-esquema. Los campos marcados con `dato_sensible = 1` solo se muestran a administrador y
-secretaría.
-
-### `solicitudes_sacramento`
-
-La tabla más delicada del sistema: contiene datos personales, con frecuencia de menores.
-
-| Columna | Tipo | Notas |
-|---|---|---|
-| `folio` | VARCHAR(20) | `uq_sol_folio`; formato `BAU-2026-00001` |
-| `sacramento_id` | TINYINT UNSIGNED | |
-| `nombre_solicitante` | VARCHAR(150) | |
-| `fecha_nacimiento` | DATE | |
-| `es_menor` | TINYINT(1) | Calculado en el servidor, no confiado al cliente |
-| `telefono`, `email`, `direccion` | | |
-| `tutor_nombre`, `tutor_parentesco`, `tutor_telefono` | | Obligatorios si `es_menor = 1` |
-| `fecha_preferida` | DATE NULL | |
-| `notas` | TEXT | |
-| `datos_extra` | JSON NULL | Respuestas de `sacramento_campos` |
-| `estado` | ENUM | `pendiente`, `en_revision`, `aprobada`, `rechazada`, `cancelada`, `completada` |
-| `motivo_estado` | VARCHAR(255) | |
-| `atendida_por`, `atendida_at` | | |
-| `consentimiento` | TINYINT(1) | Sin él no se inserta |
-| `consentimiento_ip` | VARCHAR(45) | |
-| `aviso_version` | VARCHAR(20) | Versión del aviso de privacidad aceptada |
-| `origen` | ENUM | `web` o `panel` |
-
-Índices `idx_sol_estado (estado, created_at)` e `idx_sol_sac (sacramento_id)`.
-
-Sobre `datos_extra JSON`: la decisión y su trade-off están explicados en
-[`ARQUITECTURA.md`](ARQUITECTURA.md#campos-de-sacramento-configurables). En resumen, no es
-cómodo de buscar, y se acepta porque las búsquedas reales son por folio, nombre,
-sacramento y estado, que son columnas reales.
-
-### `solicitudes_bitacora`
-
-Historial de cambios de estado: `solicitud_id`, `usuario_id`, `estado_anterior`,
-`estado_nuevo`, `comentario`, `created_at`. Foránea con `ON DELETE CASCADE`.
-
-Permite responder "¿quién aprobó esto y cuándo?" sin adivinar.
+> Hasta el issue #3, aquí vivían también `sacramento_campos`, `solicitudes_sacramento` y
+> `solicitudes_bitacora` (formulario de solicitud en línea, con folio, bandeja de estados y
+> campos configurables por sacramento). Se eliminaron las tres tablas por completo. Ver
+> [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sacramentos: catálogo puramente
+> informativo".
 
 ---
 
@@ -301,12 +378,24 @@ Hoy es contenido público informativo. En fase 2 es el ancla del aula virtual: l
 
 Boletín semanal y noticias. `slug` con `uq_avi_slug`, `titulo`, `resumen` VARCHAR(300),
 `contenido` MEDIUMTEXT, `imagen`, `tipo` ENUM(`noticia`, `boletin`, `comunicado`),
-`archivo_pdf` para el boletín, `pastoral_id`, `fecha_publicacion`, `destacado`,
-`publicado`, `vistas`, `usuario_id`.
+`archivo_pdf` para el boletín, `pastoral_id`, `fecha_publicacion`, `vigente_hasta`,
+`destacado`, `publicado`, `vistas`, `usuario_id`.
 
 `publicado` arranca en **0**: todo entra como borrador. `pastoral_id NULL` significa aviso
 parroquial global, que un coordinador nunca puede tocar. Índices
 `idx_avi_pub (publicado, fecha_publicacion)` e `idx_avi_pastoral`.
+
+**Vigencia (issue #3).** `fecha_publicacion` es el "visible desde" (ya existía: una fecha
+futura no se muestra hasta llegar ese día); `vigente_hasta` DATE NULL es el "visible hasta"
+que agrega el issue #3. `AvisoModel::VIGENTE` combina ambas en una sola condición SQL
+reutilizada por `publicados()`, `porSlugPublicado()`, `recientes()` y `paraSitemap()`:
+`publicado = 1 AND fecha_publicacion <= CURDATE() AND (vigente_hasta IS NULL OR
+vigente_hasta >= CURDATE())`. NULL en `vigente_hasta` significa sin fecha de baja. El
+listado del panel (`listar()`) **no** aplica esta condición — un editor debe poder ver y
+reeditar un aviso vencido, solo el público deja de verlo. Deliberadamente no se aplicó el
+mismo mecanismo a `eventos`: un evento ya tiene su propio ciclo de vida natural
+(`fecha_inicio`/`fecha_fin`) y ocultar automáticamente los pasados eliminaría el registro
+histórico de lo que la parroquia ha organizado.
 
 ### `eventos`
 
@@ -335,11 +424,17 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 
 | Grupo | Tablas |
 |---|---|
-| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `auditoria`, `respaldos_log`, `configuracion` |
+| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades` |
-| Sacramentos | `sacramentos`, `sacramento_campos`, `solicitudes_sacramento`, `solicitudes_bitacora` |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
+| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
+| Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 25 tablas** (24 de las diez etapas del plan original, más `respaldos_log`).
+**Total: 34 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+`centros`, `usuarios_centros`, `persona_pastorales`, `persona_centros`,
+`pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
+`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` y `mesc_colores_liturgicos`,
+menos `sacramento_campos`, `solicitudes_sacramento` y
+`solicitudes_bitacora`).

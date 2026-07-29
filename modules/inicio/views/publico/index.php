@@ -139,3 +139,20 @@
 
 </div>
 <?php endif; ?>
+
+<?php if (!empty($bloques['ligas_interes']['contenido'])): ?>
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="h6 text-uppercase text-muted mb-3">
+                    <?= e($bloques['ligas_interes']['titulo'] ?: 'Ligas de interés') ?>
+                </h2>
+                <div class="contenido-editorial">
+                    <?= $bloques['ligas_interes']['contenido'] ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>

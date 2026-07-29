@@ -1,7 +1,7 @@
 <div class="mb-4">
     <h1 class="h4 fw-bold mb-1">Sacramentos</h1>
     <p class="text-muted mb-0 small">
-        Requisitos, documentos y formulario de solicitud de cada sacramento.
+        Requisitos, documentos y aportación de cada sacramento. Sección puramente informativa.
     </p>
 </div>
 
@@ -11,7 +11,6 @@
             <thead class="table-light">
                 <tr>
                     <th>Sacramento</th>
-                    <th class="d-none d-md-table-cell">Solicitudes en línea</th>
                     <th class="d-none d-md-table-cell">Estado</th>
                     <th class="text-end">&nbsp;</th>
                 </tr>
@@ -20,13 +19,6 @@
             <?php foreach ($sacramentos as $sacramento): ?>
                 <tr>
                     <td class="fw-semibold"><?= e($sacramento['nombre']) ?></td>
-                    <td class="d-none d-md-table-cell">
-                        <?php if ($sacramento['acepta_solicitudes']): ?>
-                            <span class="badge bg-success-subtle text-success-emphasis">Activas</span>
-                        <?php else: ?>
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis">Desactivadas</span>
-                        <?php endif; ?>
-                    </td>
                     <td class="d-none d-md-table-cell">
                         <?php if ($sacramento['activo']): ?>
                             <span class="badge bg-success-subtle text-success-emphasis">Visible</span>

@@ -58,16 +58,23 @@ class EventoModel extends Model
         return $this->fetchAll('SELECT slug, created_at AS modificado FROM eventos WHERE publicado = 1');
     }
 
-    /** Próximos eventos a partir de ahora, para la portada y la página de eventos. */
-    public function proximos(int $limite = 6): array
+    /**
+     * Próximos eventos a partir de ahora, para la portada y la página de
+     * eventos. $pastoralId acota a "el calendario de esta pastoral" en su
+     * ficha pública (issue #3).
+     */
+    public function proximos(int $limite = 6, ?int $pastoralId = null): array
     {
+        $condicionPastoral = $pastoralId !== null ? ' AND pastoral_id = :pastoral' : '';
         return $this->fetchAll(
             'SELECT * FROM eventos
               WHERE publicado = 1
                 AND ((fecha_fin IS NOT NULL AND fecha_fin >= NOW())
-                  OR (fecha_fin IS NULL AND fecha_inicio >= NOW()))
+                  OR (fecha_fin IS NULL AND fecha_inicio >= NOW()))'
+                . $condicionPastoral . '
               ORDER BY fecha_inicio ASC
-              LIMIT ' . max(1, $limite)
+              LIMIT ' . max(1, $limite),
+            $pastoralId !== null ? [':pastoral' => $pastoralId] : []
         );
     }
 
@@ -76,20 +83,23 @@ class EventoModel extends Model
      * calendario. Simplificación deliberada: un evento de varios días solo se
      * marca en el día en que empieza, no en cada día que dura. La inmensa
      * mayoría de los eventos de una parroquia son de un solo día.
+     * $pastoralId filtra al calendario propio de una pastoral (issue #3).
      */
-    public function delMes(int $anio, int $mes): array
+    public function delMes(int $anio, int $mes, ?int $pastoralId = null): array
     {
         $inicio          = sprintf('%04d-%02d-01 00:00:00', $anio, $mes);
         $siguienteAnio   = $mes === 12 ? $anio + 1 : $anio;
         $siguienteMes    = $mes === 12 ? 1 : $mes + 1;
         $fin             = sprintf('%04d-%02d-01 00:00:00', $siguienteAnio, $siguienteMes);
 
+        $condicionPastoral = $pastoralId !== null ? ' AND pastoral_id = :pastoral' : '';
         return $this->fetchAll(
             'SELECT id, slug, titulo, fecha_inicio, fecha_fin, todo_el_dia, lugar, color
                FROM eventos
-              WHERE publicado = 1 AND fecha_inicio >= :inicio AND fecha_inicio < :fin
+              WHERE publicado = 1 AND fecha_inicio >= :inicio AND fecha_inicio < :fin'
+                . $condicionPastoral . '
               ORDER BY fecha_inicio',
-            [':inicio' => $inicio, ':fin' => $fin]
+            [':inicio' => $inicio, ':fin' => $fin] + ($pastoralId !== null ? [':pastoral' => $pastoralId] : [])
         );
     }
 

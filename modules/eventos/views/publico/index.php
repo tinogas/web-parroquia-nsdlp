@@ -1,6 +1,15 @@
-<h1 class="titulo-pagina mb-4">Eventos</h1>
+<h1 class="titulo-pagina mb-4"><?= $pastoral ? 'Eventos de ' . e($pastoral['nombre']) : 'Eventos' ?></h1>
 
-<div class="card border-0 shadow-sm mb-5" id="calendario" data-anio="<?= (int) $anio ?>" data-mes="<?= (int) $mes ?>">
+<?php if ($pastoral): ?>
+<p class="mb-4">
+    <a href="<?= e(url_publica('eventos')) ?>" class="small text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>Ver el calendario de todas las pastorales
+    </a>
+</p>
+<?php endif; ?>
+
+<div class="card border-0 shadow-sm mb-5" id="calendario" data-anio="<?= (int) $anio ?>" data-mes="<?= (int) $mes ?>"
+     <?= $pastoral ? 'data-pastoral="' . e($pastoral['slug']) . '"' : '' ?>>
     <div class="card-body p-3 p-md-4">
 
         <div class="d-flex justify-content-between align-items-center mb-3">

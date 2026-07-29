@@ -5,7 +5,7 @@ require_once BASE_PATH . '/modules/auditoria/AuditoriaModel.php';
 /**
  * AuditoriaController — Bandeja de solo lectura de la bitácora del sistema.
  *
- * A diferencia de solicitudes e inscripciones, aquí no hay una pantalla de
+ * A diferencia de inscripciones, aquí no hay una pantalla de
  * detalle que audite su propia consulta: el listado YA ES la auditoría, y
  * dejar una fila por cada vez que alguien lo revisa no aporta nada. Solo la
  * exportación queda registrada, igual que en el resto del panel.

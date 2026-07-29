@@ -3,6 +3,7 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/core/Upload.php';
 require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
 
 class UsuarioController extends Controller
 {
@@ -28,10 +29,12 @@ class UsuarioController extends Controller
         $this->requirePermiso('usuarios.editar');
 
         $this->render('usuarios/form', [
-            'titulo'     => 'Nuevo usuario',
-            'cuenta'     => null,
-            'pastorales' => (new PastoralModel())->paraSelector(),
-            'asignadas'  => [],
+            'titulo'           => 'Nuevo usuario',
+            'cuenta'           => null,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => [],
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => [],
         ]);
     }
 
@@ -47,16 +50,18 @@ class UsuarioController extends Controller
         }
 
         $this->render('usuarios/form', [
-            'titulo'     => $cuenta['nombre'],
+            'titulo'           => $cuenta['nombre'],
             // OJO: 'usuario' es una clave reservada de Controller::render() —
             // guarda ahí SIEMPRE al administrador con sesión activa (la usa el
             // navbar). Usarla para la cuenta que se está editando la pisa en
             // silencio con Auth::usuario(), y el formulario termina mostrando
             // los datos de quien tiene la sesión abierta en vez de los de la
             // cuenta editada. De ahí el nombre 'cuenta' en vez de 'usuario'.
-            'cuenta'     => $cuenta,
-            'pastorales' => (new PastoralModel())->paraSelector(),
-            'asignadas'  => $this->modelo->pastoralesDe((int) $cuenta['id']),
+            'cuenta'           => $cuenta,
+            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'asignadas'        => $this->modelo->pastoralesDe((int) $cuenta['id']),
+            'centros'          => (new CentroModel())->activos(),
+            'centrosAsignados' => $this->modelo->centrosDe((int) $cuenta['id']),
         ]);
     }
 
@@ -81,6 +86,9 @@ class UsuarioController extends Controller
         $pastorales = $rol === ROL_COORDINADOR
             ? array_values(array_unique(array_map('intval', array_filter((array) ($_POST['pastorales'] ?? []), 'is_numeric'))))
             : [];
+        $centros = $rol === ROL_COORDINADOR
+            ? array_values(array_unique(array_map('intval', array_filter((array) ($_POST['centros'] ?? []), 'is_numeric'))))
+            : [];
 
         $errores = [];
         if ($nombre === '') {
@@ -94,8 +102,8 @@ class UsuarioController extends Controller
         if (!isset(ROLES_NOMBRES[$rol])) {
             $errores[] = 'Elige un rol válido.';
         }
-        if ($rol === ROL_COORDINADOR && !$pastorales) {
-            $errores[] = 'Un coordinador debe tener asignada al menos una pastoral.';
+        if ($rol === ROL_COORDINADOR && !$pastorales && !$centros) {
+            $errores[] = 'Un coordinador debe tener asignada al menos una pastoral o un centro/sede.';
         }
         if (!$actual && $password === '') {
             $errores[] = 'La contraseña es obligatoria para un usuario nuevo.';
@@ -135,6 +143,7 @@ class UsuarioController extends Controller
             'foto'       => $foto,
             'activo'     => $activo,
             'pastorales' => $pastorales,
+            'centros'    => $centros,
         ];
 
         if ($actual) {
