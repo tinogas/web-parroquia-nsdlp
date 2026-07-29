@@ -55,15 +55,21 @@ if ($pastoralFija !== null) {
             <?php endif; ?>
 
             <div class="row g-3 mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="fecha" class="form-label fw-semibold">Fecha</label>
                     <input type="date" name="fecha" id="fecha" class="form-control"
                            value="<?= e($esNuevo ? $fechaSugerida : (string) $turno['fecha']) ?>" required>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <label for="hora" class="form-label fw-semibold">Hora <span class="text-muted fw-normal">(opcional)</span></label>
                     <input type="time" name="hora" id="hora" class="form-control"
                            value="<?= e($esNuevo || !$turno['hora'] ? '' : substr((string) $turno['hora'], 0, 5)) ?>">
+                </div>
+                <div class="col-md-5">
+                    <label for="descripcion" class="form-label fw-semibold">Qué se cubre</label>
+                    <input type="text" name="descripcion" id="descripcion" class="form-control" maxlength="160"
+                           value="<?= e($esNuevo ? '' : $turno['descripcion']) ?>"
+                           placeholder="Ej. Misa" required>
                 </div>
             </div>
 

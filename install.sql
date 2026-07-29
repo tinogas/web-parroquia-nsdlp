@@ -570,11 +570,9 @@ CREATE TABLE IF NOT EXISTS mesc_ministros (
 -- Un turno cubre una misa o evento en una fecha concreta. Deliberadamente sin
 -- FK a horarios ni a eventos: horarios es recurrencia semanal (no una fecha),
 -- y atarlo a eventos obligaría a que exista un evento formal para cada misa
--- dominical, que es justo lo que horarios evita. Sin columna de descripción:
--- el turno se identifica por fecha + hora + los ministros que cubre, que ya
--- basta en la práctica; MescController::etiquetaTurno() arma un texto de
--- referencia ("5 de julio de 2026, 9:00") a partir de esos dos campos donde
--- hace falta un título.
+-- dominical, que es justo lo que horarios evita. descripcion (texto libre,
+-- "Misa", "Santísimo", "Hora Santa", "Misa de Niños") es más simple y no
+-- depende de que ese horario o evento exista formalmente en el sistema.
 -- Colores litúrgicos de la Iglesia (issue #3, calendario de turnos): catálogo
 -- de referencia —blanco, verde, morado, rojo, rosa— para etiquetar cada turno
 -- según el tiempo o fiesta del día. Mantenimiento libre desde el panel: la
@@ -603,6 +601,7 @@ CREATE TABLE IF NOT EXISTS mesc_turnos (
     pastoral_id         TINYINT UNSIGNED NOT NULL,
     fecha               DATE         NOT NULL,
     hora                TIME         NULL,
+    descripcion         VARCHAR(160) NOT NULL,
     color_liturgico_id  TINYINT UNSIGNED NULL,
     usuario_id          INT UNSIGNED NULL,
     created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

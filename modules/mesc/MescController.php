@@ -462,7 +462,7 @@ class MescController extends Controller
 
         $pastorales = $this->pastoralesDisponibles();
         $this->render('mesc/turno_form', [
-            'titulo'               => $this->etiquetaTurno($turno),
+            'titulo'               => $turno['descripcion'],
             'turno'                => $turno,
             'pastorales'           => $pastorales,
             'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
@@ -491,9 +491,10 @@ class MescController extends Controller
         }
         $this->validarCsrf();
 
-        $fecha = $this->postStr('fecha');
-        if ($fecha === '') {
-            Session::flash('error', 'El turno necesita una fecha.');
+        $fecha       = $this->postStr('fecha');
+        $descripcion = $this->postStr('descripcion');
+        if ($fecha === '' || $descripcion === '') {
+            Session::flash('error', 'El turno necesita fecha y descripción.');
             $this->redirect($id ? url_admin('mesc', 'turno_editar', ['id' => $id]) : url_admin('mesc', 'turno_nuevo'));
             return;
         }
@@ -522,17 +523,17 @@ class MescController extends Controller
             'pastoral_id'        => $pastoralId,
             'fecha'              => $fecha,
             'hora'               => $this->postStr('hora') ?: null,
+            'descripcion'        => $descripcion,
             'color_liturgico_id' => $colorId,
         ];
-        $etiqueta = fecha_larga($fecha) . ($datos['hora'] ? ', ' . hora_corta($datos['hora']) : '');
 
         if ($existente) {
             $this->modelo->actualizarTurno($id, $datos, $ministroIds);
-            $this->auditoria('editar', 'mesc_turnos', $id, $etiqueta);
+            $this->auditoria('editar', 'mesc_turnos', $id, $descripcion);
             Session::flash('success', 'Turno actualizado.');
         } else {
             $id = $this->modelo->crearTurno($datos, $ministroIds, (int) Auth::usuario()['id']);
-            $this->auditoria('crear', 'mesc_turnos', $id, $etiqueta);
+            $this->auditoria('crear', 'mesc_turnos', $id, $descripcion);
             Session::flash('success', 'Turno registrado.');
         }
 
@@ -554,7 +555,7 @@ class MescController extends Controller
         if ($turno) {
             $this->requireAlcancePastoral((int) $turno['pastoral_id']);
             $this->modelo->eliminarTurno($id);
-            $this->auditoria('eliminar', 'mesc_turnos', $id, $this->etiquetaTurno($turno));
+            $this->auditoria('eliminar', 'mesc_turnos', $id, $turno['descripcion']);
             Session::flash('success', 'Turno eliminado.');
         }
 
@@ -651,13 +652,6 @@ class MescController extends Controller
             return $enviado;
         }
         throw new RuntimeException('Selecciona una de tus pastorales.');
-    }
-
-    /** Identifica un turno por fecha y hora, ya que no tiene un campo de descripción propio. */
-    private function etiquetaTurno(array $turno): string
-    {
-        $etiqueta = fecha_larga($turno['fecha']);
-        return $turno['hora'] ? $etiqueta . ', ' . hora_corta($turno['hora']) : $etiqueta;
     }
 
     private function pastoralesDisponibles(): array
