@@ -68,7 +68,7 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>
         <a href="<?= e(url_admin('sacramentos')) ?>" class="sidebar-link <?= $activo('sacramentos') ?>">
-            <i class="bi bi-droplet"></i> Sacramentos
+            <i><?= icono_cruz() ?></i> Sacramentos
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('cursos.ver')): ?>

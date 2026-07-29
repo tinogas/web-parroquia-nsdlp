@@ -580,6 +580,18 @@ fuerza a 0 en todas sus escrituras y el panel del editor muestra una bandeja de
 "Pendientes de publicar". Con diez coordinadores con cuenta, esto es lo que evita que la
 web parroquial amanezca con cualquier cosa.
 
+## Ícono de sacramentos: SVG propio, no una librería nueva
+
+Bootstrap Icons 1.11 no tiene ningún ícono de temática religiosa —ni "cross" ni
+"church"—, así que el ícono de Sacramentos (antes `bi-droplet`, una gota) es un SVG
+inline propio: `icono_cruz()` en `core/helpers.php`, una cruz latina (travesaño en el
+tercio superior, no un "+" centrado) dibujada a mano con un solo `<path>`. Usa
+`fill="currentColor"` y `width/height: 1em` para comportarse como un ícono de fuente:
+hereda color y tamaño del texto que lo rodea, sin agregar ninguna dependencia nueva solo
+por un glifo. `BloqueModel::iconoZona()` decide entre este SVG (zona "sacramentos") o el
+`<i class="bi ...">` de siempre (el resto): por eso devuelve el marcado ya completo, no
+solo el nombre de una clase como antes.
+
 ## Antispam sin servicios de terceros
 
 reCAPTCHA enviaría datos de los visitantes a Google, lo que contradice el aviso de
