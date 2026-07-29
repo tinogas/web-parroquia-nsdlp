@@ -1,0 +1,37 @@
+# Credenciales de la base de datos (cada entorno tiene las suyas)
+config/database.php
+
+# setup.php SÍ se versiona: la instalación empieza clonando el repositorio, así
+# que el instalador tiene que venir dentro. Lo que no debe pasar es que se quede
+# en el servidor después de usarlo; eso está advertido en el README, en el
+# propio archivo y en docs/DESPLIEGUE.md.
+
+# Archivos subidos desde el panel (conservar carpetas, ignorar contenido)
+uploads/*
+!uploads/.htaccess
+!uploads/*/
+uploads/*/**
+!uploads/*/.gitkeep
+
+# Respaldos de base de datos
+backups/*.sql
+
+# Logs y caché
+*.log
+*.cache
+
+# Variables de entorno
+.env
+.env.local
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Dependencias (el proyecto no usa Composer; la regla es preventiva)
+vendor/

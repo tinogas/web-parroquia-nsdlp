@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /index.php?area=admin
+Disallow: /uploads/boletines/
+Allow: /
+
+# El mapa del sitio se genera desde la base de datos (etapa 10).
+# Al desplegar, sustituir por el dominio real.
+Sitemap: https://ejemplo.com/sitemap.xml

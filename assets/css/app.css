@@ -1,0 +1,332 @@
+/* ============================================================
+   Panel de administración
+   ============================================================ */
+
+:root {
+    --sidebar-ancho:  240px;
+    --navbar-alto:    56px;
+    --color-primario: #1e4d8b;
+    --color-dorado:   #c9a227;
+    --color-oscuro:   #16233a;
+}
+
+body {
+    background: #f4f6f9;
+}
+
+/* ---- Barra lateral ---- */
+
+.sidebar {
+    position: fixed;
+    top: var(--navbar-alto);
+    left: 0;
+    width: var(--sidebar-ancho);
+    height: calc(100vh - var(--navbar-alto));
+    background: var(--color-oscuro);
+    overflow-y: auto;
+    transition: transform .2s ease;
+    z-index: 1030;
+}
+
+.sidebar.oculto {
+    transform: translateX(-100%);
+}
+
+.sidebar-nav {
+    padding: .75rem 0;
+}
+
+.sidebar-section {
+    padding: .5rem 1rem .25rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .38);
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .55rem 1rem;
+    color: rgba(255, 255, 255, .78);
+    text-decoration: none;
+    font-size: .925rem;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.sidebar-link.active {
+    background: rgba(255, 255, 255, .09);
+    border-left-color: var(--color-dorado);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sidebar-link i {
+    width: 1.15rem;
+    text-align: center;
+}
+
+/* ---- Contenido ---- */
+
+.main-content {
+    margin-top: var(--navbar-alto);
+    margin-left: var(--sidebar-ancho);
+    padding: 1.5rem;
+    transition: margin-left .2s ease;
+}
+
+.main-content.ancho {
+    margin-left: 0;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar       { transform: translateX(-100%); }
+    .sidebar.visible { transform: translateX(0); }
+    .main-content  { margin-left: 0; padding: 1rem; }
+}
+
+/* ---- Aviso de "Usar como…" (impersonación) ---- */
+
+.banner-impersonando {
+    position: fixed;
+    top: var(--navbar-alto);
+    left: 0;
+    right: 0;
+    z-index: 1035;
+    background: var(--color-dorado);
+    color: var(--color-oscuro);
+    padding: .4rem 1rem;
+    text-align: center;
+    font-size: .9rem;
+}
+
+body.impersonando .main-content {
+    margin-top: calc(var(--navbar-alto) + 40px);
+}
+
+body.impersonando .sidebar {
+    top: calc(var(--navbar-alto) + 40px);
+    height: calc(100vh - var(--navbar-alto) - 40px);
+}
+
+/* ---- Pantalla de acceso ---- */
+
+.pantalla-acceso {
+    background: linear-gradient(160deg, var(--color-oscuro) 0%, var(--color-primario) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.caja-acceso {
+    width: 100%;
+    max-width: 420px;
+}
+
+.icono-acceso {
+    font-size: 2.75rem;
+    line-height: 1;
+    color: var(--color-dorado);
+}
+
+/* ---- Detalles ---- */
+
+.btn-primary {
+    --bs-btn-bg: var(--color-primario);
+    --bs-btn-border-color: var(--color-primario);
+    --bs-btn-hover-bg: #18406f;
+    --bs-btn-hover-border-color: #18406f;
+    --bs-btn-active-bg: #143559;
+    --bs-btn-active-border-color: #143559;
+}
+
+/* ---- Campos de imagen ---- */
+
+.vista-imagen {
+    width: 160px;
+    height: 110px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: .25rem;
+}
+
+.marco-mapa {
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    overflow: hidden;
+}
+
+/* ---- Editor de texto ---- */
+
+.editor-html {
+    display: none;               /* Se muestra cuando editor.js lo activa. */
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    background: #fff;
+}
+
+.editor-html.activo {
+    display: block;
+}
+
+.editor-barra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .15rem;
+    padding: .35rem .4rem;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    border-radius: .375rem .375rem 0 0;
+}
+
+.editor-boton {
+    border: 0;
+    background: transparent;
+    border-radius: .25rem;
+    width: 2rem;
+    height: 2rem;
+    color: #495057;
+    line-height: 1;
+}
+
+.editor-boton:hover {
+    background: #e9ecef;
+    color: var(--color-primario);
+}
+
+.editor-boton.activo {
+    background: var(--color-primario);
+    color: #fff;
+}
+
+.editor-separador {
+    width: 1px;
+    margin: .25rem .3rem;
+    background: #dee2e6;
+}
+
+.editor-area {
+    min-height: 12rem;
+    max-height: 32rem;
+    overflow-y: auto;
+    padding: .75rem 1rem;
+    outline: none;
+}
+
+.editor-area:focus {
+    box-shadow: inset 0 0 0 2px rgba(30, 77, 139, .18);
+}
+
+.editor-area > :first-child { margin-top: 0; }
+.editor-area > :last-child  { margin-bottom: 0; }
+
+.editor-area h2 { font-size: 1.35rem; }
+.editor-area h3 { font-size: 1.15rem; }
+
+.editor-area blockquote {
+    border-left: 3px solid var(--color-dorado);
+    padding-left: .9rem;
+    color: #6c757d;
+}
+
+/* Con JavaScript activo el textarea queda oculto; sin él se usa directamente. */
+.editor-fuente {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem;
+}
+
+/* ---- Organigrama ---- */
+
+.arbol-organigrama,
+.arbol-organigrama ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 1.75rem;
+}
+
+.arbol-organigrama {
+    padding-left: 0;
+}
+
+.arbol-organigrama li {
+    margin: .5rem 0;
+}
+
+.arbol-organigrama ul {
+    border-left: 2px solid #e9ecef;
+    margin-top: .5rem;
+    padding-top: .25rem;
+}
+
+.nodo-organigrama {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: .45rem .8rem;
+}
+
+.nodo-organigrama.nodo-inactivo {
+    opacity: .5;
+}
+
+.nodo-foto {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.nodo-texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.nodo-titulo {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.nodo-persona {
+    font-size: .78rem;
+    color: #6c757d;
+}
+
+.nodo-acciones {
+    display: flex;
+    gap: .25rem;
+    margin-left: .4rem;
+}
+
+.lista-etapas {
+    padding-left: 1.15rem;
+    color: #6c757d;
+}
+
+.lista-etapas li {
+    margin-bottom: .3rem;
+}
+
+.lista-etapas li.hecha {
+    color: #198754;
+    font-weight: 600;
+}
+
+.lista-etapas li.hecha::marker {
+    content: '✓ ';
+}

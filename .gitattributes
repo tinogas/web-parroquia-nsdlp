@@ -1,0 +1,17 @@
+# Normalizar finales de línea. El desarrollo es en Windows y el servidor es
+# Linux: un archivo PHP con CRLF puede dar problemas de salida antes de las
+# cabeceras. Se versiona con LF y Git lo adapta en cada copia de trabajo.
+* text=auto eol=lf
+
+# Archivos que deben conservar CRLF en Windows
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# Binarios: que Git no los toque
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
