@@ -180,6 +180,12 @@ ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`, `staff`), `semblanza
 
 Solo se publica el correo institucional. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
+### `persona_pastorales`
+
+Pivote análogo a `usuarios_pastorales`: una persona del equipo suele llevar más de una
+pastoral a la vez (catequesis y liturgia, por ejemplo). Clave primaria compuesta
+`(persona_id, pastoral_id)`, ambas foráneas con `ON DELETE CASCADE`.
+
 ### `organigrama_nodos`
 
 Árbol autorreferenciado de hasta cuatro niveles. `padre_id` con clave foránea a sí misma y
@@ -405,14 +411,15 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 32 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
-`centros`, `usuarios_centros`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
-`mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` y
-`mesc_colores_liturgicos`, menos `sacramento_campos`, `solicitudes_sacramento` y
+**Total: 33 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+`centros`, `usuarios_centros`, `persona_pastorales`, `pastoral_documentos`,
+`mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`,
+`mesc_turno_ministros` y `mesc_colores_liturgicos`, menos `sacramento_campos`,
+`solicitudes_sacramento` y
 `solicitudes_bitacora`).

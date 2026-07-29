@@ -25,7 +25,12 @@ class PersonaModel extends Model
     public function todas(): array
     {
         return $this->fetchAll(
-            "SELECT * FROM personas ORDER BY FIELD(tipo, " . $this->ordenTipos() . "), orden, nombre"
+            "SELECT p.*,
+                    (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ', ')
+                       FROM persona_pastorales pp JOIN pastorales pa ON pa.id = pp.pastoral_id
+                      WHERE pp.persona_id = p.id) AS pastorales_nombres
+               FROM personas p
+              ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre"
         );
     }
 
@@ -54,30 +59,69 @@ class PersonaModel extends Model
         return $this->fetchAll('SELECT id, nombre, cargo FROM personas WHERE activo = 1 ORDER BY nombre');
     }
 
+    /** IDs de pastoral asignadas, para marcar las casillas del formulario. */
+    public function pastoralesDe(int $id): array
+    {
+        $filas = $this->fetchAll(
+            'SELECT pastoral_id FROM persona_pastorales WHERE persona_id = :id',
+            [':id' => $id]
+        );
+        return array_map(static fn (array $f): int => (int) $f['pastoral_id'], $filas);
+    }
+
     public function crear(array $datos): int
     {
-        $this->execute(
-            'INSERT INTO personas (nombre, cargo, tipo, semblanza, foto, email, telefono, orden, activo)
-             VALUES (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :orden, :activo)',
-            $this->parametros($datos)
-        );
-        return $this->lastInsertId();
+        $this->beginTransaction();
+        try {
+            $this->execute(
+                'INSERT INTO personas (nombre, cargo, tipo, semblanza, foto, email, telefono, orden, activo)
+                 VALUES (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :orden, :activo)',
+                $this->parametros($datos)
+            );
+            $id = $this->lastInsertId();
+            $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->commit();
+            return $id;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
     public function actualizar(int $id, array $datos): int
     {
-        return $this->execute(
-            'UPDATE personas
-                SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
-                    foto = :foto, email = :email, telefono = :telefono, orden = :orden, activo = :activo
-              WHERE id = :id',
-            $this->parametros($datos) + [':id' => $id]
-        );
+        $this->beginTransaction();
+        try {
+            $filas = $this->execute(
+                'UPDATE personas
+                    SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
+                        foto = :foto, email = :email, telefono = :telefono, orden = :orden, activo = :activo
+                  WHERE id = :id',
+                $this->parametros($datos) + [':id' => $id]
+            );
+            $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->commit();
+            return $filas;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
     public function eliminar(int $id): int
     {
         return $this->execute('DELETE FROM personas WHERE id = :id', [':id' => $id]);
+    }
+
+    private function sincronizarPastorales(int $personaId, array $pastoralIds): void
+    {
+        $this->execute('DELETE FROM persona_pastorales WHERE persona_id = :id', [':id' => $personaId]);
+        foreach (array_unique($pastoralIds) as $pid) {
+            $this->execute(
+                'INSERT INTO persona_pastorales (persona_id, pastoral_id) VALUES (:pid, :pastoral)',
+                [':pid' => $personaId, ':pastoral' => $pid]
+            );
+        }
     }
 
     private function parametros(array $datos): array

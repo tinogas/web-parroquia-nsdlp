@@ -40,6 +40,9 @@
                                 <?php if ($persona['cargo']): ?>
                                 <div class="text-muted small"><?= e($persona['cargo']) ?></div>
                                 <?php endif; ?>
+                                <?php if (!empty($persona['pastorales_nombres'])): ?>
+                                <div class="text-muted small"><i class="bi bi-people me-1"></i><?= e($persona['pastorales_nombres']) ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </td>

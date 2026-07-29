@@ -364,6 +364,17 @@ CREATE TABLE IF NOT EXISTS personas (
     KEY idx_per_tipo (tipo, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pivote: una misma persona del equipo pastoral suele llevar más de una
+-- pastoral a la vez (catequesis y liturgia, por ejemplo), igual que ya pasa
+-- con usuarios_pastorales. FK real a pastorales, creada más abajo.
+CREATE TABLE IF NOT EXISTS persona_pastorales (
+    persona_id  SMALLINT UNSIGNED NOT NULL,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    PRIMARY KEY (persona_id, pastoral_id),
+    CONSTRAINT fk_pp_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_pp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Árbol autorreferenciado de hasta 4 niveles. Un nodo puede apuntar a una
 -- persona, a una pastoral, o a ninguna de las dos y ser solo un título de
 -- agrupación ("Consejo Pastoral").
