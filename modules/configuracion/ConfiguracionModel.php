@@ -12,11 +12,12 @@ class ConfiguracionModel extends Model
 {
     /** Secciones del formulario: clave => [título, icono, descripción]. */
     public const GRUPOS = [
-        'general'  => ['Identidad',            'bi-house-heart',  'Nombre, logotipo e imágenes de la parroquia.'],
-        'contacto' => ['Contacto y ubicación', 'bi-geo-alt',      'Lo que aparece en el pie del sitio y en la página de contacto.'],
-        'redes'    => ['Redes sociales',       'bi-share',        'Se muestran como iconos en el pie. Deja en blanco las que no se usen.'],
-        'seo'      => ['Buscadores',           'bi-search',       'Cómo se presenta el sitio en Google y al compartirlo en redes.'],
-        'legal'    => ['Legal',                'bi-shield-check', 'Control del aviso de privacidad y de la conservación de datos.'],
+        'general'    => ['Identidad',            'bi-house-heart',  'Nombre, logotipo e imágenes de la parroquia.'],
+        'contacto'   => ['Contacto y ubicación', 'bi-geo-alt',      'Lo que aparece en el pie del sitio y en la página de contacto.'],
+        'redes'      => ['Redes sociales',       'bi-share',        'Se muestran como iconos en el pie. Deja en blanco las que no se usen.'],
+        'seo'        => ['Buscadores',           'bi-search',       'Cómo se presenta el sitio en Google y al compartirlo en redes.'],
+        'legal'      => ['Legal',                'bi-shield-check', 'Control del aviso de privacidad y de la conservación de datos.'],
+        'secciones'  => ['Secciones del sitio',  'bi-sliders',      'Enciende o apaga partes opcionales del menú público.'],
     ];
 
     /** clave => [etiqueta, tipo, grupo, ayuda] */
@@ -54,6 +55,9 @@ class ConfiguracionModel extends Model
 
         'aviso_privacidad_version'    => ['Versión del aviso de privacidad', 'solo_lectura', 'legal',
                                           'Se cambia en config/app.php al publicar un aviso nuevo. Cada inscripción y mensaje guarda la versión que aceptó la persona.'],
+
+        'cursos_activo'      => ['Mostrar "Cursos" en el menú', 'booleano', 'secciones',
+                                 'Si lo apagas, el enlace desaparece del menú público y la sección deja de estar disponible, aunque haya cursos publicados. No afecta el panel: ahí puedes seguir dando de alta cursos.'],
     ];
 
     /** Claves cuyo valor es una ruta de imagen subida. */

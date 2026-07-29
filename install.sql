@@ -774,7 +774,9 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
     ('meta_descripcion',         '',   'seo'),
     ('og_imagen',                '',   'seo'),
 
-    ('aviso_privacidad_version', '1.0', 'legal');
+    ('aviso_privacidad_version', '1.0', 'legal'),
+
+    ('cursos_activo',            '1',  'secciones');
 
 -- ------------------------------------------------------------
 -- SEMILLAS DE BLOQUES DE CONTENIDO

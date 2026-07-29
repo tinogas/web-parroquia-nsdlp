@@ -5,6 +5,11 @@
  * Declara todas las secciones previstas, pero solo dibuja las que ya tienen
  * módulo publicado (Router::existeRutaPublica). Así el menú se completa solo
  * conforme avanzan las etapas, sin dejar enlaces rotos mientras tanto.
+ *
+ * 'cursos' además respeta configuracion.cursos_activo: a diferencia de
+ * existeRutaPublica (un interruptor de código, permanente una vez conectado
+ * el módulo), este es un interruptor del panel (Configuración → Secciones
+ * del sitio) para ocultar la sección aunque el módulo siga funcionando.
  */
 $secciones = [
     'nosotros'    => ['Quiénes somos', 'bi-people'],
@@ -48,7 +53,7 @@ $moduloActual = $_GET['modulo'] ?? 'inicio';
                 </li>
 
                 <?php foreach ($secciones as $modulo => [$etiqueta, $icono]): ?>
-                    <?php if (Router::existeRutaPublica($modulo)): ?>
+                    <?php if (Router::existeRutaPublica($modulo) && ($modulo !== 'cursos' || Config::get('cursos_activo', '1') === '1')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $moduloActual === $modulo ? 'active' : '' ?>"
                            href="<?= e(url_publica($modulo)) ?>"><?= e($etiqueta) ?></a>

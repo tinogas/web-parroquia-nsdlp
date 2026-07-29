@@ -11,6 +11,11 @@ class CursoPublicoController extends ControllerPublico
 
     public function index(): void
     {
+        if (!$this->activo()) {
+            $this->noEncontrado();
+            return;
+        }
+
         $this->render('cursos/publico/index', [
             'metaTitulo'      => 'Cursos y capacitaciones',
             'metaDescripcion' => 'Catálogo de cursos y capacitaciones de la Parroquia Nuestra Señora de la Paz.',
@@ -22,7 +27,7 @@ class CursoPublicoController extends ControllerPublico
 
     public function ver(): void
     {
-        $curso = $this->cursoDelSlug();
+        $curso = $this->activo() ? $this->cursoDelSlug() : null;
         if (!$curso) {
             $this->noEncontrado();
             return;
@@ -44,7 +49,7 @@ class CursoPublicoController extends ControllerPublico
 
     public function inscribirse(): void
     {
-        $curso = $this->cursoDelSlug();
+        $curso = $this->activo() ? $this->cursoDelSlug() : null;
         $cerrado = !$curso || !$curso['inscripciones_abiertas']
                 || ($curso['fecha_cierre_inscripcion'] && $curso['fecha_cierre_inscripcion'] < date('Y-m-d'));
 
@@ -168,6 +173,12 @@ class CursoPublicoController extends ControllerPublico
             'curso'      => $curso,
             'folio'      => $folio,
         ]);
+    }
+
+    /** Configuración → Secciones del sitio: interruptor manual, independiente de si hay cursos publicados. */
+    private function activo(): bool
+    {
+        return Config::get('cursos_activo', '1') === '1';
     }
 
     private function cursoDelSlug(): ?array

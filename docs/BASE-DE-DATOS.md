@@ -96,12 +96,24 @@ seguridad recién creado para esa misma restauración.
 ### `configuracion`
 
 Pares clave-valor globales, agrupados por `grupo` (`general`, `contacto`, `redes`, `seo`,
-`legal`). `clave` VARCHAR(60) con `uq_cfg_clave`, `valor` TEXT.
+`legal`, `secciones`). `clave` VARCHAR(60) con `uq_cfg_clave`, `valor` TEXT.
 
 Claves sembradas: `parroquia_nombre`, `parroquia_diocesis`, `direccion`, `ciudad`, `cp`,
 `telefono`, `whatsapp`, `email`, `mapa_embed`, `latitud`, `longitud`, `horario_oficina`,
 `facebook`, `instagram`, `youtube`, `logo`, `favicon`, `og_imagen`, `meta_descripcion`,
-`aviso_privacidad_version`, `organigrama_imagen`.
+`aviso_privacidad_version`, `organigrama_imagen`, `cursos_activo`.
+
+**`cursos_activo`** (`'1'`/`'0'`, tipo `booleano` en `ConfiguracionModel::CAMPOS`, grupo
+`secciones`): interruptor manual e independiente del contenido para ocultar la sección
+pública de Cursos. A diferencia de `Router::existeRutaPublica()` —que solo dice si el
+módulo ya está conectado en el código, permanente una vez integrado— esta clave la
+apaga y prende el administrador desde el panel, sin tocar código. Se revisa en
+`shared/views/parciales/publico_navbar.php` (oculta el enlace del menú) y en
+`CursoPublicoController::activo()` (además del enlace, bloquea también el acceso
+directo por URL: con la clave en `'0'`, `index()`, `ver()` e `inscribirse()` responden
+404 en vez de mostrar una sección vacía). No afecta al panel de administración: el
+módulo de Cursos sigue totalmente operable ahí para preparar contenido mientras la
+sección pública está apagada.
 
 ---
 

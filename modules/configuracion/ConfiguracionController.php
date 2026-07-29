@@ -46,8 +46,11 @@ class ConfiguracionController extends Controller
             // Solo se toca lo que venga en el envío. Un formulario completo
             // manda todos sus campos, así que en el uso normal no cambia nada;
             // pero si llegara un envío incompleto, esto evita que se borren
-            // datos que nadie pidió borrar.
-            if ($tipo !== 'imagen' && !isset($_POST[$clave])) {
+            // datos que nadie pidió borrar. 'imagen' y 'booleano' quedan
+            // fuera de esta regla: una imagen no siempre se reemplaza, y un
+            // checkbox desmarcado simplemente no llega en $_POST —si no se
+            // exceptuara, apagar un interruptor nunca se guardaría.
+            if (!in_array($tipo, ['imagen', 'booleano'], true) && !isset($_POST[$clave])) {
                 continue;
             }
 
@@ -89,6 +92,8 @@ class ConfiguracionController extends Controller
             'mapa' => $this->normalizarMapa($this->postHtml($clave)),
 
             'numero' => (string) max(0, $this->postInt($clave)),
+
+            'booleano' => $this->postBool($clave) ? '1' : '0',
 
             'email' => $this->validarEmail($this->postStr($clave), $etiqueta),
 
