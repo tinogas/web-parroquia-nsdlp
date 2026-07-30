@@ -8,7 +8,6 @@
             </ol>
         </nav>
         <h1 class="h4 fw-bold mb-0"><?= e($ruta['nombre']) ?></h1>
-        <p class="text-muted small mb-0"><?= e($ruta['pastoral_nombre']) ?></p>
     </div>
     <div class="d-flex gap-2">
         <a href="<?= e(url_admin('mesc', 'ruta_exportar', ['id' => $ruta['id']])) ?>" class="btn btn-outline-secondary">

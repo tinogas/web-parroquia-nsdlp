@@ -4,9 +4,9 @@ require_once BASE_PATH . '/modules/lector/LectorModel.php';
 
 /**
  * LectorController — Exclusivo de la pastoral "Lectores": ninguna acción
- * muestra ni acepta otra pastoral (a diferencia de MESC, que sí sirve a
- * cualquiera). pastoralIdOFallar() resuelve esa única pastoral y corta el
- * flujo con un mensaje claro si todavía no existe.
+ * muestra ni acepta otra pastoral, igual que MESC y Catequesis.
+ * pastoralIdOFallar() resuelve esa única pastoral y corta el flujo con un
+ * mensaje claro si todavía no existe.
  */
 class LectorController extends Controller
 {

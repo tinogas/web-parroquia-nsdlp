@@ -337,11 +337,11 @@ colarse en un turno nuevo aunque se manipule el formulario.
 
 ## Catequesis — catequistas, periodos, tablero de actividades y documentos
 
-Módulo dedicado **exclusivamente** a la pastoral de Catecismo: a diferencia de MESC (que
-sirve a cualquier pastoral), aquí no hay selector de pastoral en ningún formulario —
-`CatequesisModel::pastoralId()` resuelve la única pastoral por su `slug = 'catecismo'`, no
-por un id fijo (los id de pastorales no se siembran en `install.sql`, se crean desde el
-panel)—. Sin controlador público ni datos sensibles.
+Módulo dedicado **exclusivamente** a la pastoral de Catecismo, igual que MESC y Lector:
+no hay selector de pastoral en ningún formulario — `CatequesisModel::pastoralId()`
+resuelve la única pastoral por su `slug = 'catecismo'`, no por un id fijo (los id de
+pastorales no se siembran en `install.sql`, se crean desde el panel)—. Sin controlador
+público ni datos sensibles.
 
 ### `catequesis_catequistas`
 

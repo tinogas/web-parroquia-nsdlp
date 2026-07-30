@@ -13,26 +13,9 @@
     </a>
 </div>
 
-<?php if (!$pastorales): ?>
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-        <p class="text-muted mb-0">No administras ninguna pastoral de MESC todavía.</p>
-    </div>
-</div>
-<?php endif; ?>
-
-<?php foreach ($pastorales as $pastoral): ?>
-<?php
-$pid   = (int) $pastoral['id'];
-$lista = $ministros[$pid]['ministros'] ?? [];
-?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
-        <?php if (count($pastorales) > 1): ?>
-        <h2 class="h6 fw-bold mb-3"><?= e($pastoral['nombre']) ?></h2>
-        <?php endif; ?>
-
-        <?php if (!$lista): ?>
+        <?php if (!$ministros): ?>
         <p class="text-muted small mb-3">Todavía no hay ministros registrados.</p>
         <?php else: ?>
         <div class="table-responsive mb-3">
@@ -41,7 +24,7 @@ $lista = $ministros[$pid]['ministros'] ?? [];
                     <tr><th>Nombre</th><th class="d-none d-md-table-cell">Teléfono</th><th>&nbsp;</th></tr>
                 </thead>
                 <tbody>
-                <?php foreach ($lista as $ministro): ?>
+                <?php foreach ($ministros as $ministro): ?>
                     <tr class="<?= $ministro['activo'] ? '' : 'text-muted' ?>">
                         <td><?= e($ministro['nombre']) ?><?= $ministro['activo'] ? '' : ' (inactivo)' ?></td>
                         <td class="d-none d-md-table-cell small"><?= e($ministro['telefono']) ?></td>
@@ -61,14 +44,12 @@ $lista = $ministros[$pid]['ministros'] ?? [];
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('mesc.crear')): ?>
-        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                data-bs-target="#ministroNuevo<?= $pid ?>">
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ministroNuevo">
             <i class="bi bi-plus-lg me-1"></i>Agregar ministro
         </button>
         <?php endif; ?>
     </div>
 </div>
-<?php endforeach; ?>
 
 <?php
 $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int $pastoralId, string $csrf) {
@@ -123,11 +104,8 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
     <?php
 };
 
-foreach ($pastorales as $pastoral) {
-    $pid = (int) $pastoral['id'];
-    $dibujarModalMinistro('ministroNuevo' . $pid, null, $pid, $csrf);
-    foreach (($ministros[$pid]['ministros'] ?? []) as $ministro) {
-        $dibujarModalMinistro('ministro' . (int) $ministro['id'], $ministro, $pid, $csrf);
-    }
+$dibujarModalMinistro('ministroNuevo', null, $pastoralId, $csrf);
+foreach ($ministros as $ministro) {
+    $dibujarModalMinistro('ministro' . (int) $ministro['id'], $ministro, $pastoralId, $csrf);
 }
 ?>

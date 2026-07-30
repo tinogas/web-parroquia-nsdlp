@@ -585,11 +585,12 @@ público**: `MescModel` no tiene una sola consulta que no pase por
 `requirePermiso('mesc.*')` + `requireAlcancePastoral()`. La razón está en
 [`PRIVACIDAD.md`](PRIVACIDAD.md): el solo hecho de aparecer en `mesc_visitas` revela un
 estado de salud, el primer dato sensible en sentido estricto de la LFPDPPP que maneja el
-sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas` es **obligatorio**, a diferencia de
-avisos o eventos: esta actividad nunca es "contenido parroquial general", siempre
-pertenece a la pastoral de MESC. `MescController::pastoralIdMescValidado()` es una
-variante de `Controller::pastoralIdValidado()` que nunca acepta `null`, ni siquiera para
-un administrador.
+sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas`/`mesc_ministros`/`mesc_turnos` es
+**obligatorio y fijo**, a diferencia de avisos o eventos: esta actividad nunca es
+"contenido parroquial general", siempre pertenece a la única pastoral de MESC, resuelta
+por `MescModel::pastoralId()` y `MescController::pastoralIdOFallar()` — ver la sección
+de Catequesis y Lector más abajo para la historia completa de este patrón, que MESC
+adoptó más tarde que ellos.
 
 **Mapa: Leaflet + OpenStreetMap, sin llave de API.** El formulario de una visita
 (`mesc/views/form.php`) incluye un mapa (`assets/js/mapa_mesc.js`) donde marcar el pin es
@@ -671,26 +672,35 @@ parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba
 cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
 los turnos, no de uno en particular.
 
-### Catequesis y Lector: MESC como plantilla para módulos dedicados (revisión de módulos)
+### MESC, Catequesis y Lector: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
 
-Dos módulos nuevos, `modules/catequesis/` y `modules/lector/`, replican deliberadamente el
-patrón de MESC —módulo propio y separado para una pastoral específica, sin controlador
-público— en vez de ampliar el sistema genérico de "contenido propio por pastoral"
-(`pastoral_actividades`/`pastoral_documentos`). La razón es la misma que hizo a MESC un
-módulo aparte: cada uno necesita columnas y pantallas que ese sistema genérico no tiene
-y que no tendría sentido forzar sobre *todas* las pastorales.
+Tres módulos, `modules/mesc/`, `modules/catequesis/` y `modules/lector/`, comparten el
+mismo patrón: módulo propio y separado para una pastoral específica, sin controlador
+público, en vez de ampliar el sistema genérico de "contenido propio por pastoral"
+(`pastoral_actividades`/`pastoral_documentos`). La razón es la misma en los tres: cada
+uno necesita columnas y pantallas que ese sistema genérico no tiene y que no tendría
+sentido forzar sobre *todas* las pastorales.
 
-**Catequesis va un paso más allá que MESC: no solo `pastoral_id` es obligatorio, la
-pastoral está fija.** MESC sí muestra un selector si el usuario administra más de una
-pastoral (`pastoralIdMescValidado()`, nunca acepta `null` pero sí acepta *cuál*).
-Catequesis nunca lo hace: `CatequesisModel::pastoralId()` resuelve la pastoral de
-Catecismo por su `slug`, no por un id fijo en PHP (los id de pastorales se generan al
-crearlas desde el panel, no se siembran en `install.sql`), y
-`CatequesisController::pastoralIdOFallar()` corta el flujo con un mensaje claro si esa
-pastoral todavía no existe. Esto vino de un bug real: al copiar el patrón "selector de
-pastoral" de MESC tal cual, la pantalla de Catequesis también ofrecía la pastoral de
-MESC como opción —cualquier administrador con acceso a ambas la veía en las dos—, algo
-que no tiene sentido para un módulo que por diseño es de una sola pastoral.
+**Los tres son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
+`CatequesisModel::pastoralId()` y `LectorModel::pastoralId()` resuelven su pastoral por
+`slug` (no por un id fijo en PHP: los id de pastorales se generan al crearlas desde el
+panel, no se siembran en `install.sql`), y `pastoralIdOFallar()` en su respectivo
+controlador corta el flujo con un mensaje claro si esa pastoral todavía no existe o el
+usuario no tiene alcance sobre ella. Ningún formulario de estos tres módulos acepta ni
+muestra otra pastoral.
+
+Esto no fue el diseño original de MESC: al ser el primer módulo de este tipo (issue #3),
+`pastoralIdMescValidado()` solo exigía que `pastoral_id` no fuera nulo, pero aceptaba
+*cuál* de las pastorales que el usuario administrara, mostrando un selector con todas
+ellas. Catequesis y Lector copiaron ese mismo selector al construirse sobre MESC como
+plantilla, y en ambos casos resultó en el mismo bug: un administrador con acceso a más
+de una pastoral (algo habitual, no la excepción) veía —y podía usar— pastorales ajenas
+al módulo en pantallas como "agregar ministro/lector" o "nueva visita/turno". Se corrigió
+primero en Catequesis y Lector (fijando su pastoral por `slug` con `pastoralIdOFallar()`)
+y, al reportarse el mismo síntoma en MESC ("se agregan ministros en pastorales que no
+son MESC" y un selector de pastoral en el formulario de visita a enfermos), se le aplicó
+el mismo arreglo: MESC dejó de ser la plantilla con la excepción y pasó a seguir su
+propio patrón.
 
 **Catequesis: catequistas, periodos y el grado vive en la asignación, no en la
 persona.** `catequesis_catequistas` es solo nombre y contacto — nada de sacramento ni
@@ -718,15 +728,6 @@ apunta al catálogo `mesc_colores_liturgicos` en vez de duplicarlo: el significa
 color litúrgico es el mismo calendario para toda la parroquia, no un dato propio de un
 módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
 catálogo de MESC directamente.
-
-Igual que Catequesis (arriba), Lector también es de una sola pastoral, sin selector:
-`LectorModel::pastoralId()` la resuelve por `slug = 'lectores'` y
-`LectorController::pastoralIdOFallar()` corta el flujo si no existe o el usuario no
-tiene alcance sobre ella. La primera versión de este módulo copió el selector
-multi-pastoral de MESC tal cual (igual que le pasó a Catequesis) y por eso ofrecía
-Catecismo y MESC como opciones válidas para dar de alta un lector o un turno — un
-administrador con acceso a las tres pastorales las veía todas mezcladas. Corregido de
-la misma forma en ambos módulos.
 
 ### Moderación
 

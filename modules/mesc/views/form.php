@@ -106,18 +106,7 @@ $esNuevo = $visita === null;
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
-                    <div class="mb-3">
-                        <label for="pastoral_id" class="form-label fw-semibold">Pastoral</label>
-                        <select name="pastoral_id" id="pastoral_id" class="form-select" required>
-                            <option value="">Elige una pastoral</option>
-                            <?php foreach ($pastorales as $pastoral): ?>
-                            <option value="<?= (int) $pastoral['id'] ?>"
-                                <?= (!$esNuevo && (int) $visita['pastoral_id'] === (int) $pastoral['id']) ? 'selected' : '' ?>>
-                                <?= e($pastoral['nombre']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <input type="hidden" name="pastoral_id" value="<?= (int) $pastoralId ?>">
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch"

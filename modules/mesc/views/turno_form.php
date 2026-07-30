@@ -1,17 +1,4 @@
-<?php
-$esNuevo = $turno === null;
-$pastoralFija = !$esNuevo ? (int) $turno['pastoral_id'] : (count($pastorales) === 1 ? (int) $pastorales[0]['id'] : null);
-
-$nombrePastoralFija = '';
-if ($pastoralFija !== null) {
-    foreach ($pastorales as $pastoral) {
-        if ((int) $pastoral['id'] === $pastoralFija) {
-            $nombrePastoralFija = $pastoral['nombre'];
-            break;
-        }
-    }
-}
-?>
+<?php $esNuevo = $turno === null; ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
     <div>
@@ -32,27 +19,10 @@ if ($pastoralFija !== null) {
 <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'mesc', 'turno_guardar')) ?>">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
     <input type="hidden" name="id" value="<?= $esNuevo ? 0 : (int) $turno['id'] ?>">
+    <input type="hidden" name="pastoral_id" value="<?= (int) $pastoralId ?>">
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
-
-            <?php if (!$esNuevo || count($pastorales) === 1): ?>
-            <input type="hidden" name="pastoral_id" value="<?= (int) $pastoralFija ?>">
-            <p class="small text-muted mb-3">
-                Pastoral: <strong><?= e($nombrePastoralFija) ?></strong>
-            </p>
-            <?php else: ?>
-            <div class="mb-3">
-                <label for="pastoral_id" class="form-label fw-semibold">Pastoral</label>
-                <select name="pastoral_id" id="pastoral_id" class="form-select" required
-                        onchange="mescMostrarMinistros(this.value)">
-                    <option value="">Elige una pastoral</option>
-                    <?php foreach ($pastorales as $pastoral): ?>
-                    <option value="<?= (int) $pastoral['id'] ?>"><?= e($pastoral['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <?php endif; ?>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
@@ -92,35 +62,26 @@ if ($pastoralFija !== null) {
             </div>
 
             <label class="form-label fw-semibold">Ministros asignados</label>
-            <?php foreach ($pastorales as $pastoral): ?>
-            <?php
-            $pid = (int) $pastoral['id'];
-            $lista = $ministrosPorPastoral[$pid] ?? [];
-            $mostrar = $pastoralFija === $pid;
-            ?>
-            <div class="mesc-grupo-ministros" data-pastoral="<?= $pid ?>" style="<?= $mostrar ? '' : 'display:none' ?>">
-                <?php if (!$lista): ?>
-                <p class="text-muted small">Esta pastoral no tiene ministros activos registrados todavía.
-                    <a href="<?= e(url_admin('mesc', 'ministros')) ?>">Agregar uno</a>.
-                </p>
-                <?php else: ?>
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1 mb-2">
-                    <?php foreach ($lista as $ministro): ?>
-                    <div class="col">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="ministros[]"
-                                   value="<?= (int) $ministro['id'] ?>" id="min<?= (int) $ministro['id'] ?>"
-                                   <?= in_array((int) $ministro['id'], $asignados, true) ? 'checked' : '' ?>>
-                            <label class="form-check-label small" for="min<?= (int) $ministro['id'] ?>">
-                                <?= e($ministro['nombre']) ?>
-                            </label>
-                        </div>
+            <?php if (!$ministrosActivos): ?>
+            <p class="text-muted small">Todavía no hay ministros activos registrados.
+                <a href="<?= e(url_admin('mesc', 'ministros')) ?>">Agregar uno</a>.
+            </p>
+            <?php else: ?>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1 mb-2">
+                <?php foreach ($ministrosActivos as $ministro): ?>
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ministros[]"
+                               value="<?= (int) $ministro['id'] ?>" id="min<?= (int) $ministro['id'] ?>"
+                               <?= in_array((int) $ministro['id'], $asignados, true) ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="min<?= (int) $ministro['id'] ?>">
+                            <?= e($ministro['nombre']) ?>
+                        </label>
                     </div>
-                    <?php endforeach; ?>
                 </div>
-                <?php endif; ?>
+                <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -132,13 +93,3 @@ if ($pastoralFija !== null) {
         <a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>
-
-<?php if ($esNuevo && count($pastorales) > 1): ?>
-<script>
-function mescMostrarMinistros(pastoralId) {
-    document.querySelectorAll('.mesc-grupo-ministros').forEach(function (grupo) {
-        grupo.style.display = (grupo.dataset.pastoral === pastoralId) ? '' : 'none';
-    });
-}
-</script>
-<?php endif; ?>
