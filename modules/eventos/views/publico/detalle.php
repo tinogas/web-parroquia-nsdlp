@@ -9,14 +9,22 @@
 
         <h1 class="titulo-pagina mb-3"><?= e($evento['titulo']) ?></h1>
 
+        <?php $mismoDia = !$evento['fecha_fin'] || substr($evento['fecha_fin'], 0, 10) === substr($evento['fecha_inicio'], 0, 10); ?>
         <ul class="list-unstyled lista-contacto mb-4">
             <li>
                 <i class="bi bi-calendar-event text-primary"></i>
                 <span>
-                    <?= e(fecha_con_dia($evento['fecha_inicio'])) ?>
-                    <?php if (!$evento['todo_el_dia']): ?>
-                        , <?= e(hora_corta(substr($evento['fecha_inicio'], 11))) ?>
-                        <?php if ($evento['fecha_fin']): ?> – <?= e(hora_corta(substr($evento['fecha_fin'], 11))) ?><?php endif; ?>
+                    <?php if ($mismoDia): ?>
+                        <?= e(fecha_con_dia($evento['fecha_inicio'])) ?>
+                        <?php if (!$evento['todo_el_dia']): ?>
+                            , <?= e(hora_corta(substr($evento['fecha_inicio'], 11))) ?>
+                            <?php if ($evento['fecha_fin']): ?> – <?= e(hora_corta(substr($evento['fecha_fin'], 11))) ?><?php endif; ?>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        Del <?= e(fecha_con_dia($evento['fecha_inicio'])) ?>
+                        <?php if (!$evento['todo_el_dia']): ?>, <?= e(hora_corta(substr($evento['fecha_inicio'], 11))) ?><?php endif; ?>
+                        al <?= e(fecha_con_dia($evento['fecha_fin'])) ?>
+                        <?php if (!$evento['todo_el_dia']): ?>, <?= e(hora_corta(substr($evento['fecha_fin'], 11))) ?><?php endif; ?>
                     <?php endif; ?>
                 </span>
             </li>

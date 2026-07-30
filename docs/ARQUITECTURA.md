@@ -393,9 +393,19 @@ eventos" en HTML plano cubre a quien tiene JavaScript desactivado.
 La acción JSON se llama `datos`, no `json`: `Controller` ya tiene un método `json()` para
 emitir la respuesta, y una acción de ruta con ese mismo nombre lo taparía.
 
-Simplificación deliberada en `EventoModel::delMes()`: un evento se ubica en el día en que
-**empieza**, no en cada día que dura. La inmensa mayoría de los eventos de una parroquia
-son de un solo día; uno de varios días solo aparece en su fecha de inicio.
+Un evento de varios días (`fecha_fin` en un día distinto a `fecha_inicio`) marca **todos**
+los días que dura, no solo el de inicio (revisión de módulos: antes solo aparecía el primer
+día, y desaparecía del todo del calendario en cuanto el mes cruzaba mientras seguía en
+curso). `EventoModel::delMes()` trae cualquier evento cuyo rango `[fecha_inicio, fecha_fin]`
+se traslape con el mes solicitado, aunque haya empezado antes o termine después; luego
+`EventoPublicoController::diasDelEventoEnMes()` recorta ese rango a los días que de verdad
+caen dentro del mes mostrado, y tanto `construirCalendario()` (la vista servida por PHP)
+como `datos()` (el JSON que consume `calendario.js`) reparten el mismo evento en una celda
+por cada día devuelto — `calendario.js` no necesita saberlo: ya agrupa cada entrada del JSON
+por su campo `fecha` plano, así que recibir varias entradas por evento "simplemente
+funciona". La ficha de detalle (`eventos/publico/detalle.php`) sigue la misma idea: si
+`fecha_fin` cae en un día distinto de `fecha_inicio` muestra el rango completo ("Del … al
+…"), no solo la fecha de inicio con ambas horas pegadas.
 
 ### Publicación con moderación, ya preparada
 

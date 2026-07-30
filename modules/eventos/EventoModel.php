@@ -79,10 +79,14 @@ class EventoModel extends Model
     }
 
     /**
-     * Eventos publicados que INICIAN dentro del mes indicado, para el
-     * calendario. Simplificación deliberada: un evento de varios días solo se
-     * marca en el día en que empieza, no en cada día que dura. La inmensa
-     * mayoría de los eventos de una parroquia son de un solo día.
+     * Eventos publicados vigentes en algún día del mes indicado (issue de
+     * revisión de módulos: antes solo traía los que INICIABAN dentro del
+     * mes, así que un evento de varios días desaparecía del todo en cuanto
+     * el calendario cruzaba a un mes siguiente mientras seguía en curso).
+     * Un evento entra si su rango [fecha_inicio, fecha_fin] se traslapa con
+     * el mes, aunque haya empezado antes o termine después;
+     * `EventoPublicoController::diasDelEventoEnMes()` recorta ese rango a
+     * los días que de verdad caen dentro del mes mostrado.
      * $pastoralId filtra al calendario propio de una pastoral (issue #3).
      */
     public function delMes(int $anio, int $mes, ?int $pastoralId = null): array
@@ -96,7 +100,7 @@ class EventoModel extends Model
         return $this->fetchAll(
             'SELECT id, slug, titulo, fecha_inicio, fecha_fin, todo_el_dia, lugar, color
                FROM eventos
-              WHERE publicado = 1 AND fecha_inicio >= :inicio AND fecha_inicio < :fin'
+              WHERE publicado = 1 AND fecha_inicio < :fin AND COALESCE(fecha_fin, fecha_inicio) >= :inicio'
                 . $condicionPastoral . '
               ORDER BY fecha_inicio',
             [':inicio' => $inicio, ':fin' => $fin] + ($pastoralId !== null ? [':pastoral' => $pastoralId] : [])
