@@ -1,8 +1,17 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/mesc/MescModel.php';
-require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
+/**
+ * MescController — Exclusivo de la pastoral "Ministro Extraordinario de la
+ * Sagrada Comunión": ninguna acción muestra ni acepta otra pastoral.
+ * pastoralIdOFallar() resuelve esa única pastoral y corta el flujo con un
+ * mensaje claro si todavía no existe o el usuario no tiene alcance sobre
+ * ella (revisión de módulos: antes ofrecía un selector con cualquier
+ * pastoral que administrara el usuario —incluyendo pastorales genéricas sin
+ * nada que ver con MESC—, igual que se corrigió antes en Catequesis y
+ * Lector, que habían copiado ese mismo patrón).
+ */
 class MescController extends Controller
 {
     private MescModel $modelo;
@@ -16,12 +25,17 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.ver');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $filtro = in_array($this->getStr('filtro'), ['activas', 'inactivas'], true)
             ? $this->getStr('filtro') : 'activas';
 
         $this->render('mesc/lista', [
             'titulo'  => 'MESC — Visitas a enfermos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
+            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $pastoralId),
             'filtro'  => $filtro,
         ]);
     }
@@ -30,10 +44,15 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.crear');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('mesc/form', [
             'titulo'      => 'Nueva visita',
             'visita'      => null,
-            'pastorales'  => $this->pastoralesDisponibles(),
+            'pastoralId'  => $pastoralId,
             'scriptExtra' => $this->scriptMapa(),
         ]);
     }
@@ -53,7 +72,7 @@ class MescController extends Controller
         $this->render('mesc/form', [
             'titulo'      => $visita['nombre_enfermo'],
             'visita'      => $visita,
-            'pastorales'  => $this->pastoralesDisponibles(),
+            'pastoralId'  => (int) $visita['pastoral_id'],
             'scriptExtra' => $this->scriptMapa(),
         ]);
     }
@@ -74,19 +93,16 @@ class MescController extends Controller
         }
         $this->validarCsrf();
 
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $nombreEnfermo = $this->postStr('nombre_enfermo');
         $direccion     = $this->postStr('direccion');
 
         if ($nombreEnfermo === '' || $direccion === '') {
             Session::flash('error', 'La visita necesita el nombre del enfermo y una dirección.');
-            $this->redirect($id ? url_admin('mesc', 'editar', ['id' => $id]) : url_admin('mesc', 'nueva'));
-            return;
-        }
-
-        try {
-            $pastoralId = $this->pastoralIdMescValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('mesc', 'editar', ['id' => $id]) : url_admin('mesc', 'nueva'));
             return;
         }
@@ -149,9 +165,14 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.ver');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('mesc/rutas_lista', [
             'titulo' => 'Rutas de visita',
-            'rutas'  => $this->modelo->rutasDe($this->filtroPastoralSql()),
+            'rutas'  => $this->modelo->rutasDe($pastoralId),
         ]);
     }
 
@@ -159,9 +180,14 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.crear');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('mesc/ruta_nueva', [
-            'titulo'   => 'Generar ruta de visitas',
-            'visitas'  => $this->modelo->activasPara($this->filtroPastoralSql()),
+            'titulo'  => 'Generar ruta de visitas',
+            'visitas' => $this->modelo->activasPara($pastoralId),
         ]);
     }
 
@@ -175,6 +201,11 @@ class MescController extends Controller
         }
         $this->validarCsrf();
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $idsElegidos = array_values(array_unique(array_map('intval',
             array_filter((array) ($_POST['visitas'] ?? []), 'is_numeric')
         )));
@@ -184,8 +215,8 @@ class MescController extends Controller
             return;
         }
 
-        // Revalidado contra el alcance real: nunca se confía en qué IDs venían marcados en el POST.
-        $disponibles = $this->modelo->activasPara($this->filtroPastoralSql());
+        // Revalidado contra las visitas reales de la pastoral: nunca se confía en qué IDs venían marcados en el POST.
+        $disponibles = $this->modelo->activasPara($pastoralId);
         $porId       = [];
         foreach ($disponibles as $visita) {
             $porId[(int) $visita['id']] = $visita;
@@ -200,11 +231,6 @@ class MescController extends Controller
             Session::flash('error', 'Esas visitas ya no están disponibles.');
             $this->redirect(url_admin('mesc', 'ruta_nueva'));
             return;
-        }
-
-        $pastoralId = (int) $visitas[0]['pastoral_id'];
-        foreach ($visitas as $visita) {
-            $this->requireAlcancePastoral((int) $visita['pastoral_id']);
         }
 
         $origen = $this->origenParroquia();
@@ -331,11 +357,15 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.ver');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('mesc/ministros_lista', [
             'titulo'     => 'Ministros MESC',
-            'pastorales' => $pastorales,
-            'ministros'  => $this->ministrosDeTodasLasPastorales($pastorales),
+            'pastoralId' => $pastoralId,
+            'ministros'  => $this->modelo->ministros($pastoralId),
         ]);
     }
 
@@ -351,7 +381,10 @@ class MescController extends Controller
         $existente = $id ? $this->modelo->ministroPorId($id) : null;
         $this->requirePermiso($existente ? 'mesc.editar' : 'mesc.crear');
 
-        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->postInt('pastoral_id');
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
         $this->requireAlcancePastoral($pastoralId);
 
         $nombre = $this->postStr('nombre');
@@ -409,6 +442,11 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.ver');
 
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $anio = $this->getInt('anio', (int) date('Y'));
         $mes  = $this->getInt('mes', (int) date('n'));
         if ($mes < 1 || $mes > 12) { $mes = (int) date('n'); }
@@ -419,7 +457,7 @@ class MescController extends Controller
         $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
         $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $this->filtroPastoralSql());
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
 
         $this->render('mesc/turnos', [
             'titulo'          => 'Calendario de turnos',
@@ -436,15 +474,19 @@ class MescController extends Controller
     {
         $this->requirePermiso('mesc.crear');
 
-        $pastorales = $this->pastoralesDisponibles();
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $this->render('mesc/turno_form', [
-            'titulo'               => 'Nuevo turno',
-            'turno'                => null,
-            'pastorales'           => $pastorales,
-            'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
-            'asignados'            => [],
-            'fechaSugerida'        => $this->getStr('fecha'),
-            'colores'              => $this->modelo->coloresLiturgicos(),
+            'titulo'           => 'Nuevo turno',
+            'turno'            => null,
+            'pastoralId'       => $pastoralId,
+            'ministrosActivos' => $this->modelo->ministrosActivos($pastoralId),
+            'asignados'        => [],
+            'fechaSugerida'    => $this->getStr('fecha'),
+            'colores'          => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -460,18 +502,17 @@ class MescController extends Controller
         }
         $this->requireAlcancePastoral((int) $turno['pastoral_id']);
 
-        $pastorales = $this->pastoralesDisponibles();
         $this->render('mesc/turno_form', [
-            'titulo'               => $turno['descripcion'],
-            'turno'                => $turno,
-            'pastorales'           => $pastorales,
-            'ministrosPorPastoral' => $this->ministrosActivosDeTodasLasPastorales($pastorales),
-            'asignados'            => array_map(
+            'titulo'           => $turno['descripcion'],
+            'turno'            => $turno,
+            'pastoralId'       => (int) $turno['pastoral_id'],
+            'ministrosActivos' => $this->modelo->ministrosActivos((int) $turno['pastoral_id']),
+            'asignados'        => array_map(
                 static fn (array $m): int => (int) $m['id'],
                 $this->modelo->ministrosDeTurno((int) $turno['id'])
             ),
-            'fechaSugerida'        => '',
-            'colores'              => $this->modelo->coloresLiturgicos(),
+            'fechaSugerida'    => '',
+            'colores'          => $this->modelo->coloresLiturgicos(),
         ]);
     }
 
@@ -491,18 +532,15 @@ class MescController extends Controller
         }
         $this->validarCsrf();
 
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
         $fecha       = $this->postStr('fecha');
         $descripcion = $this->postStr('descripcion');
         if ($fecha === '' || $descripcion === '') {
             Session::flash('error', 'El turno necesita fecha y descripción.');
-            $this->redirect($id ? url_admin('mesc', 'turno_editar', ['id' => $id]) : url_admin('mesc', 'turno_nuevo'));
-            return;
-        }
-
-        try {
-            $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdMescValidado();
-        } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('mesc', 'turno_editar', ['id' => $id]) : url_admin('mesc', 'turno_nuevo'));
             return;
         }
@@ -641,27 +679,26 @@ class MescController extends Controller
 
     // ── Privados ─────────────────────────────────────────────────────────
 
-    /** A diferencia de avisos/eventos, aquí la pastoral SIEMPRE es obligatoria: nunca "general". */
-    private function pastoralIdMescValidado(): int
+    /**
+     * Resuelve la pastoral de MESC, la única que administra este módulo. Si
+     * todavía no existe (instalación nueva) o el usuario no tiene alcance
+     * sobre ella, corta el flujo con un mensaje claro en vez de un error a
+     * medias más adelante.
+     */
+    private function pastoralIdOFallar(): ?int
     {
-        $enviado = $this->postIntONull('pastoral_id');
-        if ($enviado === null) {
-            throw new RuntimeException('Selecciona la pastoral de MESC.');
+        $pastoralId = $this->modelo->pastoralId();
+        if ($pastoralId === null) {
+            Session::flash('error', 'Todavía no existe la pastoral de MESC. Créala primero desde Pastorales.');
+            $this->redirect(url_admin('pastorales'));
+            return null;
         }
-        if (Auth::tieneAlcanceGlobal() || in_array($enviado, Auth::pastoralesPermitidas(), true)) {
-            return $enviado;
+        if (!Auth::puedeSobrePastoral($pastoralId)) {
+            Session::flash('error', 'No administras la pastoral de MESC.');
+            $this->redirect(url_admin('panel'));
+            return null;
         }
-        throw new RuntimeException('Selecciona una de tus pastorales.');
-    }
-
-    private function pastoralesDisponibles(): array
-    {
-        $todas = (new PastoralModel())->paraSelector();
-        if (Auth::tieneAlcanceGlobal()) {
-            return $todas;
-        }
-        $propias = Auth::pastoralesPermitidas();
-        return array_values(array_filter($todas, static fn (array $p): bool => in_array((int) $p['id'], $propias, true)));
+        return $pastoralId;
     }
 
     /** Coordenadas de la parroquia, como punto de partida de la ruta. Null si no están configuradas. */
@@ -678,28 +715,6 @@ class MescController extends Controller
         return '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">'
              . '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>'
              . '<script src="' . e(url_activo('assets/js/mapa_mesc.js')) . '?v=' . e(APP_VERSION) . '"></script>';
-    }
-
-    /** @param array $pastorales de pastoralesDisponibles(): id => nombre, ya acotadas al alcance del usuario */
-    private function ministrosDeTodasLasPastorales(array $pastorales): array
-    {
-        $porPastoral = [];
-        foreach ($pastorales as $pastoral) {
-            $porPastoral[(int) $pastoral['id']] = [
-                'pastoral' => $pastoral,
-                'ministros' => $this->modelo->ministros((int) $pastoral['id']),
-            ];
-        }
-        return $porPastoral;
-    }
-
-    private function ministrosActivosDeTodasLasPastorales(array $pastorales): array
-    {
-        $porPastoral = [];
-        foreach ($pastorales as $pastoral) {
-            $porPastoral[(int) $pastoral['id']] = $this->modelo->ministrosActivos((int) $pastoral['id']);
-        }
-        return $porPastoral;
     }
 
     /** Cuadrícula del mes en semanas de 7 casillas, análoga a EventoPublicoController pero sobre fecha DATE. */

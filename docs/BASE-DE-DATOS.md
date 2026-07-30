@@ -39,7 +39,7 @@ Cuentas del panel de administración.
 | `nombre` | VARCHAR(120) | |
 | `email` | VARCHAR(150) | `uq_usr_email`; es el identificador de acceso |
 | `password_hash` | VARCHAR(255) | bcrypt con coste 12 |
-| `rol` | ENUM | `admin`, `editor`, `coordinador`, `secretaria` |
+| `rol` | ENUM | `admin`, `editor`, `coordinador`, `secretaria`, y el par administrador/consulta de cada pastoral con módulo propio: `admin_mesc`/`consulta_mesc`, `admin_catequesis`/`consulta_catequesis`, `admin_lector`/`consulta_lector` |
 | `foto` | VARCHAR(255) | Opcional |
 | `telefono` | VARCHAR(20) | |
 | `activo` | TINYINT(1) | Baja lógica |
@@ -96,12 +96,24 @@ seguridad recién creado para esa misma restauración.
 ### `configuracion`
 
 Pares clave-valor globales, agrupados por `grupo` (`general`, `contacto`, `redes`, `seo`,
-`legal`). `clave` VARCHAR(60) con `uq_cfg_clave`, `valor` TEXT.
+`legal`, `secciones`). `clave` VARCHAR(60) con `uq_cfg_clave`, `valor` TEXT.
 
 Claves sembradas: `parroquia_nombre`, `parroquia_diocesis`, `direccion`, `ciudad`, `cp`,
 `telefono`, `whatsapp`, `email`, `mapa_embed`, `latitud`, `longitud`, `horario_oficina`,
 `facebook`, `instagram`, `youtube`, `logo`, `favicon`, `og_imagen`, `meta_descripcion`,
-`aviso_privacidad_version`, `organigrama_imagen`.
+`aviso_privacidad_version`, `organigrama_imagen`, `cursos_activo`.
+
+**`cursos_activo`** (`'1'`/`'0'`, tipo `booleano` en `ConfiguracionModel::CAMPOS`, grupo
+`secciones`): interruptor manual e independiente del contenido para ocultar la sección
+pública de Cursos. A diferencia de `Router::existeRutaPublica()` —que solo dice si el
+módulo ya está conectado en el código, permanente una vez integrado— esta clave la
+apaga y prende el administrador desde el panel, sin tocar código. Se revisa en
+`shared/views/parciales/publico_navbar.php` (oculta el enlace del menú) y en
+`CursoPublicoController::activo()` (además del enlace, bloquea también el acceso
+directo por URL: con la clave en `'0'`, `index()`, `ver()` e `inscribirse()` responden
+404 en vez de mostrar una sección vacía). No afecta al panel de administración: el
+módulo de Cursos sigue totalmente operable ahí para preparar contenido mientras la
+sección pública está apagada.
 
 ---
 
@@ -220,13 +232,15 @@ Recurrencia semanal, no fechas concretas.
 
 Índices `idx_hor_tipo_dia (tipo, dia_semana, hora)` e `idx_hor_centro (centro_id)`.
 
-**Agrupado público (`HorarioModel::vigentesPorCentro()`)**: el sitio público ya no
-agrupa por `tipo`; agrupa por sede/centro (issue #3) y, dentro de cada uno, por día
-—de lunes a domingo, con `MOD(dia_semana + 6, 7)` para reordenar sin tocar el valor
-guardado— y de la mañana a la noche dentro de cada día. El `tipo` se muestra como
-etiqueta en cada horario, no como criterio de agrupación. Los horarios sin
-`centro_id` se agrupan aparte, al final, bajo "Otros horarios". El listado de admin
-(`todos()`) conserva el orden por `tipo` para facilitar la edición masiva.
+**Agrupado público (`HorarioModel::vigentesPorTipo(?int $centroId = null)`)**: el sitio
+público agrupa por tipo —misa arriba, confesión al final, orden distinto al de `TIPOS`
+que usa el admin— y dentro de cada tipo por día y hora, de lunes a domingo
+(`MOD(dia_semana + 6, 7)` para reordenar sin tocar el valor guardado) y de la mañana a
+la noche. `$centroId` es un filtro opcional (`?centro=` en la URL, validado contra
+`centros.activo`): `null` mezcla todas las sedes/centros dentro de cada tipo (mostrando
+el nombre del centro como etiqueta en cada horario); un id concreto acota todo a esa
+sola sede/centro. El listado de admin (`todos()`) conserva el orden por `tipo` (misa
+primero) y sin agrupar ni filtrar por centro, para facilitar la edición masiva.
 
 ### `pastorales`
 
@@ -309,16 +323,91 @@ texto o agregar alguno si hiciera falta.
 ### `mesc_turnos` y `mesc_turno_ministros`
 
 Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
-`hora` NULL, `color_liturgico_id` (FK a `mesc_colores_liturgicos`, `ON DELETE SET NULL`,
-opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a `eventos` (ver
-[`ARQUITECTURA.md`](ARQUITECTURA.md)) y sin columna de descripción propia: el turno se
-identifica por su fecha, hora y los ministros que lo cubren, que ya basta en la práctica;
-`MescController::etiquetaTurno()` arma un texto de referencia a partir de fecha y hora
-donde hace falta un título. `mesc_turno_ministros` es el pivote `(turno_id, ministro_id)`,
-de 1 a N ministros por turno. `MescController::turnoGuardar()` revalida cada
-`ministro_id` recibido contra `ministrosActivos()` de esa pastoral antes de guardar: un
-ministro dado de baja no puede colarse en un turno nuevo aunque se manipule el
-formulario.
+`hora` NULL, `descripcion` VARCHAR(160) (qué se cubre: "Misa", "Santísimo", "Hora Santa",
+"Misa de Niños"…), `color_liturgico_id` (FK a `mesc_colores_liturgicos`,
+`ON DELETE SET NULL`, opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a
+`eventos` (ver [`ARQUITECTURA.md`](ARQUITECTURA.md)): un turno es una ocurrencia concreta,
+no la recurrencia semanal de `horarios` ni un evento formal. `mesc_turno_ministros` es el
+pivote `(turno_id, ministro_id)`, de 1 a N ministros por turno.
+`MescController::turnoGuardar()` revalida cada `ministro_id` recibido contra
+`ministrosActivos()` de esa pastoral antes de guardar: un ministro dado de baja no puede
+colarse en un turno nuevo aunque se manipule el formulario.
+
+---
+
+## Catequesis — catequistas, periodos, tablero de actividades y documentos
+
+Módulo dedicado **exclusivamente** a la pastoral de Catecismo, igual que MESC y Lector:
+no hay selector de pastoral en ningún formulario — `CatequesisModel::pastoralId()`
+resuelve la única pastoral por su `slug = 'catecismo'`, no por un id fijo (los id de
+pastorales no se siembran en `install.sql`, se crean desde el panel)—. Sin controlador
+público ni datos sensibles.
+
+### `catequesis_catequistas`
+
+Solo nombre y contacto: `pastoral_id` (FK a `pastorales`, `ON DELETE CASCADE`), `nombre`,
+`telefono`, `email`, `orden`, `activo`. **No tiene grado ni sacramento** — ver
+`catequesis_periodo_catequistas`: un catequista normalmente no da el mismo grado cada
+ciclo, así que ese dato no puede ser fijo de la persona.
+
+### `catequesis_periodos`
+
+Un ciclo de catecismo (ej. "2026-2027", de agosto a junio): `pastoral_id`, `nombre`,
+`fecha_inicio`, `fecha_fin` (ambas NOT NULL: un periodo siempre tiene principio y fin,
+a diferencia de `catequesis_actividades.fecha_fin` que sí puede quedar abierta),
+`activo` (marca cuál es el periodo vigente).
+
+### `catequesis_periodo_catequistas`
+
+Qué catequista dio clase en qué periodo, y de qué grado — el pivote que responde
+"qué catequistas estuvieron en cuál periodo". `grado` ENUM(`kinder`, `primero_primaria`,
+`segundo_primaria`, `tercero_primaria`, `comunion`, `quinto_misionero`,
+`sexto_misionero`, `primero_secundaria_misionero`, `segundo_secundaria`, `confirmacion`)
+vive **aquí, no en `catequesis_catequistas`**: el mismo catequista puede dar
+Segundo Primaria un ciclo y Tercero Primaria el siguiente, y esta tabla es la que
+conserva esa historia completa en vez de sobrescribirla. Llave primaria compuesta
+`(periodo_id, catequista_id)` — un catequista no puede tener dos grados a la vez en el
+mismo periodo —, y `CatequesisModel::asignarCatequista()` usa
+`INSERT ... ON DUPLICATE KEY UPDATE grado = VALUES(grado)` para que reasignar a alguien
+ya presente en el periodo simplemente le cambie el grado, sin duplicar la fila.
+
+### `catequesis_actividades`
+
+El "tablero o calendario" (issue de revisión de módulos): a diferencia de
+`pastoral_actividades` (lista fija de qué hace la pastoral, sin fechas),
+`catequesis_actividades` tiene vigencia y se publica o no, como un mini-evento —mismas
+columnas que `eventos`—: `pastoral_id`, `titulo`, `descripcion`, `fecha_inicio` (NOT
+NULL), `fecha_fin` (NULL = sin fecha de término), `publicado`, `orden`, `usuario_id`,
+`created_at`. Índice `idx_cta_publicado (publicado, fecha_inicio)`.
+
+### `catequesis_documentos`
+
+Documentos descargables, mismo patrón que `pastoral_documentos`: `pastoral_id`, `titulo`,
+`archivo` (ruta bajo `uploads/catequesis/AAAA/MM/`, solo PDF vía `Upload::documento()`),
+`orden`, `activo`, `usuario_id`, `created_at`. Sin columna de edición: como en
+`pastoral_documentos`, un documento se sube o se borra, no se reemplaza in situ.
+
+---
+
+## Lector — turnos y catálogo de lectores
+
+Módulo dedicado para la pastoral de Lectores, calcado de
+`mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: un
+lector proclama la Palabra en misa, no reparte comunión a domicilio.
+
+### `lector_lectores`
+
+Catálogo de lectores. `pastoral_id` (FK, `ON DELETE CASCADE`), `nombre`, `telefono`,
+`email`, `orden`, `activo`.
+
+### `lector_turnos` y `lector_turno_lectores`
+
+Calendario de turnos, misma forma que `mesc_turnos`: `pastoral_id`, `fecha`, `hora`,
+`descripcion`, `color_liturgico_id`, `usuario_id`, `created_at`. `color_liturgico_id`
+reutiliza el catálogo **de MESC** (`mesc_colores_liturgicos`) en vez de duplicarlo: el
+significado litúrgico de cada color es el mismo para toda la parroquia, no un dato propio
+de este módulo. `lector_turno_lectores` es el pivote `(turno_id, lector_id)`, de 1 a N
+lectores por turno (una lectura puede repartirse entre dos personas).
 
 ---
 
@@ -364,11 +453,19 @@ Hoy es contenido público informativo. En fase 2 es el ancla del aula virtual: l
 ### `inscripciones_curso`
 
 `folio` con `uq_ins_folio`, `curso_id`, `nombre`, `fecha_nacimiento`, `es_menor`,
-`telefono`, `email`, datos de tutor, `estado` ENUM(`pendiente`, `confirmada`,
+`telefono`, `email`, `centro` (texto libre: "Centro al que perteneces", no es FK a
+`centros`), datos de tutor, `estado` ENUM(`pendiente`, `confirmada`,
 `lista_espera`, `cancelada`), `consentimiento`, `consentimiento_ip`, `aviso_version`,
 `notas`.
 
 Único `uq_ins_curso_email (curso_id, email)` para evitar inscripciones duplicadas.
+
+Los datos de tutor (`tutor_nombre`, `tutor_parentesco`, `tutor_telefono`) se guardan si
+`es_menor` (calculado de `fecha_nacimiento`, y entonces obligatorios) o si la persona
+marcó la casilla "Padre, madre o tutor" del formulario aunque no sea menor (entonces son
+opcionales). `CursoPublicoController::validarInscripcion()` decide esto con
+`$guardarTutor = $esMenor || $tieneTutor`; la vista de detalle (`inscripcion_ver.php`)
+muestra esa sección siempre que haya algún dato de tutor, no solo cuando `es_menor`.
 
 ---
 
@@ -428,13 +525,18 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
+| Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, `catequesis_actividades`, `catequesis_documentos` |
+| Lector | `lector_lectores`, `lector_turnos`, `lector_turno_lectores` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 34 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 42 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `persona_pastorales`, `persona_centros`,
 `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
-`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros` y `mesc_colores_liturgicos`,
+`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos`,
+`catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
+`catequesis_actividades`, `catequesis_documentos`,
+`lector_lectores`, `lector_turnos` y `lector_turno_lectores`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`).

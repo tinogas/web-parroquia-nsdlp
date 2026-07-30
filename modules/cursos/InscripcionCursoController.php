@@ -95,7 +95,7 @@ class InscripcionCursoController extends Controller
 
         $salida = fopen('php://output', 'w');
         fputs($salida, "\xEF\xBB\xBF");
-        fputcsv($salida, ['Folio', 'Curso', 'Nombre', 'Es menor', 'Teléfono', 'Correo', 'Estado', 'Creada']);
+        fputcsv($salida, ['Folio', 'Curso', 'Nombre', 'Es menor', 'Teléfono', 'Correo', 'Centro', 'Estado', 'Creada']);
         foreach ($filas as $fila) {
             fputcsv($salida, [
                 $fila['folio'],
@@ -104,6 +104,7 @@ class InscripcionCursoController extends Controller
                 $fila['es_menor'] ? 'Sí' : 'No',
                 $fila['telefono'],
                 $fila['email'],
+                $fila['centro'],
                 InscripcionCursoModel::ESTADOS[$fila['estado']] ?? $fila['estado'],
                 $fila['created_at'],
             ]);

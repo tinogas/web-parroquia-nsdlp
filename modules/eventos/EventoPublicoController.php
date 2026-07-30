@@ -101,17 +101,22 @@ class EventoPublicoController extends ControllerPublico
         $pastoral   = $this->pastoralSolicitada();
         $pastoralId = $pastoral ? (int) $pastoral['id'] : null;
 
-        $eventos = array_map(static function (array $evento): array {
-            return [
-                'id'        => (int) $evento['id'],
-                'titulo'    => $evento['titulo'],
-                'fecha'     => substr((string) $evento['fecha_inicio'], 0, 10),
-                'hora'      => $evento['todo_el_dia'] ? null : substr((string) $evento['fecha_inicio'], 11, 5),
-                'lugar'     => $evento['lugar'],
-                'color'     => $evento['color'] ?: '#1e4d8b',
-                'url'       => url_publica('eventos', ['slug' => $evento['slug']]),
-            ];
-        }, (new EventoModel())->delMes($anio, $mes, $pastoralId));
+        [$primerDiaMes, $ultimoDiaMes] = $this->limitesDelMes($anio, $mes);
+
+        $eventos = [];
+        foreach ((new EventoModel())->delMes($anio, $mes, $pastoralId) as $evento) {
+            foreach ($this->diasDelEventoEnMes($evento, $primerDiaMes, $ultimoDiaMes) as $fecha) {
+                $eventos[] = [
+                    'id'     => (int) $evento['id'],
+                    'titulo' => $evento['titulo'],
+                    'fecha'  => $fecha,
+                    'hora'   => $evento['todo_el_dia'] ? null : substr((string) $evento['fecha_inicio'], 11, 5),
+                    'lugar'  => $evento['lugar'],
+                    'color'  => $evento['color'] ?: '#1e4d8b',
+                    'url'    => url_publica('eventos', ['slug' => $evento['slug']]),
+                ];
+            }
+        }
 
         $this->json(['anio' => $anio, 'mes' => $mes, 'eventos' => $eventos]);
     }
@@ -145,16 +150,54 @@ class EventoPublicoController extends ControllerPublico
         return preg_match('/^[a-z0-9\-]{1,160}$/', $slug) ? $slug : '';
     }
 
+    /** Primer y último día del mes, como 'Y-m-d'. */
+    private function limitesDelMes(int $anio, int $mes): array
+    {
+        $primerDia = new DateTimeImmutable(sprintf('%04d-%02d-01', $anio, $mes));
+        $ultimoDia = $primerDia->modify('last day of this month');
+        return [$primerDia->format('Y-m-d'), $ultimoDia->format('Y-m-d')];
+    }
+
+    /**
+     * Días ('Y-m-d') que un evento ocupa dentro del mes mostrado, recortando
+     * su rango [fecha_inicio, fecha_fin] a los límites de ese mes. Un evento
+     * de un solo día devuelve un único elemento; uno de varios días devuelve
+     * uno por cada día que le toca a este mes en particular.
+     */
+    private function diasDelEventoEnMes(array $evento, string $primerDiaMes, string $ultimoDiaMes): array
+    {
+        $inicio = substr((string) $evento['fecha_inicio'], 0, 10);
+        $fin    = $evento['fecha_fin'] ? substr((string) $evento['fecha_fin'], 0, 10) : $inicio;
+
+        $desde = max($inicio, $primerDiaMes);
+        $hasta = min($fin, $ultimoDiaMes);
+        if ($desde > $hasta) {
+            return [];
+        }
+
+        $dias   = [];
+        $cursor = new DateTimeImmutable($desde);
+        $limite = new DateTimeImmutable($hasta);
+        while ($cursor <= $limite) {
+            $dias[] = $cursor->format('Y-m-d');
+            $cursor = $cursor->modify('+1 day');
+        }
+        return $dias;
+    }
+
     /**
      * Cuadrícula del mes en semanas de 7 casillas (domingo primero, igual que
      * horarios.dia_semana). Una casilla es null si cae fuera del mes.
      */
     private function construirCalendario(int $anio, int $mes, array $eventosDelMes): array
     {
+        [$primerDiaMes, $ultimoDiaMes] = $this->limitesDelMes($anio, $mes);
+
         $eventosPorDia = [];
         foreach ($eventosDelMes as $evento) {
-            $dia = (int) substr((string) $evento['fecha_inicio'], 8, 2);
-            $eventosPorDia[$dia][] = $evento;
+            foreach ($this->diasDelEventoEnMes($evento, $primerDiaMes, $ultimoDiaMes) as $fecha) {
+                $eventosPorDia[(int) substr($fecha, 8, 2)][] = $evento;
+            }
         }
 
         $primerDia    = new DateTimeImmutable(sprintf('%04d-%02d-01', $anio, $mes));

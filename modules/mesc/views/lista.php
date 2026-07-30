@@ -41,7 +41,6 @@
                 <tr>
                     <th>Enfermo</th>
                     <th class="d-none d-md-table-cell">Dirección</th>
-                    <th class="d-none d-lg-table-cell">Pastoral</th>
                     <th class="text-end">&nbsp;</th>
                 </tr>
             </thead>
@@ -60,7 +59,6 @@
                         <i class="bi bi-geo-alt-fill text-primary ms-1" title="Con ubicación en mapa"></i>
                         <?php endif; ?>
                     </td>
-                    <td class="d-none d-lg-table-cell small text-muted"><?= e($visita['pastoral_nombre']) ?></td>
                     <td class="text-end text-nowrap">
                         <?php if (Auth::tienePermiso('mesc.editar')): ?>
                         <a href="<?= e(url_admin('mesc', 'editar', ['id' => $visita['id']])) ?>"

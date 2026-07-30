@@ -299,36 +299,43 @@ registros y un mantenimiento imposible. Por eso hay dos tablas con semánticas d
 El costo aceptado es que una celebración especial que además es misa se captura dos veces.
 Ocurre pocas veces al año.
 
-### Horarios: agrupado público por sede/centro, no por tipo (issue #3)
+### Horarios: agrupado público por tipo, con filtro de sede/centro (issue #3)
 
 `horarios` gana `centro_id` (FK a `centros`, `ON DELETE SET NULL`, NULL para un horario
-sin sede/centro asignado). Antes la página pública agrupaba en tarjetas por `tipo`
-(misa, confesión, adoración…); una parroquia con varios centros —el templo principal y
-las capillas dependientes— necesitaba primero saber **dónde** es cada horario, y solo
-después a qué hora y de qué tipo es.
+sin sede/centro asignado). La página pública pasó por dos diseños antes de este: primero
+agrupaba en tarjetas por `tipo` (misa, confesión…); luego, cuando se agregó `centro_id`,
+pasó a agrupar por sede/centro y el tipo bajó a subtítulo. En el uso real eso resultó
+menos útil que agrupar por tipo con un **filtro** de sede/centro aparte: un visitante
+normalmente ya sabe qué tipo de horario busca (misa, confesión…) y quiere ver ese tipo
+para su sede o para todas a la vez, no navegar centro por centro para encontrarlo.
 
-`HorarioModel::vigentesPorCentro()` reemplaza a la antigua `vigentesPorTipo()` y arma
-una estructura de tres niveles — centro → día → horarios del día — en vez de devolver
-una lista plana:
+`HorarioModel::vigentesPorTipo(?int $centroId = null)` es el método vigente:
 
-- **Nivel 1, sede/centro**: una tarjeta por cada fila de `centros` que tenga al menos
-  un horario vigente, ordenadas sede primero y luego centros por su propio `orden`. Los
-  horarios sin `centro_id` se agrupan aparte, al final, bajo "Otros horarios".
-- **Nivel 2, día**: dentro de cada centro, un subtítulo por día con
-  `MOD(dia_semana + 6, 7)` en el `ORDER BY` —el mismo truco que ya usa el calendario de
-  turnos MESC— para que el recorrido empiece en lunes y termine en domingo, sin alterar
-  el valor 0=domingo…6=sábado que la columna guarda.
-- **Nivel 3, hora**: los horarios de un mismo día, ordenados de la mañana a la noche;
-  `tipo` se imprime como una etiqueta (`badge`) en cada uno, ya no como criterio de
-  agrupación.
+- Agrupa por tipo, en el orden `ORDEN_PUBLICO` —misa arriba, confesión al final—, no el
+  orden de `TIPOS` que usa el admin (ahí misa también va primero, pero por ser lo más
+  frecuente de dar de alta). El array devuelto es tipo ⇒ horarios, y su orden de claves
+  ya llega misa-primero desde la consulta SQL: la vista solo debe recorrerlo con
+  `foreach` —nunca iterar `HorarioModel::TIPOS` en su lugar para decidir el orden de las
+  tarjetas—, o el orden dependería de una coincidencia entre dos constantes en vez de
+  ser explícito.
+- Dentro de cada tipo, los horarios quedan ordenados de lunes a domingo —no domingo
+  primero, que es como queda `dia_semana` tal cual, con `MOD(dia_semana + 6, 7)` en el
+  `ORDER BY`, el mismo truco que ya usa el calendario de turnos MESC— y de la mañana a
+  la noche. La vista muestra el centro de cada horario como etiqueta (`badge`), pero
+  solo cuando el filtro está en "Todos": con un centro ya elegido, repetir su nombre en
+  cada fila sería ruido.
+- `$centroId` es el filtro: `null` = todos los centros mezclados dentro de cada tipo; un
+  id concreto acota la consulta a esa sola sede/centro (`AND h.centro_id = :centro`).
+  `HorarioPublicoController` lee `?centro=` de la URL y lo valida contra
+  `CentroModel::activos()` —un id que no exista cae de vuelta a "Todos" en silencio, no
+  a un error—, y arma el `<select>` del filtro con esas mismas opciones. El filtro es un
+  formulario `GET` sin JavaScript: funciona igual con o sin JS, y el resultado es una URL
+  compartible (`/horarios?centro=3`).
 
-El array de "día" es asociativo (día ⇒ horarios) y su orden es el de inserción, que ya
-llega lunes-primero desde la consulta SQL: la vista solo debe recorrerlo con `foreach`,
-nunca reordenarlo con `ksort()`, o volvería a poner domingo primero.
-
-El listado de administración (`HorarioModel::todos()`) no cambia su orden por `tipo`:
-ahí sigue siendo más útil para editar en bloque (todas las misas juntas, todas las
-confesiones juntas) que agrupado por centro.
+El listado de administración (`HorarioModel::todos()`) no cambia: sigue ordenado por
+`tipo` en el orden de `TIPOS` (misa primero) y sin agrupar ni filtrar por centro, porque
+ahí es más útil editar en bloque (todas las misas juntas, todas las confesiones juntas)
+que separar por sede.
 
 ### Campos de sacramento configurables (eliminado en el issue #3)
 
@@ -386,9 +393,19 @@ eventos" en HTML plano cubre a quien tiene JavaScript desactivado.
 La acción JSON se llama `datos`, no `json`: `Controller` ya tiene un método `json()` para
 emitir la respuesta, y una acción de ruta con ese mismo nombre lo taparía.
 
-Simplificación deliberada en `EventoModel::delMes()`: un evento se ubica en el día en que
-**empieza**, no en cada día que dura. La inmensa mayoría de los eventos de una parroquia
-son de un solo día; uno de varios días solo aparece en su fecha de inicio.
+Un evento de varios días (`fecha_fin` en un día distinto a `fecha_inicio`) marca **todos**
+los días que dura, no solo el de inicio (revisión de módulos: antes solo aparecía el primer
+día, y desaparecía del todo del calendario en cuanto el mes cruzaba mientras seguía en
+curso). `EventoModel::delMes()` trae cualquier evento cuyo rango `[fecha_inicio, fecha_fin]`
+se traslape con el mes solicitado, aunque haya empezado antes o termine después; luego
+`EventoPublicoController::diasDelEventoEnMes()` recorta ese rango a los días que de verdad
+caen dentro del mes mostrado, y tanto `construirCalendario()` (la vista servida por PHP)
+como `datos()` (el JSON que consume `calendario.js`) reparten el mismo evento en una celda
+por cada día devuelto — `calendario.js` no necesita saberlo: ya agrupa cada entrada del JSON
+por su campo `fecha` plano, así que recibir varias entradas por evento "simplemente
+funciona". La ficha de detalle (`eventos/publico/detalle.php`) sigue la misma idea: si
+`fecha_fin` cae en un día distinto de `fecha_inicio` muestra el rango completo ("Del … al
+…"), no solo la fecha de inicio con ambas horas pegadas.
 
 ### Publicación con moderación, ya preparada
 
@@ -469,6 +486,56 @@ Reglas sin excepción:
   ambos casos se revalida en el servidor.
 - `pastoral_id NULL` significa contenido parroquial global. Un coordinador nunca lo toca.
 
+### Administrador y Consulta por pastoral (revisión de módulos)
+
+`ROL_COORDINADOR` es genérico: sirve para cualquier pastoral, sin importar cuál. Pero las
+pastorales con un módulo propio y dedicado —MESC, Catequesis, Lector, calcadas unas de
+otras— ganaron además un par de roles con nombre explícito cada una:
+`ROL_ADMIN_MESC`/`ROL_CONSULTA_MESC`, `ROL_ADMIN_CATEQUESIS`/`ROL_CONSULTA_CATEQUESIS`,
+`ROL_ADMIN_LECTOR`/`ROL_CONSULTA_LECTOR`.
+
+- **Administrador de X** tiene el mismo alcance de contenido que Coordinador (avisos,
+  eventos, galería, `pastoral_actividades`/`pastoral_documentos` de su pastoral) más
+  control total (`ver`/`crear`/`editar`/`eliminar`) del módulo específico de esa
+  pastoral. Es, en la práctica, "Coordinador con nombre puesto": mismo mecanismo de
+  alcance, para que crear la cuenta dé de una vez claridad sobre qué administra, en vez
+  de un rol abstracto más una asignación de pastoral aparte.
+- **Consulta de X** es de solo lectura: únicamente el permiso `X.ver` (además de
+  `panel.ver`). Pensado para que un ministro, catequista o lector de a pie entre al
+  panel solo a ver su propio calendario o los documentos de su pastoral, sin poder
+  editar nada.
+
+Los seis roles reutilizan exactamente el mismo mecanismo de alcance que Coordinador
+(`usuarios_pastorales`/`usuarios_centros`, cacheado en sesión por `Auth::cargarPastorales()`
+al iniciar sesión, sin distinción de rol): al crear la cuenta hay que asignarle la
+pastoral correspondiente, igual que a un coordinador. La constante
+`ROLES_CON_ALCANCE_PASTORAL` en `config/app.php` agrupa los siete roles que necesitan
+este checklist (Coordinador más los seis nuevos), para que el formulario de usuarios
+(`modules/usuarios/views/form.php`) y su guardado (`UsuarioController::guardar()`) no
+repitan `=== ROL_COORDINADOR` en cada punto — un error fácil de cometer si un rol nuevo
+se agrega en un solo lugar y se olvida el otro.
+
+### Un botón sin permiso no se muestra, no se muestra deshabilitado
+
+Antes de los roles de Consulta, cualquiera que pudiera *ver* un módulo (coordinador,
+editor, admin) también podía *editarlo* — nunca hizo falta que una vista distinguiera
+entre ambos. Consulta rompió ese supuesto (solo tiene `X.ver`) y expuso un hueco real en
+las vistas de MESC (construidas antes de que existiera ese rol) y, por copiarlas tal
+cual, también en Catequesis y Lector: botones de Nuevo/Editar/Eliminar sin ningún
+`Auth::tienePermiso()`, y —el más importante— el calendario de turnos enlazaba cada
+evento directo a `turno_editar`, así que un usuario de Consulta que le diera clic caía
+en `requirePermiso('mesc.editar')`, era redirigido a `/admin/panel` con un error de
+permisos, y no entendía por qué. `requirePermiso()` y `requireAlcancePastoral()`
+comparten ese mismo destino (`Controller.php`), así que cualquier acción sin permiso —no
+solo un botón, un enlace directo como el del calendario— termina ahí.
+
+La regla, ya aplicada en MESC, Catequesis y Lector: si `Auth::tienePermiso()` es falso
+para la acción, el botón o enlace **no se dibuja**, no se muestra gris ni deshabilitado.
+En el calendario de turnos, el evento sigue mostrándose (`<span>` en vez de `<a>`,
+mismo color y título) para que Consulta vea su turno, solo que no es clickeable. Esto
+es además de la comprobación real en el controlador (`requirePermiso()` sigue ahí):
+ocultar el botón es una cortesía de UX, no el límite de seguridad.
+
 ### Alcance por centro/sede (issue #3)
 
 Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,
@@ -518,11 +585,12 @@ público**: `MescModel` no tiene una sola consulta que no pase por
 `requirePermiso('mesc.*')` + `requireAlcancePastoral()`. La razón está en
 [`PRIVACIDAD.md`](PRIVACIDAD.md): el solo hecho de aparecer en `mesc_visitas` revela un
 estado de salud, el primer dato sensible en sentido estricto de la LFPDPPP que maneja el
-sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas` es **obligatorio**, a diferencia de
-avisos o eventos: esta actividad nunca es "contenido parroquial general", siempre
-pertenece a la pastoral de MESC. `MescController::pastoralIdMescValidado()` es una
-variante de `Controller::pastoralIdValidado()` que nunca acepta `null`, ni siquiera para
-un administrador.
+sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas`/`mesc_ministros`/`mesc_turnos` es
+**obligatorio y fijo**, a diferencia de avisos o eventos: esta actividad nunca es
+"contenido parroquial general", siempre pertenece a la única pastoral de MESC, resuelta
+por `MescModel::pastoralId()` y `MescController::pastoralIdOFallar()` — ver la sección
+de Catequesis y Lector más abajo para la historia completa de este patrón, que MESC
+adoptó más tarde que ellos.
 
 **Mapa: Leaflet + OpenStreetMap, sin llave de API.** El formulario de una visita
 (`mesc/views/form.php`) incluye un mapa (`assets/js/mapa_mesc.js`) donde marcar el pin es
@@ -603,6 +671,63 @@ hardcodear un solo color de texto para todos habría vuelto ilegible alguno de l
 parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba de la
 cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
 los turnos, no de uno en particular.
+
+### MESC, Catequesis y Lector: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
+
+Tres módulos, `modules/mesc/`, `modules/catequesis/` y `modules/lector/`, comparten el
+mismo patrón: módulo propio y separado para una pastoral específica, sin controlador
+público, en vez de ampliar el sistema genérico de "contenido propio por pastoral"
+(`pastoral_actividades`/`pastoral_documentos`). La razón es la misma en los tres: cada
+uno necesita columnas y pantallas que ese sistema genérico no tiene y que no tendría
+sentido forzar sobre *todas* las pastorales.
+
+**Los tres son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
+`CatequesisModel::pastoralId()` y `LectorModel::pastoralId()` resuelven su pastoral por
+`slug` (no por un id fijo en PHP: los id de pastorales se generan al crearlas desde el
+panel, no se siembran en `install.sql`), y `pastoralIdOFallar()` en su respectivo
+controlador corta el flujo con un mensaje claro si esa pastoral todavía no existe o el
+usuario no tiene alcance sobre ella. Ningún formulario de estos tres módulos acepta ni
+muestra otra pastoral.
+
+Esto no fue el diseño original de MESC: al ser el primer módulo de este tipo (issue #3),
+`pastoralIdMescValidado()` solo exigía que `pastoral_id` no fuera nulo, pero aceptaba
+*cuál* de las pastorales que el usuario administrara, mostrando un selector con todas
+ellas. Catequesis y Lector copiaron ese mismo selector al construirse sobre MESC como
+plantilla, y en ambos casos resultó en el mismo bug: un administrador con acceso a más
+de una pastoral (algo habitual, no la excepción) veía —y podía usar— pastorales ajenas
+al módulo en pantallas como "agregar ministro/lector" o "nueva visita/turno". Se corrigió
+primero en Catequesis y Lector (fijando su pastoral por `slug` con `pastoralIdOFallar()`)
+y, al reportarse el mismo síntoma en MESC ("se agregan ministros en pastorales que no
+son MESC" y un selector de pastoral en el formulario de visita a enfermos), se le aplicó
+el mismo arreglo: MESC dejó de ser la plantilla con la excepción y pasó a seguir su
+propio patrón.
+
+**Catequesis: catequistas, periodos y el grado vive en la asignación, no en la
+persona.** `catequesis_catequistas` es solo nombre y contacto — nada de sacramento ni
+grado fijo. `catequesis_periodos` es un ciclo (ej. "2026-2027"), y
+`catequesis_periodo_catequistas` es el pivote que junta periodo + catequista +
+`grado` (diez valores, de Kinder a Confirmación). El grado se modeló ahí a propósito:
+un catequista normalmente no da el mismo grado cada ciclo, así que fijarlo en
+`catequesis_catequistas` perdería esa historia en cuanto cambiara de grado el año
+siguiente; puesto en la asignación, "qué catequistas dieron clase en cuál periodo y de
+qué grado cada uno" queda respondido con una sola consulta y sin perder nada del
+pasado. `CatequesisModel::asignarCatequista()` usa
+`INSERT ... ON DUPLICATE KEY UPDATE` sobre la llave compuesta `(periodo_id,
+catequista_id)`: reasignar a alguien ya presente en el periodo le cambia el grado en
+vez de duplicar la fila. `catequesis_actividades` es un tablero con vigencia y
+`publicado` propios, como un mini-`eventos`, distinto de la lista fija sin fechas de
+`pastoral_actividades`; `catequesis_documentos` es una copia directa de
+`pastoral_documentos` (mismo patrón de subida vía `Upload::documento()`).
+
+**Lector** (pastoral "Lectores"): recorta MESC a sus dos piezas no sensibles y
+extrapolables —`lector_turnos`/`lector_turno_lectores` calcan
+`mesc_turnos`/`mesc_turno_ministros` entrada por entrada, y `lector_lectores` calca
+`mesc_ministros`—, y deja fuera lo que no aplica: nada de `mesc_rutas`/`mesc_visitas`, un
+lector proclama la Palabra en misa, no reparte comunión a domicilio. `lector_turnos.color_liturgico_id`
+apunta al catálogo `mesc_colores_liturgicos` en vez de duplicarlo: el significado de cada
+color litúrgico es el mismo calendario para toda la parroquia, no un dato propio de un
+módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
+catálogo de MESC directamente.
 
 ### Moderación
 

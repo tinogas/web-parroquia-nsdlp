@@ -27,7 +27,6 @@
             <thead class="table-light">
                 <tr>
                     <th>Ruta</th>
-                    <th class="d-none d-md-table-cell">Pastoral</th>
                     <th class="d-none d-lg-table-cell">Visitas</th>
                     <th class="d-none d-lg-table-cell">Generada</th>
                     <th class="text-end">&nbsp;</th>
@@ -40,7 +39,6 @@
                         <div class="fw-semibold"><?= e($ruta['nombre']) ?></div>
                         <div class="small text-muted"><?= e($ruta['autor'] ?? '—') ?></div>
                     </td>
-                    <td class="d-none d-md-table-cell small"><?= e($ruta['pastoral_nombre']) ?></td>
                     <td class="d-none d-lg-table-cell"><?= (int) $ruta['num_visitas'] ?></td>
                     <td class="d-none d-lg-table-cell small text-muted"><?= e(fecha_larga($ruta['created_at'])) ?></td>
                     <td class="text-end text-nowrap">

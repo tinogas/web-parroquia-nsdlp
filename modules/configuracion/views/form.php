@@ -92,6 +92,19 @@ $activo = 'general';
                                     <?php endif; ?>
                                 </div>
 
+                            <?php elseif ($tipo === 'booleano'): ?>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                               name="<?= e($clave) ?>" id="<?= e($id) ?>" value="1"
+                                               <?= $valor === '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label fw-semibold" for="<?= e($id) ?>"><?= e($etiqueta) ?></label>
+                                    </div>
+                                    <?php if ($ayuda !== ''): ?>
+                                    <div class="form-text"><?= e($ayuda) ?></div>
+                                    <?php endif; ?>
+                                </div>
+
                             <?php elseif ($tipo === 'solo_lectura'): ?>
                                 <div class="mb-3">
                                     <label for="<?= e($id) ?>" class="form-label fw-semibold"><?= e($etiqueta) ?></label>

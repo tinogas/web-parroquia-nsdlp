@@ -287,13 +287,17 @@
     padding-bottom: 0;
 }
 
-.horario-dia-titulo {
+.horario-grupo-titulo {
     font-weight: 600;
-    text-transform: capitalize;
     font-size: .78rem;
     letter-spacing: .03em;
     color: var(--azul-oscuro);
     opacity: .75;
+}
+
+.lista-horarios .dia {
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 .lista-horarios .hora {
@@ -452,6 +456,19 @@
 .nodo-persona {
     font-size: .8rem;
     color: #6c757d;
+}
+
+/* ---- Inscripción a cursos ---- */
+
+/* Los datos de padre/madre/tutor no aparecen en el formulario hasta que se
+   marca la casilla — puro CSS, sin JavaScript, para que nunca dependa de que
+   el script cargue. */
+.campos-tutor {
+    display: none;
+}
+
+#tiene_tutor:checked ~ .campos-tutor {
+    display: flex;
 }
 
 /* ---- Accesibilidad ---- */

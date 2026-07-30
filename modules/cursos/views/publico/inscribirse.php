@@ -56,11 +56,23 @@
                         <input type="tel" name="telefono" id="telefono" class="form-control"
                                value="<?= e($valores['telefono'] ?? '') ?>">
                     </div>
+                    <div class="col-md-12">
+                        <label for="centro" class="form-label fw-semibold">Centro al que perteneces</label>
+                        <input type="text" name="centro" id="centro" class="form-control" maxlength="140"
+                               value="<?= e($valores['centro'] ?? '') ?>" placeholder="Ej. Sede, San Pío, Centro Guadalupe…">
+                    </div>
                 </div>
 
+                <?php $tieneTutor = !empty($valores['tiene_tutor']); ?>
                 <h2 class="h6 fw-bold mb-2">Padre, madre o tutor</h2>
-                <p class="text-muted small mb-3">Completa esta sección solo si quien se inscribe es menor de edad.</p>
-                <div class="row g-3 mb-3">
+                <p class="text-muted small mb-2">Obligatorio si quien se inscribe es menor de edad.</p>
+                <input class="form-check-input" type="checkbox" name="tiene_tutor" id="tiene_tutor"
+                       value="1" <?= $tieneTutor ? 'checked' : '' ?>>
+                <label class="form-check-label ms-2 mb-3 d-inline-block" for="tiene_tutor">
+                    Sí, voy a completar los datos de padre, madre o tutor
+                </label>
+                <?php /* .campos-tutor se revela solo con CSS: #tiene_tutor:checked ~ .campos-tutor en publico.css */ ?>
+                <div class="row g-3 mb-3 campos-tutor">
                     <div class="col-md-5">
                         <label for="tutor_nombre" class="form-label fw-semibold">Nombre</label>
                         <input type="text" name="tutor_nombre" id="tutor_nombre" class="form-control"

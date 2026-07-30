@@ -4,22 +4,20 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('mesc')) ?>" class="text-decoration-none">MESC</a></li>
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="text-decoration-none">Turnos</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Lectores</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?= $esNuevo ? 'Nuevo' : 'Editar' ?></li>
             </ol>
         </nav>
         <h1 class="h4 fw-bold mb-0"><?= $esNuevo ? 'Nuevo turno' : e($titulo) ?></h1>
     </div>
-    <a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="btn btn-sm btn-outline-secondary">
+    <a href="<?= e(url_admin('lector')) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver
     </a>
 </div>
 
-<form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'mesc', 'turno_guardar')) ?>">
+<form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'lector', 'turno_guardar')) ?>">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
     <input type="hidden" name="id" value="<?= $esNuevo ? 0 : (int) $turno['id'] ?>">
-    <input type="hidden" name="pastoral_id" value="<?= (int) $pastoralId ?>">
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
@@ -39,7 +37,7 @@
                     <label for="descripcion" class="form-label fw-semibold">Qué se cubre</label>
                     <input type="text" name="descripcion" id="descripcion" class="form-control" maxlength="160"
                            value="<?= e($esNuevo ? '' : $turno['descripcion']) ?>"
-                           placeholder="Ej. Misa" required>
+                           placeholder="Ej. Misa 12:00, primera lectura" required>
                 </div>
             </div>
 
@@ -61,21 +59,21 @@
                 </div>
             </div>
 
-            <label class="form-label fw-semibold">Ministros asignados</label>
-            <?php if (!$ministrosActivos): ?>
-            <p class="text-muted small">Todavía no hay ministros activos registrados.
-                <a href="<?= e(url_admin('mesc', 'ministros')) ?>">Agregar uno</a>.
+            <label class="form-label fw-semibold">Lectores asignados</label>
+            <?php if (!$lectores): ?>
+            <p class="text-muted small">Todavía no hay lectores activos registrados.
+                <a href="<?= e(url_admin('lector', 'lectores')) ?>">Agregar uno</a>.
             </p>
             <?php else: ?>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1 mb-2">
-                <?php foreach ($ministrosActivos as $ministro): ?>
+                <?php foreach ($lectores as $lector): ?>
                 <div class="col">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="ministros[]"
-                               value="<?= (int) $ministro['id'] ?>" id="min<?= (int) $ministro['id'] ?>"
-                               <?= in_array((int) $ministro['id'], $asignados, true) ? 'checked' : '' ?>>
-                        <label class="form-check-label small" for="min<?= (int) $ministro['id'] ?>">
-                            <?= e($ministro['nombre']) ?>
+                        <input class="form-check-input" type="checkbox" name="lectores[]"
+                               value="<?= (int) $lector['id'] ?>" id="lec<?= (int) $lector['id'] ?>"
+                               <?= in_array((int) $lector['id'], $asignados, true) ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="lec<?= (int) $lector['id'] ?>">
+                            <?= e($lector['nombre']) ?>
                         </label>
                     </div>
                 </div>
@@ -90,6 +88,6 @@
         <button type="submit" class="btn btn-primary flex-grow-1">
             <i class="bi bi-check-lg me-1"></i>Guardar
         </button>
-        <a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="btn btn-outline-secondary">Cancelar</a>
+        <a href="<?= e(url_admin('lector')) ?>" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>

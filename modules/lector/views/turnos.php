@@ -1,7 +1,7 @@
 <?php
-if (!function_exists('mesc_texto_legible')) {
+if (!function_exists('lector_texto_legible')) {
     /** Blanco o negro según qué tan clara es la casilla, para que el texto del turno siempre se lea. */
-    function mesc_texto_legible(string $hex): string
+    function lector_texto_legible(string $hex): string
     {
         $hex = ltrim($hex, '#');
         if (strlen($hex) !== 6) { return '#fff'; }
@@ -13,31 +13,18 @@ if (!function_exists('mesc_texto_legible')) {
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <nav aria-label="Ubicación">
-            <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('mesc')) ?>" class="text-decoration-none">MESC</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Turnos</li>
-            </ol>
-        </nav>
-        <h1 class="h4 fw-bold mb-0">Calendario de turnos</h1>
+        <h1 class="h4 fw-bold mb-1">Calendario de lectores</h1>
+        <p class="text-muted mb-0 small">Quién proclama la Palabra en cada misa.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="<?= e(url_admin('mesc', 'colores')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-palette me-1"></i>Colores litúrgicos
+        <a href="<?= e(url_admin('lector', 'lectores')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-people me-1"></i>Lectores
         </a>
-        <?php if (Auth::tienePermiso('mesc.crear')): ?>
-        <a href="<?= e(url_admin('mesc', 'turno_nuevo')) ?>" class="btn btn-primary">
+        <?php if (Auth::tienePermiso('lector.crear')): ?>
+        <a href="<?= e(url_admin('lector', 'turno_nuevo')) ?>" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i>Nuevo turno
         </a>
         <?php endif; ?>
-    </div>
-</div>
-
-<div class="alert alert-warning small d-flex gap-2 align-items-start">
-    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
-    <div>
-        En caso de necesidad, consiga entre los compañeros un <strong>cambio de turno</strong>, y dé aviso a la
-        Coordinación para evitar malentendidos. Gracias por su colaboración.
     </div>
 </div>
 
@@ -74,15 +61,15 @@ if (!function_exists('mesc_texto_legible')) {
                             $fondo   = $turno['color_hex'] ?: '#1e4d8b';
                             $titulo  = $turno['descripcion']
                                      . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                     . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados');
+                                     . ($turno['lectores_nombres'] ? ' — ' . $turno['lectores_nombres'] : ' — sin lectores asignados');
                             $etiqueta = e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
                             ?>
-                            <?php if (Auth::tienePermiso('mesc.editar')): ?>
-                            <a href="<?= e(url_admin('mesc', 'turno_editar', ['id' => $turno['id']])) ?>"
-                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
+                            <?php if (Auth::tienePermiso('lector.editar')): ?>
+                            <a href="<?= e(url_admin('lector', 'turno_editar', ['id' => $turno['id']])) ?>"
+                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
                                title="<?= e($titulo) ?>"><?= $etiqueta ?></a>
                             <?php else: ?>
-                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
+                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
                                   title="<?= e($titulo) ?>"><?= $etiqueta ?></span>
                             <?php endif; ?>
                             <?php endforeach; ?>

@@ -33,7 +33,8 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
-                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver') || Auth::tienePermiso('mesc.ver')): ?>
+                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver') || Auth::tienePermiso('mesc.ver')
+                || Auth::tienePermiso('catequesis.ver') || Auth::tienePermiso('lector.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -64,6 +65,16 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('mesc.ver')): ?>
         <a href="<?= e(url_admin('mesc')) ?>" class="sidebar-link <?= $activo('mesc') ?>">
             <i class="bi bi-heart-pulse"></i> MESC
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('catequesis.ver')): ?>
+        <a href="<?= e(url_admin('catequesis')) ?>" class="sidebar-link <?= $activo('catequesis') ?>">
+            <i class="bi bi-book"></i> Catequesis
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('lector.ver')): ?>
+        <a href="<?= e(url_admin('lector')) ?>" class="sidebar-link <?= $activo('lector') ?>">
+            <i class="bi bi-mic"></i> Lectores
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>

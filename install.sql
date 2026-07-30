@@ -33,7 +33,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre        VARCHAR(120) NOT NULL,
     email         VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    rol           ENUM('admin','editor','coordinador','secretaria') NOT NULL DEFAULT 'coordinador',
+    rol           ENUM('admin','editor','coordinador','secretaria',
+                       'admin_mesc','consulta_mesc',
+                       'admin_catequesis','consulta_catequesis',
+                       'admin_lector','consulta_lector') NOT NULL DEFAULT 'coordinador',
     foto          VARCHAR(255) NULL,
     telefono      VARCHAR(20)  NULL,
     activo        TINYINT(1)   NOT NULL DEFAULT 1,
@@ -639,6 +642,146 @@ CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- CATEQUESIS — CATEQUISTAS, PERIODOS, ACTIVIDADES Y DOCUMENTOS
+-- ------------------------------------------------------------
+-- Módulo dedicado exclusivamente a la pastoral de Catecismo (issue de
+-- revisión de módulos: a diferencia de MESC, aquí NO hay selector de
+-- pastoral — el controlador resuelve la pastoral por su slug 'catecismo' y
+-- nunca muestra ni acepta otra). No hay controlador público: vive
+-- enteramente en el panel.
+
+-- Catequista: solo nombre y contacto. El grado que da NO es un dato fijo
+-- suyo —vive en catequesis_periodo_catequistas—, porque normalmente no da
+-- el mismo grado cada ciclo (ver esa tabla).
+CREATE TABLE IF NOT EXISTS catequesis_catequistas (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    nombre      VARCHAR(140)      NOT NULL,
+    telefono    VARCHAR(20)       NULL,
+    email       VARCHAR(150)      NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_ctq_pastoral (pastoral_id),
+    CONSTRAINT fk_ctq_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ciclo de catecismo (ej. "2026-2027", agosto a junio). Para saber qué
+-- catequistas dieron clase en cuál ciclo.
+CREATE TABLE IF NOT EXISTS catequesis_periodos (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    nombre       VARCHAR(60)       NOT NULL,
+    fecha_inicio DATE              NOT NULL,
+    fecha_fin    DATE              NOT NULL,
+    activo       TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_ctp_pastoral (pastoral_id),
+    CONSTRAINT fk_ctp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Qué catequista dio clase en qué periodo, y de qué grado — el grado vive
+-- aquí, no en catequesis_catequistas, porque el mismo catequista puede dar
+-- un grado distinto cada periodo (issue de revisión de módulos). Un
+-- catequista no puede tener dos grados a la vez en un mismo periodo, de
+-- ahí la llave primaria compuesta.
+CREATE TABLE IF NOT EXISTS catequesis_periodo_catequistas (
+    periodo_id    SMALLINT UNSIGNED NOT NULL,
+    catequista_id SMALLINT UNSIGNED NOT NULL,
+    grado         ENUM('kinder', 'primero_primaria', 'segundo_primaria', 'tercero_primaria',
+                        'comunion', 'quinto_misionero', 'sexto_misionero',
+                        'primero_secundaria_misionero', 'segundo_secundaria', 'confirmacion') NOT NULL,
+    PRIMARY KEY (periodo_id, catequista_id),
+    CONSTRAINT fk_cpc_periodo    FOREIGN KEY (periodo_id)    REFERENCES catequesis_periodos(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_cpc_catequista FOREIGN KEY (catequista_id) REFERENCES catequesis_catequistas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tablero/calendario de actividades: a diferencia de pastoral_actividades
+-- (lista fija de "qué hace la pastoral", sin fechas), esto tiene vigencia y
+-- se publica o no, como un mini-evento — mismas columnas que eventos.*.
+CREATE TABLE IF NOT EXISTS catequesis_actividades (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    titulo       VARCHAR(160)      NOT NULL,
+    descripcion  TEXT              NULL,
+    fecha_inicio DATE              NOT NULL,
+    fecha_fin    DATE              NULL,
+    publicado    TINYINT(1)        NOT NULL DEFAULT 0,
+    orden        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    usuario_id   INT UNSIGNED      NULL,
+    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_cta_pastoral (pastoral_id),
+    KEY idx_cta_publicado (publicado, fecha_inicio),
+    CONSTRAINT fk_cta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cta_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Documentos descargables, mismo patrón que pastoral_documentos.
+CREATE TABLE IF NOT EXISTS catequesis_documentos (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    titulo      VARCHAR(160)      NOT NULL,
+    archivo     VARCHAR(255)      NOT NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    usuario_id  INT UNSIGNED      NULL,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ctd_pastoral (pastoral_id),
+    CONSTRAINT fk_ctd_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ctd_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- LECTOR — TURNOS Y CATÁLOGO DE LECTORES
+-- ------------------------------------------------------------
+-- Módulo dedicado para la pastoral de Lectores, calcado de
+-- mesc_turnos/mesc_ministros/mesc_turno_ministros pero sin rutas ni
+-- visitas: un lector proclama la Palabra en misa, no reparte comunión a
+-- domicilio. color_liturgico_id reutiliza el catálogo de MESC
+-- (mesc_colores_liturgicos): el significado litúrgico de cada color no es
+-- propio de ese módulo, es el mismo calendario para toda la parroquia.
+
+CREATE TABLE IF NOT EXISTS lector_lectores (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    nombre      VARCHAR(140)      NOT NULL,
+    telefono    VARCHAR(20)       NULL,
+    email       VARCHAR(150)      NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_lec_pastoral (pastoral_id),
+    CONSTRAINT fk_lec_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS lector_turnos (
+    id                 INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    pastoral_id        TINYINT UNSIGNED NOT NULL,
+    fecha              DATE             NOT NULL,
+    hora               TIME             NOT NULL,
+    descripcion        VARCHAR(160)     NULL,
+    color_liturgico_id TINYINT UNSIGNED NULL,
+    usuario_id         INT UNSIGNED     NULL,
+    created_at         DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ltu_pastoral (pastoral_id),
+    KEY idx_ltu_fecha (fecha),
+    CONSTRAINT fk_ltu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)             ON DELETE CASCADE,
+    CONSTRAINT fk_ltu_color    FOREIGN KEY (color_liturgico_id) REFERENCES mesc_colores_liturgicos(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ltu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)                ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS lector_turno_lectores (
+    turno_id  INT UNSIGNED      NOT NULL,
+    lector_id SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (turno_id, lector_id),
+    CONSTRAINT fk_ltl_turno  FOREIGN KEY (turno_id)  REFERENCES lector_turnos(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_ltl_lector FOREIGN KEY (lector_id) REFERENCES lector_lectores(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SACRAMENTOS
 -- ------------------------------------------------------------
 
@@ -726,6 +869,7 @@ CREATE TABLE IF NOT EXISTS inscripciones_curso (
     es_menor         TINYINT(1)   NOT NULL DEFAULT 0,
     telefono         VARCHAR(20)  NULL,
     email            VARCHAR(150) NULL,
+    centro           VARCHAR(140) NULL,
     tutor_nombre     VARCHAR(150) NULL,
     tutor_parentesco VARCHAR(60)  NULL,
     tutor_telefono   VARCHAR(20)  NULL,
@@ -774,7 +918,9 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
     ('meta_descripcion',         '',   'seo'),
     ('og_imagen',                '',   'seo'),
 
-    ('aviso_privacidad_version', '1.0', 'legal');
+    ('aviso_privacidad_version', '1.0', 'legal'),
+
+    ('cursos_activo',            '1',  'secciones');
 
 -- ------------------------------------------------------------
 -- SEMILLAS DE BLOQUES DE CONTENIDO

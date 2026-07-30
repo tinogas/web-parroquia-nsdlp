@@ -83,10 +83,11 @@ class UsuarioController extends Controller
         $email      = strtolower($this->postStr('email'));
         $rol        = $this->postStr('rol');
         $password   = (string) ($_POST['password'] ?? '');
-        $pastorales = $rol === ROL_COORDINADOR
+        $rolConAlcance = in_array($rol, ROLES_CON_ALCANCE_PASTORAL, true);
+        $pastorales = $rolConAlcance
             ? array_values(array_unique(array_map('intval', array_filter((array) ($_POST['pastorales'] ?? []), 'is_numeric'))))
             : [];
-        $centros = $rol === ROL_COORDINADOR
+        $centros = $rolConAlcance
             ? array_values(array_unique(array_map('intval', array_filter((array) ($_POST['centros'] ?? []), 'is_numeric'))))
             : [];
 
@@ -102,8 +103,8 @@ class UsuarioController extends Controller
         if (!isset(ROLES_NOMBRES[$rol])) {
             $errores[] = 'Elige un rol válido.';
         }
-        if ($rol === ROL_COORDINADOR && !$pastorales && !$centros) {
-            $errores[] = 'Un coordinador debe tener asignada al menos una pastoral o un centro/sede.';
+        if ($rolConAlcance && !$pastorales && !$centros) {
+            $errores[] = 'Este rol debe tener asignada al menos una pastoral o un centro/sede.';
         }
         if (!$actual && $password === '') {
             $errores[] = 'La contraseña es obligatoria para un usuario nuevo.';

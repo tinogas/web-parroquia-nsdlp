@@ -3,7 +3,16 @@ require_once BASE_PATH . '/core/Model.php';
 
 /**
  * MescModel — Visitas a enfermos de los Ministros Extraordinarios de la
- * Comunión (issue #3), y las rutas que se arman a partir de ellas.
+ * Comunión (issue #3), las rutas que se arman a partir de ellas, sus
+ * ministros y sus turnos.
+ *
+ * Exclusivo de la pastoral "Ministro Extraordinario de la Sagrada Comunión":
+ * pastoralId() la resuelve por su slug (no por un id fijo en PHP: los id se
+ * generan al crear la pastoral desde el panel, no se siembran en
+ * install.sql), igual que CatequesisModel/LectorModel (revisión de módulos:
+ * MESC era la excepción con selector multi-pastoral, y por eso dejaba
+ * agregar ministros o visitas bajo cualquier otra pastoral que administrara
+ * el usuario).
  *
  * Dato sensible: la sola presencia de un registro aquí revela que la persona
  * está enferma (LFPDPPP, dato de salud). Por eso este modelo, a diferencia de
@@ -12,12 +21,19 @@ require_once BASE_PATH . '/core/Model.php';
  */
 class MescModel extends Model
 {
+    public function pastoralId(): ?int
+    {
+        return $this->fetchColumn(
+            "SELECT id FROM pastorales WHERE slug = 'ministro-extraordinario-de-la-sagrada-comunion'"
+        ) ?: null;
+    }
+
     // ── Visitas ──────────────────────────────────────────────────────────
 
-    public function listar(int $pagina, string $filtro = 'activas', ?array $pastoralesPermitidas = null): array
+    public function listar(int $pagina, string $filtro, int $pastoralId): array
     {
-        $condiciones = [];
-        $params      = [];
+        $condiciones = ['v.pastoral_id = :pastoral'];
+        $params      = [':pastoral' => $pastoralId];
 
         if ($filtro === 'activas') {
             $condiciones[] = 'v.activo = 1';
@@ -25,20 +41,10 @@ class MescModel extends Model
             $condiciones[] = 'v.activo = 0';
         }
 
-        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'v.pastoral_id');
-        if ($condicionPastoral !== '') {
-            $condiciones[] = $condicionPastoral;
-            $params += $paramsPastoral;
-        }
-
-        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
+        $where = 'WHERE ' . implode(' AND ', $condiciones);
 
         return $this->paginar(
-            "SELECT v.*, p.nombre AS pastoral_nombre
-               FROM mesc_visitas v
-               JOIN pastorales p ON p.id = v.pastoral_id
-               {$where}
-              ORDER BY v.nombre_enfermo",
+            "SELECT v.* FROM mesc_visitas v {$where} ORDER BY v.nombre_enfermo",
             $params,
             $pagina,
             20
@@ -50,15 +56,12 @@ class MescModel extends Model
         return $this->fetchOne('SELECT * FROM mesc_visitas WHERE id = :id', [':id' => $id]);
     }
 
-    /** Visitas activas visibles para el usuario, sin paginar: para elegir cuáles entran a una ruta. */
-    public function activasPara(?array $pastoralesPermitidas): array
+    /** Visitas activas de la pastoral, sin paginar: para elegir cuáles entran a una ruta. */
+    public function activasPara(int $pastoralId): array
     {
-        [$condicionPastoral, $params] = $this->condicionPastoral($pastoralesPermitidas, 'pastoral_id');
-        $where = 'activo = 1' . ($condicionPastoral !== '' ? " AND {$condicionPastoral}" : '');
-
         return $this->fetchAll(
-            "SELECT * FROM mesc_visitas WHERE {$where} ORDER BY nombre_enfermo",
-            $params
+            'SELECT * FROM mesc_visitas WHERE activo = 1 AND pastoral_id = :pastoral ORDER BY nombre_enfermo',
+            [':pastoral' => $pastoralId]
         );
     }
 
@@ -114,31 +117,22 @@ class MescModel extends Model
 
     // ── Rutas ────────────────────────────────────────────────────────────
 
-    public function rutasDe(?array $pastoralesPermitidas): array
+    public function rutasDe(int $pastoralId): array
     {
-        [$condicionPastoral, $params] = $this->condicionPastoral($pastoralesPermitidas, 'r.pastoral_id');
-        $where = $condicionPastoral !== '' ? "WHERE {$condicionPastoral}" : '';
-
         return $this->fetchAll(
-            "SELECT r.*, p.nombre AS pastoral_nombre, u.nombre AS autor,
+            'SELECT r.*, u.nombre AS autor,
                     (SELECT COUNT(*) FROM mesc_ruta_visitas rv WHERE rv.ruta_id = r.id) AS num_visitas
                FROM mesc_rutas r
-               JOIN pastorales p ON p.id = r.pastoral_id
                LEFT JOIN usuarios u ON u.id = r.usuario_id
-               {$where}
-              ORDER BY r.created_at DESC",
-            $params
+              WHERE r.pastoral_id = :pastoral
+              ORDER BY r.created_at DESC',
+            [':pastoral' => $pastoralId]
         );
     }
 
     public function rutaPorId(int $id): ?array
     {
-        return $this->fetchOne(
-            'SELECT r.*, p.nombre AS pastoral_nombre FROM mesc_rutas r
-               JOIN pastorales p ON p.id = r.pastoral_id
-              WHERE r.id = :id',
-            [':id' => $id]
-        );
+        return $this->fetchOne('SELECT * FROM mesc_rutas WHERE id = :id', [':id' => $id]);
     }
 
     /** Visitas de una ruta, en su orden actual (editable). */
@@ -256,19 +250,13 @@ class MescModel extends Model
 
     // ── Turnos ───────────────────────────────────────────────────────────
 
-    /**
-     * Turnos del mes, con los nombres de sus ministros ya concatenados, para
-     * el calendario. $pastoralesPermitidas: null = alcance global.
-     */
-    public function turnosDelMes(int $anio, int $mes, ?array $pastoralesPermitidas = null): array
+    /** Turnos del mes de la pastoral, con los nombres de sus ministros ya concatenados, para el calendario. */
+    public function turnosDelMes(int $anio, int $mes, int $pastoralId): array
     {
         $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
         $siguienteAnio = $mes === 12 ? $anio + 1 : $anio;
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
-
-        [$condicionPastoral, $params] = $this->condicionPastoral($pastoralesPermitidas, 't.pastoral_id');
-        $condicionPastoral = $condicionPastoral !== '' ? " AND {$condicionPastoral}" : '';
 
         return $this->fetchAll(
             "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
@@ -277,9 +265,9 @@ class MescModel extends Model
                       WHERE tm.turno_id = t.id) AS ministros_nombres
                FROM mesc_turnos t
                LEFT JOIN mesc_colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin{$condicionPastoral}
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
               ORDER BY t.fecha, t.hora",
-            [':inicio' => $inicio, ':fin' => $fin] + $params
+            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
         );
     }
 

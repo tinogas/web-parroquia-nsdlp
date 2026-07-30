@@ -46,6 +46,11 @@
                     <dt class="col-sm-4">Correo</dt>
                     <dd class="col-sm-8"><a href="mailto:<?= e($inscripcion['email']) ?>"><?= e($inscripcion['email']) ?></a></dd>
 
+                    <?php if (!empty($inscripcion['centro'])): ?>
+                    <dt class="col-sm-4">Centro</dt>
+                    <dd class="col-sm-8"><?= e($inscripcion['centro']) ?></dd>
+                    <?php endif; ?>
+
                     <?php if ($inscripcion['notas']): ?>
                     <dt class="col-sm-4">Notas</dt>
                     <dd class="col-sm-8"><?= e($inscripcion['notas']) ?></dd>
@@ -54,10 +59,15 @@
             </div>
         </div>
 
-        <?php if ($inscripcion['es_menor']): ?>
+        <?php if ($inscripcion['tutor_nombre'] || $inscripcion['tutor_parentesco'] || $inscripcion['tutor_telefono']): ?>
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <h2 class="h6 fw-bold mb-3">Padre, madre o tutor</h2>
+                <h2 class="h6 fw-bold mb-3">
+                    Padre, madre o tutor
+                    <?php if (!$inscripcion['es_menor']): ?>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal">dato adicional, no es menor</span>
+                    <?php endif; ?>
+                </h2>
                 <dl class="row mb-0 small">
                     <dt class="col-sm-4">Nombre</dt>
                     <dd class="col-sm-8"><?= e((string) $inscripcion['tutor_nombre']) ?></dd>

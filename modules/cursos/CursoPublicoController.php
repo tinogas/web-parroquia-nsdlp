@@ -11,6 +11,11 @@ class CursoPublicoController extends ControllerPublico
 
     public function index(): void
     {
+        if (!$this->activo()) {
+            $this->noEncontrado();
+            return;
+        }
+
         $this->render('cursos/publico/index', [
             'metaTitulo'      => 'Cursos y capacitaciones',
             'metaDescripcion' => 'Catálogo de cursos y capacitaciones de la Parroquia Nuestra Señora de la Paz.',
@@ -22,7 +27,7 @@ class CursoPublicoController extends ControllerPublico
 
     public function ver(): void
     {
-        $curso = $this->cursoDelSlug();
+        $curso = $this->activo() ? $this->cursoDelSlug() : null;
         if (!$curso) {
             $this->noEncontrado();
             return;
@@ -44,7 +49,7 @@ class CursoPublicoController extends ControllerPublico
 
     public function inscribirse(): void
     {
-        $curso = $this->cursoDelSlug();
+        $curso = $this->activo() ? $this->cursoDelSlug() : null;
         $cerrado = !$curso || !$curso['inscripciones_abiertas']
                 || ($curso['fecha_cierre_inscripcion'] && $curso['fecha_cierre_inscripcion'] < date('Y-m-d'));
 
@@ -110,11 +115,15 @@ class CursoPublicoController extends ControllerPublico
             }
         }
 
+        // La casilla "tiene_tutor" solo controla si esos campos llegan habilitados desde
+        // el formulario (ver assets/js/publico.js); si quien se inscribe es menor de edad
+        // los datos de tutor son obligatorios de todas formas, la haya marcado o no.
+        $tieneTutor      = (bool) $this->postBool('tiene_tutor');
         $tutorNombre     = $this->postStr('tutor_nombre');
         $tutorParentesco = $this->postStr('tutor_parentesco');
         $tutorTelefono   = $this->postStr('tutor_telefono');
         if ($esMenor && ($tutorNombre === '' || $tutorParentesco === '' || $tutorTelefono === '')) {
-            $errores[] = 'Como quien se inscribe es menor de edad, el nombre, parentesco y teléfono del padre, madre o tutor son obligatorios.';
+            $errores[] = 'Como quien se inscribe es menor de edad, marca la casilla "Padre, madre o tutor" y completa nombre, parentesco y teléfono: son obligatorios.';
         }
 
         if (!$this->postBool('consentimiento')) {
@@ -129,6 +138,11 @@ class CursoPublicoController extends ControllerPublico
             return [[], $errores];
         }
 
+        // Si no es menor, los datos de tutor solo se guardan cuando la persona marcó la
+        // casilla explícitamente: sin eso, unos campos que quedaron vacíos por error no
+        // deben dejar basura en el registro.
+        $guardarTutor = $esMenor || $tieneTutor;
+
         return [[
             'curso_id'         => (int) $curso['id'],
             'nombre'           => $nombre,
@@ -136,9 +150,10 @@ class CursoPublicoController extends ControllerPublico
             'es_menor'         => $esMenor ? 1 : 0,
             'telefono'         => $this->postStr('telefono'),
             'email'            => $email,
-            'tutor_nombre'     => $esMenor ? $tutorNombre : '',
-            'tutor_parentesco' => $esMenor ? $tutorParentesco : '',
-            'tutor_telefono'   => $esMenor ? $tutorTelefono : '',
+            'centro'           => $this->postStr('centro'),
+            'tutor_nombre'     => $guardarTutor ? $tutorNombre : '',
+            'tutor_parentesco' => $guardarTutor ? $tutorParentesco : '',
+            'tutor_telefono'   => $guardarTutor ? $tutorTelefono : '',
             'notas'            => $this->postStr('notas'),
             'ip'               => (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
         ], []];
@@ -168,6 +183,12 @@ class CursoPublicoController extends ControllerPublico
             'curso'      => $curso,
             'folio'      => $folio,
         ]);
+    }
+
+    /** Configuración → Secciones del sitio: interruptor manual, independiente de si hay cursos publicados. */
+    private function activo(): bool
+    {
+        return Config::get('cursos_activo', '1') === '1';
     }
 
     private function cursoDelSlug(): ?array

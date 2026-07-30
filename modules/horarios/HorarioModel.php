@@ -17,13 +17,16 @@ class HorarioModel extends Model
         'otro'      => ['Otro',                     'bi-calendar3'],
     ];
 
+    /** Orden del tipo en la página pública: misas arriba, confesiones al final. */
+    private const ORDEN_PUBLICO = ['misa', 'confesion', 'adoracion', 'oficina', 'otro'];
+
     public function todos(): array
     {
         return $this->fetchAll(
             "SELECT h.*, c.nombre AS centro_nombre
                FROM horarios h
                LEFT JOIN centros c ON c.id = h.centro_id
-              ORDER BY FIELD(h.tipo, " . $this->ordenTipos() . "), h.dia_semana, h.hora"
+              ORDER BY FIELD(h.tipo, " . $this->campoOrden(array_keys(self::TIPOS)) . "), h.dia_semana, h.hora"
         );
     }
 
@@ -33,45 +36,46 @@ class HorarioModel extends Model
     }
 
     /**
-     * Para el sitio público: activos y vigentes hoy, agrupados por sede o
-     * centro (issue #3) y, dentro de cada uno, por día —de lunes a domingo,
-     * no domingo primero, que es como queda dia_semana ordenado tal cual— y
-     * de la mañana a la noche dentro de cada día. MOD(dia_semana + 6, 7) es
-     * el truco: convierte 0=domingo…6=sábado en 0=lunes…6=domingo para el
-     * ORDER BY, sin tocar el valor guardado. Un horario sin centro asignado
-     * se agrupa aparte, al final, bajo la clave 'sin_centro'.
+     * Para el sitio público: activos y vigentes hoy, agrupados por tipo
+     * (misas arriba, confesiones al final — ORDEN_PUBLICO, no el orden de
+     * TIPOS que usa el admin), con un filtro opcional de sede/centro.
      *
-     * 'dias' es un array asociativo día => horarios; el orden de sus claves
-     * es el de inserción (el de la consulta, ya lunes-primero), así que la
-     * vista solo debe recorrerlo con foreach, nunca reordenarlo con ksort.
+     * $centroId null = todos los centros (el filtro "Todos" del selector
+     * público); un id concreto acota a esa sola sede/centro.
+     *
+     * Dentro de cada tipo los horarios quedan ordenados de lunes a domingo
+     * —no domingo primero, que es como queda dia_semana tal cual— y de la
+     * mañana a la noche; MOD(dia_semana + 6, 7) convierte 0=domingo…6=sábado
+     * en 0=lunes…6=domingo para el ORDER BY, sin tocar el valor guardado. La
+     * vista muestra el centro de cada horario (con "Todos" seleccionado
+     * puede haber varias sedes/centros mezclados dentro de un mismo tipo).
+     *
+     * El array devuelto es tipo => horarios; el orden de sus claves es el
+     * de inserción (el de la consulta, ya misa-primero), así que la vista
+     * solo debe recorrerlo con foreach, nunca reordenarlo.
      */
-    public function vigentesPorCentro(): array
+    public function vigentesPorTipo(?int $centroId = null): array
     {
+        $condicionCentro = $centroId !== null ? 'AND h.centro_id = :centro' : '';
+
         $filas = $this->fetchAll(
-            "SELECT h.*, c.nombre AS centro_nombre, c.tipo AS centro_tipo
+            "SELECT h.*, c.nombre AS centro_nombre
                FROM horarios h
                LEFT JOIN centros c ON c.id = h.centro_id
               WHERE h.activo = 1
                 AND (h.vigente_desde IS NULL OR h.vigente_desde <= CURDATE())
                 AND (h.vigente_hasta IS NULL OR h.vigente_hasta >= CURDATE())
-              ORDER BY (h.centro_id IS NULL), FIELD(c.tipo, 'sede', 'centro'), c.orden, c.nombre,
-                       MOD(h.dia_semana + 6, 7), h.hora"
+                {$condicionCentro}
+              ORDER BY FIELD(h.tipo, " . $this->campoOrden(self::ORDEN_PUBLICO) . "),
+                       MOD(h.dia_semana + 6, 7), h.hora",
+            $centroId !== null ? [':centro' => $centroId] : []
         );
 
-        $porCentro = [];
+        $porTipo = [];
         foreach ($filas as $fila) {
-            $claveCentro = $fila['centro_id'] !== null ? (int) $fila['centro_id'] : 'sin_centro';
-            if (!isset($porCentro[$claveCentro])) {
-                $porCentro[$claveCentro] = [
-                    'nombre' => $fila['centro_nombre'] ?? 'Otros horarios',
-                    'tipo'   => $fila['centro_tipo'],
-                    'dias'   => [],
-                ];
-            }
-            $claveDia = (int) $fila['dia_semana'];
-            $porCentro[$claveCentro]['dias'][$claveDia][] = $fila;
+            $porTipo[$fila['tipo']][] = $fila;
         }
-        return $porCentro;
+        return $porTipo;
     }
 
     /**
@@ -167,11 +171,12 @@ class HorarioModel extends Model
         ];
     }
 
-    private function ordenTipos(): string
+    /** Convierte una lista de valores en la sublista literal que pide FIELD() para un ORDER BY a medida. */
+    private function campoOrden(array $orden): string
     {
         return implode(',', array_map(
             static fn (string $t): string => "'" . $t . "'",
-            array_keys(self::TIPOS)
+            $orden
         ));
     }
 }

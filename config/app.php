@@ -5,7 +5,7 @@
 
 define('APP_NAME',   'Parroquia Nuestra Señora de la Paz');
 define('APP_CORTO',  'Parroquia N. S. de la Paz');
-define('APP_VERSION', '0.1.0');
+define('APP_VERSION', '0.1.1');
 
 // Subcarpeta donde vive el sitio: '/WebParroquia' en XAMPP, '' en la raíz de un
 // dominio. Se deduce de dónde está index.php, que es lo que cambia entre un
@@ -63,11 +63,49 @@ define('ROL_EDITOR',      'editor');       // Todo el contenido; publica y moder
 define('ROL_COORDINADOR', 'coordinador');  // Contenido de su pastoral; no publica
 define('ROL_SECRETARIA',  'secretaria');   // Trámites y mensajes; no edita el sitio
 
+// Administrador y Consulta de una pastoral con módulo propio (issue de
+// revisión de módulos): mismo mecanismo de alcance por pastoral que
+// Coordinador (ver ROLES_CON_ALCANCE_PASTORAL más abajo), pero con nombre
+// explícito en vez de "Coordinador + pastoral asignada", para que quede
+// claro de un vistazo qué administra cada cuenta. "Administrador X" tiene
+// el mismo alcance que Coordinador más control total de su módulo
+// específico; "Consulta X" es de solo lectura (para que un ministro,
+// catequista o lector de a pie entre solo a ver su propio calendario).
+define('ROL_ADMIN_MESC',           'admin_mesc');
+define('ROL_CONSULTA_MESC',        'consulta_mesc');
+define('ROL_ADMIN_CATEQUESIS',     'admin_catequesis');
+define('ROL_CONSULTA_CATEQUESIS',  'consulta_catequesis');
+define('ROL_ADMIN_LECTOR',         'admin_lector');
+define('ROL_CONSULTA_LECTOR',      'consulta_lector');
+
 define('ROLES_NOMBRES', [
-    ROL_ADMIN       => 'Administrador',
-    ROL_EDITOR      => 'Editor',
-    ROL_COORDINADOR => 'Coordinador de pastoral',
-    ROL_SECRETARIA  => 'Secretaría',
+    ROL_ADMIN               => 'Administrador',
+    ROL_EDITOR              => 'Editor',
+    ROL_COORDINADOR         => 'Coordinador de pastoral',
+    ROL_SECRETARIA          => 'Secretaría',
+    ROL_ADMIN_MESC          => 'Administrador MESC',
+    ROL_CONSULTA_MESC       => 'Consulta MESC',
+    ROL_ADMIN_CATEQUESIS    => 'Administrador Catequesis',
+    ROL_CONSULTA_CATEQUESIS => 'Consulta Catequesis',
+    ROL_ADMIN_LECTOR        => 'Administrador Lector',
+    ROL_CONSULTA_LECTOR     => 'Consulta Lector',
+]);
+
+/**
+ * Roles cuyo acceso queda acotado a las pastorales/centros que se le asignen
+ * al crear la cuenta (Auth::pastoralesPermitidas()/centrosPermitidos(), vía
+ * la tabla usuarios_pastorales/usuarios_centros). Se usa en el formulario de
+ * usuarios (para mostrar el checklist de pastorales/centros) y al guardar
+ * (para saber si hay que sincronizarlas). Coordinador es genérico —sirve
+ * para cualquier pastoral sin módulo propio—; los seis roles de Administrador
+ * y Consulta son la versión con nombre explícito para las pastorales que sí
+ * tienen un módulo dedicado (MESC, Catequesis, Lector).
+ */
+define('ROLES_CON_ALCANCE_PASTORAL', [
+    ROL_COORDINADOR,
+    ROL_ADMIN_MESC, ROL_CONSULTA_MESC,
+    ROL_ADMIN_CATEQUESIS, ROL_CONSULTA_CATEQUESIS,
+    ROL_ADMIN_LECTOR, ROL_CONSULTA_LECTOR,
 ]);
 
 // ------------------------------------------------------------
@@ -108,6 +146,8 @@ define('PERMISOS', [
         'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
         'documentos.ver', 'documentos.crear', 'documentos.eliminar',
         'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
+        'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
+        'lector.ver', 'lector.crear', 'lector.editar', 'lector.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -130,6 +170,8 @@ define('PERMISOS', [
         // es una actividad de la propia pastoral, no un trámite administrativo,
         // y es el primer dato sensible (estado de salud) que maneja el sistema.
         'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
+        'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
+        'lector.ver', 'lector.crear', 'lector.editar', 'lector.eliminar',
         'cursos.ver',
     ],
 
@@ -140,4 +182,49 @@ define('PERMISOS', [
         'inscripciones.ver', 'inscripciones.editar', 'inscripciones.exportar',
         // 'cursos.ver', 'avisos.ver', 'eventos.ver',
     ],
+
+    // Administrador/Consulta de una pastoral con módulo propio: mismo
+    // alcance de contenido que Coordinador (avisos, eventos, galería,
+    // pastorales, actividades, documentos), más control total (Admin) o
+    // solo lectura (Consulta) del módulo específico de esa pastoral. El
+    // alcance sobre CUÁL pastoral se resuelve igual que Coordinador, vía
+    // Auth::puedeSobrePastoral() — ver ROLES_CON_ALCANCE_PASTORAL arriba.
+    ROL_ADMIN_MESC => [
+        'panel.ver',
+        'avisos.ver', 'avisos.crear', 'avisos.editar',
+        'eventos.ver', 'eventos.crear', 'eventos.editar',
+        'galeria.ver', 'galeria.crear', 'galeria.eliminar',
+        'pastorales.ver', 'pastorales.editar',
+        'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
+        'cursos.ver',
+    ],
+    ROL_CONSULTA_MESC => ['panel.ver', 'mesc.ver'],
+
+    ROL_ADMIN_CATEQUESIS => [
+        'panel.ver',
+        'avisos.ver', 'avisos.crear', 'avisos.editar',
+        'eventos.ver', 'eventos.crear', 'eventos.editar',
+        'galeria.ver', 'galeria.crear', 'galeria.eliminar',
+        'pastorales.ver', 'pastorales.editar',
+        'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
+        'cursos.ver',
+    ],
+    ROL_CONSULTA_CATEQUESIS => ['panel.ver', 'catequesis.ver'],
+
+    ROL_ADMIN_LECTOR => [
+        'panel.ver',
+        'avisos.ver', 'avisos.crear', 'avisos.editar',
+        'eventos.ver', 'eventos.crear', 'eventos.editar',
+        'galeria.ver', 'galeria.crear', 'galeria.eliminar',
+        'pastorales.ver', 'pastorales.editar',
+        'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
+        'documentos.ver', 'documentos.crear', 'documentos.eliminar',
+        'lector.ver', 'lector.crear', 'lector.editar', 'lector.eliminar',
+        'cursos.ver',
+    ],
+    ROL_CONSULTA_LECTOR => ['panel.ver', 'lector.ver'],
 ]);
