@@ -54,7 +54,15 @@ RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/([a-z0-9-]+)/?$   index.php?area=publico&
     # Maps para esto: enviar la ubicación de un enfermo a un servicio de
     # terceros de pago choca con la misma lógica que ya evitó reCAPTCHA. Ver
     # docs/ARQUITECTURA.md.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    #
+    # blob: en img-src: la vista previa de imagen antes de subirla
+    # (assets/js/app.js, campo_imagen.php) usa URL.createObjectURL(), que
+    # genera una URL blob: —no data:—; sin esto el navegador la bloquea en
+    # silencio (no hay error visible, el <img> simplemente no carga), aunque
+    # el archivo se suba bien al guardar porque eso no depende de esta
+    # cabecera. Un blob: es del mismo origen y viene del propio archivo que
+    # el usuario ya eligió, así que no abre superficie de XSS nueva.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
 </IfModule>
 
 # ---- PHP: ocultar versión y errores en producción ----
