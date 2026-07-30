@@ -67,6 +67,27 @@ class CursoModel extends Model
         );
     }
 
+    /**
+     * Cursos que todavía tienen sentido anunciar, para la portada: los que no
+     * han terminado y los que no tienen fechas puestas —un curso permanente o
+     * uno cuyas fechas aún no se deciden sigue siendo información útil—.
+     *
+     * Un curso ya terminado deja de aparecer aquí, a diferencia de un evento,
+     * que se conserva como registro histórico: al curso lo que le importa es
+     * que alguien se pueda inscribir.
+     */
+    public function proximos(int $limite = 3): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM cursos
+              WHERE publicado = 1
+                AND (COALESCE(fecha_fin, fecha_inicio) >= CURDATE()
+                     OR (fecha_inicio IS NULL AND fecha_fin IS NULL))
+              ORDER BY (fecha_inicio IS NULL), fecha_inicio, orden, titulo
+              LIMIT ' . max(1, $limite)
+        );
+    }
+
     public function crear(array $datos): int
     {
         $this->execute(
