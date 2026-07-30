@@ -41,10 +41,12 @@
                             <?php endif; ?>
                         </td>
                         <td class="text-end">
+                            <?php if (Auth::tienePermiso('catequesis.editar')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#actividad<?= (int) $actividad['id'] ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -53,9 +55,11 @@
         </div>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('catequesis.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#actividadNueva">
             <i class="bi bi-plus-lg me-1"></i>Agregar actividad
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -109,7 +113,7 @@ $dibujarModalActividad = static function (string $idModal, ?array $actividad, in
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('catequesis.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'catequesis', 'actividad_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar esta actividad?');">

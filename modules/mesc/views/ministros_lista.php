@@ -46,10 +46,12 @@ $lista = $ministros[$pid]['ministros'] ?? [];
                         <td><?= e($ministro['nombre']) ?><?= $ministro['activo'] ? '' : ' (inactivo)' ?></td>
                         <td class="d-none d-md-table-cell small"><?= e($ministro['telefono']) ?></td>
                         <td class="text-end">
+                            <?php if (Auth::tienePermiso('mesc.editar')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#ministro<?= (int) $ministro['id'] ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -58,10 +60,12 @@ $lista = $ministros[$pid]['ministros'] ?? [];
         </div>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('mesc.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                 data-bs-target="#ministroNuevo<?= $pid ?>">
             <i class="bi bi-plus-lg me-1"></i>Agregar ministro
         </button>
+        <?php endif; ?>
     </div>
 </div>
 <?php endforeach; ?>
@@ -100,7 +104,7 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('mesc.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'mesc', 'ministro_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar este ministro?');">

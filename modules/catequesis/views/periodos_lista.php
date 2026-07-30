@@ -49,10 +49,12 @@
                                class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-people"></i>
                             </a>
+                            <?php if (Auth::tienePermiso('catequesis.editar')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#periodo<?= (int) $periodo['id'] ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -61,9 +63,11 @@
         </div>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('catequesis.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#periodoNuevo">
             <i class="bi bi-plus-lg me-1"></i>Agregar periodo
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -108,7 +112,7 @@ $dibujarModalPeriodo = static function (string $idModal, ?array $periodo, string
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('catequesis.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'catequesis', 'periodo_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar este periodo? También se borran sus asignaciones de catequistas.');">

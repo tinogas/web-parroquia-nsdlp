@@ -27,6 +27,7 @@
                 <a href="<?= e(url_activo($documento['archivo'])) ?>" target="_blank" rel="noopener">
                     <i class="bi bi-file-earmark-pdf text-danger me-1"></i><?= e($documento['titulo']) ?>
                 </a>
+                <?php if (Auth::tienePermiso('catequesis.eliminar')): ?>
                 <form method="POST" accept-charset="UTF-8"
                       action="<?= e(url_post('admin', 'catequesis', 'documento_eliminar')) ?>" class="m-0"
                       onsubmit="return confirm('¿Eliminar este documento?');">
@@ -34,14 +35,17 @@
                     <input type="hidden" name="id" value="<?= (int) $documento['id'] ?>">
                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                 </form>
+                <?php endif; ?>
             </li>
             <?php endforeach; ?>
         </ul>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('catequesis.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#documentoNuevo">
             <i class="bi bi-plus-lg me-1"></i>Subir documento
         </button>
+        <?php endif; ?>
     </div>
 </div>
 

@@ -100,7 +100,7 @@ $dibujarModalColor = static function (string $idModal, ?array $color, string $cs
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('mesc.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'mesc', 'color_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar este color? Los turnos que lo usaban quedan sin color asignado.');">

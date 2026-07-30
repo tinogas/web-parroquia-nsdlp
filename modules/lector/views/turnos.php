@@ -57,14 +57,21 @@ if (!function_exists('lector_texto_legible')) {
                             <?php if ($celda): ?>
                             <div class="numero-dia"><?= $celda['dia'] ?></div>
                             <?php foreach ($celda['turnos'] as $turno): ?>
-                            <?php $fondo = $turno['color_hex'] ?: '#1e4d8b'; ?>
+                            <?php
+                            $fondo   = $turno['color_hex'] ?: '#1e4d8b';
+                            $titulo  = $turno['descripcion']
+                                     . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
+                                     . ($turno['lectores_nombres'] ? ' — ' . $turno['lectores_nombres'] : ' — sin lectores asignados');
+                            $etiqueta = e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
+                            ?>
+                            <?php if (Auth::tienePermiso('lector.editar')): ?>
                             <a href="<?= e(url_admin('lector', 'turno_editar', ['id' => $turno['id']])) ?>"
                                class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
-                               title="<?= e($turno['descripcion']
-                                          . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                          . ($turno['lectores_nombres'] ? ' — ' . $turno['lectores_nombres'] : ' — sin lectores asignados')) ?>">
-                                <?= e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') ?><?= e($turno['descripcion']) ?>
-                            </a>
+                               title="<?= e($titulo) ?>"><?= $etiqueta ?></a>
+                            <?php else: ?>
+                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
+                                  title="<?= e($titulo) ?>"><?= $etiqueta ?></span>
+                            <?php endif; ?>
                             <?php endforeach; ?>
                             <?php endif; ?>
                         </td>

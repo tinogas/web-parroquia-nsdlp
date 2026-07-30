@@ -26,6 +26,7 @@
     números y guarda si conoces mejor el camino.
 </div>
 
+<?php $puedeReordenar = Auth::tienePermiso('mesc.crear'); ?>
 <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'mesc', 'ruta_reordenar')) ?>">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
     <input type="hidden" name="ruta_id" value="<?= (int) $ruta['id'] ?>">
@@ -45,8 +46,12 @@
                 <?php foreach ($visitas as $i => $visita): ?>
                     <tr>
                         <td>
+                            <?php if ($puedeReordenar): ?>
                             <input type="number" class="form-control form-control-sm"
                                    name="orden[<?= (int) $visita['id'] ?>]" value="<?= $i + 1 ?>" min="1" max="999">
+                            <?php else: ?>
+                            <?= $i + 1 ?>
+                            <?php endif; ?>
                         </td>
                         <td class="fw-semibold"><?= e($visita['nombre_enfermo']) ?></td>
                         <td class="d-none d-md-table-cell small"><?= e($visita['direccion']) ?></td>
@@ -58,7 +63,9 @@
         </div>
     </div>
 
+    <?php if ($puedeReordenar): ?>
     <button type="submit" class="btn btn-primary">
         <i class="bi bi-check-lg me-1"></i>Guardar orden
     </button>
+    <?php endif; ?>
 </form>

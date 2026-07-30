@@ -313,24 +313,6 @@ body.impersonando .sidebar {
     margin-left: .4rem;
 }
 
-.lista-etapas {
-    padding-left: 1.15rem;
-    color: #6c757d;
-}
-
-.lista-etapas li {
-    margin-bottom: .3rem;
-}
-
-.lista-etapas li.hecha {
-    color: #198754;
-    font-weight: 600;
-}
-
-.lista-etapas li.hecha::marker {
-    content: '✓ ';
-}
-
 /* ---- Calendario de turnos MESC (issue #3) ---- */
 
 .calendario-tabla {

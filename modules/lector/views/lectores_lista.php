@@ -31,10 +31,12 @@
                             <?= e(trim(($lector['telefono'] ?? '') . ($lector['telefono'] && $lector['email'] ? ' · ' : '') . ($lector['email'] ?? ''))) ?>
                         </td>
                         <td class="text-end">
+                            <?php if (Auth::tienePermiso('lector.editar')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#lector<?= (int) $lector['id'] ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -43,9 +45,11 @@
         </div>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('lector.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#lectorNuevo">
             <i class="bi bi-plus-lg me-1"></i>Agregar lector
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -88,7 +92,7 @@ $dibujarModalLector = static function (string $idModal, ?array $lector, int $pas
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('lector.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'lector', 'lector_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar este lector?');">

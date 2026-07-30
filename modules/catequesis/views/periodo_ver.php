@@ -23,6 +23,8 @@
     <div class="card-body p-4">
         <h2 class="h6 fw-bold mb-3">Catequistas de este periodo</h2>
 
+        <?php $puedeEditar = Auth::tienePermiso('catequesis.editar'); ?>
+
         <?php if (!$asignados): ?>
         <p class="text-muted small mb-3">Todavía no hay catequistas asignados a este periodo.</p>
         <?php else: ?>
@@ -41,6 +43,7 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <?php if ($puedeEditar): ?>
                             <form method="POST" accept-charset="UTF-8" class="d-inline m-0"
                                   action="<?= e(url_post('admin', 'catequesis', 'periodo_desasignar')) ?>"
                                   onsubmit="return confirm('¿Quitar a este catequista del periodo?');">
@@ -49,6 +52,7 @@
                                 <input type="hidden" name="catequista_id" value="<?= (int) $catequista['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -57,6 +61,7 @@
         </div>
         <?php endif; ?>
 
+        <?php if ($puedeEditar): ?>
         <?php if (!$disponibles): ?>
         <p class="text-muted small mb-0">
             No hay más catequistas activos por asignar.
@@ -91,6 +96,7 @@
                 </button>
             </div>
         </form>
+        <?php endif; ?>
         <?php endif; ?>
     </div>
 </div>

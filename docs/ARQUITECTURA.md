@@ -505,6 +505,27 @@ este checklist (Coordinador más los seis nuevos), para que el formulario de usu
 repitan `=== ROL_COORDINADOR` en cada punto — un error fácil de cometer si un rol nuevo
 se agrega en un solo lugar y se olvida el otro.
 
+### Un botón sin permiso no se muestra, no se muestra deshabilitado
+
+Antes de los roles de Consulta, cualquiera que pudiera *ver* un módulo (coordinador,
+editor, admin) también podía *editarlo* — nunca hizo falta que una vista distinguiera
+entre ambos. Consulta rompió ese supuesto (solo tiene `X.ver`) y expuso un hueco real en
+las vistas de MESC (construidas antes de que existiera ese rol) y, por copiarlas tal
+cual, también en Catequesis y Lector: botones de Nuevo/Editar/Eliminar sin ningún
+`Auth::tienePermiso()`, y —el más importante— el calendario de turnos enlazaba cada
+evento directo a `turno_editar`, así que un usuario de Consulta que le diera clic caía
+en `requirePermiso('mesc.editar')`, era redirigido a `/admin/panel` con un error de
+permisos, y no entendía por qué. `requirePermiso()` y `requireAlcancePastoral()`
+comparten ese mismo destino (`Controller.php`), así que cualquier acción sin permiso —no
+solo un botón, un enlace directo como el del calendario— termina ahí.
+
+La regla, ya aplicada en MESC, Catequesis y Lector: si `Auth::tienePermiso()` es falso
+para la acción, el botón o enlace **no se dibuja**, no se muestra gris ni deshabilitado.
+En el calendario de turnos, el evento sigue mostrándose (`<span>` en vez de `<a>`,
+mismo color y título) para que Consulta vea su turno, solo que no es clickeable. Esto
+es además de la comprobación real en el controlador (`requirePermiso()` sigue ahí):
+ocultar el botón es una cortesía de UX, no el límite de seguridad.
+
 ### Alcance por centro/sede (issue #3)
 
 Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,

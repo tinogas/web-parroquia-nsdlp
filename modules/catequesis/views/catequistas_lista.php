@@ -34,10 +34,12 @@
                             <?= e(trim(($catequista['telefono'] ?? '') . ($catequista['telefono'] && $catequista['email'] ? ' · ' : '') . ($catequista['email'] ?? ''))) ?>
                         </td>
                         <td class="text-end">
+                            <?php if (Auth::tienePermiso('catequesis.editar')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#catequista<?= (int) $catequista['id'] ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -46,9 +48,11 @@
         </div>
         <?php endif; ?>
 
+        <?php if (Auth::tienePermiso('catequesis.crear')): ?>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#catequistaNuevo">
             <i class="bi bi-plus-lg me-1"></i>Agregar catequista
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -91,7 +95,7 @@ $dibujarModalCatequista = static function (string $idModal, ?array $catequista, 
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio): ?>
+                    <?php if (!$vacio && Auth::tienePermiso('catequesis.eliminar')): ?>
                     <button type="submit" formaction="<?= e(url_post('admin', 'catequesis', 'catequista_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
                             onclick="return confirm('¿Eliminar este catequista? También se quitará de cualquier periodo donde estuviera asignado.');">
