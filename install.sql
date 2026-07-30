@@ -869,6 +869,7 @@ CREATE TABLE IF NOT EXISTS inscripciones_curso (
     es_menor         TINYINT(1)   NOT NULL DEFAULT 0,
     telefono         VARCHAR(20)  NULL,
     email            VARCHAR(150) NULL,
+    centro           VARCHAR(140) NULL,
     tutor_nombre     VARCHAR(150) NULL,
     tutor_parentesco VARCHAR(60)  NULL,
     tutor_telefono   VARCHAR(20)  NULL,

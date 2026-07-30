@@ -453,11 +453,19 @@ Hoy es contenido público informativo. En fase 2 es el ancla del aula virtual: l
 ### `inscripciones_curso`
 
 `folio` con `uq_ins_folio`, `curso_id`, `nombre`, `fecha_nacimiento`, `es_menor`,
-`telefono`, `email`, datos de tutor, `estado` ENUM(`pendiente`, `confirmada`,
+`telefono`, `email`, `centro` (texto libre: "Centro al que perteneces", no es FK a
+`centros`), datos de tutor, `estado` ENUM(`pendiente`, `confirmada`,
 `lista_espera`, `cancelada`), `consentimiento`, `consentimiento_ip`, `aviso_version`,
 `notas`.
 
 Único `uq_ins_curso_email (curso_id, email)` para evitar inscripciones duplicadas.
+
+Los datos de tutor (`tutor_nombre`, `tutor_parentesco`, `tutor_telefono`) se guardan si
+`es_menor` (calculado de `fecha_nacimiento`, y entonces obligatorios) o si la persona
+marcó la casilla "Padre, madre o tutor" del formulario aunque no sea menor (entonces son
+opcionales). `CursoPublicoController::validarInscripcion()` decide esto con
+`$guardarTutor = $esMenor || $tieneTutor`; la vista de detalle (`inscripcion_ver.php`)
+muestra esa sección siempre que haya algún dato de tutor, no solo cuando `es_menor`.
 
 ---
 

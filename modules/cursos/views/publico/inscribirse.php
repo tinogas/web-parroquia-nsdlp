@@ -56,24 +56,37 @@
                         <input type="tel" name="telefono" id="telefono" class="form-control"
                                value="<?= e($valores['telefono'] ?? '') ?>">
                     </div>
+                    <div class="col-md-12">
+                        <label for="centro" class="form-label fw-semibold">Centro al que perteneces</label>
+                        <input type="text" name="centro" id="centro" class="form-control" maxlength="140"
+                               value="<?= e($valores['centro'] ?? '') ?>" placeholder="Ej. Sede, San Pío, Centro Guadalupe…">
+                    </div>
                 </div>
 
+                <?php $tieneTutor = !empty($valores['tiene_tutor']); ?>
                 <h2 class="h6 fw-bold mb-2">Padre, madre o tutor</h2>
-                <p class="text-muted small mb-3">Completa esta sección solo si quien se inscribe es menor de edad.</p>
+                <p class="text-muted small mb-2">
+                    Obligatorio si quien se inscribe es menor de edad. Marca la casilla para completar esta sección.
+                </p>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" name="tiene_tutor" id="tiene_tutor"
+                           value="1" data-tutor-activar <?= $tieneTutor ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="tiene_tutor">Sí, voy a completar los datos de padre, madre o tutor</label>
+                </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-5">
                         <label for="tutor_nombre" class="form-label fw-semibold">Nombre</label>
-                        <input type="text" name="tutor_nombre" id="tutor_nombre" class="form-control"
+                        <input type="text" name="tutor_nombre" id="tutor_nombre" class="form-control" data-tutor-campo
                                value="<?= e($valores['tutor_nombre'] ?? '') ?>">
                     </div>
                     <div class="col-md-3">
                         <label for="tutor_parentesco" class="form-label fw-semibold">Parentesco</label>
-                        <input type="text" name="tutor_parentesco" id="tutor_parentesco" class="form-control"
+                        <input type="text" name="tutor_parentesco" id="tutor_parentesco" class="form-control" data-tutor-campo
                                value="<?= e($valores['tutor_parentesco'] ?? '') ?>">
                     </div>
                     <div class="col-md-4">
                         <label for="tutor_telefono" class="form-label fw-semibold">Teléfono</label>
-                        <input type="tel" name="tutor_telefono" id="tutor_telefono" class="form-control"
+                        <input type="tel" name="tutor_telefono" id="tutor_telefono" class="form-control" data-tutor-campo
                                value="<?= e($valores['tutor_telefono'] ?? '') ?>">
                     </div>
                 </div>

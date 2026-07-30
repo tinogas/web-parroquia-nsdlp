@@ -19,4 +19,28 @@
             });
         });
     }
+
+    // Inscripción a cursos: la sección "Padre, madre o tutor" arranca
+    // deshabilitada; la casilla la habilita. Sin JavaScript los campos se
+    // quedan como en el HTML (habilitados), así que el formulario sigue
+    // funcionando completo.
+    var casillaTutor = document.querySelector('[data-tutor-activar]');
+    if (casillaTutor) {
+        var camposTutor = document.querySelectorAll('[data-tutor-campo]');
+        var actualizarCamposTutor = function () {
+            camposTutor.forEach(function (campo) {
+                campo.disabled = !casillaTutor.checked;
+            });
+        };
+        casillaTutor.addEventListener('change', actualizarCamposTutor);
+        // Si el formulario se volvió a mostrar tras un error con estos campos
+        // ya escritos, se dejan visibles y editables en vez de esconderlos.
+        var tutorConDatos = Array.prototype.some.call(camposTutor, function (campo) {
+            return campo.value.trim() !== '';
+        });
+        if (tutorConDatos) {
+            casillaTutor.checked = true;
+        }
+        actualizarCamposTutor();
+    }
 })();

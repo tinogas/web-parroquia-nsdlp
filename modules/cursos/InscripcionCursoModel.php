@@ -93,11 +93,11 @@ class InscripcionCursoModel extends Model
 
             $this->execute(
                 'INSERT INTO inscripciones_curso
-                    (folio, curso_id, nombre, fecha_nacimiento, es_menor, telefono, email,
+                    (folio, curso_id, nombre, fecha_nacimiento, es_menor, telefono, email, centro,
                      tutor_nombre, tutor_parentesco, tutor_telefono, estado,
                      consentimiento, consentimiento_ip, aviso_version, notas)
                  VALUES
-                    (:folio, :curso, :nombre, :fechaNac, :esMenor, :telefono, :email,
+                    (:folio, :curso, :nombre, :fechaNac, :esMenor, :telefono, :email, :centro,
                      :tutorNombre, :tutorParentesco, :tutorTelefono, :estado,
                      :consentimiento, :consentimientoIp, :avisoVersion, :notas)',
                 [
@@ -108,6 +108,7 @@ class InscripcionCursoModel extends Model
                     ':esMenor'          => $datos['es_menor'],
                     ':telefono'         => $datos['telefono'] ?: null,
                     ':email'            => $datos['email'],
+                    ':centro'           => $datos['centro'] ?: null,
                     ':tutorNombre'      => $datos['tutor_nombre'] ?: null,
                     ':tutorParentesco'  => $datos['tutor_parentesco'] ?: null,
                     ':tutorTelefono'    => $datos['tutor_telefono'] ?: null,
