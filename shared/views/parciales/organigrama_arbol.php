@@ -64,9 +64,11 @@ $oa_admin = $oa_admin ?? false;
 $oa_csrf  = $oa_csrf ?? '';
 ?>
 <?php if ($oa_nodos): ?>
-<ul class="arbol-organigrama">
-    <?php foreach ($oa_nodos as $nodo) { organigrama_render_nodo($nodo, $oa_admin, $oa_csrf); } ?>
-</ul>
+<div class="arbol-organigrama-contenedor">
+    <ul class="arbol-organigrama">
+        <?php foreach ($oa_nodos as $nodo) { organigrama_render_nodo($nodo, $oa_admin, $oa_csrf); } ?>
+    </ul>
+</div>
 <?php else: ?>
 <p class="text-muted fst-italic mb-0">Todavía no hay nodos en el organigrama.</p>
 <?php endif; ?>

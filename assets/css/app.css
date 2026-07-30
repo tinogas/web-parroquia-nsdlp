@@ -248,6 +248,10 @@ body.impersonando .sidebar {
 
 /* ---- Organigrama ---- */
 
+.arbol-organigrama-contenedor {
+    overflow-x: auto;
+}
+
 .arbol-organigrama,
 .arbol-organigrama ul {
     list-style: none;
@@ -273,6 +277,7 @@ body.impersonando .sidebar {
     display: inline-flex;
     align-items: center;
     gap: .6rem;
+    max-width: 100%;
     background: #fff;
     border: 1px solid #dee2e6;
     border-radius: .5rem;
@@ -295,22 +300,53 @@ body.impersonando .sidebar {
     display: flex;
     flex-direction: column;
     line-height: 1.2;
+    min-width: 0;
 }
 
 .nodo-titulo {
     font-weight: 600;
     font-size: .9rem;
+    overflow-wrap: break-word;
 }
 
 .nodo-persona {
     font-size: .78rem;
     color: #6c757d;
+    overflow-wrap: break-word;
 }
 
 .nodo-acciones {
     display: flex;
     gap: .25rem;
     margin-left: .4rem;
+}
+
+@media (max-width: 575.98px) {
+    .arbol-organigrama ul {
+        padding-left: 1rem;
+    }
+
+    .nodo-organigrama {
+        gap: .4rem;
+        padding: .35rem .6rem;
+    }
+
+    .nodo-foto {
+        width: 26px;
+        height: 26px;
+    }
+
+    .nodo-titulo {
+        font-size: .82rem;
+    }
+
+    .nodo-persona {
+        font-size: .72rem;
+    }
+
+    .nodo-acciones .btn {
+        padding: .2rem .4rem;
+    }
 }
 
 /* ---- Calendario de turnos MESC (issue #3) ---- */

@@ -1,0 +1,235 @@
+/* ============================================================
+   Organigrama — vista de impresión/PDF
+   Página independiente (sin el layout del sitio): se abre en pestaña nueva
+   y se imprime o se guarda como PDF con el diálogo del propio navegador. Sin
+   librería de PDF: ver docs/ARQUITECTURA.md.
+   ============================================================ */
+
+:root {
+    --oi-azul:        #1e4d8b;
+    --oi-azul-oscuro: #16233a;
+    --oi-linea:       #adb9c7;
+    --oi-espacio:     2.25rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #24303f;
+    margin: 0;
+    padding: 1.5rem 1.25rem 3rem;
+    background: #fff;
+}
+
+.oi-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.oi-volver {
+    color: var(--oi-azul);
+    text-decoration: none;
+    font-size: .9rem;
+}
+
+.oi-volver:hover {
+    text-decoration: underline;
+}
+
+.oi-boton-imprimir {
+    background: var(--oi-azul);
+    color: #fff;
+    border: 0;
+    border-radius: .4rem;
+    padding: .55rem 1.1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.oi-boton-imprimir:hover {
+    background: var(--oi-azul-oscuro);
+}
+
+.oi-encabezado {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.oi-encabezado .oi-parroquia {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--oi-azul-oscuro);
+    margin: 0;
+}
+
+.oi-encabezado .oi-subtitulo {
+    font-size: 1rem;
+    color: #6c757d;
+    margin: .2rem 0 0;
+}
+
+.oi-imagen {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.oi-vacio {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* ---- Árbol de caja y línea ----
+   Patrón clásico de "organigrama en CSS puro": cada <li> reserva
+   padding-top para dibujar ahí sus conectores (pseudo-elementos ::before/
+   ::after), y cada <ul> anidado dibuja la línea vertical que baja del nodo
+   padre. Frágil si se edita sin cuidado — ver el comentario de cada regla
+   antes de tocarla. */
+
+.oi-arbol,
+.oi-arbol ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.oi-arbol {
+    padding-bottom: 1rem;
+}
+
+.oi-arbol li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding: var(--oi-espacio) .6rem 0;
+}
+
+/* La raíz no tiene línea hacia un padre: no reserva espacio para ella. */
+.oi-arbol > li {
+    padding-top: 0;
+}
+
+/* Línea que baja de un nodo hacia la fila de sus hijos. */
+.oi-arbol ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: var(--oi-espacio);
+    border-left: 2px solid var(--oi-linea);
+}
+
+/* Conector en T de cada nodo hacia la barra horizontal de sus hermanos:
+   ::before dibuja la mitad izquierda (hacia el hermano anterior), ::after
+   la mitad derecha (hacia el siguiente) y también carga el tramo vertical
+   propio de este nodo (border-left, a la altura de su propio centro). */
+.oi-arbol li::before,
+.oi-arbol li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: var(--oi-espacio);
+    border-top: 2px solid var(--oi-linea);
+}
+
+.oi-arbol li::before {
+    right: 50%;
+}
+
+.oi-arbol li::after {
+    left: 50%;
+    border-left: 2px solid var(--oi-linea);
+}
+
+/* Hijo único: nada de barra horizontal, la línea del <ul> ya baja derecho. */
+.oi-arbol li:only-child::before,
+.oi-arbol li:only-child::after {
+    display: none;
+}
+
+/* El primero no tiene hermano a la izquierda; el último, ninguno a la
+   derecha. Al último hay que devolverle su tramo vertical (lo llevaba
+   ::after) mediante ::before, para no perder la línea hacia su propia caja. */
+.oi-arbol li:first-child::before {
+    border: 0 none;
+}
+
+.oi-arbol li:last-child::after {
+    border: 0 none;
+}
+
+.oi-arbol li:last-child::before {
+    border-right: 2px solid var(--oi-linea);
+    border-radius: 0 6px 0 0;
+}
+
+.oi-arbol li:first-child::after {
+    border-radius: 6px 0 0 0;
+}
+
+.oi-nodo {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    background: #fff;
+    border: 1px solid rgba(30, 77, 139, .3);
+    border-radius: .5rem;
+    padding: .6rem .9rem;
+    min-width: 110px;
+    max-width: 200px;
+}
+
+.oi-nodo.oi-inactivo {
+    opacity: .55;
+}
+
+.oi-foto {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.oi-titulo {
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--oi-azul-oscuro);
+    overflow-wrap: break-word;
+}
+
+.oi-persona {
+    font-size: .75rem;
+    color: #6c757d;
+    overflow-wrap: break-word;
+}
+
+@media print {
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+    }
+
+    @page {
+        size: landscape;
+        margin: 12mm;
+    }
+}
