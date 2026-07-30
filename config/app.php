@@ -5,7 +5,7 @@
 
 define('APP_NAME',   'Parroquia Nuestra Señora de la Paz');
 define('APP_CORTO',  'Parroquia N. S. de la Paz');
-define('APP_VERSION', '0.1.0');
+define('APP_VERSION', '0.1.1');
 
 // Subcarpeta donde vive el sitio: '/WebParroquia' en XAMPP, '' en la raíz de un
 // dominio. Se deduce de dónde está index.php, que es lo que cambia entre un
