@@ -8,54 +8,8 @@
 </p>
 <?php endif; ?>
 
-<div class="card border-0 shadow-sm mb-5" id="calendario" data-anio="<?= (int) $anio ?>" data-mes="<?= (int) $mes ?>"
-     <?= $pastoral ? 'data-pastoral="' . e($pastoral['slug']) . '"' : '' ?>>
-    <div class="card-body p-3 p-md-4">
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <a href="<?= e($urlMesAnterior) ?>" class="btn btn-sm btn-outline-secondary" data-calendario-nav="anterior"
-               aria-label="Mes anterior">
-                <i class="bi bi-chevron-left"></i>
-            </a>
-            <h2 class="h5 fw-bold mb-0" data-calendario-titulo><?= e($nombreMes) ?></h2>
-            <a href="<?= e($urlMesSiguiente) ?>" class="btn btn-sm btn-outline-secondary" data-calendario-nav="siguiente"
-               aria-label="Mes siguiente">
-                <i class="bi bi-chevron-right"></i>
-            </a>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-bordered calendario-tabla mb-0">
-                <thead>
-                    <tr class="text-center small text-uppercase">
-                        <?php foreach (['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'] as $dia): ?>
-                        <th><?= $dia ?></th>
-                        <?php endforeach; ?>
-                    </tr>
-                </thead>
-                <tbody data-calendario-cuerpo>
-                    <?php foreach ($semanas as $semana): ?>
-                    <tr>
-                        <?php foreach ($semana as $celda): ?>
-                        <td class="<?= $celda && $celda['hoy'] ? 'dia-hoy' : '' ?>">
-                            <?php if ($celda): ?>
-                            <div class="numero-dia"><?= $celda['dia'] ?></div>
-                            <?php foreach ($celda['eventos'] as $evento): ?>
-                            <a href="<?= e(url_publica('eventos', ['slug' => $evento['slug']])) ?>"
-                               class="evento-punto" style="background:<?= e($evento['color'] ?: '#1e4d8b') ?>"
-                               title="<?= e($evento['titulo']) ?>">
-                                <?= e($evento['titulo']) ?>
-                            </a>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
-                        </td>
-                        <?php endforeach; ?>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div data-calendario-contenedor>
+    <?php require BASE_PATH . '/modules/eventos/views/publico/calendario.php'; ?>
 </div>
 
 <h2 class="h5 fw-bold mb-3">Próximos eventos</h2>

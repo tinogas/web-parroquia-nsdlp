@@ -5,6 +5,7 @@ require_once BASE_PATH . '/modules/horarios/HorarioModel.php';
 require_once BASE_PATH . '/modules/carrusel/CarruselModel.php';
 require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
 require_once BASE_PATH . '/modules/eventos/EventoModel.php';
+require_once BASE_PATH . '/modules/cursos/CursoModel.php';
 
 class InicioController extends ControllerPublico
 {
@@ -23,6 +24,7 @@ class InicioController extends ControllerPublico
             'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
             'avisosRecientes' => (new AvisoModel())->recientes(3),
             'proximosEventos' => (new EventoModel())->proximos(3),
+            'proximosCursos'  => (new CursoModel())->proximos(3),
             'jsonLd'          => $this->datosEstructurados(),
         ]);
     }

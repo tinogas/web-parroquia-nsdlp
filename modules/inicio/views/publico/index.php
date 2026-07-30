@@ -63,36 +63,13 @@
 </section>
 <?php endif; ?>
 
-<?php if (Config::tiene('telefono') || Config::tiene('direccion')): ?>
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm text-start">
-            <div class="card-body p-4">
-                <h2 class="h6 text-uppercase text-muted mb-3">Contacto rápido</h2>
-                <ul class="list-unstyled mb-0 lista-contacto">
-                    <?php if (Config::tiene('direccion')): ?>
-                    <li><i class="bi bi-geo-alt text-primary"></i> <?= e(Config::get('direccion')) ?></li>
-                    <?php endif; ?>
-                    <?php if (Config::tiene('telefono')): ?>
-                    <li>
-                        <i class="bi bi-telephone text-primary"></i>
-                        <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', Config::get('telefono'))) ?>">
-                            <?= e(Config::get('telefono')) ?>
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if (Config::tiene('horario_oficina')): ?>
-                    <li><i class="bi bi-clock text-primary"></i> <?= nl2br(e(Config::get('horario_oficina'))) ?></li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<?php if (!empty($proximosEventos) || !empty($avisosRecientes)): ?>
-<div class="row g-4 mt-1">
+<?php /* Lo que viene: eventos y cursos, uno en cada columna. Los datos de
+         contacto no se repiten aquí porque el pie de página ya los lleva en
+         todas las pantallas del sitio. */ ?>
+<?php if (!empty($proximosEventos) || !empty($proximosCursos)): ?>
+<div class="row justify-content-center mt-1">
+<div class="col-lg-8">
+<div class="row g-4 justify-content-center">
 
     <?php if (!empty($proximosEventos)): ?>
     <div class="col-md-6">
@@ -117,26 +94,79 @@
     </div>
     <?php endif; ?>
 
-    <?php if (!empty($avisosRecientes)): ?>
+    <?php if (!empty($proximosCursos)): ?>
     <div class="col-md-6">
-        <h2 class="h6 text-uppercase text-muted mb-3">Últimos avisos</h2>
+        <h2 class="h6 text-uppercase text-muted mb-3">Próximos cursos</h2>
         <div class="d-flex flex-column gap-2">
-            <?php foreach ($avisosRecientes as $aviso): ?>
-            <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>"
+            <?php foreach ($proximosCursos as $curso): ?>
+            <?php
+            // Se avisa de la inscripción solo si de verdad se puede uno inscribir:
+            // la casilla abierta y, si hay fecha de cierre, que no haya pasado.
+            $abierta = $curso['inscripciones_abiertas']
+                && (!$curso['fecha_cierre_inscripcion'] || $curso['fecha_cierre_inscripcion'] >= date('Y-m-d'));
+            ?>
+            <a href="<?= e(url_publica('cursos', ['slug' => $curso['slug']])) ?>"
                class="card border-0 shadow-sm text-decoration-none">
                 <div class="card-body p-3">
-                    <span class="fw-semibold text-body d-block"><?= e($aviso['titulo']) ?></span>
-                    <span class="small text-muted"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></span>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                            <?= e(CursoModel::MODALIDADES[$curso['modalidad']] ?? $curso['modalidad']) ?>
+                        </span>
+                        <?php if ($abierta): ?>
+                        <span class="badge bg-success-subtle text-success-emphasis">Inscripciones abiertas</span>
+                        <?php endif; ?>
+                    </div>
+                    <span class="fw-semibold text-body d-block mb-1"><?= e($curso['titulo']) ?></span>
+                    <?php if ($curso['fecha_inicio']): ?>
+                    <span class="small text-muted d-block">
+                        <i class="bi bi-calendar3 me-1"></i>Inicia el <?= e(fecha_larga($curso['fecha_inicio'])) ?>
+                    </span>
+                    <?php endif; ?>
+                    <?php if ($curso['horario'] || $curso['lugar']): ?>
+                    <span class="small text-muted d-block">
+                        <?php if ($curso['horario']): ?>
+                        <i class="bi bi-clock me-1"></i><?= e($curso['horario']) ?><?php endif; ?>
+                        <?php if ($curso['horario'] && $curso['lugar']): ?> · <?php endif; ?>
+                        <?php if ($curso['lugar']): ?>
+                        <i class="bi bi-geo-alt me-1"></i><?= e($curso['lugar']) ?><?php endif; ?>
+                    </span>
+                    <?php endif; ?>
                 </div>
             </a>
             <?php endforeach; ?>
         </div>
         <p class="mt-2 mb-0">
-            <a href="<?= e(url_publica('avisos')) ?>" class="small">Ver todos los avisos <i class="bi bi-arrow-right"></i></a>
+            <a href="<?= e(url_publica('cursos')) ?>" class="small">Ver todos los cursos <i class="bi bi-arrow-right"></i></a>
         </p>
     </div>
     <?php endif; ?>
 
+</div>
+</div>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($avisosRecientes)): ?>
+<div class="row justify-content-center mt-4">
+<div class="col-lg-8">
+    <h2 class="h6 text-uppercase text-muted mb-3">Últimos avisos</h2>
+    <div class="row g-3">
+        <?php foreach ($avisosRecientes as $aviso): ?>
+        <div class="col-md-4">
+            <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>"
+               class="card border-0 shadow-sm h-100 text-decoration-none">
+                <div class="card-body p-3">
+                    <span class="fw-semibold text-body d-block"><?= e($aviso['titulo']) ?></span>
+                    <span class="small text-muted"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></span>
+                </div>
+            </a>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <p class="mt-2 mb-0">
+        <a href="<?= e(url_publica('avisos')) ?>" class="small">Ver todos los avisos <i class="bi bi-arrow-right"></i></a>
+    </p>
+</div>
 </div>
 <?php endif; ?>
 

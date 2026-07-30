@@ -16,6 +16,12 @@ uploads/*/**
 # Respaldos de base de datos
 backups/*.sql
 
+# Hojas de cálculo de trabajo: la agenda parroquial que se transcribe a mano y
+# lo que saca de ella herramientas/extraer_agenda.py. Los scripts sí se
+# versionan; los datos de origen y su extracción no.
+*.xlsx
+agenda-2026.json
+
 # Logs y caché
 *.log
 *.cache
@@ -35,3 +41,7 @@ Thumbs.db
 
 # Dependencias (el proyecto no usa Composer; la regla es preventiva)
 vendor/
+node_modules/
+
+# Caché de los scripts de herramientas/
+__pycache__/

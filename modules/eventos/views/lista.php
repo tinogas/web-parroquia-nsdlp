@@ -10,20 +10,106 @@
     <?php endif; ?>
 </div>
 
-<div class="btn-group btn-group-sm mb-3" role="group">
-    <a href="<?= e(url_admin('eventos')) ?>"
-       class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-    <a href="<?= e(url_admin('eventos', '', ['filtro' => 'publicados'])) ?>"
-       class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-    <a href="<?= e(url_admin('eventos', '', ['filtro' => 'borradores'])) ?>"
-       class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+<?php
+// Los filtros se combinan, así que cada uno tiene que arrastrar el estado de los
+// otros: los botones de estado conservan mes y año, y el formulario de fecha
+// conserva el estado.
+$porFecha  = array_filter(
+    ['anio' => $anio, 'mes' => $mes, 'dia' => $dia],
+    static fn ($v) => $v !== null
+);
+$porEstado = $filtro !== 'todos' ? ['filtro' => $filtro] : [];
+$MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+          'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+?>
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
+        <a href="<?= e(url_admin('eventos', '', $porFecha)) ?>"
+           class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
+        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'publicados'] + $porFecha)) ?>"
+           class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
+        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'borradores'] + $porFecha)) ?>"
+           class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+    </div>
+
+    <?php if ($anios): ?>
+    <form method="GET" action="<?= e(url_admin('eventos')) ?>" class="row g-2 align-items-end">
+        <?php if (!URLS_AMIGABLES): ?>
+        <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
+                 descarta la del action: hay que repetirla como campos. */ ?>
+        <input type="hidden" name="area" value="admin">
+        <input type="hidden" name="modulo" value="eventos">
+        <?php endif; ?>
+        <?php if ($filtro !== 'todos'): ?>
+        <input type="hidden" name="filtro" value="<?= e($filtro) ?>">
+        <?php endif; ?>
+        <div class="col-auto">
+            <label for="dia" class="form-label small fw-semibold mb-1">Día</label>
+            <select name="dia" id="dia" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <?php for ($d = 1; $d <= $diasDelMes; $d++): ?>
+                <option value="<?= $d ?>" <?= $dia === $d ? 'selected' : '' ?>><?= $d ?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="mes" class="form-label small fw-semibold mb-1">Mes</label>
+            <select name="mes" id="mes" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <?php foreach ($MESES as $i => $nombre): ?>
+                <option value="<?= $i + 1 ?>" <?= $mes === $i + 1 ? 'selected' : '' ?>>
+                    <?= e(ucfirst($nombre)) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="anio" class="form-label small fw-semibold mb-1">Año</label>
+            <select name="anio" id="anio" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <?php foreach ($anios as $unAnio): ?>
+                <option value="<?= (int) $unAnio ?>" <?= $anio === $unAnio ? 'selected' : '' ?>>
+                    <?= (int) $unAnio ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+        </div>
+        <?php if ($porFecha): ?>
+        <div class="col-auto">
+            <a href="<?= e(url_admin('eventos', '', $porEstado)) ?>"
+               class="btn btn-sm btn-outline-secondary">Quitar</a>
+        </div>
+        <?php endif; ?>
+    </form>
+    <?php endif; ?>
 </div>
+
+<?php if ($porFecha): ?>
+<p class="small text-muted mb-3">
+    <?= (int) $listado['total'] ?>
+    <?= (int) $listado['total'] === 1 ? 'evento' : 'eventos' ?>
+    con fecha de inicio <?= e($descripcionFecha) ?>.
+</p>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <?php if (!$listado['filas']): ?>
         <div class="card-body text-center py-5">
             <div class="display-6 text-body-tertiary mb-2"><i class="bi bi-calendar-event"></i></div>
+            <?php if ($porFecha || $filtro !== 'todos'): ?>
+            <p class="text-muted mb-2">Ningún evento coincide con el filtro.</p>
+            <a href="<?= e(url_admin('eventos')) ?>" class="btn btn-sm btn-outline-secondary">
+                Ver todos los eventos
+            </a>
+            <?php else: ?>
             <p class="text-muted mb-0">No hay eventos que mostrar.</p>
+            <?php endif; ?>
         </div>
     <?php else: ?>
     <div class="table-responsive">
@@ -87,7 +173,7 @@
 
 <?php
 $paginacion = $listado;
-$paginaBase = url_admin('eventos', '', $filtro !== 'todos' ? ['filtro' => $filtro] : []);
+$paginaBase = url_admin('eventos', '', $porEstado + $porFecha);
 require BASE_PATH . '/shared/views/parciales/paginacion.php';
 ?>
 

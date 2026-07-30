@@ -18,11 +18,79 @@ class EventoController extends Controller
         $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
             ? $this->getStr('filtro') : 'todos';
 
+        $alcance = $this->filtroPastoralSql();
+        $anios   = $this->modelo->aniosConEventos($alcance);
+
+        // Un valor fuera de rango se ignora y el listado vuelve a mostrarlo todo:
+        // es un filtro, no una búsqueda que deba fallar con un error.
+        $anio = $this->getInt('anio', 0);
+        $anio = in_array($anio, $anios, true) ? $anio : null;
+        $mes  = $this->getInt('mes', 0);
+        $mes  = ($mes >= 1 && $mes <= 12) ? $mes : null;
+        $dia  = $this->getInt('dia', 0);
+        $dia  = ($dia >= 1 && $dia <= 31) ? $dia : null;
+
+        // Un 31 de febrero no existe: se descarta el día y queda el mes, que es
+        // lo que la persona tenía delante antes de cambiar de mes en el selector.
+        if ($dia !== null && $mes !== null && !checkdate($mes, $dia, $anio ?? 2000)) {
+            $dia = null;
+        }
+
         $this->render('eventos/lista', [
             'titulo'  => 'Eventos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
-            'filtro'  => $filtro,
+            'listado' => $this->modelo->listar(
+                max(1, $this->getInt('pagina', 1)),
+                $filtro,
+                $alcance,
+                $anio,
+                $mes,
+                $dia
+            ),
+            'filtro'          => $filtro,
+            'anio'            => $anio,
+            'mes'             => $mes,
+            'dia'             => $dia,
+            'anios'           => $anios,
+            'diasDelMes'      => $this->diasDelMes($anio, $mes),
+            'descripcionFecha' => $this->descripcionFecha($anio, $mes, $dia),
         ]);
+    }
+
+    /**
+     * Cuántos días ofrecer en el selector: los del mes elegido, o 31 mientras no
+     * haya mes. 2000 es bisiesto, así que sin año un 29 de febrero sigue siendo
+     * elegible.
+     */
+    private function diasDelMes(?int $anio, ?int $mes): int
+    {
+        if ($mes === null) {
+            return 31;
+        }
+        return (int) date('t', (int) mktime(0, 0, 0, $mes, 1, $anio ?? 2000));
+    }
+
+    /** «el 21 de noviembre de 2026», «en noviembre de cualquier año»… */
+    private function descripcionFecha(?int $anio, ?int $mes, ?int $dia): string
+    {
+        if ($anio === null && $mes === null && $dia === null) {
+            return '';
+        }
+
+        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                  'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        $nombreMes = $mes !== null ? $meses[$mes - 1] : null;
+
+        // Sin mes, el día solo se puede decir en plural («los días 16»), y no se
+        // le añade «de cualquier año» porque ya sonaría a trabalenguas.
+        if ($dia !== null && $nombreMes === null) {
+            return "los días {$dia}" . ($anio !== null ? " de {$anio}" : '');
+        }
+        if ($nombreMes === null) {
+            return "en {$anio}";
+        }
+
+        $texto = $dia !== null ? "el {$dia} de {$nombreMes}" : "en {$nombreMes}";
+        return $texto . ($anio !== null ? " de {$anio}" : ' de cualquier año');
     }
 
     public function nuevo(): void

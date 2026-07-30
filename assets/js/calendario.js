@@ -1,130 +1,74 @@
 /* ============================================================
    Calendario de eventos — mejora progresiva, sin dependencias
 
-   El servidor ya entrega el mes solicitado completamente renderizado: los
-   enlaces de mes anterior/siguiente son URLs normales que funcionan sin
-   JavaScript, recargando la página. Este script solo intercepta esos clics
-   para traer el mes por fetch y reconstruir la tabla sin recargar, contra el
-   mismo endpoint JSON (?accion=datos) que serviría a cualquier otro cliente.
+   El servidor ya entrega el periodo solicitado completamente renderizado, y
+   todos los enlaces del calendario —cambiar de periodo, cambiar de vista, abrir
+   un día— son URLs normales que funcionan sin JavaScript recargando la página.
+   Este script solo intercepta esos clics para traer el mismo bloque por fetch y
+   sustituirlo sin recargar.
+
+   Pide el HTML ya armado (?accion=fragmento) en vez de reconstruirlo aquí: son
+   cuatro cuadrículas distintas (día, semana, mes, año) y duplicar en JavaScript
+   lo que PHP ya sabe hacer garantizaría que las dos versiones se separaran.
+   Para consumir los eventos como datos está ?accion=datos, que devuelve JSON.
 
    Si el fetch falla por lo que sea, se cae al enlace normal: nunca deja al
-   visitante sin poder cambiar de mes.
+   visitante sin poder moverse por el calendario.
    ============================================================ */
 
 (function () {
     'use strict';
 
-    var contenedor = document.getElementById('calendario');
-    if (!contenedor) {
+    var contenedor = document.querySelector('[data-calendario-contenedor]');
+    if (!contenedor || !window.fetch) {
         return;
     }
 
-    var cuerpo = contenedor.querySelector('[data-calendario-cuerpo]');
-    var titulo = contenedor.querySelector('[data-calendario-titulo]');
+    // Los enlaces que maneja este script. El resto —un evento concreto— navega
+    // como siempre.
+    var SELECTOR = '[data-calendario-nav], [data-calendario-vista], [data-calendario-ir]';
 
-    var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-                 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    function cargar(url) {
+        var destino = new URL(url, window.location.href);
+        var interna = new URL(destino.toString());
+        interna.searchParams.set('area', 'publico');
+        interna.searchParams.set('modulo', 'eventos');
+        interna.searchParams.set('accion', 'fragmento');
 
-    function escaparHtml(texto) {
-        var div = document.createElement('div');
-        div.textContent = texto;
-        return div.innerHTML;
-    }
-
-    function construirCuerpo(anio, mes, eventos) {
-        var porDia = {};
-        eventos.forEach(function (ev) {
-            var dia = parseInt(ev.fecha.slice(8, 10), 10);
-            (porDia[dia] = porDia[dia] || []).push(ev);
-        });
-
-        var primerDia    = new Date(anio, mes - 1, 1);
-        var diasEnMes    = new Date(anio, mes, 0).getDate();
-        var diaSemanaIni = primerDia.getDay();
-        var hoy          = new Date();
-        var esHoy = function (dia) {
-            return anio === hoy.getFullYear() && mes === (hoy.getMonth() + 1) && dia === hoy.getDate();
-        };
-
-        var celdas = [];
-        var i;
-        for (i = 0; i < diaSemanaIni; i++) { celdas.push(null); }
-        for (i = 1; i <= diasEnMes; i++) { celdas.push(i); }
-        while (celdas.length % 7 !== 0) { celdas.push(null); }
-
-        var html = '';
-        for (var f = 0; f < celdas.length; f += 7) {
-            html += '<tr>';
-            celdas.slice(f, f + 7).forEach(function (dia) {
-                if (dia === null) {
-                    html += '<td></td>';
-                    return;
-                }
-                html += '<td' + (esHoy(dia) ? ' class="dia-hoy"' : '') + '>'
-                      + '<div class="numero-dia">' + dia + '</div>';
-                (porDia[dia] || []).forEach(function (ev) {
-                    html += '<a href="' + escaparHtml(ev.url) + '" class="evento-punto" '
-                          + 'style="background:' + escaparHtml(ev.color) + '" title="' + escaparHtml(ev.titulo) + '">'
-                          + escaparHtml(ev.titulo) + '</a>';
-                });
-                html += '</td>';
-            });
-            html += '</tr>';
-        }
-        return html;
-    }
-
-    function actualizarEnlacesNav(anio, mes) {
-        var anterior  = mes === 1  ? { a: anio - 1, m: 12 } : { a: anio, m: mes - 1 };
-        var siguiente = mes === 12 ? { a: anio + 1, m: 1 }  : { a: anio, m: mes + 1 };
-
-        contenedor.querySelectorAll('[data-calendario-nav]').forEach(function (enlace) {
-            var destino = enlace.dataset.calendarioNav === 'anterior' ? anterior : siguiente;
-            var url = new URL(enlace.href);
-            url.searchParams.set('anio', destino.a);
-            url.searchParams.set('mes', destino.m);
-            enlace.href = url.toString();
-        });
-    }
-
-    function cargarMes(anio, mes, urlDestino) {
-        var base = window.APP_URL || '';
-        var query = 'anio=' + anio + '&mes=' + mes;
-        if (contenedor.dataset.pastoral) {
-            query += '&pastoral=' + encodeURIComponent(contenedor.dataset.pastoral);
-        }
-        fetch(base + '/index.php?area=publico&modulo=eventos&accion=datos&' + query)
+        contenedor.setAttribute('aria-busy', 'true');
+        fetch(interna.toString(), { headers: { 'X-Requested-With': 'fetch' } })
             .then(function (respuesta) {
-                return respuesta.ok ? respuesta.json() : Promise.reject(new Error('respuesta no válida'));
+                return respuesta.ok ? respuesta.text() : Promise.reject(new Error('respuesta no válida'));
             })
-            .then(function (datos) {
-                cuerpo.innerHTML = construirCuerpo(datos.anio, datos.mes, datos.eventos);
-                titulo.textContent = MESES[datos.mes - 1].charAt(0).toUpperCase()
-                    + MESES[datos.mes - 1].slice(1) + ' ' + datos.anio;
-                contenedor.dataset.anio = String(datos.anio);
-                contenedor.dataset.mes  = String(datos.mes);
-                actualizarEnlacesNav(datos.anio, datos.mes);
+            .then(function (html) {
+                contenedor.innerHTML = html;
+                contenedor.removeAttribute('aria-busy');
                 if (window.history && window.history.pushState) {
-                    window.history.pushState({}, '', urlDestino);
+                    window.history.pushState({ calendario: true }, '', destino.toString());
                 }
             })
             .catch(function () {
-                window.location.href = urlDestino;
+                window.location.href = destino.toString();
             });
     }
 
     contenedor.addEventListener('click', function (evento) {
-        var enlace = evento.target.closest('[data-calendario-nav]');
-        if (!enlace) {
+        if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) {
+            return;   // Clic con modificador: que el navegador haga lo suyo.
+        }
+        var enlace = evento.target.closest(SELECTOR);
+        if (!enlace || !enlace.href) {
             return;
         }
-        var url  = new URL(enlace.href);
-        var anio = parseInt(url.searchParams.get('anio'), 10);
-        var mes  = parseInt(url.searchParams.get('mes'), 10);
-        if (!anio || !mes) {
-            return;   // Sin datos claros: se deja el enlace normal.
-        }
         evento.preventDefault();
-        cargarMes(anio, mes, enlace.href);
+        cargar(enlace.href);
+    });
+
+    // Atrás y adelante del navegador: las URLs son de verdad, así que basta con
+    // volver a pedir el fragmento que toque.
+    window.addEventListener('popstate', function (evento) {
+        if (evento.state && evento.state.calendario) {
+            cargar(window.location.href);
+        }
     });
 })();
