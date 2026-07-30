@@ -407,32 +407,75 @@ que necesita cada diseño es distinto de raíz.
 
 ### Calendario propio
 
-Mejora progresiva de verdad, no solo de palabra: `EventoPublicoController::index()`
-calcula la cuadrícula del mes solicitado **en el servidor** (`construirCalendario()`) y la
-sirve como HTML normal — funciona sin JavaScript, incluida la navegación de mes anterior
-y siguiente, porque esos enlaces son URLs comunes (`?anio=&mes=`) que el propio
-controlador sabe responder. `assets/js/calendario.js` solo intercepta esos clics para
-traer el mes por `fetch` contra `?accion=datos` (un endpoint JSON) y reconstruir la tabla
-sin recargar; si el `fetch` falla por lo que sea, cae al enlace normal sin más. Sin
+Mejora progresiva de verdad, no solo de palabra: `EventoPublicoController::index()` arma
+el periodo solicitado **en el servidor** y lo sirve como HTML normal — funciona sin
+JavaScript, incluida la navegación y el cambio de vista, porque todos esos enlaces son
+URLs comunes (`?vista=&fecha=`) que el propio controlador sabe responder. Sin
 FullCalendar ni ninguna otra librería. Debajo del calendario, una lista de "próximos
 eventos" en HTML plano cubre a quien tiene JavaScript desactivado.
 
-La acción JSON se llama `datos`, no `json`: `Controller` ya tiene un método `json()` para
-emitir la respuesta, y una acción de ruta con ese mismo nombre lo taparía.
+**Cuatro vistas** (`?vista=dia|semana|mes|anio`, `mes` por omisión), cada una con su
+plantilla en `modules/eventos/views/publico/vista_*.php`:
+
+| Vista | Qué dibuja | Navega de |
+|---|---|---|
+| `dia` | La lista de la jornada, con hora, lugar y hasta cuándo dura | día en día |
+| `semana` | Los siete días en columnas, domingo primero | semana en semana |
+| `mes` | La cuadrícula de siempre | mes en mes |
+| `anio` | Los doce meses en mini-cuadrículas; el día con eventos se marca | año en año |
+
+`calendario()` es el único sitio donde se decide qué trae cada vista, y `calendario.php`
+el único que dibuja la cabecera común (selector, periodo, contador) e incluye la
+plantilla que toque. La fecha de referencia se resuelve en `fechaSolicitada()`, que
+acepta `?fecha=Y-m-d` y también el `?anio=&mes=` anterior, para que los enlaces que ya
+circulan sigan funcionando. Los saltos de periodo (`desplazar()`) normalizan al día 1
+antes de sumar meses y al 1 de enero antes de sumar años: sin eso, "un mes menos" sobre
+un día 31 y "un año menos" sobre un 29 de febrero se van al mes o al día equivocado.
+
+`assets/js/calendario.js` intercepta los clics para pedir **el mismo bloque ya
+renderizado** (`?accion=fragmento`, que devuelve `calendario.php` sin layout) y
+sustituirlo sin recargar; si el `fetch` falla, cae al enlace normal sin más. Pide HTML y
+no JSON a propósito: antes reconstruía la cuadrícula en JavaScript, duplicando lo que PHP
+ya hacía, y con cuatro vistas distintas esa duplicación solo podía acabar separándose de
+la de PHP. Para consumir los eventos como datos sigue estando `?accion=datos`, que
+devuelve JSON con una entrada por día ocupado. Se llama `datos` y no `json` porque
+`Controller` ya tiene un método `json()` para emitir la respuesta, y una acción de ruta
+con ese mismo nombre lo taparía.
 
 Un evento de varios días (`fecha_fin` en un día distinto a `fecha_inicio`) marca **todos**
 los días que dura, no solo el de inicio (revisión de módulos: antes solo aparecía el primer
 día, y desaparecía del todo del calendario en cuanto el mes cruzaba mientras seguía en
-curso). `EventoModel::delMes()` trae cualquier evento cuyo rango `[fecha_inicio, fecha_fin]`
-se traslape con el mes solicitado, aunque haya empezado antes o termine después; luego
-`EventoPublicoController::diasDelEventoEnMes()` recorta ese rango a los días que de verdad
-caen dentro del mes mostrado, y tanto `construirCalendario()` (la vista servida por PHP)
-como `datos()` (el JSON que consume `calendario.js`) reparten el mismo evento en una celda
-por cada día devuelto — `calendario.js` no necesita saberlo: ya agrupa cada entrada del JSON
-por su campo `fecha` plano, así que recibir varias entradas por evento "simplemente
-funciona". La ficha de detalle (`eventos/publico/detalle.php`) sigue la misma idea: si
-`fecha_fin` cae en un día distinto de `fecha_inicio` muestra el rango completo ("Del … al
-…"), no solo la fecha de inicio con ambas horas pegadas.
+curso). `EventoModel::entreFechas()` trae cualquier evento cuyo rango
+`[fecha_inicio, fecha_fin]` se traslape con el periodo pedido, aunque haya empezado antes
+o termine después —`delMes()` es un atajo suyo—; luego
+`EventoPublicoController::diasDelEvento()` recorta ese rango a los días que de verdad
+caen dentro, y `repartirPorDia()` deja el resultado indexado por fecha, que es lo que
+consumen las cuatro plantillas y también `datos()`. El contador del encabezado cuenta
+eventos distintos, no días ocupados: uno de nueve días es un evento aunque se dibuje en
+nueve casillas. La ficha de detalle (`eventos/publico/detalle.php`) sigue la misma idea:
+si `fecha_fin` cae en un día distinto de `fecha_inicio` muestra el rango completo ("Del …
+al …"), no solo la fecha de inicio con ambas horas pegadas.
+
+**El listado del panel filtra por día, mes y año de `fecha_inicio`**, además del filtro de
+estado (todos / publicados / borradores). Con la agenda de un año entero cargada son 467
+eventos, o 32 páginas de 15: encontrar uno concreto pasando páginas no es viable. Los dos
+filtros se combinan y cada uno arrastra el estado del otro en sus enlaces, y la paginación
+conserva los dos.
+
+Los tres campos de fecha son independientes y se combinan en cualquier orden: un año
+entero, un mes de un año, un día concreto, o "los días 16 de cualquier mes".
+`EventoModel::condicionFecha()` compara por rango de fechas siempre que hay año, en vez de
+con `YEAR()`/`MONTH()`/`DAY()`, para no dejar fuera el índice `idx_eve_fecha`; sin año no
+queda más remedio que usarlas. Un día que no existe en su mes devuelve `1 = 0` en vez de un
+rango: sin eso, el "29 de febrero de 2026" se normalizaría al 1 de marzo y el listado
+mostraría los eventos de otro día.
+
+El selector de año se llena con `aniosConEventos()`, que solo ofrece los años que de verdad
+tienen eventos y respeta el alcance por pastoral de quien mira; el de día ofrece los del mes
+elegido (28, 29, 30 o 31), y 31 mientras no haya mes. Cualquier valor fuera de rango se
+ignora y el listado vuelve a mostrarlo todo: es un filtro, no una búsqueda que deba fallar
+con un error. Si el día deja de existir al cambiar de mes —del 31 de enero a febrero— se
+descarta el día y queda el mes, que es lo que la persona tenía delante.
 
 ### Publicación con moderación, ya preparada
 
@@ -599,11 +642,11 @@ filtrada dentro de la ficha de cada pastoral sería mostrar dos veces lo mismo c
 caminos de código distintos, sin que nadie lo haya pedido.
 
 **`/eventos?pastoral=slug`** reutiliza el calendario general en vez de duplicarlo:
-`EventoModel::delMes()`/`proximos()` reciben un `$pastoralId` opcional,
+`EventoModel::entreFechas()`/`proximos()` reciben un `$pastoralId` opcional,
 `EventoPublicoController` resuelve el slug con `pastoralSolicitada()` (si no resuelve a
 una pastoral activa, se ignora el filtro — la página cae en el calendario completo en vez
-de mostrar uno vacío), y `calendario.js` propaga el filtro leyendo `data-pastoral` del
-contenedor tanto en el fetch AJAX como al reescribir los enlaces de mes anterior/siguiente.
+de mostrar uno vacío), y el filtro viaja en las propias URLs de navegación y de cambio de
+vista, así que `calendario.js` lo arrastra sin tener que saber que existe.
 
 ### MESC: visitas a enfermos y rutas (issue #3)
 
@@ -676,7 +719,7 @@ del calendario público de eventos (`calendario.js`, con fetch y sin recargar), 
 clic en "mes anterior/siguiente" es un enlace normal que recarga la página. El panel admin
 no tiene el mismo volumen de tráfico que justifique la complejidad de un endpoint JSON
 aparte; `MescController::construirCalendarioTurnos()` es una cuadrícula de semanas
-análoga a `EventoPublicoController::construirCalendario()`, deliberadamente duplicada en
+análoga a `EventoPublicoController::cuadriculaDelMes()`, deliberadamente duplicada en
 vez de compartida —cruzar la frontera pública/admin por una función de 20 líneas no vale
 el acoplamiento—. Los estilos (`.calendario-tabla`, `.numero-dia`, `.evento-punto`) se
 copiaron de `assets/css/publico.css` a `assets/css/app.css` porque el panel carga una
