@@ -72,7 +72,13 @@ foreach (array_keys($mvv) as $clave) {
 
 <?php if ($organigramaImagen !== '' || !empty($organigramaArbol)): ?>
 <section class="mb-5">
-    <h2 class="h4 fw-bold mb-4">Organigrama</h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h2 class="h4 fw-bold mb-0">Organigrama</h2>
+        <a href="<?= e(url_publica('nosotros', ['accion' => 'organigrama_imprimir'])) ?>"
+           class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">
+            <i class="bi bi-printer me-1"></i>Imprimir / Descargar PDF
+        </a>
+    </div>
     <?php if ($organigramaImagen !== ''): ?>
         <img src="<?= e(url_activo($organigramaImagen)) ?>" alt="Organigrama de la parroquia" class="img-fluid rounded shadow-sm">
     <?php else: ?>

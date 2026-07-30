@@ -398,6 +398,10 @@
 
 /* ---- Organigrama ---- */
 
+.arbol-organigrama-contenedor {
+    overflow-x: auto;
+}
+
 .arbol-organigrama,
 .arbol-organigrama ul {
     list-style: none;
@@ -423,6 +427,7 @@
     display: inline-flex;
     align-items: center;
     gap: .6rem;
+    max-width: 100%;
     background: #fff;
     border: 1px solid rgba(30, 77, 139, .15);
     border-radius: .5rem;
@@ -445,17 +450,44 @@
     display: flex;
     flex-direction: column;
     line-height: 1.2;
+    min-width: 0;
 }
 
 .nodo-titulo {
     font-weight: 600;
     font-size: .92rem;
     color: var(--azul-oscuro);
+    overflow-wrap: break-word;
 }
 
 .nodo-persona {
     font-size: .8rem;
     color: #6c757d;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 575.98px) {
+    .arbol-organigrama ul {
+        padding-left: 1rem;
+    }
+
+    .nodo-organigrama {
+        gap: .45rem;
+        padding: .4rem .6rem;
+    }
+
+    .nodo-foto {
+        width: 28px;
+        height: 28px;
+    }
+
+    .nodo-titulo {
+        font-size: .85rem;
+    }
+
+    .nodo-persona {
+        font-size: .74rem;
+    }
 }
 
 /* ---- Inscripción a cursos ---- */

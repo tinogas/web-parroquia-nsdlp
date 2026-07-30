@@ -359,8 +359,17 @@ después.
 (4) niveles. Se renderiza como una lista indentada con líneas de guía —`<ul>` anidados,
 CSS puro, sin JavaScript— en vez de un diagrama de cajas y conectores: un organigrama real
 de caja-y-línea en CSS puro es notoriamente frágil, y una lista jerárquica es accesible,
-indexable por buscadores, editable sin abrir Photoshop, y se lee igual de bien en escritorio
-que en un celular sin necesitar dos diseños distintos.
+indexable por buscadores, y editable sin abrir Photoshop.
+
+**Responsivo (revisión de módulos): la promesa de "se lee igual en celular" no estaba
+respaldada por CSS.** `.arbol-organigrama`/`.nodo-organigrama` no tenían ni una sola regla
+`@media` en `publico.css` ni en `app.css`: la indentación acumulada de `padding-left` por
+cada nivel anidado, sumada a `.nodo-organigrama` sin `max-width` ni forma de romper texto
+largo, podía desbordar horizontalmente toda la página en una pantalla angosta. Se agregó
+`min-width: 0` + `overflow-wrap` en `.nodo-texto`, `max-width: 100%` en `.nodo-organigrama`,
+un `@media (max-width: 575.98px)` que reduce la indentación y el tamaño de fuente, y un
+`.arbol-organigrama-contenedor` con `overflow-x: auto` como red de seguridad si aun así algo
+no cupiera, en vez de dejar que el desborde se propague al `<body>`.
 
 El HTML lo genera un único partial recursivo (`shared/views/parciales/organigrama_arbol.php`,
 con la función `organigrama_render_nodo()`), compartido entre el panel y el sitio público;
@@ -377,6 +386,24 @@ escribe la persona que edita.
 Válvula de escape: si la clave `configuracion.organigrama_imagen` tiene valor, la vista
 muestra esa imagen en lugar del árbol, y ni siquiera se consulta la base de datos del
 organigrama. La parroquia decide sin que nadie toque código.
+
+**Vista de impresión/PDF: aquí sí es un diagrama de caja y línea (revisión de módulos).**
+`NosotrosController::organigramaImprimir()` + `modules/nosotros/views/publico/
+organigrama_imprimir.php` sirven una página independiente —sin `layout_publico.php`, vía
+`Controller::renderSinLayout()` (ya pensado para esto: "fragmentos para peticiones
+asíncronas, vistas de impresión")— con su propia hoja de estilos
+(`assets/css/organigrama_imprimir.css`). Ahí sí se dibuja un árbol de caja-y-línea real
+con el patrón clásico de pseudo-elementos `::before`/`::after` sobre `<li>` (línea vertical
+del padre a la fila de hijos vía `ul::before`, conector en T entre hermanos, casos
+especiales para hijo único y para primer/último hermano). Es exactamente el diseño que la
+sección de arriba descarta para el sitio en vivo, y por la misma razón que ahí se evita
+(frágil en CSS puro) aquí es viable: una página de impresión tiene tamaño de página fijo,
+no un viewport que cambia en vivo entre celular y escritorio. Sin librería de PDF: el
+botón "Imprimir / Guardar como PDF" solo llama a `window.print()`; quien lo abre usa el
+diálogo de impresión de su propio navegador para guardar el archivo. Reutiliza
+`OrganigramaModel::arbolPublico()` tal cual, con una función de render recursiva propia
+(`organigrama_imprimir_nodo()`) distinta de `organigrama_render_nodo()`, porque el HTML
+que necesita cada diseño es distinto de raíz.
 
 ### Calendario propio
 

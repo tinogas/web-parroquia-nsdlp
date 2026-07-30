@@ -23,4 +23,20 @@ class NosotrosController extends ControllerPublico
             'organigramaArbol'   => $organigramaArbol,
         ]);
     }
+
+    /**
+     * Vista de impresión/PDF del organigrama: página independiente, sin el
+     * layout del sitio, para abrirse en pestaña nueva. Sin librería de PDF:
+     * se imprime o se guarda como PDF con el diálogo del propio navegador.
+     */
+    public function organigramaImprimir(): void
+    {
+        $organigramaImagen = Config::get('organigrama_imagen');
+        $organigramaArbol  = $organigramaImagen === '' ? (new OrganigramaModel())->arbolPublico() : [];
+
+        $this->renderSinLayout('nosotros/publico/organigrama_imprimir', [
+            'organigramaImagen' => $organigramaImagen,
+            'organigramaArbol'  => $organigramaArbol,
+        ]);
+    }
 }
