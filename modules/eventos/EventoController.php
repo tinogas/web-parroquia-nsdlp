@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/eventos/EventoModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 class EventoController extends Controller
 {
@@ -18,8 +19,17 @@ class EventoController extends Controller
         $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
             ? $this->getStr('filtro') : 'todos';
 
-        $alcance = $this->filtroPastoralSql();
-        $anios   = $this->modelo->aniosConEventos($alcance);
+        // Cada quien trabaja sobre lo de su pastoral y su sede, más lo general de
+        // la parroquia; lo de otra pastoral o de otra comunidad no sale en este
+        // listado. Para ver todo lo que hay programado —que es lo que hace falta
+        // para no pisarse el salón— está la agenda interna, que no recorta nada.
+        $pastorales = $this->pastoralesDelFiltro();
+        $centros    = $this->centrosDelFiltro();
+        [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
+        [$filtroCentro,   $idsCentro]   = $this->filtroCentro($centros);
+        $idsPastoral = $this->pastoralesVisibles($idsPastoral);
+        $idsCentro   = $this->centrosVisibles($idsCentro);
+        $anios = $this->modelo->aniosConEventos($idsPastoral, $idsCentro);
 
         // Un valor fuera de rango se ignora y el listado vuelve a mostrarlo todo:
         // es un filtro, no una búsqueda que deba fallar con un error.
@@ -41,7 +51,8 @@ class EventoController extends Controller
             'listado' => $this->modelo->listar(
                 max(1, $this->getInt('pagina', 1)),
                 $filtro,
-                $alcance,
+                $idsPastoral,
+                $idsCentro,
                 $anio,
                 $mes,
                 $dia
@@ -53,6 +64,11 @@ class EventoController extends Controller
             'anios'           => $anios,
             'diasDelMes'      => $this->diasDelMes($anio, $mes),
             'descripcionFecha' => $this->descripcionFecha($anio, $mes, $dia),
+            'pastorales'      => $pastorales,
+            'filtroPastoral'  => $filtroPastoral,
+            'centros'         => $centros,
+            'filtroCentro'    => $filtroCentro,
+            'tieneAlcance'    => Auth::pastoralesPermitidas() !== [],
         ]);
     }
 
@@ -97,7 +113,7 @@ class EventoController extends Controller
     {
         $this->requirePermiso('eventos.crear');
 
-        $this->render('eventos/form', array_merge($this->opcionesPastoral(), [
+        $this->render('eventos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
             'titulo'      => 'Nuevo evento',
             'evento'      => null,
             'scriptExtra' => $this->scriptEditor(),
@@ -114,9 +130,12 @@ class EventoController extends Controller
             $this->redirect(url_admin('eventos'));
             return;
         }
-        $this->requireAlcancePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null);
+        $this->requireAlcanceContenido(
+            $evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null,
+            $evento['centro_id'] !== null ? (int) $evento['centro_id'] : null
+        );
 
-        $this->render('eventos/form', array_merge($this->opcionesPastoral(), [
+        $this->render('eventos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
             'titulo'      => $evento['titulo'],
             'evento'      => $evento,
             'scriptExtra' => $this->scriptEditor(),
@@ -135,7 +154,10 @@ class EventoController extends Controller
         $existente = $id ? $this->modelo->porId($id) : null;
         $this->requirePermiso($existente ? 'eventos.editar' : 'eventos.crear');
         if ($existente) {
-            $this->requireAlcancePastoral($existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null);
+            $this->requireAlcanceContenido(
+                $existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null,
+                $existente['centro_id'] !== null ? (int) $existente['centro_id'] : null
+            );
         }
 
         $titulo = $this->postStr('titulo');
@@ -149,6 +171,7 @@ class EventoController extends Controller
 
         try {
             $pastoralId = $this->pastoralIdValidado();
+            $centroId   = $this->centroIdValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
             $this->redirect($id ? url_admin('eventos', 'editar', ['id' => $id]) : url_admin('eventos', 'nuevo'));
@@ -182,6 +205,7 @@ class EventoController extends Controller
             'fecha_fin'    => $fin !== '' ? str_replace('T', ' ', $fin) . ':00' : null,
             'todo_el_dia'  => $this->postBool('todo_el_dia'),
             'pastoral_id'  => $pastoralId,
+            'centro_id'    => $centroId,
             'color'        => $this->postStr('color') ?: '#1e4d8b',
             'publicado'    => $publicado,
         ];
@@ -212,7 +236,10 @@ class EventoController extends Controller
         $id     = $this->postInt('id');
         $evento = $this->modelo->porId($id);
         if ($evento) {
-            $this->requireAlcancePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null);
+            $this->requireAlcanceContenido(
+                $evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null,
+                $evento['centro_id'] !== null ? (int) $evento['centro_id'] : null
+            );
             Upload::borrar($evento['imagen']);
             $this->modelo->eliminar($id);
             $this->auditoria('eliminar', 'eventos', $id, $evento['titulo']);

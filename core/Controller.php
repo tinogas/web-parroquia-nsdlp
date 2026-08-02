@@ -49,12 +49,223 @@ class Controller
     }
 
     /**
+     * Lo mismo, para el contenido que además vive en una sede: eventos y
+     * cursos. Las dos condiciones se exigen juntas —la pastoral dice qué equipo
+     * lo organiza y la sede en qué comunidad—, y basta que falle una para
+     * rechazar: la coordinadora de catequesis de Jesús el Señor no toca la
+     * catequesis de la sede aunque sea la misma pastoral.
+     *
+     * Los dos identificadores se leen DE LA BASE al editar y borrar, nunca del
+     * POST, por lo mismo que en requireAlcancePastoral().
+     */
+    protected function requireAlcanceContenido(?int $pastoralId, ?int $centroId): void
+    {
+        $this->requireAuth();
+        if (!Auth::puedeSobrePastoral($pastoralId) || !Auth::puedeSobreCentro($centroId)) {
+            Session::flash('error', 'Ese contenido pertenece a otra pastoral o a otra sede.');
+            $this->redirect(url_admin('panel'));
+        }
+    }
+
+    /**
      * IDs de pastoral por los que debe filtrar un listado del panel, o null si
      * el usuario ve todo. Los modelos lo traducen a "AND pastoral_id IN (…)".
      */
     protected function filtroPastoralSql(): ?array
     {
         return Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas();
+    }
+
+    /**
+     * Filtro de pastoral elegido en pantalla (?pastoral=), que no es lo mismo
+     * que filtroPastoralSql(): aquel recorta el listado al alcance de quien
+     * mira, y este solo acota lo que esa persona quiso ver. Los dos se cruzan
+     * después con pastoralesVisibles(); la agenda es la única pantalla que usa
+     * este filtro a solas, porque ahí sí se ven todas entre sí.
+     *
+     * Acepta '' (todas), 'mias' (las que administra) o el id de una pastoral.
+     * Un id que no exista cae a «todas» en silencio: es un filtro, no una
+     * búsqueda que deba fallar con un error. Cuando el listado ofrece el
+     * selector ya acotado —pastoralesDelFiltro()—, el id de una pastoral ajena
+     * tampoco está en la lista y cae igual, así que nadie se asoma a lo de otra
+     * escribiendo la URL a mano.
+     *
+     * @param  array $pastorales Las del selector, tal como las da PastoralModel::paraSelector()
+     * @return array{0: string, 1: ?array} [valor para las URLs, ids para el modelo]
+     */
+    protected function filtroPastoral(array $pastorales): array
+    {
+        $valor   = $this->getStr('pastoral');
+        $propias = Auth::pastoralesPermitidas();
+
+        if ($valor === 'mias' && $propias) {
+            return ['mias', $propias];
+        }
+
+        $id = (int) $valor;
+        foreach ($pastorales as $pastoral) {
+            if ((int) $pastoral['id'] === $id) {
+                return [(string) $id, [$id]];
+            }
+        }
+        return ['', null];
+    }
+
+    /**
+     * Las pastorales que ofrece el selector de un listado del panel: todas si
+     * quien mira tiene alcance global, y si no, las suyas. Ofrecer una pastoral
+     * ajena en un listado que no la va a mostrar es prometer algo que no pasa.
+     */
+    protected function pastoralesDelFiltro(): array
+    {
+        require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+        $todas = (new PastoralModel())->paraSelector();
+
+        if (Auth::tieneAlcanceGlobal()) {
+            return $todas;
+        }
+
+        $propias = Auth::pastoralesPermitidas();
+        return array_values(array_filter(
+            $todas,
+            static fn (array $p): bool => in_array((int) $p['id'], $propias, true)
+        ));
+    }
+
+    /**
+     * Qué pastorales ve de verdad un listado del panel: el filtro que la
+     * persona eligió en pantalla, cruzado con su alcance real.
+     *
+     * Quien tiene alcance global ve lo que pidió, sin más. Quien no, ve lo suyo
+     * **y lo general de la parroquia** —311 de los 467 eventos de la agenda son
+     * generales; esconderlos dejaría a cada pastoral mirando su propio recorte
+     * del calendario—, salvo que pida «solo las mías» o una pastoral concreta.
+     * Los generales llegan al modelo como un null dentro de la lista; lo demás
+     * lo hace Model::condicionAlcance().
+     *
+     * Esto es solo lectura. Escribir sigue acotado a lo propio, siempre, en
+     * requireAlcanceContenido(): ver un evento general no da derecho a tocarlo.
+     *
+     * @param  ?array $filtroElegido El segundo valor de filtroPastoral()
+     * @return ?array Ids para el modelo, null si no hay que filtrar nada
+     */
+    protected function pastoralesVisibles(?array $filtroElegido): ?array
+    {
+        if (Auth::tieneAlcanceGlobal()) {
+            return $filtroElegido;
+        }
+
+        $propias = Auth::pastoralesPermitidas();
+        if ($filtroElegido === null) {
+            return array_merge([null], $propias);
+        }
+        return array_values(array_intersect($filtroElegido, $propias));
+    }
+
+    // ── La otra mitad del alcance: la sede ──────────────────────────────
+    //
+    // Misma mecánica que las tres funciones de arriba, sobre centro_id. Están
+    // separadas y no unificadas en una sola con la columna por parámetro
+    // porque las reglas no son iguales: no tener pastorales asignadas es no
+    // poder con nada, y no tener sedes asignadas es poder en todas.
+
+    /** Las sedes que ofrece el selector de un listado: todas, o solo las suyas. */
+    protected function centrosDelFiltro(): array
+    {
+        require_once BASE_PATH . '/modules/centros/CentroModel.php';
+        $todos = (new CentroModel())->activos();
+
+        $propios = Auth::centrosPermitidos();
+        if (Auth::tieneAlcanceGlobal() || !$propios) {
+            return $todos;
+        }
+        return array_values(array_filter(
+            $todos,
+            static fn (array $c): bool => in_array((int) $c['id'], $propios, true)
+        ));
+    }
+
+    /**
+     * Filtro de sede elegido en pantalla (?centro=): '' para todas, o el id de
+     * una. Como en filtroPastoral(), un id que no esté en el selector cae a
+     * «todas» en silencio.
+     *
+     * @param  array $centros Los del selector, tal como los da centrosDelFiltro()
+     * @return array{0: string, 1: ?array} [valor para las URLs, ids para el modelo]
+     */
+    protected function filtroCentro(array $centros): array
+    {
+        $id = (int) $this->getStr('centro');
+        foreach ($centros as $centro) {
+            if ((int) $centro['id'] === $id) {
+                return [(string) $id, [$id]];
+            }
+        }
+        return ['', null];
+    }
+
+    /**
+     * Qué sedes ve de verdad un listado: el filtro de pantalla cruzado con las
+     * sedes de quien mira. Sin sedes marcadas no se recorta nada —trabaja en
+     * toda la parroquia—; con ellas se ven las suyas y, cuando no ha pedido una
+     * concreta, también el contenido sin sede, que es de todos.
+     *
+     * @param  ?array $filtroElegido El segundo valor de filtroCentro()
+     * @return ?array Ids para el modelo, null si no hay que filtrar nada
+     */
+    protected function centrosVisibles(?array $filtroElegido): ?array
+    {
+        $propios = Auth::centrosPermitidos();
+        if (Auth::tieneAlcanceGlobal() || !$propios) {
+            return $filtroElegido;
+        }
+
+        if ($filtroElegido === null) {
+            return array_merge([null], $propios);
+        }
+        return array_values(array_intersect($filtroElegido, $propios));
+    }
+
+    /**
+     * Datos para el selector de sede de los formularios de eventos y cursos,
+     * con el prefijo sc_ que espera shared/views/parciales/selector_centro.php.
+     * Mismo criterio que opcionesPastoral(): si solo puede una, va fija y no se
+     * le enseña una lista de una sola opción.
+     */
+    protected function opcionesCentro(): array
+    {
+        $opciones = $this->centrosDelFiltro();
+        $propios  = Auth::centrosPermitidos();
+
+        if (Auth::tieneAlcanceGlobal() || !$propios) {
+            return ['sc_opciones' => $opciones, 'sc_fija' => null, 'sc_permiteVacio' => true];
+        }
+
+        return [
+            'sc_opciones'     => $opciones,
+            'sc_fija'         => count($opciones) === 1 ? (int) $opciones[0]['id'] : null,
+            'sc_permiteVacio' => false,
+        ];
+    }
+
+    /**
+     * Valida el centro_id del formulario contra las sedes de quien guarda, como
+     * pastoralIdValidado() con las pastorales.
+     *
+     * @throws RuntimeException si el valor no es válido para este usuario
+     */
+    protected function centroIdValidado(): ?int
+    {
+        $enviado = $this->postIntONull('centro_id');
+        $propios = Auth::centrosPermitidos();
+
+        if (Auth::tieneAlcanceGlobal() || !$propios) {
+            return $enviado;
+        }
+        if ($enviado !== null && in_array($enviado, $propios, true)) {
+            return $enviado;
+        }
+        throw new RuntimeException('Elige una de tus sedes.');
     }
 
     /**
@@ -71,18 +282,12 @@ class Controller
      */
     protected function opcionesPastoral(): array
     {
-        require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
-        $todas = (new PastoralModel())->paraSelector();
+        $opciones = $this->pastoralesDelFiltro();
 
         if (Auth::tieneAlcanceGlobal()) {
-            return ['sp_opciones' => $todas, 'sp_fija' => null, 'sp_permiteVacio' => true];
+            return ['sp_opciones' => $opciones, 'sp_fija' => null, 'sp_permiteVacio' => true];
         }
 
-        $propias  = Auth::pastoralesPermitidas();
-        $opciones = array_values(array_filter(
-            $todas,
-            static fn (array $p): bool => in_array((int) $p['id'], $propias, true)
-        ));
         return [
             'sp_opciones'     => $opciones,
             'sp_fija'         => count($opciones) === 1 ? (int) $opciones[0]['id'] : null,

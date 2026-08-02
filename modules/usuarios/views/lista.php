@@ -3,7 +3,14 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
         <h1 class="h4 fw-bold mb-1">Usuarios</h1>
-        <p class="text-muted mb-0 small">Cuentas del panel, su rol y las pastorales que administran.</p>
+        <p class="text-muted mb-0 small">
+            <?php if ($alcanceLimitado): ?>
+            Coordinadores y consultas de tu propia pastoral. Lo que administra cada quien más
+            allá de eso se cambia desde Administrador.
+            <?php else: ?>
+            Cuentas del panel, su rol y las pastorales que administran.
+            <?php endif; ?>
+        </p>
     </div>
     <a href="<?= e(url_admin('usuarios', 'nuevo')) ?>" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
@@ -47,12 +54,25 @@
                             </div>
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell"><?= e(ROLES_NOMBRES[$usuario['rol']] ?? $usuario['rol']) ?></td>
+                    <td class="d-none d-md-table-cell">
+                        <?= e(ROLES_NOMBRES[$usuario['rol']] ?? $usuario['rol']) ?>
+                        <?php if ($usuario['cargo']): ?>
+                        <?php /* El cargo real sale de su ficha del equipo pastoral; el rol es lo
+                                 que puede hacer en el panel, que no siempre se llama igual. */ ?>
+                        <div class="text-body-tertiary small"><?= e($usuario['cargo']) ?></div>
+                        <?php elseif (!$usuario['persona_id']): ?>
+                        <div class="text-body-tertiary small">Sin ficha en el equipo</div>
+                        <?php endif; ?>
+                    </td>
                     <td class="d-none d-lg-table-cell small text-muted">
-                        <?php
-                        $ambitos = array_filter([$usuario['pastorales_nombres'] ?? null, $usuario['centros_nombres'] ?? null]);
-                        echo $ambitos ? e(implode(', ', $ambitos)) : '—';
-                        ?>
+                        <?= $usuario['pastorales_nombres'] ? e($usuario['pastorales_nombres']) : '—' ?>
+                        <?php if ($usuario['pastorales_nombres']): ?>
+                        <?php /* Sin sedes marcadas administra su pastoral en toda la parroquia. */ ?>
+                        <div class="text-body-tertiary">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            <?= $usuario['centros_nombres'] ? e($usuario['centros_nombres']) : 'Todas las sedes' ?>
+                        </div>
+                        <?php endif; ?>
                     </td>
                     <td class="d-none d-md-table-cell">
                         <?php if ($usuario['activo']): ?>

@@ -2,6 +2,8 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 
 class PastoralController extends Controller
 {
@@ -16,18 +18,29 @@ class PastoralController extends Controller
     {
         $this->requirePermiso('pastorales.ver');
 
-        $todas = $this->modelo->todas();
+        $agrupado = $this->modelo->todasAgrupadas();
+
         if (!Auth::tieneAlcanceGlobal()) {
             $permitidas = Auth::pastoralesPermitidas();
-            $todas = array_values(array_filter(
-                $todas,
-                static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true)
-            ));
+            $puede = static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true);
+
+            // La Comisión-padre se conserva como encabezado de solo lectura si el
+            // coordinador administra al menos una hija, aunque no administre la
+            // Comisión en sí: es presentación, no un cambio de a qué tiene acceso.
+            $agrupado['comisiones'] = array_values(array_filter(array_map(
+                static function (array $grupo) use ($puede): ?array {
+                    $hijas = array_values(array_filter($grupo['hijas'], $puede));
+                    return $hijas ? ['padre' => $grupo['padre'], 'hijas' => $hijas] : null;
+                },
+                $agrupado['comisiones']
+            )));
+            $agrupado['sueltas'] = array_values(array_filter($agrupado['sueltas'], $puede));
         }
 
         $this->render('pastorales/lista', [
             'titulo'     => 'Pastorales',
-            'pastorales' => $todas,
+            'comisiones' => $agrupado['comisiones'],
+            'sueltas'    => $agrupado['sueltas'],
         ]);
     }
 
@@ -36,9 +49,13 @@ class PastoralController extends Controller
         $this->requirePermiso('pastorales.crear');
 
         $this->render('pastorales/form', [
-            'titulo'   => 'Nueva pastoral',
-            'pastoral' => null,
-            'centros'  => (new CentroModel())->activos(),
+            'titulo'            => 'Nueva pastoral',
+            'pastoral'          => null,
+            'centros'           => (new CentroModel())->activos(),
+            'personas'          => (new PersonaModel())->paraSelector(),
+            'responsableCuenta' => null,
+            'padresDisponibles' => $this->modelo->candidatosPadre(),
+            'tieneHijos'        => false,
         ]);
     }
 
@@ -54,13 +71,21 @@ class PastoralController extends Controller
         }
         $this->requireAlcancePastoral((int) $pastoral['id']);
 
+        $responsableCuenta = $pastoral['responsable_persona_id']
+            ? (new UsuarioModel())->porPersona((int) $pastoral['responsable_persona_id'])
+            : null;
+
         $this->render('pastorales/form', [
-            'titulo'      => $pastoral['nombre'],
-            'pastoral'    => $pastoral,
-            'centros'     => (new CentroModel())->activos(),
-            'actividades' => $this->modelo->actividades((int) $pastoral['id']),
-            'documentos'  => $this->modelo->documentos((int) $pastoral['id']),
-            'scriptExtra' => $this->scriptEditor(),
+            'titulo'            => $pastoral['nombre'],
+            'pastoral'          => $pastoral,
+            'centros'           => (new CentroModel())->activos(),
+            'personas'          => (new PersonaModel())->paraSelector(),
+            'responsableCuenta' => $responsableCuenta,
+            'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
+            'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
+            'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
+            'documentos'        => $this->modelo->documentos((int) $pastoral['id']),
+            'scriptExtra'       => $this->scriptEditor(),
         ]);
     }
 
@@ -104,16 +129,57 @@ class PastoralController extends Controller
             Session::flash('warning', 'La pastoral se guardó, pero la imagen no: ' . $e->getMessage());
         }
 
+        // El responsable se elige del equipo pastoral; si no está ahí todavía,
+        // el nombre libre de abajo es el respaldo. Con persona elegida, su
+        // nombre manda sobre el campo de texto (que se ignora) y su correo de
+        // acceso —si tiene cuenta— manda sobre el de contacto: es la misma
+        // regla que corrige el caso real de MESC, donde el correo de contacto
+        // llevaba una letra distinta al de la cuenta de la coordinadora.
+        $responsablePersonaId = $this->postIntONull('responsable_persona_id');
+        $responsablePersona   = $responsablePersonaId
+            ? (new PersonaModel())->porId($responsablePersonaId) : null;
+        if ($responsablePersonaId && !$responsablePersona) {
+            $responsablePersonaId = null;   // id inválido: se ignora en silencio, como el resto de selects opcionales
+        }
+
+        // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
+        // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
+        // puede a la vez agrupar hijas y tener un padre. La UI ya solo ofrece
+        // candidatos válidos (PastoralModel::candidatosPadre()) y oculta el
+        // selector si tieneHijos, así que esto es defensa ante un POST
+        // manipulado, no un caso de uso real — se ignora en silencio, como el
+        // resto de selects opcionales.
+        $pastoralPadreId = $this->postIntONull('pastoral_padre_id');
+        if ($pastoralPadreId !== null) {
+            $padre  = $this->modelo->porId($pastoralPadreId);
+            $valido = $padre && $pastoralPadreId !== $id && $padre['pastoral_padre_id'] === null
+                   && !($id && $this->modelo->tieneHijos($id));
+            if (!$valido) {
+                $pastoralPadreId = null;
+            }
+        }
+
+        if ($responsablePersona) {
+            $responsableNombre = $responsablePersona['nombre'];
+            $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
+            $contactoEmail     = $cuentaResponsable ? $cuentaResponsable['email'] : ($this->postStr('contacto_email') ?: null);
+        } else {
+            $responsableNombre = $this->postStr('responsable_nombre') ?: null;
+            $contactoEmail     = $this->postStr('contacto_email') ?: null;
+        }
+
         $datos = [
             'centro_id'          => $this->postIntONull('centro_id'),
+            'pastoral_padre_id'  => $pastoralPadreId,
             'slug'               => $slug,
             'nombre'             => $nombre,
             'descripcion_corta'  => $this->postStr('descripcion_corta') ?: null,
             'descripcion'        => SanitizadorHtml::limpiar($this->postHtml('descripcion')) ?: null,
             'imagen'             => $imagen,
             'icono'              => $this->postStr('icono') ?: 'bi-people',
-            'responsable_nombre' => $this->postStr('responsable_nombre') ?: null,
-            'contacto_email'     => $this->postStr('contacto_email') ?: null,
+            'responsable_nombre'      => $responsableNombre,
+            'responsable_persona_id'  => $responsablePersonaId,
+            'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
             'hora_reunion'       => $this->postStr('hora_reunion') ?: null,

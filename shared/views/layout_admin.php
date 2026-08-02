@@ -115,15 +115,15 @@ $candidatosImpersonar = (new UsuarioModel())->paraImpersonar();
                 <div class="list-group">
                     <?php foreach ($candidatosImpersonar as $candidato): ?>
                     <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'auth', 'impersonar')) ?>"
-                          class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 fila-usar-como"
+                          class="list-group-item list-group-item-action d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 py-2 fila-usar-como"
                           data-texto="<?= e(mb_strtolower($candidato['nombre'] . ' ' . $candidato['email'])) ?>">
                         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                         <input type="hidden" name="usuario_id" value="<?= (int) $candidato['id'] ?>">
-                        <span>
+                        <span class="fila-usar-como-nombre">
                             <?= e($candidato['nombre']) ?>
                             <span class="text-muted small d-block"><?= e($candidato['email']) ?></span>
                         </span>
-                        <span class="d-flex align-items-center gap-2">
+                        <span class="d-flex align-items-center gap-2 flex-shrink-0">
                             <span class="badge bg-secondary-subtle text-secondary-emphasis"><?= e(ROLES_NOMBRES[$candidato['rol']] ?? $candidato['rol']) ?></span>
                             <button type="submit" class="btn btn-sm btn-outline-primary">Usar</button>
                         </span>

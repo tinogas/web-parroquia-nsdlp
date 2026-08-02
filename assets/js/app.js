@@ -44,6 +44,20 @@
         }
     }
 
+    // ---- Buscar en el modal de "Usar como…" ----
+    // data-texto ya trae nombre + correo en minúsculas, listo para comparar.
+    var buscarUsarComo = document.getElementById('buscarUsarComo');
+    if (buscarUsarComo) {
+        var filasUsarComo = document.querySelectorAll('.fila-usar-como');
+        buscarUsarComo.addEventListener('input', function () {
+            var texto = buscarUsarComo.value.trim().toLowerCase();
+            filasUsarComo.forEach(function (fila) {
+                var coincide = texto === '' || fila.dataset.texto.indexOf(texto) !== -1;
+                fila.classList.toggle('d-none', !coincide);
+            });
+        });
+    }
+
     // ---- Vista previa de la imagen antes de subirla ----
     // Se activa con: <input type="file" data-preview="idDeLaImagen">
     document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {

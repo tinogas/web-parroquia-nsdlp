@@ -62,7 +62,14 @@ RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/([a-z0-9-]+)/?$   index.php?area=publico&
     # el archivo se suba bien al guardar porque eso no depende de esta
     # cabecera. Un blob: es del mismo origen y viene del propio archivo que
     # el usuario ya eligió, así que no abre superficie de XSS nueva.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    #
+    # frame-src suma www.facebook.com para el widget de "lo último publicado"
+    # de la portada (modules/inicio/views/publico/index.php): es el iframe
+    # oficial del Page Plugin de Facebook, sin SDK ni script propio —por eso
+    # basta con abrir frame-src y no hace falta tocar script-src—, y solo se
+    # carga si hay una URL de Facebook capturada en Configuración → Redes
+    # sociales. Ver docs/ARQUITECTURA.md.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; frame-src https://www.google.com https://maps.google.com https://www.facebook.com; object-src 'none'; base-uri 'self'; form-action 'self'"
 </IfModule>
 
 # ---- PHP: ocultar versión y errores en producción ----

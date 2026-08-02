@@ -14,11 +14,18 @@ class EventoModel extends Model
      * Listado del panel. $anio, $mes y $dia acotan por la fecha de inicio del
      * evento: con un año cargado entero, 467 eventos son 32 páginas y encontrar
      * uno concreto pasando páginas no es viable.
+     *
+     * `$pastorales` y `$centros` ya vienen cruzados con el alcance de quien
+     * mira (Controller::pastoralesVisibles() y centrosVisibles()): son a la vez
+     * el filtro que eligió en pantalla y el límite de lo que le corresponde. Un
+     * null dentro de cualquiera de las dos listas incluye el contenido sin
+     * pastoral o sin sede.
      */
     public function listar(
         int $pagina,
         string $filtro = 'todos',
-        ?array $pastoralesPermitidas = null,
+        ?array $pastorales = null,
+        ?array $centros = null,
         ?int $anio = null,
         ?int $mes = null,
         ?int $dia = null
@@ -38,19 +45,22 @@ class EventoModel extends Model
             $params += $paramsFecha;
         }
 
-        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'e.pastoral_id');
-        if ($condicionPastoral !== '') {
-            $condiciones[] = $condicionPastoral;
-            $params += $paramsPastoral;
+        foreach ([[$pastorales, 'e.pastoral_id'], [$centros, 'e.centro_id']] as [$ids, $columna]) {
+            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
+            if ($condicion !== '') {
+                $condiciones[] = $condicion;
+                $params += $paramsAlcance;
+            }
         }
 
         $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
 
         return $this->paginar(
-            "SELECT e.*, u.nombre AS autor, p.nombre AS pastoral_nombre
+            "SELECT e.*, u.nombre AS autor, p.nombre AS pastoral_nombre, c.nombre AS centro_nombre
                FROM eventos e
                LEFT JOIN usuarios u ON u.id = e.usuario_id
                LEFT JOIN pastorales p ON p.id = e.pastoral_id
+               LEFT JOIN centros c ON c.id = e.centro_id
                {$where}
               ORDER BY e.fecha_inicio DESC, e.id DESC",
             $params,
@@ -115,14 +125,22 @@ class EventoModel extends Model
 
     /**
      * Años que de verdad tienen eventos, de más reciente a más antiguo, para no
-     * ofrecer un selector lleno de años vacíos. Respeta el alcance por pastoral
-     * de quien mira: si solo administra una, no debería deducir de este selector
-     * en qué años hay eventos de las demás.
+     * ofrecer un selector lleno de años vacíos. Acompaña a los filtros de
+     * pastoral y sede que estén puestos, para que los años ofrecidos
+     * correspondan a lo que se está viendo y no a todo el histórico.
      */
-    public function aniosConEventos(?array $pastoralesPermitidas = null): array
+    public function aniosConEventos(?array $pastorales = null, ?array $centros = null): array
     {
-        [$condicion, $params] = $this->condicionPastoral($pastoralesPermitidas, 'e.pastoral_id');
-        $where = $condicion !== '' ? 'WHERE ' . $condicion : '';
+        $condiciones = [];
+        $params      = [];
+        foreach ([[$pastorales, 'e.pastoral_id'], [$centros, 'e.centro_id']] as [$ids, $columna]) {
+            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
+            if ($condicion !== '') {
+                $condiciones[] = $condicion;
+                $params += $paramsAlcance;
+            }
+        }
+        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
 
         return array_map(
             'intval',
@@ -202,6 +220,50 @@ class EventoModel extends Model
         );
     }
 
+    /**
+     * Lo mismo que entreFechas(), pero para la agenda interna del panel: sin la
+     * condición `publicado = 1`, porque ahí el equipo tiene que ver también lo
+     * que todavía es borrador —de eso se trata que la agenda sea interna—, y
+     * con el nombre de la pastoral para poder etiquetar cada casilla.
+     *
+     * No filtra por el alcance de quien mira: la agenda es de toda la parroquia
+     * y todas las pastorales se ven entre sí. Lo que sí respeta el alcance es
+     * escribir, que se comprueba con requireAlcancePastoral() al editar.
+     *
+     * $pastorales y $centros son los filtros que la persona eligió en pantalla,
+     * no su alcance: null = todas, o la lista de ids a la que quiera acotar.
+     */
+    public function agenda(
+        string $desde,
+        string $hasta,
+        ?array $pastorales = null,
+        ?array $centros = null
+    ): array {
+        $filtro = '';
+        $params = [':desde' => $desde, ':hasta' => $hasta];
+        foreach ([[$pastorales, 'e.pastoral_id'], [$centros, 'e.centro_id']] as [$ids, $columna]) {
+            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
+            if ($condicion !== '') {
+                $filtro .= ' AND ' . $condicion;
+                $params += $paramsAlcance;
+            }
+        }
+
+        return $this->fetchAll(
+            'SELECT e.id, e.slug, e.titulo, e.fecha_inicio, e.fecha_fin, e.todo_el_dia,
+                    e.lugar, e.color, e.publicado, e.pastoral_id, e.centro_id,
+                    p.nombre AS pastoral_nombre, c.nombre AS centro_nombre
+               FROM eventos e
+               LEFT JOIN pastorales p ON p.id = e.pastoral_id
+               LEFT JOIN centros c ON c.id = e.centro_id
+              WHERE DATE(e.fecha_inicio) <= :hasta
+                AND DATE(COALESCE(e.fecha_fin, e.fecha_inicio)) >= :desde'
+                . $filtro . '
+              ORDER BY e.fecha_inicio',
+            $params
+        );
+    }
+
     /** Atajo de entreFechas() para un mes entero. */
     public function delMes(int $anio, int $mes, ?int $pastoralId = null): array
     {
@@ -215,10 +277,10 @@ class EventoModel extends Model
         $this->execute(
             'INSERT INTO eventos
                 (slug, titulo, descripcion, imagen, lugar, fecha_inicio, fecha_fin,
-                 todo_el_dia, pastoral_id, color, publicado, usuario_id)
+                 todo_el_dia, pastoral_id, centro_id, color, publicado, usuario_id)
              VALUES
                 (:slug, :titulo, :descripcion, :imagen, :lugar, :inicio, :fin,
-                 :todoDia, :pastoral, :color, :publicado, :usuario)',
+                 :todoDia, :pastoral, :centro, :color, :publicado, :usuario)',
             $this->parametros($datos) + [':usuario' => $usuarioId]
         );
         return $this->lastInsertId();
@@ -230,7 +292,7 @@ class EventoModel extends Model
             'UPDATE eventos
                 SET slug = :slug, titulo = :titulo, descripcion = :descripcion, imagen = :imagen,
                     lugar = :lugar, fecha_inicio = :inicio, fecha_fin = :fin, todo_el_dia = :todoDia,
-                    pastoral_id = :pastoral, color = :color, publicado = :publicado
+                    pastoral_id = :pastoral, centro_id = :centro, color = :color, publicado = :publicado
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -253,6 +315,7 @@ class EventoModel extends Model
             ':fin'         => $datos['fecha_fin'],
             ':todoDia'     => $datos['todo_el_dia'],
             ':pastoral'    => $datos['pastoral_id'],
+            ':centro'      => $datos['centro_id'],
             ':color'       => $datos['color'],
             ':publicado'   => $datos['publicado'],
         ];

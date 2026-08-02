@@ -4,9 +4,12 @@ require_once BASE_PATH . '/core/Model.php';
 /**
  * CursoModel — Catálogo de cursos y capacitaciones.
  *
- * A diferencia de avisos/eventos/galería, `pastoral_id` aquí es solo una
- * etiqueta organizativa: el rol coordinador no administra cursos, así que no
- * hace falta el mismo alcance por pastoral. Ver install.sql.
+ * `pastoral_id` era al principio solo una etiqueta organizativa, porque el rol
+ * coordinador no administraba cursos. Desde el issue de filtrado por pastoral
+ * pesa lo mismo que en avisos y eventos: la pastoral dueña administra sus
+ * cursos y nadie más los toca, y `centro_id` añade en qué sede se da. Quien lo
+ * hace cumplir es CursoController con requireAlcanceContenido(); aquí solo se
+ * ofrece por dónde filtrar.
  *
  * Fase 1: catálogo con temario informativo e inscripción. `curso_sesiones` es
  * el ancla del aula virtual de fase 2. Ver docs/BASE-DE-DATOS.md
@@ -19,20 +22,43 @@ class CursoModel extends Model
         'mixta'      => 'Mixta',
     ];
 
-    public function listar(int $pagina, string $filtro = 'todos'): array
-    {
-        $where = match ($filtro) {
-            'publicados' => 'WHERE c.publicado = 1',
-            'borradores' => 'WHERE c.publicado = 0',
-            default      => '',
+    /**
+     * Listado del panel. `$pastorales` y `$centros` ya vienen cruzados con el
+     * alcance de quien mira, igual que en EventoModel::listar().
+     */
+    public function listar(
+        int $pagina,
+        string $filtro = 'todos',
+        ?array $pastorales = null,
+        ?array $centros = null
+    ): array {
+        $condiciones = match ($filtro) {
+            'publicados' => ['c.publicado = 1'],
+            'borradores' => ['c.publicado = 0'],
+            default      => [],
         };
+
+        $params = [];
+        foreach ([[$pastorales, 'c.pastoral_id'], [$centros, 'c.centro_id']] as [$ids, $columna]) {
+            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
+            if ($condicion !== '') {
+                $condiciones[] = $condicion;
+                $params += $paramsAlcance;
+            }
+        }
+
+        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
+
         return $this->paginar(
-            "SELECT c.*, p.nombre AS instructor_nombre
+            "SELECT c.*, i.nombre AS instructor_nombre, p.nombre AS pastoral_nombre,
+                    ce.nombre AS centro_nombre
                FROM cursos c
-               LEFT JOIN personas p ON p.id = c.instructor_id
+               LEFT JOIN personas i   ON i.id = c.instructor_id
+               LEFT JOIN pastorales p ON p.id = c.pastoral_id
+               LEFT JOIN centros ce   ON ce.id = c.centro_id
                {$where}
               ORDER BY c.fecha_inicio DESC, c.id DESC",
-            [],
+            $params,
             $pagina,
             15
         );
@@ -88,17 +114,95 @@ class CursoModel extends Model
         );
     }
 
+    // ── Agenda interna ──────────────────────────────────────────────────
+    //
+    // El calendario del panel mezcla eventos y cursos; el del sitio público
+    // sigue siendo solo de eventos, y los cursos allí se ven como catálogo.
+    // Aquí no se filtra por `publicado` —un curso en borrador también hay que
+    // poder programarlo— ni por el alcance de quien mira: todas las pastorales
+    // se ven entre sí, y lo que se acota es escribir, no leer.
+
+    /**
+     * Cursos cuyo periodo [fecha_inicio, fecha_fin] se traslapa con el rango
+     * pedido. Las dos columnas son DATE, así que un curso ocupa días enteros:
+     * el controlador los normaliza a la forma que espera `Calendario`.
+     *
+     * Un curso sin fecha_inicio no puede dibujarse en ninguna casilla; los
+     * recoge sinFechas() para avisar aparte en vez de desaparecerlos.
+     */
+    public function agenda(
+        string $desde,
+        string $hasta,
+        ?array $pastorales = null,
+        ?array $centros = null
+    ): array {
+        [$filtro, $params] = $this->filtroAlcance($pastorales, $centros);
+
+        return $this->fetchAll(
+            'SELECT c.id, c.slug, c.titulo, c.fecha_inicio, c.fecha_fin, c.horario, c.lugar,
+                    c.publicado, c.pastoral_id, c.centro_id,
+                    p.nombre AS pastoral_nombre, ce.nombre AS centro_nombre
+               FROM cursos c
+               LEFT JOIN pastorales p ON p.id = c.pastoral_id
+               LEFT JOIN centros ce   ON ce.id = c.centro_id
+              WHERE c.fecha_inicio IS NOT NULL
+                AND c.fecha_inicio <= :hasta
+                AND COALESCE(c.fecha_fin, c.fecha_inicio) >= :desde'
+                . $filtro . '
+              ORDER BY c.fecha_inicio, c.titulo',
+            [':desde' => $desde, ':hasta' => $hasta] + $params
+        );
+    }
+
+    /** Cursos sin fecha de inicio: no caben en el calendario, pero existen. */
+    public function sinFechas(?array $pastorales = null, ?array $centros = null): array
+    {
+        [$filtro, $params] = $this->filtroAlcance($pastorales, $centros);
+
+        return $this->fetchAll(
+            'SELECT c.id, c.titulo, c.publicado, c.pastoral_id, c.centro_id,
+                    p.nombre AS pastoral_nombre, ce.nombre AS centro_nombre
+               FROM cursos c
+               LEFT JOIN pastorales p ON p.id = c.pastoral_id
+               LEFT JOIN centros ce   ON ce.id = c.centro_id
+              WHERE c.fecha_inicio IS NULL'
+                . $filtro . '
+              ORDER BY c.titulo',
+            $params
+        );
+    }
+
+    /**
+     * Las dos condiciones de alcance —pastoral y sede— como un solo fragmento
+     * « AND … AND …» listo para pegar detrás de un WHERE que ya tiene algo.
+     *
+     * @return array{0: string, 1: array}
+     */
+    private function filtroAlcance(?array $pastorales, ?array $centros): array
+    {
+        $filtro = '';
+        $params = [];
+        foreach ([[$pastorales, 'c.pastoral_id'], [$centros, 'c.centro_id']] as [$ids, $columna]) {
+            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
+            if ($condicion !== '') {
+                $filtro .= ' AND ' . $condicion;
+                $params += $paramsAlcance;
+            }
+        }
+        return [$filtro, $params];
+    }
+
     public function crear(array $datos): int
     {
         $this->execute(
             'INSERT INTO cursos
                 (slug, titulo, descripcion, objetivos, dirigido_a, imagen, modalidad,
-                 instructor_id, pastoral_id, cupo, aportacion, fecha_inicio, fecha_fin,
+                 instructor_id, pastoral_id, centro_id, cupo, aportacion, fecha_inicio, fecha_fin,
                  horario, lugar, inscripciones_abiertas, fecha_cierre_inscripcion,
                  requiere_tutor, publicado, orden)
              VALUES
                 (:slug, :titulo, :descripcion, :objetivos, :dirigidoA, :imagen, :modalidad,
-                 :instructor, :pastoral, :cupo, :aportacion, :inicio, :fin,
+                 :instructor, :pastoral, :centro, :cupo, :aportacion, :inicio, :fin,
                  :horario, :lugar, :inscripcionesAbiertas, :cierre,
                  :tutor, :publicado, :orden)',
             $this->parametros($datos)
@@ -113,6 +217,7 @@ class CursoModel extends Model
                 SET slug = :slug, titulo = :titulo, descripcion = :descripcion,
                     objetivos = :objetivos, dirigido_a = :dirigidoA, imagen = :imagen,
                     modalidad = :modalidad, instructor_id = :instructor, pastoral_id = :pastoral,
+                    centro_id = :centro,
                     cupo = :cupo, aportacion = :aportacion, fecha_inicio = :inicio, fecha_fin = :fin,
                     horario = :horario, lugar = :lugar,
                     inscripciones_abiertas = :inscripcionesAbiertas, fecha_cierre_inscripcion = :cierre,
@@ -193,6 +298,7 @@ class CursoModel extends Model
             ':modalidad'             => $datos['modalidad'],
             ':instructor'            => $datos['instructor_id'],
             ':pastoral'              => $datos['pastoral_id'],
+            ':centro'                => $datos['centro_id'],
             ':cupo'                  => $datos['cupo'],
             ':aportacion'            => $datos['aportacion'],
             ':inicio'                => $datos['fecha_inicio'],

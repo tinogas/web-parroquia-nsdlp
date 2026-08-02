@@ -24,7 +24,8 @@ class MescModel extends Model
     public function pastoralId(): ?int
     {
         return $this->fetchColumn(
-            "SELECT id FROM pastorales WHERE slug = 'ministro-extraordinario-de-la-sagrada-comunion'"
+            'SELECT id FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_MESC]
         ) ?: null;
     }
 
@@ -194,10 +195,21 @@ class MescModel extends Model
 
     // ── Ministros ────────────────────────────────────────────────────────
 
+    /**
+     * Para el catálogo del panel: además del nombre corto propio del módulo,
+     * trae el nombre completo de su ficha del equipo pastoral cuando está
+     * vinculado (`nombre_completo`, NULL si no lo está). Las dos cosas se
+     * listan juntas para poder ver de un vistazo quién es cada «Tino» y a
+     * quién le falta ficha.
+     */
     public function ministros(int $pastoralId): array
     {
         return $this->fetchAll(
-            'SELECT * FROM mesc_ministros WHERE pastoral_id = :id ORDER BY nombre',
+            'SELECT m.*, p.nombre AS nombre_completo
+               FROM mesc_ministros m
+               LEFT JOIN personas p ON p.id = m.persona_id
+              WHERE m.pastoral_id = :id
+              ORDER BY m.nombre',
             [':id' => $pastoralId]
         );
     }
@@ -218,10 +230,11 @@ class MescModel extends Model
     public function crearMinistro(array $datos): int
     {
         $this->execute(
-            'INSERT INTO mesc_ministros (pastoral_id, nombre, telefono, activo)
-             VALUES (:pastoral, :nombre, :telefono, :activo)',
+            'INSERT INTO mesc_ministros (pastoral_id, persona_id, nombre, telefono, activo)
+             VALUES (:pastoral, :persona, :nombre, :telefono, :activo)',
             [
                 ':pastoral' => $datos['pastoral_id'],
+                ':persona'  => $datos['persona_id'],
                 ':nombre'   => $datos['nombre'],
                 ':telefono' => $datos['telefono'],
                 ':activo'   => $datos['activo'],
@@ -233,8 +246,11 @@ class MescModel extends Model
     public function actualizarMinistro(int $id, array $datos): int
     {
         return $this->execute(
-            'UPDATE mesc_ministros SET nombre = :nombre, telefono = :telefono, activo = :activo WHERE id = :id',
+            'UPDATE mesc_ministros
+                SET persona_id = :persona, nombre = :nombre, telefono = :telefono, activo = :activo
+              WHERE id = :id',
             [
+                ':persona'  => $datos['persona_id'],
                 ':nombre'   => $datos['nombre'],
                 ':telefono' => $datos['telefono'],
                 ':activo'   => $datos['activo'],

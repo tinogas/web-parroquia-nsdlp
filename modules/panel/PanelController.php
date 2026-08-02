@@ -1,5 +1,6 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 
 class PanelController extends Controller
 {
@@ -8,7 +9,8 @@ class PanelController extends Controller
         $this->requirePermiso('panel.ver');
 
         $this->render('panel/index', [
-            'titulo' => 'Panel',
+            'titulo'          => 'Panel',
+            'cumpleanerosMes' => (new PersonaModel())->cumpleanerosDelMes(),
         ]);
     }
 }

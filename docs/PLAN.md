@@ -22,8 +22,13 @@ desarrollador.
 El issue preguntaba cuál convenía. Una landing page sirve para una sola conversión; aquí
 hay ocho secciones informativas, un catálogo de cursos, formularios de inscripción y un
 panel de administración. Es un sitio multi-página. Lo que sí se toma prestado de las
-landing pages es la portada: carrusel, próximas misas, avisos recientes y contacto
-visible sin bajar.
+landing pages es la portada: carrusel, próximas misas, próximos eventos y cursos, y avisos
+recientes, todo sin bajar.
+
+(Al principio la portada repetía además los datos de contacto. Se quitaron: el pie de
+página los lleva en todas las pantallas del sitio, así que ese bloque solo servía en una
+landing page, donde no hay otra página a la que ir. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#la-portada).)
 
 ### CMS a medida, no WordPress ni un motor tipo Joomla
 
@@ -64,6 +69,12 @@ avisan con contadores en el panel.
 - Se añade un **formulario de inscripción en línea a los sacramentos**. El issue solo
   pedía publicar los requisitos; recibir la solicitud por la web ahorra visitas a la
   oficina parroquial y es la pieza de más valor operativo del sistema.
+
+  > **Revertido después.** Se construyó en la etapa 7 y se eliminó por completo en el
+  > issue #3, a petición explícita del administrador: la parroquia prefiere que el trámite
+  > empiece en la oficina. La sección quedó como información de requisitos, y con eso el
+  > issue original tenía razón en este punto. Ver
+  > [`ARQUITECTURA.md`](ARQUITECTURA.md#sacramentos-catálogo-puramente-informativo).
 - El **organigrama** se muestra en "Quiénes somos" y no en la portada. En la portada
   competiría con lo que el visitante realmente busca: horario de misa y ubicación.
 
@@ -71,10 +82,10 @@ avisan con contadores en el panel.
 
 | Sección | Contenido |
 |---|---|
-| Inicio | Carrusel, bienvenida del párroco, horarios destacados, próximos eventos, últimos avisos, contacto rápido |
+| Inicio | Carrusel, bienvenida del párroco, próximas misas, próximos eventos y próximos cursos, últimos avisos, ligas de interés |
 | Quiénes somos | Historia, misión, visión y valores; sacerdote, diáconos y equipo pastoral; organigrama |
 | Horarios | Misas dominicales y entre semana, confesiones, adoración eucarística, horario de oficina |
-| Sacramentos | Requisitos y documentos de bautizo, primera comunión, confirmación, matrimonio, confesión y unción; formulario de solicitud |
+| Sacramentos | Requisitos, documentos y aportación de bautizo, primera comunión, confirmación, matrimonio, confesión y unción. Puramente informativo: el trámite se hace en la oficina parroquial |
 | Pastorales | Coro, catequesis, caridad, jóvenes, ministros MESC y demás, con sus actividades comunitarias y de apoyo social |
 | Cursos | Catálogo con temario e inscripción |
 | Avisos | Boletín semanal y noticias parroquiales |
@@ -87,14 +98,23 @@ avisan con contadores en el panel.
 
 | Rol | Alcance |
 |---|---|
-| Administrador | Todo, incluidos usuarios, configuración y auditoría |
+| Administrador | Todo, incluidos usuarios, configuración, respaldos y auditoría |
 | Editor | Todo el contenido del sitio; publica y modera. Sin acceso a usuarios ni configuración |
-| Coordinador | Contenido de su o sus pastorales. Lo que escribe queda en borrador hasta que un editor lo publica |
-| Secretaría | Solicitudes de sacramentos, inscripciones a cursos y mensajes de contacto. No edita el sitio |
+| Coordinador de pastoral | Contenido de su o sus pastorales, en las sedes que se le marquen (sin marcar ninguna, en todas). Publica sus eventos y sus cursos; sus avisos y su galería quedan en borrador hasta que un editor los publica |
+| Secretaría | Inscripciones a cursos y mensajes de contacto. No edita el sitio |
 
 El rol de secretaría existe por una razón legal, no organizativa: separa a quien ve datos
 personales de menores de quien edita la web. Detalle en
 [`ARQUITECTURA.md`](ARQUITECTURA.md#roles-y-permisos).
+
+A estos cuatro se sumaron después seis roles con la pastoral en el nombre (Administrador
+MESC, Consulta Catequesis…) y se retiraron al aparecer tres coordinadoras de catequesis, una
+por comunidad, que ese esquema no sabía distinguir. En su lugar quedan dos: **Coordinador
+general de pastoral**, que administra la suya en varias sedes o en todas, y **Consulta**, de
+solo lectura, para que un ministro, catequista o lector entre a ver su calendario y sus
+documentos sin poder cambiar nada. Los tres acotados usan el mismo mecanismo: se les asigna
+la pastoral y la sede. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#administrador-y-consulta-por-pastoral-revisión-de-módulos).
 
 ## Etapas
 
@@ -137,21 +157,83 @@ vistas de administración.
    desde cero en una base de datos limpia. No hay migraciones: `install.sql` es un
    archivo único acumulativo hasta que el sitio salga a producción.
 
+**Salvedad sobre la regla 4, a partir de la carga de la agenda 2026.** La base local ya
+contiene contenido real que `install.sql` no siembra: los 467 eventos de la agenda, los
+centros, las pastorales con sus ministros, catequistas y lectores, y el equipo pastoral.
+Reimportar `install.sql` desde cero sigue siendo la forma de comprobar que el esquema está
+completo, pero **ya no es gratis**: borra ese trabajo. Desde ahora, antes de reinstalar se
+genera un respaldo desde el panel (Administración → Respaldos) y se restaura después.
+`backups/antes-agenda-2026.sql` es el precedente. El punto de no retorno formal sigue siendo el despliegue —ahí empiezan las
+migraciones `ALTER TABLE`, ver [`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores)—,
+pero en local ya conviene tratar la base como algo que cuesta reconstruir.
+
+## Después de la fase 1
+
+Las diez etapas de arriba cerraron el alcance acordado. Lo que sigue son bloques de trabajo
+pedidos después, cada uno con su origen; todos están implementados y probados en local.
+
+| Bloque | Qué trajo | Origen |
+|---|---|---|
+| Respaldos y restauración | Módulo de respaldos en PHP puro, con restauración desde el panel y respaldo de seguridad automático antes de reemplazar nada | Petición del párroco |
+| Impersonación | "Usar como…": el administrador opera el panel con la sesión de otra cuenta, y la auditoría distingue quién lo hizo de verdad | Petición del administrador |
+| Sedes, centros y pastorales | Catálogo de centros, pastorales ligadas a su sede (el alcance heredado por centro se implementó aquí y se sustituyó después por el alcance pastoral × sede, ver ARQUITECTURA.md), contenido y documentos propios de cada pastoral, vigencia de avisos, horarios por sede, y el módulo MESC (visitas a enfermos, rutas y calendario de turnos). Se retiró el formulario de solicitud de sacramentos en línea | [Issue #3](https://github.com/tinogas/web-parroquia-nsdlp/issues/3) |
+| Catequesis y Lector | Dos módulos más de pastoral dedicada sobre el patrón de MESC: catequistas con periodos y grado, y turnos de lectores | Issue #3 |
+| Revisión de módulos | Roles de administrador y consulta por pastoral, botones que no se dibujan sin permiso, horarios públicos agrupados por tipo con filtro de sede, eventos de varios días, datos de tutor en inscripciones, organigrama responsivo y su vista de impresión en árbol | Uso real del panel |
+| Calendario y agenda 2026 | Vistas de día, semana, mes y año; filtros de fecha en el listado del panel; y la carga de la agenda impresa completa con los scripts de `herramientas/` | Necesidad de publicar la agenda del año |
+
+El detalle de cada decisión —y de los errores que estos bloques encontraron en el código de
+la fase 1— está en [`ARQUITECTURA.md`](ARQUITECTURA.md).
+
+### Lo que queda abierto
+
+- **Desplegar en producción.** Todo el trabajo sigue siendo local. Los pendientes que no
+  dependen de nosotros (dominio, hosting, quién tiene cada acceso) están listados en
+  [`DESPLIEGUE.md`](DESPLIEGUE.md#pendiente-de-resolver).
+- **El resto del contenido real**: lo de la lista de abajo que aún no ha llegado.
+- **No hay mecanismo de retención ni anonimización** de datos personales. El que existía
+  murió con el formulario de solicitud de sacramentos; si la parroquia decide que
+  `inscripciones_curso` o `mensajes_contacto` necesitan uno, hay que construirlo de nuevo.
+  Ver [`PRIVACIDAD.md`](PRIVACIDAD.md#retención).
+- **Dos incoherencias menores anotadas, no resueltas**: la lista de carpetas que el
+  `.htaccess` bloquea nombra `cli/`, que ya no existe, y no nombra `herramientas/`; y
+  `package.json` declara una versión de los iconos distinta de la que el sitio carga del CDN.
+  Las dos están explicadas en [`ARQUITECTURA.md`](ARQUITECTURA.md).
+- **La fase 2 (aula virtual) sigue fuera de alcance**, con el modelo de datos de cursos ya
+  preparado para extenderse.
+
 ## Qué hace falta de la parroquia
 
-El sitio no sirve sin contenido real. Conviene ir reuniendo, en paralelo al desarrollo:
+El sitio no sirve sin contenido real. Esto es lo que se pidió al empezar y cómo va, revisado
+sobre la base local el **30 de julio de 2026**:
 
-- Fotografías del templo, del interior y de las celebraciones, en buena resolución.
-- Historia de la parroquia, y su misión, visión y valores.
-- Nombre, cargo, fotografía y semblanza breve del párroco, vicarios, diáconos y equipo
-  pastoral.
-- Horarios exactos de misas, confesiones, adoración y oficina parroquial.
-- Requisitos y documentos que se piden hoy para cada sacramento.
-- Listado de pastorales con su responsable, día y lugar de reunión.
-- Dirección exacta, teléfono, correo y enlaces a redes sociales.
-- Logotipo o escudo, si existe.
+**Ya cargado**
 
-Mientras tanto se trabaja con datos de ejemplo, claramente marcados como tales.
+- Dirección, ciudad, código postal, teléfono, WhatsApp, correo, Facebook, mapa y horario de
+  oficina.
+- Logotipo.
+- Horarios de misas, confesiones y demás: 42 registros, repartidos entre la sede y los dos
+  centros.
+- Párroco, vicario y equipo pastoral: 8 personas y un organigrama de 10 nodos.
+- Las seis pastorales activas, con los ministros de MESC (13), los catequistas (5) y los
+  lectores dados de alta.
+- La agenda del año: 467 eventos y 22 actividades semanales.
+- Bienvenida del párroco, misión, visión, ligas de interés e introducción de horarios.
+
+**Sigue faltando**
+
+- **Fotografías.** Es lo más notorio: el carrusel de la portada está vacío, la galería tiene
+  una sola imagen, y de las 8 personas del equipo pastoral solo el párroco tiene foto.
+- **Historia de la parroquia y sus valores.** Los bloques existen y están en blanco.
+- **Requisitos y documentos de cuatro de los seis sacramentos**: hoy solo bautismo y
+  matrimonio los tienen escritos.
+- **Textos de entrada** de inicio, contacto, cursos, pastorales y sacramentos, todos en
+  blanco.
+- **Semblanza** de la mayoría del equipo pastoral.
+- **Instagram y YouTube**, si la parroquia los usa; el favicon; y la descripción para
+  buscadores y la imagen de Open Graph, que hoy caen en el valor por omisión.
+
+Nada de esto bloquea el despliegue —una sección sin contenido no se dibuja en vez de
+aparecer vacía—, pero la portada sin fotografías es lo primero que se nota.
 
 ## Riesgos
 
@@ -161,8 +243,8 @@ Mientras tanto se trabaja con datos de ejemplo, claramente marcados como tales.
 | XSS almacenado: habrá varios editores semi-confiables escribiendo HTML | Alto | Sanitizado con whitelist al guardar, más una CSP restrictiva |
 | Ejecución de PHP subido a `uploads/` | Crítico | `.htaccess` que apaga el motor, validación de MIME real y nombres generados |
 | Fuga de datos personales de menores | Crítico y legal | Separación de roles, filtro de autorización en la galería, auditoría de lecturas y anonimizado por retención |
-| Un coordinador publica contenido inapropiado | Reputacional | Los coordinadores no tienen permiso de publicar; todo entra como borrador |
+| Un coordinador publica contenido inapropiado | Reputacional | Sus avisos y su galería entran como borrador y los revisa un editor. Sus eventos y cursos sí se publican solos —una fecha del calendario no espera revisión—, con la auditoría y el respaldo como red |
 | `mod_rewrite` ausente o distinto en el hosting | Medio | Interruptor `URLS_AMIGABLES` y helpers de URL desde el primer día |
-| `install.sql` se desincroniza del esquema real | Medio | Reinstalación limpia al cerrar cada etapa |
+| `install.sql` se desincroniza del esquema real | Medio | Reinstalación limpia al cerrar cada etapa; desde la carga de la agenda 2026, con respaldo y restauración alrededor (ver la salvedad de la regla 4) |
 | Falta de contenido real al momento de publicar | Alto para la entrega | Solicitarlo desde ahora; datos de ejemplo marcados mientras tanto |
 | El alcance es grande y abarca varias sesiones de trabajo | Medio | Etapas independientes y acumulativas, con hitos presentables |

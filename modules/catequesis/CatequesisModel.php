@@ -27,12 +27,18 @@ class CatequesisModel extends Model
     /** La única pastoral que administra este módulo, resuelta por slug (no por id fijo: los id no se siembran en install.sql). */
     public function pastoralId(): ?int
     {
-        return $this->fetchColumn("SELECT id FROM pastorales WHERE slug = 'catecismo'") ?: null;
+        return $this->fetchColumn(
+            'SELECT id FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_CATEQUESIS]
+        ) ?: null;
     }
 
     public function pastoral(): ?array
     {
-        return $this->fetchOne("SELECT * FROM pastorales WHERE slug = 'catecismo'");
+        return $this->fetchOne(
+            'SELECT * FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_CATEQUESIS]
+        );
     }
 
     // ── Catequistas ──────────────────────────────────────────────────────
@@ -61,9 +67,9 @@ class CatequesisModel extends Model
     public function crearCatequista(array $datos): int
     {
         $this->execute(
-            'INSERT INTO catequesis_catequistas (pastoral_id, nombre, telefono, email, orden, activo)
-             VALUES (:pastoral, :nombre, :telefono, :email, :orden, :activo)',
-            $this->parametrosCatequista($datos)
+            'INSERT INTO catequesis_catequistas (pastoral_id, persona_id, nombre, telefono, email, orden, activo)
+             VALUES (:pastoral, :persona, :nombre, :telefono, :email, :orden, :activo)',
+            $this->parametrosCatequista($datos) + [':pastoral' => $datos['pastoral_id']]
         );
         return $this->lastInsertId();
     }
@@ -72,7 +78,8 @@ class CatequesisModel extends Model
     {
         return $this->execute(
             'UPDATE catequesis_catequistas
-                SET nombre = :nombre, telefono = :telefono, email = :email, orden = :orden, activo = :activo
+                SET persona_id = :persona, nombre = :nombre, telefono = :telefono, email = :email,
+                    orden = :orden, activo = :activo
               WHERE id = :id',
             $this->parametrosCatequista($datos) + [':id' => $id]
         );
@@ -83,10 +90,16 @@ class CatequesisModel extends Model
         return $this->execute('DELETE FROM catequesis_catequistas WHERE id = :id', [':id' => $id]);
     }
 
+    /**
+     * Sin :pastoral: pastoral_id se fija una sola vez al crear (este módulo
+     * es exclusivo de una única pastoral) y actualizarCatequista() no lo
+     * toca — incluirlo aquí rompía el UPDATE con PDO::ATTR_EMULATE_PREPARES
+     * en false, que rechaza cualquier parámetro que el SQL no declare.
+     */
     private function parametrosCatequista(array $datos): array
     {
         return [
-            ':pastoral' => $datos['pastoral_id'],
+            ':persona'  => $datos['persona_id'],
             ':nombre'   => $datos['nombre'],
             ':telefono' => $datos['telefono'],
             ':email'    => $datos['email'],
@@ -115,7 +128,7 @@ class CatequesisModel extends Model
         $this->execute(
             'INSERT INTO catequesis_periodos (pastoral_id, nombre, fecha_inicio, fecha_fin, activo)
              VALUES (:pastoral, :nombre, :inicio, :fin, :activo)',
-            $this->parametrosPeriodo($datos)
+            $this->parametrosPeriodo($datos) + [':pastoral' => $datos['pastoral_id']]
         );
         return $this->lastInsertId();
     }
@@ -135,10 +148,10 @@ class CatequesisModel extends Model
         return $this->execute('DELETE FROM catequesis_periodos WHERE id = :id', [':id' => $id]);
     }
 
+    /** Sin :pastoral: mismo motivo que parametrosCatequista(), no lo usa actualizarPeriodo(). */
     private function parametrosPeriodo(array $datos): array
     {
         return [
-            ':pastoral' => $datos['pastoral_id'],
             ':nombre'   => $datos['nombre'],
             ':inicio'   => $datos['fecha_inicio'],
             ':fin'      => $datos['fecha_fin'],
@@ -223,7 +236,7 @@ class CatequesisModel extends Model
             'INSERT INTO catequesis_actividades
                 (pastoral_id, titulo, descripcion, fecha_inicio, fecha_fin, publicado, orden, usuario_id)
              VALUES (:pastoral, :titulo, :descripcion, :inicio, :fin, :publicado, :orden, :usuario)',
-            $this->parametrosActividad($datos) + [':usuario' => $usuarioId]
+            $this->parametrosActividad($datos) + [':pastoral' => $datos['pastoral_id'], ':usuario' => $usuarioId]
         );
         return $this->lastInsertId();
     }
@@ -244,10 +257,10 @@ class CatequesisModel extends Model
         return $this->execute('DELETE FROM catequesis_actividades WHERE id = :id', [':id' => $id]);
     }
 
+    /** Sin :pastoral: mismo motivo que parametrosCatequista(), no lo usa actualizarActividad(). */
     private function parametrosActividad(array $datos): array
     {
         return [
-            ':pastoral'    => $datos['pastoral_id'],
             ':titulo'      => $datos['titulo'],
             ':descripcion' => $datos['descripcion'],
             ':inicio'      => $datos['fecha_inicio'],

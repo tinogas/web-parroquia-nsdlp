@@ -44,8 +44,11 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
    Version* que estén activas las extensiones `pdo_mysql`, `fileinfo`, `dom` y `mbstring`.
    Activar `gd` si está disponible.
 
-3. **Subir los archivos** a `public_html/`. Excluir del paquete: `.git/`, `docs/` y
-   `config/database.php`.
+3. **Subir los archivos** a `public_html/`. Excluir del paquete: `.git/`, `docs/`,
+   `config/database.php`, `herramientas/` (scripts de carga masiva que solo corren en la
+   máquina de desarrollo), `node_modules/`, `package.json`, `package-lock.json`, los
+   respaldos `.sql` de `backups/` y las hojas de cálculo de trabajo de la agenda. De todo
+   eso, lo único que el servidor necesita es lo que no está en esta lista.
 
 4. **Importar `install.sql`** desde phpMyAdmin.
 
@@ -75,14 +78,20 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 
 > **Nota:** el `cli/purgar_solicitudes.php` que mencionaban versiones anteriores de esta
 > guía ya no existe — se eliminó junto con el formulario de solicitud de sacramentos
-> (issue #3). Hoy no hay ningún respaldo automático de retención de datos que programar en
-> *Cron Jobs*. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Retención".
+> (issue #3), y con él la carpeta `cli/` entera. **No hay ninguna tarea que programar en
+> *Cron Jobs***: el sistema no tiene hoy mecanismo automático de retención ni de
+> anonimización. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Retención".
+>
+> El `.htaccess` sigue bloqueando `cli/` (inofensivo, la carpeta ya no existe) y **no**
+> bloquea `herramientas/`. Si el paquete se armó bien, `herramientas/` no llegó al servidor
+> y da igual; hay un punto para comprobarlo en la verificación posterior, justo abajo.
 
 ## Verificación posterior al despliegue
 
 - [ ] La portada carga en el dominio, sin errores y sin avisos de PHP visibles.
 - [ ] `APP_DEBUG` está en `false` y ningún error se muestra al visitante.
-- [ ] Las once rutas públicas responden sin exigir sesión.
+- [ ] Las once rutas públicas del sitio responden sin exigir sesión (las doce del Router,
+      menos `sitemap`, que se comprueba aparte más abajo).
 - [ ] El panel exige contraseña y la sesión se mantiene.
 - [ ] Una imagen subida desde el panel se ve en el sitio.
 - [ ] `https://dominio/uploads/prueba.php` devuelve 403 y no ejecuta nada.
@@ -97,7 +106,10 @@ vhost** antes de publicar, porque ahí es donde aparecen las rutas olvidadas.
 - [ ] El certificado SSL es válido y HTTP redirige a HTTPS.
 - [ ] El formulario de contacto envía y el mensaje aparece en el panel.
 - [ ] Los enlaces del footer, incluido el aviso de privacidad, funcionan.
-- [ ] La tarea programada de purga aparece en *Cron Jobs* y corrió al menos una vez sin error.
+- [ ] El calendario de eventos responde en sus cuatro vistas (`/eventos?vista=dia|semana|mes|anio`)
+      y sigue navegando con JavaScript desactivado.
+- [ ] `https://dominio/herramientas/importar_agenda.php` devuelve 404 o 403 — nunca ejecuta
+      nada. Lo correcto es que la carpeta no se haya subido (paso 3).
 
 ## Checklist de seguridad
 
@@ -135,7 +147,10 @@ diseño desde etapas anteriores (ver `docs/ARQUITECTURA.md`); esta lista es para
       de la parroquia, no el texto de plantilla con corchetes.
 - [ ] Ninguna foto de la galería con menores está marcada `autorizacion_imagen` sin el
       permiso firmado correspondiente.
-- [ ] La tarea de purga (paso 11 de arriba) está programada y corriendo.
+- [ ] Queda claro para quien administra que **no hay purga ni anonimización automática**: las
+      inscripciones a cursos y los mensajes de contacto se conservan hasta que alguien los
+      borre a mano. Si eso no es aceptable, hay que construir el mecanismo antes de anunciar
+      el sitio, no después. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
 **Cuentas y accesos**
 - [ ] Cada persona con acceso al panel tiene su propia cuenta; nadie comparte la de
@@ -174,6 +189,14 @@ el nombre y aplicado por phpMyAdmin.
 
 Conviene marcar ese momento con claridad. Es el punto en el que el proyecto deja de ser
 desechable.
+
+**En local ese momento se adelantó de hecho.** La base de desarrollo ya tiene contenido que
+`install.sql` no siembra —la agenda de 2026 completa, los centros, las pastorales con sus
+ministros y catequistas, el equipo pastoral, los horarios—, así que reimportar desde cero
+sigue siendo válido para comprobar el esquema, pero borra ese trabajo. Antes de hacerlo, hay
+que generar un respaldo desde **Administración → Respaldos** y restaurarlo después;
+`backups/antes-agenda-2026.sql` quedó como precedente de esa costumbre. En producción la
+regla es la de arriba, sin excepciones: migraciones, nunca reimportación.
 
 ## Pendiente de resolver
 

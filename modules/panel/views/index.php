@@ -4,7 +4,10 @@
  * nunca vuelve a quedar desactualizado según avance el proyecto (a
  * diferencia de la versión anterior, un texto "sitio en construcción" con
  * una lista de etapas hardcodeada desde la etapa 1, que nunca se actualizó).
- * Mismo permiso por sección que ya usa shared/views/parciales/admin_sidebar.php.
+ * Mismo cruce de permiso + pastoral que ya usa shared/views/parciales/admin_sidebar.php:
+ * mesc.ver/catequesis.ver/lector.ver los llevan todos los coordinadores a
+ * propósito (para que cada controlador decida el alcance real), así que la
+ * tarjeta solo se ofrece si además se administra la pastoral de ese módulo.
  */
 $secciones = [
     ['bloques',       'Textos del sitio',   'bi-file-richtext',       'bloques.ver'],
@@ -30,9 +33,22 @@ $secciones = [
     ['auditoria',     'Auditoría',          'bi-journal-text',       'auditoria.ver'],
     ['respaldos',     'Respaldos',          'bi-database-fill-gear', 'respaldos.ver'],
 ];
+// Los tres módulos dedicados también exigen administrar la pastoral que les
+// corresponde, no solo llevar el permiso — ver el comentario de arriba.
+$pastoralPorModulo = [
+    'mesc'       => PASTORAL_MESC,
+    'catequesis' => PASTORAL_CATEQUESIS,
+    'lector'     => PASTORAL_LECTOR,
+];
 $disponibles = array_values(array_filter(
     $secciones,
-    static fn (array $s): bool => Auth::tienePermiso($s[3])
+    static function (array $s) use ($pastoralPorModulo): bool {
+        if (!Auth::tienePermiso($s[3])) {
+            return false;
+        }
+        $slug = $pastoralPorModulo[$s[0]] ?? null;
+        return $slug === null || Auth::administraPastoral($slug);
+    }
 ));
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
@@ -44,6 +60,30 @@ $disponibles = array_values(array_filter(
         <i class="bi bi-box-arrow-up-right me-1"></i>Ver el sitio
     </a>
 </div>
+
+<?php if ($cumpleanerosMes): ?>
+<?php
+$meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+          'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+$mesActual = $meses[(int) date('n') - 1];
+?>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <h2 class="h6 fw-bold mb-3">
+            <i class="bi bi-balloon-heart-fill text-dorado me-1"></i>Cumpleaños de <?= e($mesActual) ?>
+        </h2>
+        <div class="d-flex flex-wrap gap-3">
+            <?php foreach ($cumpleanerosMes as $persona): ?>
+            <div class="d-flex align-items-center gap-2">
+                <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 32)) ?>"
+                     class="rounded-circle" style="width:28px;height:28px;object-fit:cover" alt="">
+                <span class="small"><?= e($persona['nombre']) ?> <span class="text-muted">· día <?= (int) $persona['dia'] ?></span></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if (!$disponibles): ?>
 <div class="card border-0 shadow-sm">

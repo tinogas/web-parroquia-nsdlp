@@ -11,29 +11,30 @@
 </div>
 
 <?php
-// Los filtros se combinan, así que cada uno tiene que arrastrar el estado de los
-// otros: los botones de estado conservan mes y año, y el formulario de fecha
-// conserva el estado.
+// Los cuatro filtros —estado, fecha, pastoral y sede— se combinan, así que
+// cada uno tiene que arrastrar el estado de los otros tres.
 $porFecha  = array_filter(
     ['anio' => $anio, 'mes' => $mes, 'dia' => $dia],
     static fn ($v) => $v !== null
 );
-$porEstado = $filtro !== 'todos' ? ['filtro' => $filtro] : [];
+$porEstado   = $filtro !== 'todos' ? ['filtro' => $filtro] : [];
+$porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
+$porCentro   = $filtroCentro !== '' ? ['centro' => $filtroCentro] : [];
+$porAmbito   = $porPastoral + $porCentro;   // pastoral y sede viajan juntas
 $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
           'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
     <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
-        <a href="<?= e(url_admin('eventos', '', $porFecha)) ?>"
+        <a href="<?= e(url_admin('eventos', '', $porFecha + $porAmbito)) ?>"
            class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'publicados'] + $porFecha)) ?>"
+        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'publicados'] + $porFecha + $porAmbito)) ?>"
            class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'borradores'] + $porFecha)) ?>"
+        <a href="<?= e(url_admin('eventos', '', ['filtro' => 'borradores'] + $porFecha + $porAmbito)) ?>"
            class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
     </div>
 
-    <?php if ($anios): ?>
     <form method="GET" action="<?= e(url_admin('eventos')) ?>" class="row g-2 align-items-end">
         <?php if (!URLS_AMIGABLES): ?>
         <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
@@ -44,6 +45,39 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
         <?php if ($filtro !== 'todos'): ?>
         <input type="hidden" name="filtro" value="<?= e($filtro) ?>">
         <?php endif; ?>
+        <div class="col-auto">
+            <label for="pastoral" class="form-label small fw-semibold mb-1">Pastoral</label>
+            <select name="pastoral" id="pastoral" class="form-select form-select-sm">
+                <?php /* Quien no tiene alcance global solo ve aquí lo suyo y lo
+                         general de la parroquia, así que «Todas» prometería de
+                         más: para el resto está la agenda interna. */ ?>
+                <option value=""><?= Auth::tieneAlcanceGlobal() ? 'Todas' : 'Las mías y las generales' ?></option>
+                <?php if ($tieneAlcance): ?>
+                <option value="mias" <?= $filtroPastoral === 'mias' ? 'selected' : '' ?>>Solo las mías</option>
+                <?php endif; ?>
+                <?php foreach ($pastorales as $unaPastoral): ?>
+                <option value="<?= (int) $unaPastoral['id'] ?>"
+                        <?= $filtroPastoral === (string) $unaPastoral['id'] ? 'selected' : '' ?>>
+                    <?= e($unaPastoral['nombre']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php if (count($centros) > 1): /* Con una sola sede el selector no elige nada. */ ?>
+        <div class="col-auto">
+            <label for="centro" class="form-label small fw-semibold mb-1">Sede</label>
+            <select name="centro" id="centro" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                <?php foreach ($centros as $unCentro): ?>
+                <option value="<?= (int) $unCentro['id'] ?>"
+                        <?= $filtroCentro === (string) $unCentro['id'] ? 'selected' : '' ?>>
+                    <?= e($unCentro['nombre']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php endif; ?>
+        <?php if ($anios): ?>
         <div class="col-auto">
             <label for="dia" class="form-label small fw-semibold mb-1">Día</label>
             <select name="dia" id="dia" class="form-select form-select-sm">
@@ -75,19 +109,19 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php endif; /* $anios: sin ningún evento capturado no hay fechas que ofrecer. */ ?>
         <div class="col-auto">
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="bi bi-funnel me-1"></i>Filtrar
             </button>
         </div>
-        <?php if ($porFecha): ?>
+        <?php if ($porFecha || $porAmbito): ?>
         <div class="col-auto">
             <a href="<?= e(url_admin('eventos', '', $porEstado)) ?>"
                class="btn btn-sm btn-outline-secondary">Quitar</a>
         </div>
         <?php endif; ?>
     </form>
-    <?php endif; ?>
 </div>
 
 <?php if ($porFecha): ?>
@@ -102,7 +136,7 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
     <?php if (!$listado['filas']): ?>
         <div class="card-body text-center py-5">
             <div class="display-6 text-body-tertiary mb-2"><i class="bi bi-calendar-event"></i></div>
-            <?php if ($porFecha || $filtro !== 'todos'): ?>
+            <?php if ($porFecha || $porPastoral || $filtro !== 'todos'): ?>
             <p class="text-muted mb-2">Ningún evento coincide con el filtro.</p>
             <a href="<?= e(url_admin('eventos')) ?>" class="btn btn-sm btn-outline-secondary">
                 Ver todos los eventos
@@ -125,6 +159,16 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
             </thead>
             <tbody>
             <?php foreach ($listado['filas'] as $evento): ?>
+                <?php
+                // Suyo es lo de su pastoral Y su sede. Un botón sin permiso no
+                // se dibuja, no se dibuja gris: el enlace acabaría en «ese
+                // contenido pertenece a otra pastoral o a otra sede» y quien lo
+                // pulsa no entendería por qué.
+                $suyo = Auth::puedeSobrePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null)
+                     && Auth::puedeSobreCentro($evento['centro_id'] !== null ? (int) $evento['centro_id'] : null);
+                $puedeEditar  = $suyo && Auth::tienePermiso('eventos.editar');
+                $puedeBorrar  = $suyo && Auth::tienePermiso('eventos.eliminar');
+                ?>
                 <tr>
                     <td>
                         <span class="badge rounded-pill me-1" style="background:<?= e($evento['color'] ?: '#1e4d8b') ?>;width:.6rem;height:.6rem;padding:0"></span>
@@ -132,6 +176,11 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                         <span class="badge bg-light text-secondary border">
                             <?= e($evento['pastoral_nombre'] ?? 'General') ?>
                         </span>
+                        <?php if ($evento['centro_nombre']): ?>
+                        <span class="badge bg-light text-secondary border">
+                            <i class="bi bi-geo-alt me-1"></i><?= e($evento['centro_nombre']) ?>
+                        </span>
+                        <?php endif; ?>
                     </td>
                     <td class="d-none d-md-table-cell small text-muted">
                         <?= e(fecha_larga(substr($evento['fecha_inicio'], 0, 10))) ?>
@@ -152,11 +201,11 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                             <i class="bi bi-box-arrow-up-right"></i>
                         </a>
                         <?php endif; ?>
-                        <?php if (Auth::tienePermiso('eventos.editar')): ?>
+                        <?php if ($puedeEditar): ?>
                         <a href="<?= e(url_admin('eventos', 'editar', ['id' => $evento['id']])) ?>"
                            class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
                         <?php endif; ?>
-                        <?php if (Auth::tienePermiso('eventos.eliminar')): ?>
+                        <?php if ($puedeBorrar): ?>
                         <button type="button" class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal" data-bs-target="#borrar<?= (int) $evento['id'] ?>">
                             <i class="bi bi-trash"></i>
@@ -173,11 +222,17 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
 
 <?php
 $paginacion = $listado;
-$paginaBase = url_admin('eventos', '', $porEstado + $porFecha);
+$paginaBase = url_admin('eventos', '', $porEstado + $porFecha + $porAmbito);
 require BASE_PATH . '/shared/views/parciales/paginacion.php';
 ?>
 
 <?php foreach ($listado['filas'] as $evento): ?>
+    <?php // El modal solo existe si su botón existe: ver un evento ajeno no da acceso a borrarlo.
+    if (!Auth::tienePermiso('eventos.eliminar')
+        || !Auth::puedeSobrePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null)
+        || !Auth::puedeSobreCentro($evento['centro_id'] !== null ? (int) $evento['centro_id'] : null)) {
+        continue;
+    } ?>
     <div class="modal fade" id="borrar<?= (int) $evento['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

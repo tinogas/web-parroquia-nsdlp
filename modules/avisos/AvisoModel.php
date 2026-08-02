@@ -32,7 +32,7 @@ class AvisoModel extends Model
             $condiciones[] = 'a.publicado = 0';
         }
 
-        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'a.pastoral_id');
+        [$condicionPastoral, $paramsPastoral] = $this->condicionAlcance($pastoralesPermitidas, 'a.pastoral_id');
         if ($condicionPastoral !== '') {
             $condiciones[] = $condicionPastoral;
             $params += $paramsPastoral;

@@ -1,4 +1,10 @@
-<?php $esNuevo = $cuenta === null; ?>
+<?php
+$esNuevo   = $cuenta === null;
+// Una cuenta es, ante todo, alguien del equipo pastoral. El vínculo es opcional
+// porque crear una ficha publica a esa persona en el sitio, y la cuenta técnica
+// del administrador no tiene por qué salir en «Quiénes somos».
+$vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
+?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
     <div>
@@ -27,22 +33,49 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
 
+                    <div class="mb-3">
+                        <label for="persona_id" class="form-label fw-semibold">¿Quién es?</label>
+                        <select name="persona_id" id="persona_id" class="form-select">
+                            <option value="">— Cuenta sin ficha en el equipo pastoral —</option>
+                            <?php foreach ($personas as $persona): ?>
+                            <option value="<?= (int) $persona['id'] ?>"
+                                <?= (!$esNuevo && (int) $cuenta['persona_id'] === (int) $persona['id']) ? 'selected' : '' ?>>
+                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">
+                            El equipo pastoral es el registro principal: de ahí salen el organigrama y las
+                            cuentas. Al elegir a alguien, <strong>su nombre, su teléfono y su foto se toman
+                            de su ficha</strong> —para cambiarlos se edita la ficha, no la cuenta— y, si no
+                            marcas nada abajo, también sus pastorales y sus sedes. Solo aparecen las
+                            personas que todavía no tienen cuenta.
+                        </div>
+                    </div>
+
                     <div class="row g-3 mb-3">
+                        <?php if (!$vinculada): ?>
                         <div class="col-md-7">
                             <label for="nombre" class="form-label fw-semibold">Nombre completo</label>
                             <input type="text" name="nombre" id="nombre" class="form-control"
-                                   value="<?= e($esNuevo ? '' : $cuenta['nombre']) ?>" maxlength="120" required>
+                                   value="<?= e($esNuevo ? '' : $cuenta['nombre']) ?>" maxlength="120">
+                            <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
                         </div>
+                        <?php endif; ?>
                         <div class="col-md-5">
                             <label for="rol" class="form-label fw-semibold">Rol</label>
                             <select name="rol" id="rol" class="form-select">
-                                <?php foreach (ROLES_NOMBRES as $valor => $etiqueta): ?>
+                                <?php foreach ($rolesDisponibles as $valor => $etiqueta): ?>
                                 <option value="<?= e($valor) ?>"
                                     <?= (!$esNuevo && $cuenta['rol'] === $valor) ? 'selected' : '' ?>>
                                     <?= e($etiqueta) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
+                            <div class="form-text">
+                                Coordinador administra su pastoral en <strong>una</strong> sede; Coordinador
+                                general, en varias o en todas; Consulta solo mira.
+                            </div>
                         </div>
                     </div>
 
@@ -53,11 +86,13 @@
                                    value="<?= e($esNuevo ? '' : $cuenta['email']) ?>" required>
                             <div class="form-text">Con este correo se inicia sesión.</div>
                         </div>
+                        <?php if (!$vinculada): ?>
                         <div class="col-md-5">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
                                    value="<?= e($esNuevo ? '' : (string) $cuenta['telefono']) ?>">
                         </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -72,11 +107,16 @@
                     </div>
 
                     <?php if ($esNuevo || in_array($cuenta['rol'], ROLES_CON_ALCANCE_PASTORAL, true)): ?>
+                    <?php /* Las dos mitades del alcance. Marcar pastorales dice QUÉ administra;
+                             marcar sedes acota DÓNDE. Ni una ni otra reparte nada por su cuenta:
+                             una sede marcada no da las demás pastorales de esa sede. */ ?>
                     <div class="mb-0">
                         <label class="form-label fw-semibold">Pastorales que administra</label>
                         <div class="form-text mb-2">
-                            Solo se guarda con un rol acotado por pastoral (Coordinador, o Administrador/Consulta de
-                            MESC, Catequesis o Lector); con cualquier otro rol se ignora.
+                            Esta cuenta trabajará <strong>únicamente</strong> con lo que se marque aquí: sus
+                            eventos, sus cursos y su contenido. Solo se guarda con un rol acotado por
+                            pastoral (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector);
+                            con cualquier otro rol se ignora.
                         </div>
                         <?php if (!$pastorales): ?>
                         <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
@@ -99,10 +139,13 @@
                     </div>
 
                     <div class="mb-0 mt-3">
-                        <label class="form-label fw-semibold">Centros o sedes que administra completos</label>
+                        <label class="form-label fw-semibold">Sedes en las que trabaja</label>
                         <div class="form-text mb-2">
-                            Quien administra un centro/sede administra todas sus pastorales, sin tener que
-                            marcarlas una por una arriba. Aplica a los mismos roles que arriba.
+                            Acota lo de arriba a esas comunidades: quien coordina la catequesis de Jesús
+                            el Señor marca «Catecismo» arriba y «Jesús el Señor» aquí, y no verá ni tocará
+                            la catequesis de las otras sedes. <strong>Sin marcar ninguna administra su
+                            pastoral en toda la parroquia</strong>, que es como se representa una
+                            coordinación general.
                         </div>
                         <?php if (!$centros): ?>
                         <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>
@@ -130,8 +173,33 @@
         </div>
 
         <div class="col-lg-4">
+            <?php if ($vinculada): ?>
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
+                    <p class="text-uppercase text-muted small fw-semibold mb-2">Su ficha en el equipo</p>
+                    <?php if ($fichaCuenta['foto']): ?>
+                    <img src="<?= e(url_activo('uploads/' . $fichaCuenta['foto'])) ?>" alt=""
+                         class="rounded-circle mb-2" style="width:64px;height:64px;object-fit:cover">
+                    <?php endif; ?>
+                    <p class="fw-semibold mb-0"><?= e($fichaCuenta['nombre']) ?></p>
+                    <p class="text-muted small mb-1"><?= e($fichaCuenta['cargo'] ?: 'Sin cargo anotado') ?></p>
+                    <?php if ($fichaCuenta['telefono']): ?>
+                    <p class="text-muted small mb-2"><i class="bi bi-telephone me-1"></i><?= e($fichaCuenta['telefono']) ?></p>
+                    <?php endif; ?>
+                    <a href="<?= e(url_admin('personas', 'editar', ['id' => (int) $fichaCuenta['id']])) ?>"
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil me-1"></i>Editar su ficha
+                    </a>
+                    <div class="form-text mt-2">
+                        El nombre, el teléfono y la foto de esta cuenta salen de aquí.
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <?php if (!$vinculada): ?>
                     <?php
                     $ci_nombre   = 'foto';
                     $ci_etiqueta = 'Fotografía';
@@ -139,6 +207,7 @@
                     $ci_ayuda    = 'Se muestra junto a su nombre en el panel.';
                     require BASE_PATH . '/shared/views/parciales/campo_imagen.php';
                     ?>
+                    <?php endif; ?>
 
                     <?php $esPropio = !$esNuevo && (int) $cuenta['id'] === (int) Auth::usuario()['id']; ?>
                     <div class="form-check form-switch">

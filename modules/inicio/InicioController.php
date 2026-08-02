@@ -11,7 +11,6 @@ class InicioController extends ControllerPublico
 {
     public function index(): void
     {
-        // Próximos eventos y últimos avisos se agregan en la etapa 5.
         $this->render('inicio/publico/index', [
             'metaTitulo'      => '',
             'metaDescripcion' => Config::get(

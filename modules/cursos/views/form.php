@@ -130,18 +130,16 @@ $puedePublicar = Auth::tienePermiso('cursos.publicar');
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="pastoral_id" class="form-label fw-semibold">Pastoral (opcional)</label>
-                        <select name="pastoral_id" id="pastoral_id" class="form-select">
-                            <option value="">— Ninguna —</option>
-                            <?php foreach ($pastorales as $p): ?>
-                            <option value="<?= (int) $p['id'] ?>"
-                                <?= (!$esNuevo && (int) $curso['pastoral_id'] === (int) $p['id']) ? 'selected' : '' ?>>
-                                <?= e($p['nombre']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <?php
+                    // Mismo selector acotado al alcance que avisos y eventos: un
+                    // coordinador no ve una lista abierta de pastorales, y si
+                    // solo administra una va fija sin que tenga que elegirla.
+                    $sp_valorActual = $esNuevo ? null : $curso['pastoral_id'];
+                    require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
+
+                    $sc_valorActual = $esNuevo ? null : $curso['centro_id'];
+                    require BASE_PATH . '/shared/views/parciales/selector_centro.php';
+                    ?>
                 </div>
             </div>
 

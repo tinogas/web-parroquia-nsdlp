@@ -23,7 +23,7 @@ class GaleriaModel extends Model
             $condiciones[] = 'g.publicada = 0';
         }
 
-        [$condicionPastoral, $paramsPastoral] = $this->condicionPastoral($pastoralesPermitidas, 'g.pastoral_id');
+        [$condicionPastoral, $paramsPastoral] = $this->condicionAlcance($pastoralesPermitidas, 'g.pastoral_id');
         if ($condicionPastoral !== '') {
             $condiciones[] = $condicionPastoral;
             $params += $paramsPastoral;

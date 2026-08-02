@@ -22,8 +22,18 @@ class PersonaModel extends Model
         'staff'     => 'Personal de oficina',
     ];
 
-    public function todas(): array
+    /**
+     * @param ?array $pastorales Filtro opcional por pertenencia (persona_pastorales): null = todas, [] = ninguna.
+     * @param ?array $centros    Igual, por pertenencia a centro/sede (persona_centros).
+     */
+    public function todas(?array $pastorales = null, ?array $centros = null): array
     {
+        [$condPastoral, $paramsPastoral] = $this->condicionPertenece($pastorales, 'persona_pastorales', 'pastoral_id');
+        [$condCentro,   $paramsCentro]   = $this->condicionPertenece($centros, 'persona_centros', 'centro_id');
+
+        $condiciones = array_filter([$condPastoral, $condCentro], static fn (string $c): bool => $c !== '');
+        $where = $condiciones ? ('WHERE ' . implode(' AND ', $condiciones)) : '';
+
         return $this->fetchAll(
             "SELECT p.*,
                     (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ', ')
@@ -31,10 +41,45 @@ class PersonaModel extends Model
                       WHERE pp.persona_id = p.id) AS pastorales_nombres,
                     (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
                        FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
-                      WHERE pc.persona_id = p.id) AS centros_nombres
+                      WHERE pc.persona_id = p.id) AS centros_nombres,
+                    (SELECT GROUP_CONCAT(pa2.nombre ORDER BY pa2.nombre SEPARATOR ', ')
+                       FROM pastorales pa2 WHERE pa2.responsable_persona_id = p.id) AS pastorales_coordina
                FROM personas p
-              ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre"
+               {$where}
+              ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre",
+            $paramsPastoral + $paramsCentro
         );
+    }
+
+    /**
+     * Condición EXISTS para acotar `personas` a quienes pertenecen a alguno de estos ids,
+     * vía una tabla pivote propia de la ficha (no el alcance de una cuenta). Mismo contrato
+     * que Model::condicionAlcance(), pero con EXISTS en vez de columna directa: aquí la
+     * pertenencia vive en persona_pastorales/persona_centros, no en personas.pastoral_id.
+     *
+     * @return array{0: string, 1: array} [condición SQL o cadena vacía, parámetros]
+     */
+    private function condicionPertenece(?array $ids, string $tabla, string $columna): array
+    {
+        if ($ids === null) {
+            return ['', []];
+        }
+        if (!$ids) {
+            return ['1 = 0', []];
+        }
+
+        $marcadores = [];
+        $params     = [];
+        foreach (array_values($ids) as $i => $id) {
+            $clave          = ":{$columna}{$i}";
+            $marcadores[]   = $clave;
+            $params[$clave] = (int) $id;
+        }
+
+        return [
+            "EXISTS (SELECT 1 FROM {$tabla} x WHERE x.persona_id = p.id AND x.{$columna} IN (" . implode(',', $marcadores) . '))',
+            $params,
+        ];
     }
 
     public function porId(int $id): ?array
@@ -87,8 +132,10 @@ class PersonaModel extends Model
         $this->beginTransaction();
         try {
             $this->execute(
-                'INSERT INTO personas (nombre, cargo, tipo, semblanza, foto, email, telefono, orden, activo)
-                 VALUES (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :orden, :activo)',
+                'INSERT INTO personas
+                    (nombre, cargo, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo)
+                 VALUES
+                    (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :fechaNacimiento, :orden, :activo)',
                 $this->parametros($datos)
             );
             $id = $this->lastInsertId();
@@ -109,12 +156,16 @@ class PersonaModel extends Model
             $filas = $this->execute(
                 'UPDATE personas
                     SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
-                        foto = :foto, email = :email, telefono = :telefono, orden = :orden, activo = :activo
+                        foto = :foto, email = :email, telefono = :telefono,
+                        fecha_nacimiento = :fechaNacimiento, orden = :orden, activo = :activo
                   WHERE id = :id',
                 $this->parametros($datos) + [':id' => $id]
             );
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
+            $this->sincronizarCuenta($id, $datos);
+            $this->sincronizarResponsable($id, $datos['nombre']);
+            $this->sincronizarPersonal($id, $datos);
             $this->commit();
             return $filas;
         } catch (Throwable $e) {
@@ -126,6 +177,77 @@ class PersonaModel extends Model
     public function eliminar(int $id): int
     {
         return $this->execute('DELETE FROM personas WHERE id = :id', [':id' => $id]);
+    }
+
+    /**
+     * Si esta persona tiene cuenta en el panel, su nombre, teléfono y foto van
+     * detrás: la ficha es el registro principal y la cuenta no guarda una
+     * versión propia que pueda quedarse vieja. Lo que NO se toca son sus
+     * permisos —rol, pastorales y sedes de la cuenta—, que se deciden aparte:
+     * figurar en una pastoral no es administrarla. Ver docs/ARQUITECTURA.md
+     */
+    private function sincronizarCuenta(int $personaId, array $datos): void
+    {
+        $this->execute(
+            'UPDATE usuarios SET nombre = :nombre, telefono = :telefono, foto = :foto
+              WHERE persona_id = :persona',
+            [
+                ':nombre'   => $datos['nombre'],
+                ':telefono' => $datos['telefono'],
+                ':foto'     => $datos['foto'],
+                ':persona'  => $personaId,
+            ]
+        );
+    }
+
+    /**
+     * Si esta persona es la responsable de alguna pastoral (`pastorales.
+     * responsable_persona_id`), su nombre ahí también viene de aquí: la
+     * pastoral no guarda su propia copia editable una vez que se elige a
+     * alguien del equipo. Ver PastoralController::guardar(), que hace el
+     * mismo cálculo al elegir responsable.
+     */
+    private function sincronizarResponsable(int $personaId, string $nombre): void
+    {
+        $this->execute(
+            'UPDATE pastorales SET responsable_nombre = :nombre WHERE responsable_persona_id = :persona',
+            [':nombre' => $nombre, ':persona' => $personaId]
+        );
+    }
+
+    /**
+     * Si esta persona está registrada como ministro de MESC, catequista o
+     * lector —`mesc_ministros`/`catequesis_catequistas`/`lector_lectores`,
+     * cualquiera de las tres, incluso más de una a la vez—, sus datos de
+     * contacto van detrás, igual que en `sincronizarCuenta()`. Corrige de raíz
+     * el mismo problema que ya se vio con los responsables de pastoral: antes
+     * de este vínculo, Zulema estaba escrita como "Zulema" en
+     * `mesc_ministros`, "Zulema Alvarez" en `catequesis_catequistas` y con su
+     * nombre completo aquí en `personas` — tres grafías de la misma persona,
+     * sin nada que las mantuviera iguales.
+     *
+     * El `nombre` sí se sincroniza en catequistas y lectores, pero NO en
+     * ministros de MESC: ahí es el nombre corto del calendario de turnos, un
+     * dato propio (ver abajo).
+     */
+    private function sincronizarPersonal(int $personaId, array $datos): void
+    {
+        // MESC es la excepción: su `nombre` es el nombre CORTO del ministro
+        // —el que cabe en una casilla del calendario de turnos y con el que se
+        // le reconoce al capturar uno de fuera—, un dato propio del módulo que
+        // la ficha no debe pisar. Ver MescController::ministroGuardar().
+        $this->execute(
+            'UPDATE mesc_ministros SET telefono = :telefono WHERE persona_id = :persona',
+            [':telefono' => $datos['telefono'], ':persona' => $personaId]
+        );
+        $this->execute(
+            'UPDATE catequesis_catequistas SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
+            [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
+        );
+        $this->execute(
+            'UPDATE lector_lectores SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
+            [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
+        );
     }
 
     private function sincronizarPastorales(int $personaId, array $pastoralIds): void
@@ -153,16 +275,34 @@ class PersonaModel extends Model
     private function parametros(array $datos): array
     {
         return [
-            ':nombre'    => $datos['nombre'],
-            ':cargo'     => $datos['cargo'],
-            ':tipo'      => $datos['tipo'],
-            ':semblanza' => $datos['semblanza'],
-            ':foto'      => $datos['foto'],
-            ':email'     => $datos['email'],
-            ':telefono'  => $datos['telefono'],
-            ':orden'     => $datos['orden'],
-            ':activo'    => $datos['activo'],
+            ':nombre'          => $datos['nombre'],
+            ':cargo'           => $datos['cargo'],
+            ':tipo'            => $datos['tipo'],
+            ':semblanza'       => $datos['semblanza'],
+            ':foto'            => $datos['foto'],
+            ':email'           => $datos['email'],
+            ':telefono'        => $datos['telefono'],
+            ':fechaNacimiento' => $datos['fecha_nacimiento'],
+            ':orden'           => $datos['orden'],
+            ':activo'          => $datos['activo'],
         ];
+    }
+
+    /**
+     * Personas activas que cumplen años en el mes dado (el actual si no se
+     * especifica), ordenadas por día — para "Cumpleaños del mes" en el panel
+     * de inicio. Solo mes y día importan: no se calcula ni se expone edad.
+     */
+    public function cumpleanerosDelMes(?int $mes = null): array
+    {
+        $mes ??= (int) date('n');
+        return $this->fetchAll(
+            'SELECT id, nombre, foto, DAY(fecha_nacimiento) AS dia
+               FROM personas
+              WHERE activo = 1 AND fecha_nacimiento IS NOT NULL AND MONTH(fecha_nacimiento) = :mes
+              ORDER BY DAY(fecha_nacimiento), nombre',
+            [':mes' => $mes]
+        );
     }
 
     private function ordenTipos(): string

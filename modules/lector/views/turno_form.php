@@ -4,7 +4,7 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Lectores</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Liturgia</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?= $esNuevo ? 'Nuevo' : 'Editar' ?></li>
             </ol>
         </nav>

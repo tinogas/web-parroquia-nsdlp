@@ -46,11 +46,19 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="cargo" class="form-label fw-semibold">Cargo</label>
-                        <input type="text" name="cargo" id="cargo" class="form-control"
-                               value="<?= e($esNueva ? '' : (string) $persona['cargo']) ?>" maxlength="100"
-                               placeholder="Ej. Párroco, Coordinador de catequesis…">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label for="cargo" class="form-label fw-semibold">Cargo</label>
+                            <input type="text" name="cargo" id="cargo" class="form-control"
+                                   value="<?= e($esNueva ? '' : (string) $persona['cargo']) ?>" maxlength="100"
+                                   placeholder="Ej. Párroco, Coordinador de catequesis…">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="fecha_nacimiento" class="form-label fw-semibold">Fecha de nacimiento</label>
+                            <input type="date" name="fecha_nacimiento" id="fecha_nacimiento" class="form-control"
+                                   value="<?= e($esNueva || !$persona['fecha_nacimiento'] ? '' : $persona['fecha_nacimiento']) ?>">
+                            <div class="form-text">Para avisar su cumpleaños en el panel.</div>
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -80,33 +88,8 @@
 
             <div class="card border-0 shadow-sm mt-4">
                 <div class="card-body p-4">
-                    <label class="form-label fw-semibold">Pastorales</label>
-                    <div class="form-text mb-2">Muchas personas del equipo llevan más de una pastoral a la vez.</div>
-                    <?php if (!$pastorales): ?>
-                    <p class="text-muted small mb-0">Todavía no hay pastorales dadas de alta.</p>
-                    <?php else: ?>
-                    <div class="row row-cols-1 row-cols-sm-2 g-1">
-                        <?php foreach ($pastorales as $pastoral): ?>
-                        <div class="col">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="pastorales[]"
-                                       value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
-                                       <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
-                                    <?= e($pastoral['nombre']) ?>
-                                </label>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="card border-0 shadow-sm mt-4">
-                <div class="card-body p-4">
                     <label class="form-label fw-semibold">Sede o centros</label>
-                    <div class="form-text mb-2">También puede estar adscrita a más de un centro a la vez.</div>
+                    <div class="form-text mb-2">También puede estar adscrita a más de un centro a la vez. Elige primero esto.</div>
                     <?php if (!$centros): ?>
                     <p class="text-muted small mb-0">Todavía no hay sede ni centros dados de alta.</p>
                     <?php else: ?>
@@ -124,6 +107,84 @@
                         </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php
+            $comisiones = $agrupado['comisiones'];
+            $sueltas    = $agrupado['sueltas'];
+            ?>
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <label class="form-label fw-semibold">Pastoral (Comisión)</label>
+                    <div class="form-text mb-2">A qué Comisión pertenece o coordina, en general. Puede ser más de una.</div>
+                    <?php if (!$comisiones && !$sueltas): ?>
+                    <p class="text-muted small mb-0">Todavía no hay pastorales dadas de alta.</p>
+                    <?php else: ?>
+                    <div class="row row-cols-1 row-cols-sm-2 g-1">
+                        <?php foreach ($comisiones as $grupo): ?>
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input chk-comision" type="checkbox" name="pastorales[]"
+                                       value="<?= (int) $grupo['padre']['id'] ?>" id="pas<?= (int) $grupo['padre']['id'] ?>"
+                                       <?= in_array((int) $grupo['padre']['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="pas<?= (int) $grupo['padre']['id'] ?>">
+                                    <?= e($grupo['padre']['nombre']) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <label class="form-label fw-semibold">Dimensión</label>
+                    <div class="form-text mb-2">Marca primero su Comisión de arriba para elegir sus dimensiones.</div>
+                    <?php if (!$comisiones && !$sueltas): ?>
+                    <p class="text-muted small mb-0">Todavía no hay pastorales dadas de alta.</p>
+                    <?php else: ?>
+                    <?php foreach ($comisiones as $grupo): ?>
+                    <?php if (!$grupo['hijas']) { continue; } ?>
+                    <div class="grupo-dimension mb-3" data-comision-id="<?= (int) $grupo['padre']['id'] ?>">
+                        <div class="small fw-semibold text-muted mb-1"><?= e($grupo['padre']['nombre']) ?></div>
+                        <div class="row row-cols-1 row-cols-sm-2 g-1">
+                            <?php foreach ($grupo['hijas'] as $hija): ?>
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input chk-dimension" type="checkbox" name="pastorales[]"
+                                           value="<?= (int) $hija['id'] ?>" id="pas<?= (int) $hija['id'] ?>"
+                                           <?= in_array((int) $hija['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="pas<?= (int) $hija['id'] ?>">
+                                        <?= e($hija['nombre']) ?>
+                                    </label>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                    <?php if ($sueltas): ?>
+                    <div class="grupo-dimension mb-3" data-siempre-visible="1">
+                        <div class="row row-cols-1 row-cols-sm-2 g-1">
+                            <?php foreach ($sueltas as $suelta): ?>
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                           value="<?= (int) $suelta['id'] ?>" id="pas<?= (int) $suelta['id'] ?>"
+                                           <?= in_array((int) $suelta['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="pas<?= (int) $suelta['id'] ?>">
+                                        <?= e($suelta['nombre']) ?>
+                                    </label>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -165,3 +226,25 @@
         </div>
     </div>
 </form>
+
+<script>
+function actualizarDimensiones() {
+    document.querySelectorAll('.grupo-dimension').forEach(function (grupo) {
+        if (grupo.dataset.siempreVisible === '1') { return; }
+        var chkComision = document.querySelector('.chk-comision[value="' + grupo.dataset.comisionId + '"]');
+        var comisionMarcada = chkComision ? chkComision.checked : false;
+        // Una dimension ya marcada de antes se sigue mostrando aunque su
+        // Comision no este marcada explicitamente, para no esconder un dato
+        // ya guardado.
+        var algunaDimensionMarcada = Array.prototype.some.call(
+            grupo.querySelectorAll('.chk-dimension'),
+            function (chk) { return chk.checked; }
+        );
+        grupo.classList.toggle('d-none', !(comisionMarcada || algunaDimensionMarcada));
+    });
+}
+document.querySelectorAll('.chk-comision').forEach(function (chk) {
+    chk.addEventListener('change', actualizarDimensiones);
+});
+actualizarDimensiones();
+</script>

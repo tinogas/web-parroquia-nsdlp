@@ -22,6 +22,9 @@ if (!function_exists('mesc_texto_legible')) {
         <h1 class="h4 fw-bold mb-0">Calendario de turnos</h1>
     </div>
     <div class="d-flex gap-2">
+        <a href="<?= e($urlImprimir) ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">
+            <i class="bi bi-printer me-1"></i>Imprimir / Descargar PDF
+        </a>
         <a href="<?= e(url_admin('mesc', 'colores')) ?>" class="btn btn-outline-secondary">
             <i class="bi bi-palette me-1"></i>Colores litúrgicos
         </a>
