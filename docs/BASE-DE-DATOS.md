@@ -306,6 +306,38 @@ crear la pastoral: es una acción deliberada y separada
 de contraseña, para no generar accesos de más antes de que de verdad se quiera exponer la
 pastoral. Ver [`ARQUITECTURA.md`](ARQUITECTURA.md#panel-básico-por-pastoral-y-activación-en-el-menú).
 
+### Los dos escalones de publicación (`avisos` y `cursos`)
+
+Publicar no es un interruptor sino una escalera de dos peldaños, y las dos tablas la
+modelan igual con dos columnas: `publicado_interno` (`TINYINT(1)`, default 0) lo hace
+visible **dentro del panel** a los miembros de su pastoral, y `publicado` —que no cambió
+de significado— lo saca al **sitio web**. Los tres estados de `ESTADOS_PUBLICACION`
+(`config/app.php`) se derivan de esas dos columnas con `estado_publicacion()`
+(`core/helpers.php`); no hay una tercera columna de estado.
+
+`publicado = 1` exige `publicado_interno = 1`, y no solo por convención: lo aplican los
+`CHECK` `chk_avi_escalon` y `chk_cur_escalon` (MariaDB los cumple desde 10.2). Hace falta
+en la base y no solo en PHP porque hay guiones sueltos que escriben `publicado` por SQL
+directo, fuera de la aplicación.
+
+`publicado_interno_at` (`DATETIME`, nulo) se sella cuando el flag pasa de 0 a 1 y se
+conserva mientras siga publicado. Es el momento real de publicación —ni `created_at`, que
+es cuando se empezó el borrador, ni `fecha_publicacion`, que es un "visible desde" que
+escribe la persona—, y de él salen el orden de las novedades del panel y la etiqueta
+«Nuevo». Índices `idx_avi_interno` / `idx_cur_interno`.
+
+Se eligió añadir columnas en vez de sustituir `publicado` por un `ENUM` justamente para no
+tocar ninguna consulta pública: las cinco de `AvisoModel` que comparten `VIGENTE` y las
+tres de `CursoModel` que repiten `publicado = 1` siguen igual, y los índices `idx_avi_pub`
+/ `idx_cur_pub` se conservan. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#publicar-en-dos-escalones-interno-y-público).
+
+**Al actualizar una base ya existente** hacen falta el `ALTER TABLE` y el relleno, porque
+`install.sql` solo cubre instalaciones nuevas: todo lo que hoy está público es por
+definición interno, así que `UPDATE ... SET publicado_interno = 1, publicado_interno_at =
+COALESCE(updated_at, created_at) WHERE publicado = 1` (en `cursos`, `created_at` a secas:
+no tiene `updated_at`).
+
 ### `pastoral_actividades`
 
 Actividades comunitarias y de apoyo social de cada pastoral. `pastoral_id`, `titulo`,

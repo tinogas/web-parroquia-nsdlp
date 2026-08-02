@@ -158,7 +158,7 @@
                 <span class="badge bg-light text-secondary border"><i class="bi bi-geo-alt me-1"></i><?= e($curso['centro_nombre']) ?></span>
                 <?php endif; ?>
                 <?php if (!$curso['publicado']): ?>
-                <span class="badge bg-warning-subtle text-warning-emphasis">Borrador</span>
+                <?= badge_escalon($curso) ?>
                 <?php endif; ?>
             </li>
             <?php endforeach; ?>

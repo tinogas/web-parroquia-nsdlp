@@ -23,28 +23,43 @@ class CursoModel extends Model
     ];
 
     /**
-     * Listado del panel. `$pastorales` y `$centros` ya vienen cruzados con el
-     * alcance de quien mira, igual que en EventoModel::listar().
+     * Listado del panel. `$filtro` es 'todos' o una clave de
+     * ESTADOS_PUBLICACION; `$audiencia` y `$propias` salen de
+     * Controller::acotarAudiencia() —la primera dice qué puede leer, la segunda
+     * de quién son los borradores que además ve—, y `$centros` sigue viniendo
+     * cruzado con el alcance como antes.
      */
     public function listar(
         int $pagina,
         string $filtro = 'todos',
-        ?array $pastorales = null,
+        ?array $audiencia = null,
+        array $propias = [],
         ?array $centros = null
     ): array {
         $condiciones = match ($filtro) {
-            'publicados' => ['c.publicado = 1'],
-            'borradores' => ['c.publicado = 0'],
-            default      => [],
+            'publico'  => ['c.publicado = 1'],
+            'interno'  => ['c.publicado_interno = 1 AND c.publicado = 0'],
+            'borrador' => ['c.publicado_interno = 0'],
+            default    => [],
         };
 
         $params = [];
-        foreach ([[$pastorales, 'c.pastoral_id'], [$centros, 'c.centro_id']] as [$ids, $columna]) {
-            [$condicion, $paramsAlcance] = $this->condicionAlcance($ids, $columna);
-            if ($condicion !== '') {
-                $condiciones[] = $condicion;
-                $params += $paramsAlcance;
-            }
+
+        [$condicionPastoral, $paramsPastoral] = $this->condicionVisibilidadPanel(
+            $audiencia,
+            $propias,
+            'c.pastoral_id',
+            'c.publicado_interno'
+        );
+        if ($condicionPastoral !== '') {
+            $condiciones[] = $condicionPastoral;
+            $params += $paramsPastoral;
+        }
+
+        [$condicionCentro, $paramsCentro] = $this->condicionAlcance($centros, 'c.centro_id');
+        if ($condicionCentro !== '') {
+            $condiciones[] = $condicionCentro;
+            $params += $paramsCentro;
         }
 
         $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
@@ -114,6 +129,42 @@ class CursoModel extends Model
         );
     }
 
+    /**
+     * Todo lo publicado a la pastoral en el mes dado, para el tablón del
+     * panel. Gemelo de AvisoModel::internosDelMes(), con la misma regla
+     * traducida a lo que un curso tiene: no importa cuándo empieza —uno que
+     * aún no ha arrancado es justo del que hay que enterarse—, pero uno que ya
+     * terminó no pinta nada en el tablón. Un curso sin fechas se queda: existe
+     * y sigue abierto. Mismo criterio que proximos().
+     *
+     * @param ?array $audiencia Formato de Controller::audienciaInterna(); null = alcance global
+     */
+    public function internosDelMes(?array $audiencia, ?string $mes = null): array
+    {
+        [$condicion, $params] = $this->condicionAlcance($audiencia, 'c.pastoral_id');
+
+        $mes = $mes ?? date('Y-m');
+        $params += [
+            ':desde' => $mes . '-01 00:00:00',
+            ':hasta' => date('Y-m-01 00:00:00', strtotime($mes . '-01 +1 month')),
+        ];
+
+        $where = 'c.publicado_interno = 1
+                  AND c.publicado_interno_at >= :desde AND c.publicado_interno_at < :hasta
+                  AND (COALESCE(c.fecha_fin, c.fecha_inicio) >= CURDATE()
+                       OR (c.fecha_inicio IS NULL AND c.fecha_fin IS NULL))'
+               . ($condicion !== '' ? ' AND ' . $condicion : '');
+
+        return $this->fetchAll(
+            "SELECT c.*, p.nombre AS pastoral_nombre
+               FROM cursos c
+               LEFT JOIN pastorales p ON p.id = c.pastoral_id
+              WHERE {$where}
+              ORDER BY c.publicado_interno_at DESC, c.id DESC",
+            $params
+        );
+    }
+
     // ── Agenda interna ──────────────────────────────────────────────────
     //
     // El calendario del panel mezcla eventos y cursos; el del sitio público
@@ -140,7 +191,7 @@ class CursoModel extends Model
 
         return $this->fetchAll(
             'SELECT c.id, c.slug, c.titulo, c.fecha_inicio, c.fecha_fin, c.horario, c.lugar,
-                    c.publicado, c.pastoral_id, c.centro_id,
+                    c.publicado, c.publicado_interno, c.pastoral_id, c.centro_id,
                     p.nombre AS pastoral_nombre, ce.nombre AS centro_nombre
                FROM cursos c
                LEFT JOIN pastorales p ON p.id = c.pastoral_id
@@ -199,12 +250,12 @@ class CursoModel extends Model
                 (slug, titulo, descripcion, objetivos, dirigido_a, imagen, modalidad,
                  instructor_id, pastoral_id, centro_id, cupo, aportacion, fecha_inicio, fecha_fin,
                  horario, lugar, inscripciones_abiertas, fecha_cierre_inscripcion,
-                 requiere_tutor, publicado, orden)
+                 requiere_tutor, publicado_interno, publicado_interno_at, publicado, orden)
              VALUES
                 (:slug, :titulo, :descripcion, :objetivos, :dirigidoA, :imagen, :modalidad,
                  :instructor, :pastoral, :centro, :cupo, :aportacion, :inicio, :fin,
                  :horario, :lugar, :inscripcionesAbiertas, :cierre,
-                 :tutor, :publicado, :orden)',
+                 :tutor, :interno, :internoAt, :publicado, :orden)',
             $this->parametros($datos)
         );
         return $this->lastInsertId();
@@ -221,7 +272,9 @@ class CursoModel extends Model
                     cupo = :cupo, aportacion = :aportacion, fecha_inicio = :inicio, fecha_fin = :fin,
                     horario = :horario, lugar = :lugar,
                     inscripciones_abiertas = :inscripcionesAbiertas, fecha_cierre_inscripcion = :cierre,
-                    requiere_tutor = :tutor, publicado = :publicado, orden = :orden
+                    requiere_tutor = :tutor,
+                    publicado_interno = :interno, publicado_interno_at = :internoAt,
+                    publicado = :publicado, orden = :orden
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -308,6 +361,8 @@ class CursoModel extends Model
             ':inscripcionesAbiertas' => $datos['inscripciones_abiertas'],
             ':cierre'                => $datos['fecha_cierre_inscripcion'],
             ':tutor'                 => $datos['requiere_tutor'],
+            ':interno'               => $datos['publicado_interno'],
+            ':internoAt'             => $datos['publicado_interno_at'],
             ':publicado'             => $datos['publicado'],
             ':orden'                 => $datos['orden'],
         ];

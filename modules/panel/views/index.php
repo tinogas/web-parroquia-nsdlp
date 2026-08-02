@@ -61,12 +61,14 @@ $disponibles = array_values(array_filter(
     </a>
 </div>
 
-<?php if ($cumpleanerosMes): ?>
 <?php
+// Lo usan la tarjeta de cumpleaños y el tablón de novedades, las dos «del mes».
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
           'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $mesActual = $meses[(int) date('n') - 1];
 ?>
+
+<?php if ($cumpleanerosMes): ?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-3">
         <h2 class="h6 fw-bold mb-3">
@@ -82,6 +84,66 @@ $mesActual = $meses[(int) date('n') - 1];
             <?php endforeach; ?>
         </div>
     </div>
+</div>
+<?php endif; ?>
+
+<?php
+/**
+ * Todo lo publicado a sus pastorales este mes, avisos y cursos mezclados y
+ * ordenados juntos por el momento real de publicación: a quien entra le
+ * importa qué se ha anunciado, no de qué sección viene. Sin recorte — el mes
+ * ya acota cuánto es, y esconder parte de lo que la pastoral anunció sería
+ * justo lo contrario de para lo que está este tablón.
+ *
+ * «Nuevo» se decide contra el ingreso anterior de esta persona
+ * (usuario_acceso_anterior, sellado al iniciar sesión), no contra una tabla de
+ * lecturas: no hace falta saber si abrió cada cosa, basta con no volver a
+ * señalarle lo que ya estaba ahí la última vez que entró.
+ */
+$novedades = [];
+foreach ($avisosInternos as $fila) {
+    $novedades[] = $fila + ['_modulo' => 'avisos', '_icono' => 'bi-megaphone', '_texto' => $fila['resumen']];
+}
+foreach ($cursosInternos as $fila) {
+    $novedades[] = $fila + ['_modulo' => 'cursos', '_icono' => 'bi-mortarboard', '_texto' => $fila['dirigido_a']];
+}
+usort($novedades, static fn (array $a, array $b): int => strcmp(
+    (string) $b['publicado_interno_at'],
+    (string) $a['publicado_interno_at']
+));
+?>
+
+<?php if ($novedades): ?>
+<h2 class="h6 fw-bold text-uppercase text-muted mb-3">
+    De tus pastorales en <?= e($mesActual) ?>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1"><?= count($novedades) ?></span>
+</h2>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 mb-4">
+    <?php foreach ($novedades as $item): ?>
+    <?php $esNuevo = $accesoAnterior !== null && $item['publicado_interno_at'] > $accesoAnterior; ?>
+    <div class="col">
+        <a href="<?= e(url_admin($item['_modulo'], 'ver', ['id' => $item['id']])) ?>"
+           class="card border-0 shadow-sm h-100 text-decoration-none text-body">
+            <?php if ($item['imagen']): ?>
+            <img src="<?= e(url_activo($item['imagen'])) ?>" class="card-img-top" alt=""
+                 style="height:120px;object-fit:cover">
+            <?php endif; ?>
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi <?= e($item['_icono']) ?> text-dorado"></i>
+                    <span class="small text-muted"><?= e($item['pastoral_nombre'] ?? 'Toda la parroquia') ?></span>
+                    <?php if ($esNuevo): ?>
+                    <span class="badge bg-danger-subtle text-danger-emphasis ms-auto">Nuevo</span>
+                    <?php endif; ?>
+                </div>
+                <div class="fw-semibold small"><?= e($item['titulo']) ?></div>
+                <?php if (!empty($item['_texto'])): ?>
+                <p class="small text-muted mb-0 mt-1"><?= e($item['_texto']) ?></p>
+                <?php endif; ?>
+            </div>
+        </a>
+    </div>
+    <?php endforeach; ?>
 </div>
 <?php endif; ?>
 

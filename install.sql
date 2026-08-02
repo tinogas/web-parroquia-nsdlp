@@ -264,6 +264,18 @@ CREATE TABLE IF NOT EXISTS avisos (
     fecha_publicacion DATE         NOT NULL,
     vigente_hasta     DATE         NULL,
     destacado         TINYINT(1)   NOT NULL DEFAULT 0,
+    -- Dos escalones, no uno: publicado_interno lo hace visible dentro del
+    -- panel a los miembros de su pastoral (y a los de sus pastorales hijas si
+    -- se publica en una Comisión), y publicado lo saca al sitio web. El
+    -- segundo exige el primero — eso es lo que garantiza chk_avi_escalon, y
+    -- no solo el controlador, porque hay guiones sueltos que escriben
+    -- publicado por SQL directo. publicado_interno_at se sella cuando el flag
+    -- pasa de 0 a 1: ni created_at (un borrador puede pasar semanas sin
+    -- publicarse) ni fecha_publicacion (es un "visible desde" que escribe la
+    -- persona) dicen cuándo se publicó de verdad, y hace falta saberlo para
+    -- ordenar las novedades del panel y marcarlas como nuevas.
+    publicado_interno    TINYINT(1) NOT NULL DEFAULT 0,
+    publicado_interno_at DATETIME   NULL,
     publicado         TINYINT(1)   NOT NULL DEFAULT 0,
     vistas            INT UNSIGNED NOT NULL DEFAULT 0,
     usuario_id        INT UNSIGNED NULL,
@@ -272,8 +284,10 @@ CREATE TABLE IF NOT EXISTS avisos (
     PRIMARY KEY (id),
     UNIQUE KEY uq_avi_slug (slug),
     KEY idx_avi_pub (publicado, fecha_publicacion),
+    KEY idx_avi_interno (publicado_interno, publicado_interno_at),
     KEY idx_avi_pastoral (pastoral_id),
-    CONSTRAINT fk_avi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL
+    CONSTRAINT fk_avi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL,
+    CONSTRAINT chk_avi_escalon CHECK (publicado = 0 OR publicado_interno = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Fecha concreta, no recurrencia: lo que se repite cada semana vive en
@@ -907,16 +921,22 @@ CREATE TABLE IF NOT EXISTS cursos (
     inscripciones_abiertas   TINYINT(1)   NOT NULL DEFAULT 1,
     fecha_cierre_inscripcion DATE         NULL,
     requiere_tutor           TINYINT(1)   NOT NULL DEFAULT 0,
+    -- Mismos dos escalones que en avisos, con el mismo motivo; ver el
+    -- comentario de la tabla avisos.
+    publicado_interno        TINYINT(1)   NOT NULL DEFAULT 0,
+    publicado_interno_at     DATETIME     NULL,
     publicado                TINYINT(1)   NOT NULL DEFAULT 0,
     orden                    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     created_at               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_cur_slug (slug),
     KEY idx_cur_pub (publicado, fecha_inicio),
+    KEY idx_cur_interno (publicado_interno, publicado_interno_at),
     KEY idx_cur_centro (centro_id),
     CONSTRAINT fk_cur_instructor FOREIGN KEY (instructor_id) REFERENCES personas(id)   ON DELETE SET NULL,
     CONSTRAINT fk_cur_pastoral   FOREIGN KEY (pastoral_id)   REFERENCES pastorales(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cur_centro     FOREIGN KEY (centro_id)     REFERENCES centros(id)    ON DELETE SET NULL
+    CONSTRAINT fk_cur_centro     FOREIGN KEY (centro_id)     REFERENCES centros(id)    ON DELETE SET NULL,
+    CONSTRAINT chk_cur_escalon   CHECK (publicado = 0 OR publicado_interno = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Temario. Hoy es contenido público informativo; en fase 2 es el ancla del

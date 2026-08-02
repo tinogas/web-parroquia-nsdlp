@@ -171,6 +171,64 @@ class Model
     }
 
     /**
+     * Qué filas ve alguien en el listado del panel de avisos o de cursos, ahora
+     * que publicar tiene dos escalones. Con alcance global no recorta nada; sin
+     * él, la regla es la suma de dos cosas distintas:
+     *
+     *   - lo ya publicado hacia dentro que le corresponde leer: su audiencia,
+     *     que además de sus pastorales incluye las Comisiones que las agrupan y
+     *     el contenido parroquial general;
+     *   - más los borradores **de sus propias pastorales, y solo esos**.
+     *
+     * El segundo punto es el que arregla una fuga que venía de antes: como
+     * Controller::pastoralesVisibles() añade el null del contenido general sin
+     * mirar el estado, cualquier coordinador venía leyendo los borradores que
+     * admin y editor tuvieran a medias. Aquí el general entra solo cuando ya
+     * está publicado.
+     *
+     * @param  ?array $audiencia Ids que puede leer, con un null delante para incluir el general; null = alcance global
+     * @param  array  $propias   Ids que administra de verdad; de ahí salen los borradores que sí ve
+     * @return array{0: string, 1: array} [condición SQL o cadena vacía, parámetros]
+     */
+    protected function condicionVisibilidadPanel(
+        ?array $audiencia,
+        array $propias,
+        string $columna = 'pastoral_id',
+        string $columnaInterno = 'publicado_interno'
+    ): array {
+        if ($audiencia === null) {
+            return ['', []];
+        }
+
+        $params = [];
+
+        // Rama 1: lo publicado hacia dentro, dentro de su audiencia.
+        $ids = [];
+        foreach (array_values(array_filter($audiencia, static fn ($id): bool => $id !== null)) as $i => $id) {
+            $ids[":vpaud{$i}"] = (int) $id;
+        }
+        $params += $ids;
+
+        $enAudiencia = $ids ? "{$columna} IN (" . implode(',', array_keys($ids)) . ')' : '';
+        if (in_array(null, $audiencia, true)) {
+            $enAudiencia = $enAudiencia ? "({$columna} IS NULL OR {$enAudiencia})" : "{$columna} IS NULL";
+        }
+        $ramas = [$enAudiencia !== '' ? "({$columnaInterno} = 1 AND {$enAudiencia})" : '1 = 0'];
+
+        // Rama 2: sus borradores. Sin el null: un borrador general no es suyo.
+        $suyas = [];
+        foreach (array_values(array_filter($propias, static fn ($id): bool => $id !== null)) as $i => $id) {
+            $suyas[":vppro{$i}"] = (int) $id;
+        }
+        if ($suyas) {
+            $params += $suyas;
+            $ramas[] = "({$columnaInterno} = 0 AND {$columna} IN (" . implode(',', array_keys($suyas)) . '))';
+        }
+
+        return ['(' . implode(' OR ', $ramas) . ')', $params];
+    }
+
+    /**
      * Folio consecutivo por año. Formato: BAU-2026-00001
      *
      * La columna de folio lleva índice UNIQUE: si dos peticiones concurrentes

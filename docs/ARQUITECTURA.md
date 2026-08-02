@@ -1017,6 +1017,63 @@ desactivado): confirmar con contraseña es la única fricción entre un clic y p
 pastoral y sus documentos/actividades para siempre (avisos, eventos y cursos sobreviven
 como contenido general, por `ON DELETE SET NULL`).
 
+### Publicar en dos escalones: interno y público
+
+Publicar un aviso o un curso era un interruptor de dos posiciones —borrador o en el sitio
+web—, y eso dejaba sin resolver lo que una pastoral hace todo el tiempo: avisar **a los
+suyos** de algo que no tiene por qué salir en la portada. Ahora hay un peldaño intermedio:
+
+1. **Borrador** — solo lo ven admin y editor, y quien administra esa pastoral.
+2. **Publicado para la pastoral** — lo leen sus miembros desde el panel. No sale al sitio.
+3. **Publicado en la página** — además, se publica en el sitio web.
+
+**El modelo son dos booleanos, no un `ENUM`.** `publicado_interno` es el escalón 2 y
+`publicado` conserva exactamente el significado que ya tenía, el 3. La ventaja es que
+ninguna consulta pública se tocó: siguen preguntando `publicado = 1` y no se enteran de
+que ahora hay un peldaño antes. El invariante "público exige interno" no lo garantiza solo
+el controlador sino un `CHECK` en la base, porque el repositorio tiene guiones que
+escriben `publicado` por SQL directo. `Controller::escalonPublicacion()` traduce el
+formulario a las dos columnas en un único sitio para avisos y cursos, y es también quien
+fuerza los descensos: bajar a interno apaga `publicado`, y bajar a borrador apaga los dos
+—sin eso, bajar de escalón dejaría el registro en el estado que el `CHECK` rechaza—.
+
+**Leer no hereda igual que escribir.** El escalón interno de una Comisión alcanza a los
+miembros de sus pastorales hijas: un aviso puesto en Litúrgica lo leen los de MESC,
+Lectores o Coros. Eso lo resuelve `Auth::pastoralesAudiencia()`, que expande hacia arriba
+las pastorales de la cuenta sumándoles sus padres. Va deliberadamente **aparte** de
+`Auth::pastoralesPermitidas()`, que gobierna la escritura y sigue sin heredar nada:
+estar en Lectores te deja leer lo de Litúrgica, no escribir en Litúrgica. Tampoco se
+cachea en sesión —a diferencia de las pastorales asignadas, que solo cambian con la
+cuenta—, porque depende de `pastoral_padre_id` y reasignar el padre de una pastoral no
+debería esperar a que todo el mundo vuelva a entrar.
+
+**De paso se cerró una fuga anterior.** `Controller::pastoralesVisibles()` añade el `null`
+del contenido parroquial general al alcance sin mirar el estado, así que cualquier
+coordinador venía leyendo los borradores que admin y editor tuvieran a medias. La regla
+del listado del panel pasa a ser explícita en `Model::condicionVisibilidadPanel()`: lo
+publicado hacia dentro de su audiencia (donde el general sí entra), **más** los borradores
+de sus propias pastorales y solo esos.
+
+**Quién publica.** `avisos.publicar` se añadió a `PERMISOS_COORDINACION`, donde
+`cursos.publicar` ya estaba: partir la publicación en dos es justamente lo que quita el
+motivo por el que los avisos entraban siempre como borrador —el primer escalón ya no llega
+a la portada—. Y `ROL_CONSULTA` recibió `avisos.ver`, sin lo cual el escalón interno no
+tendría a quién llegar: ese es el rol de los miembros de a pie.
+
+**Dos piezas nuevas de interfaz** hacían falta para que esto sirviera de algo. Una acción
+de lectura (`AvisoController::ver()`, `CursoController::ver()`): hasta ahora el panel solo
+sabía llevar al formulario de edición, y lo que aún no es público no tiene página que
+enseñar. Y las miniaturas del panel de inicio, con lo último publicado a sus pastorales;
+se marcan «Nuevo» comparando `publicado_interno_at` contra el ingreso anterior de esa
+persona, que `Auth::intentarLogin()` guarda en sesión antes de pisar `ultimo_acceso`. No
+hay tabla de lecturas: no hace falta saber si abrió cada cosa, basta con no volver a
+señalarle lo que ya estaba la última vez que entró.
+
+**La agenda interna es la excepción conocida.** Sigue enseñando borradores a cualquiera
+con `agenda.ver`, sin recortar por pastoral, porque para eso existe: que nadie reserve el
+salón dos veces. Lo único que se corrigió ahí es cómo los llama —un curso publicado a su
+pastoral ya no se etiqueta «Borrador»—, no a quién se los enseña.
+
 ### MESC: visitas a enfermos y rutas (issue #3)
 
 `modules/mesc/` es, a propósito, el único módulo del sitio **sin ningún controlador

@@ -104,6 +104,10 @@ class AgendaController extends Controller
             'lugar'           => $evento['lugar'],
             'color'           => $evento['color'] ?: self::COLOR_EVENTO,
             'publicado'       => (int) $evento['publicado'],
+            // Los eventos siguen teniendo dos posiciones, no tres: aquí el
+            // escalón intermedio no existe. Se normaliza igual para que las
+            // vistas de la agenda no tengan que preguntar de qué tipo es.
+            'estado'          => $evento['publicado'] ? 'publico' : 'borrador',
             'pastoral_id'     => $evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null,
             'pastoral_nombre' => $evento['pastoral_nombre'],
             'centro_nombre'   => $evento['centro_nombre'],
@@ -129,6 +133,10 @@ class AgendaController extends Controller
             'horario'         => $curso['horario'],
             'color'           => self::COLOR_CURSO,
             'publicado'       => (int) $curso['publicado'],
+            // Un curso ya publicado a su pastoral no es un borrador, aunque
+            // todavía no esté en el sitio: la agenda lo atenúa igual —no es
+            // público— pero no puede llamarlo por un nombre que no le toca.
+            'estado'          => estado_publicacion($curso),
             'pastoral_id'     => $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null,
             'pastoral_nombre' => $curso['pastoral_nombre'],
             'centro_nombre'   => $curso['centro_nombre'],

@@ -188,6 +188,115 @@ class Controller
         return array_values(array_intersect($filtroElegido, $propias));
     }
 
+    /**
+     * Las pastorales cuyo contenido interno puede leer, en el formato que
+     * esperan los modelos: null si tiene alcance global (lo ve todo), y si no,
+     * su audiencia con el null del contenido parroquial general delante.
+     *
+     * Hermano de pastoralesVisibles(), pero para el escalón interno de avisos y
+     * cursos, y con una diferencia que importa: aquí la lista viene de
+     * Auth::pastoralesAudiencia(), que sí sube a las Comisiones que agrupan sus
+     * pastorales. Leer lo de su Comisión sí; escribir en ella no.
+     */
+    protected function audienciaInterna(): ?array
+    {
+        if (Auth::tieneAlcanceGlobal()) {
+            return null;
+        }
+        return array_merge([null], Auth::pastoralesAudiencia());
+    }
+
+    /**
+     * Los dos conjuntos que pide Model::condicionVisibilidadPanel(), ya
+     * cruzados con la pastoral que la persona haya elegido en el selector de
+     * la pantalla. Se cruzan los dos y no solo el primero para que filtrar por
+     * una pastoral recorte también sus borradores, y no deje asomando los de
+     * las demás.
+     *
+     * @param  ?array $filtroElegido El segundo valor de filtroPastoral(); null = no filtró nada
+     * @return array{0: ?array, 1: array} [audiencia de lectura, pastorales propias]
+     */
+    protected function acotarAudiencia(?array $filtroElegido): array
+    {
+        $audiencia = $this->audienciaInterna();
+        $propias   = Auth::pastoralesPermitidas();
+
+        if ($filtroElegido === null) {
+            return [$audiencia, $propias];
+        }
+
+        return [
+            $audiencia === null ? $filtroElegido : array_values(array_intersect($audiencia, $filtroElegido)),
+            array_values(array_intersect($propias, $filtroElegido)),
+        ];
+    }
+
+    /**
+     * ¿Puede LEER este registro interno de avisos o cursos?
+     *
+     * No sirve requireAlcancePastoral() para esto: aquel dice quién puede
+     * TOCARLO y responde que no ante un pastoral_id nulo, que es justo el
+     * contenido parroquial general —el que va dirigido a todo el mundo—.
+     *
+     * Un borrador es la excepción: no es de nadie más que de quien lo
+     * administra, así que ahí sí vale el alcance de escritura.
+     */
+    protected function puedeLeerInterno(?int $pastoralId, bool $publicadoInterno): bool
+    {
+        if (Auth::tieneAlcanceGlobal()) {
+            return true;
+        }
+        if (!$publicadoInterno) {
+            return Auth::puedeSobrePastoral($pastoralId);
+        }
+        return $pastoralId === null || in_array($pastoralId, Auth::pastoralesAudiencia(), true);
+    }
+
+    /**
+     * Traduce el escalón elegido en el formulario a las dos columnas que lo
+     * representan, para avisos y para cursos.
+     *
+     * Reglas, todas en un solo sitio para que no se contradigan entre módulos:
+     *  - Sin el permiso de publicar, el escalón «publico» no está a su alcance
+     *    y se queda en el que ya tenía, igual que hacía el interruptor de antes.
+     *  - Bajar de escalón limpia lo de arriba: de público a interno apaga
+     *    `publicado`, y a borrador apaga los dos. Sin esto, bajar dejaría el
+     *    registro en el estado ilegal que rechaza el CHECK de la base.
+     *  - `publicado_interno_at` se sella solo al subir de 0 a 1, y se conserva
+     *    mientras siga publicado: es el momento real de publicación, y
+     *    reescribirlo en cada guardado haría reaparecer como «Nuevo» un aviso
+     *    de hace meses al corregirle una coma.
+     *
+     * @param  ?array $existente La fila tal cual está en la base, o null si es nueva
+     * @return array{publicado_interno: int, publicado_interno_at: ?string, publicado: int}
+     */
+    protected function escalonPublicacion(string $permisoPublicar, ?array $existente): array
+    {
+        $eraInterno = (int) ($existente['publicado_interno'] ?? 0);
+        $selladoEn  = $existente['publicado_interno_at'] ?? null;
+
+        // Un valor que no es ninguno de los tres solo llega por un POST
+        // manipulado o por un formulario roto: en cualquiera de los dos casos
+        // se deja como estaba. Caer a «borrador» sería más drástico de lo que
+        // hace falta —despublicaría de golpe algo que nadie pidió retirar—.
+        $anterior = $existente ? estado_publicacion($existente) : 'borrador';
+        $estado   = $this->postStr('estado');
+        if (!isset(ESTADOS_PUBLICACION[$estado])) {
+            $estado = $anterior;
+        }
+        if ($estado === 'publico' && !Auth::tienePermiso($permisoPublicar)) {
+            $estado = $anterior;
+        }
+
+        $interno = $estado === 'borrador' ? 0 : 1;
+
+        return [
+            'publicado_interno'    => $interno,
+            'publicado_interno_at' => $interno && $eraInterno ? $selladoEn : ($interno ? date('Y-m-d H:i:s') : null),
+            'publicado'            => $estado === 'publico' ? 1 : 0,
+        ];
+    }
+
     // ── La otra mitad del alcance: la sede ──────────────────────────────
     //
     // Misma mecánica que las tres funciones de arriba, sobre centro_id. Están

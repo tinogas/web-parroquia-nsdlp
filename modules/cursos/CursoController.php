@@ -31,16 +31,16 @@ class CursoController extends Controller
     {
         $this->requirePermiso('cursos.ver');
 
-        $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
-            ? $this->getStr('filtro') : 'todos';
+        $filtro = isset(ESTADOS_PUBLICACION[$this->getStr('filtro')]) ? $this->getStr('filtro') : 'todos';
 
-        // Mismo recorte que el listado de eventos: lo de su pastoral y su sede,
-        // más lo general de la parroquia. Lo demás se consulta en la agenda.
+        // La sede se recorta como siempre; la pastoral ya no, porque leer lo
+        // publicado hacia dentro alcanza también a las Comisiones que agrupan
+        // las suyas y deja fuera los borradores ajenos. Ver acotarAudiencia().
         $pastorales = $this->pastoralesDelFiltro();
         $centros    = $this->centrosDelFiltro();
         [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
         [$filtroCentro,   $idsCentro]   = $this->filtroCentro($centros);
-        $idsPastoral = $this->pastoralesVisibles($idsPastoral);
+        [$audiencia, $propias] = $this->acotarAudiencia($idsPastoral);
         $idsCentro   = $this->centrosVisibles($idsCentro);
 
         $this->render('cursos/lista', [
@@ -48,7 +48,8 @@ class CursoController extends Controller
             'listado' => $this->modelo->listar(
                 max(1, $this->getInt('pagina', 1)),
                 $filtro,
-                $idsPastoral,
+                $audiencia,
+                $propias,
                 $idsCentro
             ),
             'filtro'  => $filtro,
@@ -72,6 +73,41 @@ class CursoController extends Controller
             'pastoralIdPreseleccionado' => $this->pastoralIdPreseleccionado(),
             'scriptExtra'               => $this->scriptEditor(),
         ]));
+    }
+
+    /**
+     * Lectura de solo lectura dentro del panel, hermana de
+     * AvisoController::ver(): es lo que abre un miembro de la pastoral cuando
+     * le llega un curso interno, y el destino de las miniaturas del panel de
+     * inicio. Un curso que todavía no es público no tiene página que enseñar.
+     */
+    public function ver(): void
+    {
+        $this->requirePermiso('cursos.ver');
+
+        $curso = $this->modelo->porId($this->getInt('id'));
+        if (!$curso) {
+            Session::flash('error', 'No encontramos ese curso.');
+            $this->redirect(url_admin('cursos'));
+            return;
+        }
+
+        $pastoralId = $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null;
+        if (!$this->puedeLeerInterno($pastoralId, (bool) $curso['publicado_interno'])) {
+            Session::flash('error', 'Ese curso no está publicado para tus pastorales.');
+            $this->redirect(url_admin('cursos'));
+            return;
+        }
+
+        $this->render('cursos/ver', [
+            'titulo'      => $curso['titulo'],
+            'curso'       => $curso,
+            'pastoral'    => $pastoralId ? (new PastoralModel())->porId($pastoralId) : null,
+            'sesiones'    => $this->modelo->sesiones((int) $curso['id']),
+            'puedeEditar' => Auth::tienePermiso('cursos.editar')
+                             && Auth::puedeSobrePastoral($pastoralId)
+                             && Auth::puedeSobreCentro($curso['centro_id'] !== null ? (int) $curso['centro_id'] : null),
+        ]);
     }
 
     public function editar(): void
@@ -149,10 +185,7 @@ class CursoController extends Controller
             Session::flash('warning', 'El curso se guardó, pero la imagen no: ' . $e->getMessage());
         }
 
-        $puedePublicar = Auth::tienePermiso('cursos.publicar');
-        $publicado = $puedePublicar ? $this->postBool('publicado') : ($existente['publicado'] ?? 0);
-
-        $datos = [
+        $datos = $this->escalonPublicacion('cursos.publicar', $existente) + [
             'slug'                     => $slug,
             'titulo'                   => $titulo,
             'descripcion'              => SanitizadorHtml::limpiar($this->postHtml('descripcion')) ?: null,
@@ -172,7 +205,6 @@ class CursoController extends Controller
             'inscripciones_abiertas'   => $this->postBool('inscripciones_abiertas'),
             'fecha_cierre_inscripcion' => $this->postStr('fecha_cierre_inscripcion') ?: null,
             'requiere_tutor'           => $this->postBool('requiere_tutor'),
-            'publicado'                => $publicado,
             'orden'                    => $this->postInt('orden'),
         ];
 
@@ -183,7 +215,8 @@ class CursoController extends Controller
         } else {
             $id = $this->modelo->crear($datos);
             $this->auditoria('crear', 'cursos', $id, $titulo);
-            Session::flash('success', $puedePublicar ? 'Curso creado.' : 'Curso enviado como borrador para revisión.');
+            Session::flash('success', 'Curso creado como «'
+                . ESTADOS_PUBLICACION[estado_publicacion($datos)] . '».');
         }
 
         $this->redirect(url_admin('cursos', 'editar', ['id' => $id]));

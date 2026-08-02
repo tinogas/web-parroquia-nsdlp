@@ -20,10 +20,12 @@ $porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
     <div class="btn-group btn-group-sm" role="group">
         <a href="<?= e(url_admin('avisos', '', $porPastoral)) ?>"
            class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-        <a href="<?= e(url_admin('avisos', '', ['filtro' => 'publicados'] + $porPastoral)) ?>"
-           class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-        <a href="<?= e(url_admin('avisos', '', ['filtro' => 'borradores'] + $porPastoral)) ?>"
-           class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+        <?php foreach (ESTADOS_PUBLICACION as $clave => $etiqueta): ?>
+        <a href="<?= e(url_admin('avisos', '', ['filtro' => $clave] + $porPastoral)) ?>"
+           class="btn <?= $filtro === $clave ? 'btn-primary' : 'btn-outline-secondary' ?>">
+            <?= e($clave === 'borrador' ? 'Borradores' : ($clave === 'interno' ? 'De la pastoral' : 'En la página')) ?>
+        </a>
+        <?php endforeach; ?>
     </div>
 
     <form method="GET" action="<?= e(url_admin('avisos')) ?>" class="row g-2 align-items-end">
@@ -87,16 +89,16 @@ $porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
                     <td class="d-none d-md-table-cell"><?= e(AvisoModel::TIPOS[$aviso['tipo']] ?? $aviso['tipo']) ?></td>
                     <td class="d-none d-lg-table-cell small text-muted"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></td>
                     <td class="d-none d-md-table-cell">
-                        <?php if ($aviso['publicado']): ?>
-                            <span class="badge bg-success-subtle text-success-emphasis">Publicado</span>
-                        <?php else: ?>
-                            <span class="badge bg-warning-subtle text-warning-emphasis">Borrador</span>
-                        <?php endif; ?>
+                        <?= badge_escalon($aviso) ?>
                         <?php if ($aviso['vigente_hasta'] && $aviso['vigente_hasta'] < date('Y-m-d')): ?>
                             <span class="badge bg-secondary-subtle text-secondary-emphasis" title="Ya pasó su fecha 'Visible hasta'; no se muestra en el sitio.">Vencido</span>
                         <?php endif; ?>
                     </td>
                     <td class="text-end text-nowrap">
+                        <a href="<?= e(url_admin('avisos', 'ver', ['id' => $aviso['id']])) ?>"
+                           class="btn btn-sm btn-outline-secondary" title="Leer">
+                            <i class="bi bi-eye"></i>
+                        </a>
                         <?php if ($aviso['publicado']): ?>
                         <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>"
                            class="btn btn-sm btn-outline-secondary" target="_blank" title="Ver en el sitio">
