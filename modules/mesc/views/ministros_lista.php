@@ -21,12 +21,27 @@
         <div class="table-responsive mb-3">
             <table class="table table-sm align-middle">
                 <thead class="table-light">
-                    <tr><th>Nombre</th><th class="d-none d-md-table-cell">Teléfono</th><th>&nbsp;</th></tr>
+                    <tr>
+                        <th>Nombre completo</th>
+                        <th>Nombre corto</th>
+                        <th class="d-none d-md-table-cell">Teléfono</th>
+                        <th>&nbsp;</th>
+                    </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($ministros as $ministro): ?>
                     <tr class="<?= $ministro['activo'] ? '' : 'text-muted' ?>">
-                        <td><?= e($ministro['nombre']) ?><?= $ministro['activo'] ? '' : ' (inactivo)' ?></td>
+                        <td>
+                            <?php if ($ministro['nombre_completo']): ?>
+                            <?= e($ministro['nombre_completo']) ?>
+                            <?php else: ?>
+                            <?php /* Sin ficha vinculada no hay más nombre que el corto; se dice
+                                     aquí para que se note a quién le falta. */ ?>
+                            <span class="text-body-tertiary fst-italic small">Sin ficha en el equipo</span>
+                            <?php endif; ?>
+                            <?= $ministro['activo'] ? '' : ' (inactivo)' ?>
+                        </td>
+                        <td class="fw-semibold"><?= e($ministro['nombre']) ?></td>
                         <td class="d-none d-md-table-cell small"><?= e($ministro['telefono']) ?></td>
                         <td class="text-end">
                             <?php if (Auth::tienePermiso('mesc.editar')): ?>
