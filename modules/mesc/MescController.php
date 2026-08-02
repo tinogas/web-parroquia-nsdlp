@@ -389,23 +389,31 @@ class MescController extends Controller
         }
         $this->requireAlcancePastoral($pastoralId);
 
-        // El ministro se elige del equipo pastoral; si todavía no está ahí, el
-        // nombre libre de abajo es el respaldo. Con persona elegida, su
-        // nombre y su teléfono mandan sobre los campos de texto (que se
-        // ignoran) — mismo patrón que el responsable de una pastoral.
+        // El ministro se elige del equipo pastoral, pero su `nombre` NO se toma
+        // de la ficha: es el nombre corto con el que se le conoce en el
+        // calendario de turnos —«Zulema», «Tino»—, donde no cabe el nombre
+        // completo, y es la clave con la que se le reconoce al capturar un
+        // calendario que venga de fuera. Por eso se guarda siempre, aunque
+        // haya persona vinculada, y sincronizarPersonal() tampoco lo pisa. Lo
+        // que sí manda la ficha es el teléfono, que no tiene esa doble vida.
         $personaId = $this->postIntONull('persona_id');
         $persona   = $personaId ? (new PersonaModel())->porId($personaId) : null;
-        if ($persona) {
-            $nombre   = $persona['nombre'];
-            $telefono = $persona['telefono'];
-        } else {
+        if (!$persona) {
             $personaId = null;
-            $nombre    = $this->postStr('nombre');
-            $telefono  = $this->postStr('telefono') ?: null;
+        }
+
+        $nombre   = $this->postStr('nombre');
+        $telefono = $persona ? $persona['telefono'] : ($this->postStr('telefono') ?: null);
+
+        // Sin nombre corto, el primero de su ficha es el default razonable:
+        // «Zulema Maria Alavrez Andrade» → «Zulema», que es justo la forma en
+        // que están capturados los demás.
+        if ($nombre === '' && $persona) {
+            $nombre = strtok(trim((string) $persona['nombre']), ' ') ?: (string) $persona['nombre'];
         }
 
         if ($nombre === '') {
-            Session::flash('error', 'El ministro necesita un nombre, o elige a alguien del equipo pastoral.');
+            Session::flash('error', 'El ministro necesita un nombre corto, o elige a alguien del equipo pastoral.');
             $this->redirect(url_admin('mesc', 'ministros'));
             return;
         }
@@ -484,6 +492,41 @@ class MescController extends Controller
             'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
             'urlMesAnterior'  => url_admin('mesc', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
             'urlMesSiguiente' => url_admin('mesc', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
+            'urlImprimir'     => url_admin('mesc', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes]),
+        ]);
+    }
+
+    /**
+     * El calendario del mes en hoja aparte, con los nombres cortos de cada
+     * ministro a la vista: es el formato que se reparte impreso o se comparte
+     * como imagen, y el que hasta ahora se armaba a mano fuera del sistema.
+     *
+     * Página independiente sin el layout del panel, igual que la vista de
+     * impresión del organigrama (NosotrosController::organigramaImprimir()):
+     * sin librería de PDF ni de imagen —el proyecto no admite dependencias en
+     * el servidor—, se imprime, se guarda como PDF o se captura con el propio
+     * navegador.
+     */
+    public function turnosImprimir(): void
+    {
+        $this->requirePermiso('mesc.ver');
+
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
+        $anio = $this->getInt('anio', (int) date('Y'));
+        $mes  = $this->getInt('mes', (int) date('n'));
+        if ($mes < 1 || $mes > 12) { $mes = (int) date('n'); }
+        if ($anio < 2000 || $anio > 2100) { $anio = (int) date('Y'); }
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
+
+        $this->renderSinLayout('mesc/turnos_imprimir', [
+            'nombreMes'  => $this->nombreMes($mes) . ' ' . $anio,
+            'semanas'    => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
+            'urlVolver'  => url_admin('mesc', 'turnos', ['anio' => $anio, 'mes' => $mes]),
         ]);
     }
 

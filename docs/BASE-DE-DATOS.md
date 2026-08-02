@@ -345,11 +345,16 @@ Catálogo de quién sirve como Ministro Extraordinario de la Comunión (issue #3
 Sigue siendo una tabla aparte de `personas` a propósito: `personas` es el equipo
 pastoral que se muestra en público, con foto y semblanza, y un ministro MESC es un
 voluntario interno que no necesariamente forma parte de esa vitrina. `persona_id` es el
-puente opcional entre ambas cuando sí coinciden: con la persona elegida, `nombre` y
-`telefono` se toman de su ficha y `PersonaModel::sincronizarPersonal()` los mantiene al
-día si la ficha cambia; sin persona (todavía no está de alta en el equipo), los dos
-campos son texto libre como siempre. Mismo patrón en `catequesis_catequistas` y
-`lector_lectores`, ver más abajo. Índice `idx_mmi_pastoral (pastoral_id, activo)`.
+puente opcional entre ambas cuando sí coinciden: con la persona elegida, el `telefono` se
+toma de su ficha y `PersonaModel::sincronizarPersonal()` lo mantiene al día si la ficha
+cambia; sin persona (todavía no está de alta en el equipo), es texto libre como siempre.
+
+**`nombre` es la excepción: aquí es el nombre CORTO** —«Zulema», «Tino»—, el que cabe en
+una casilla del calendario de turnos y con el que se reconoce a cada ministro al capturar
+un calendario que venga de fuera. Se guarda siempre, aunque haya persona vinculada, y la
+sincronización desde la ficha no lo pisa. En `catequesis_catequistas` y `lector_lectores`,
+en cambio, `nombre` sí viene de la ficha (ver más abajo). Índice
+`idx_mmi_pastoral (pastoral_id, activo)`.
 
 ### `mesc_colores_liturgicos`
 

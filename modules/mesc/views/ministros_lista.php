@@ -82,10 +82,16 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nombre, si no está en el equipo pastoral</label>
+                        <label class="form-label small fw-semibold">Nombre corto</label>
                         <input type="text" name="nombre" class="form-control form-control-sm"
-                               value="<?= e($vacio || $personaId ? '' : $ministro['nombre']) ?>" maxlength="150">
-                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
+                               value="<?= e($vacio ? '' : $ministro['nombre']) ?>" maxlength="150">
+                        <div class="form-text">
+                            Como aparece en el calendario de turnos, donde no cabe el nombre completo:
+                            «Zulema», «Tino». Se guarda aunque arriba se elija a alguien del equipo —es un
+                            dato propio, no se pisa con el de su ficha— y es con lo que se reconoce a cada
+                            ministro al capturar un calendario que venga de fuera. Si se deja en blanco, se
+                            usa el primer nombre de su ficha.
+                        </div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>

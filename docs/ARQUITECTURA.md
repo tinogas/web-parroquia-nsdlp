@@ -1112,6 +1112,38 @@ color litúrgico es el mismo calendario para toda la parroquia, no un dato propi
 módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
 catálogo de MESC directamente.
 
+**El nombre de un ministro de MESC es su nombre corto, y es un dato propio.** En
+`mesc_ministros`, `nombre` no es una copia del de su ficha sino el nombre con el que se le
+conoce en el calendario de turnos —«Zulema», «Tino», «Aimeé»—, que es lo único que cabe en
+una casilla de una cuadrícula de siete columnas. Es además la clave con la que se reconoce
+a cada quien al capturar un calendario que llega de fuera, hecho a mano en otra
+herramienta. Por eso:
+
+- El campo se guarda **siempre**, aunque haya persona vinculada, y
+  `PersonaModel::sincronizarPersonal()` es la excepción documentada que no lo pisa —sí
+  sincroniza el teléfono, que no tiene esa doble vida—.
+- Si se deja en blanco al vincular a alguien, `MescController::ministroGuardar()` toma el
+  primer nombre de su ficha («Zulema Maria Alavrez Andrade» → «Zulema»), que es
+  exactamente la forma en que están capturados los demás.
+
+Catequistas y lectores **no** siguen esta excepción: ahí el nombre sí viene de la ficha,
+porque sus pantallas son listados donde el nombre completo cabe sin problema.
+
+**El calendario de turnos se puede sacar en hoja aparte.**
+`MescController::turnosImprimir()` + `modules/mesc/views/turnos_imprimir.php` +
+`assets/css/turnos_imprimir.css` replican, para el calendario mensual de MESC, el mismo
+patrón que la vista de impresión del organigrama: página independiente vía
+`renderSinLayout()`, hoja de estilos propia, y un botón que solo llama a `window.print()`
+—sin librería de PDF ni de imagen, que el proyecto no admite en el servidor—. Es el
+formato que se reparte impreso a los ministros y que hasta ahora se armaba a mano fuera
+del sistema.
+
+Dos diferencias deliberadas con el calendario del panel, las dos por el mismo motivo —en
+papel no hay dónde pasar el ratón—: los ministros de cada turno van **escritos en la
+casilla** en vez de en el `title`, y el CSS fuerza `print-color-adjust: exact` sobre las
+etiquetas, porque su color es el código litúrgico del día, no un adorno que el navegador
+pueda descartar al imprimir.
+
 **El ministro/catequista/lector también se elige del equipo pastoral —tercera vez que
 se construye este vínculo.** `mesc_ministros`, `catequesis_catequistas` y
 `lector_lectores` tenían el mismo problema que ya se había resuelto antes para

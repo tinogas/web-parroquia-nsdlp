@@ -610,8 +610,14 @@ CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
 -- equipo pastoral PÚBLICO mostrado en "Quiénes somos" con foto y semblanza):
 -- un ministro MESC es un voluntario interno, no necesariamente parte de esa
 -- vitrina pública — de ahí que persona_id sea opcional: vincula con su ficha
--- cuando sí está de alta ahí (para que nombre/teléfono se tomen de una sola
--- fuente, ver PersonaModel::sincronizarPersonal()), y queda NULL cuando no.
+-- cuando sí está de alta ahí (para que el teléfono salga de una sola fuente,
+-- ver PersonaModel::sincronizarPersonal()), y queda NULL cuando no.
+--
+-- OJO con `nombre`: aquí es el nombre CORTO del ministro —«Zulema», «Tino»—,
+-- el que cabe en una casilla del calendario de turnos y con el que se le
+-- reconoce al capturar un calendario hecho fuera del sistema. Es un dato
+-- propio: se guarda aunque haya persona vinculada y la ficha no lo pisa, a
+-- diferencia de catequesis_catequistas y lector_lectores.
 CREATE TABLE IF NOT EXISTS mesc_ministros (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED NOT NULL,

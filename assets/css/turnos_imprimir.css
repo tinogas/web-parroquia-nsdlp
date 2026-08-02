@@ -1,0 +1,231 @@
+/* ============================================================
+   Calendario de turnos MESC — vista de impresión/PDF
+   Página independiente (sin el layout del panel): se abre en pestaña nueva y
+   se imprime, se guarda como PDF o se captura como imagen con el propio
+   navegador. Sin librería de PDF ni de imagen: ver docs/ARQUITECTURA.md.
+
+   Replica el calendario que la coordinación venía armando a mano fuera del
+   sistema (rol_ministros.jpeg): cabeceras en negro, banda gris con el número
+   de día, un bloque por turno con su color litúrgico de fondo y los ministros
+   en mayúsculas. Misma idea que organigrama_imprimir.css, que resolvió lo
+   mismo para el organigrama; se repite en vez de compartir hoja porque son
+   dos páginas sueltas con formas muy distintas.
+   ============================================================ */
+
+:root {
+    --ti-azul:        #1e4d8b;
+    --ti-azul-oscuro: #16233a;
+    --ti-borde:       #000;
+    --ti-gris:        #d9d9d9;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, "Segoe UI", sans-serif;
+    color: #000;
+    margin: 0;
+    padding: 1.25rem;
+    background: #f4f6f9;
+}
+
+.ti-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.ti-volver {
+    color: var(--ti-azul);
+    text-decoration: none;
+    font-size: .9rem;
+}
+
+.ti-volver:hover {
+    text-decoration: underline;
+}
+
+.ti-boton-imprimir {
+    background: var(--ti-azul);
+    color: #fff;
+    border: 0;
+    border-radius: .4rem;
+    padding: .55rem 1.1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ti-boton-imprimir:hover {
+    background: var(--ti-azul-oscuro);
+}
+
+/* La hoja en sí: fondo blanco sobre el gris de la pantalla, para que se vea
+   como la página que va a salir impresa. */
+.ti-hoja {
+    background: #fff;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 1.5rem;
+}
+
+.ti-parroquia {
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0 0 .35rem;
+}
+
+.ti-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+}
+
+/* ---- Cuadrícula del mes ----
+   table-layout fijo + colgroup: sin esto, el domingo (cuatro misas, ocho
+   ministros) ensancharía su columna a costa del resto y descuadraría la hoja. */
+.ti-calendario {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.ti-col-domingo {
+    width: 26%;
+}
+
+.ti-calendario th {
+    background: #000;
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: .15rem .3rem;
+    border: 1px solid var(--ti-borde);
+}
+
+.ti-calendario td {
+    border: 1px solid var(--ti-borde);
+    vertical-align: top;
+    height: 5rem;
+    padding: 0;
+}
+
+.ti-calendario td.ti-vacia {
+    background: var(--ti-gris);
+}
+
+/* Banda gris con el número, como en el calendario original. */
+.ti-dia {
+    background: var(--ti-gris);
+    border-bottom: 1px solid var(--ti-borde);
+    font-size: .8rem;
+    font-weight: 700;
+    padding: 0 .25rem;
+}
+
+.ti-turnos {
+    padding: .15rem;
+}
+
+/* Cada turno es un bloque con su color litúrgico de fondo —blanco si no se le
+   asignó ninguno—, con la misa arriba y los ministros debajo. */
+.ti-turno {
+    text-align: center;
+    padding: .15rem .2rem;
+    margin-bottom: .15rem;
+}
+
+.ti-turno:last-child {
+    margin-bottom: 0;
+}
+
+.ti-cabecera-turno {
+    display: block;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.ti-ministros {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.ti-sin-ministros {
+    display: block;
+    font-size: .65rem;
+    font-style: italic;
+    color: #6c757d;
+}
+
+/* Recuadro de aviso, como el del calendario original. */
+.ti-aviso {
+    border: 1px solid var(--ti-borde);
+    border-top: 0;
+    padding: .35rem .5rem;
+    text-align: center;
+}
+
+.ti-aviso-titulo {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.ti-aviso-texto {
+    font-size: .75rem;
+    margin: .15rem 0 0;
+}
+
+@media print {
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+        background: #fff;
+    }
+
+    .ti-hoja {
+        max-width: none;
+        padding: 0;
+    }
+
+    /* Los fondos son el código litúrgico del día, no adorno: sin esto el
+       navegador los descarta al imprimir y la hoja pierde el dato. */
+    .ti-turno,
+    .ti-dia,
+    .ti-calendario th,
+    .ti-calendario td.ti-vacia {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .ti-calendario {
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: landscape;
+        margin: 8mm;
+    }
+}
