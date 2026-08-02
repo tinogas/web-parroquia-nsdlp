@@ -10,11 +10,14 @@ class PastoralPublicoController extends ControllerPublico
 {
     public function index(): void
     {
+        $agrupado = (new PastoralModel())->activasAgrupadas();
+
         $this->render('pastorales/publico/index', [
             'metaTitulo'      => 'Pastorales',
             'metaDescripcion' => 'Pastorales y grupos de la Parroquia Nuestra Señora de la Paz: coro, catequesis, caridad, jóvenes y más.',
             'urlCanonica'     => url_publica('pastorales'),
-            'pastorales'      => (new PastoralModel())->activas(),
+            'comisiones'      => $agrupado['comisiones'],
+            'sueltas'         => $agrupado['sueltas'],
             'bloques'         => (new BloqueModel())->porZona('pastorales'),
         ]);
     }
@@ -38,6 +41,8 @@ class PastoralPublicoController extends ControllerPublico
             'ogImagen'        => $pastoral['imagen'] ?: null,
             'urlCanonica'     => url_publica('pastorales', ['slug' => $pastoral['slug']]),
             'pastoral'        => $pastoral,
+            'comisionPadre'   => $pastoral['pastoral_padre_id'] ? $modelo->porId((int) $pastoral['pastoral_padre_id']) : null,
+            'hijas'           => $modelo->hijasActivas($pastoralId),
             'centro'          => $pastoral['centro_id'] ? (new CentroModel())->porId((int) $pastoral['centro_id']) : null,
             'actividades'     => $modelo->actividadesActivas($pastoralId),
             'avisos'          => (new AvisoModel())->publicadosPorPastoral($pastoralId),

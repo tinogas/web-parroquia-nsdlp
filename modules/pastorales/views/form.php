@@ -59,6 +59,27 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     </div>
 
                     <div class="mb-3">
+                        <label for="pastoral_padre_id" class="form-label fw-semibold">Comisión padre</label>
+                        <?php if ($tieneHijos): ?>
+                        <p class="form-control-plaintext py-1 mb-0 small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Esta pastoral ya agrupa a otras; no puede a la vez
+                            tener una Comisión padre.
+                        </p>
+                        <?php else: ?>
+                        <select name="pastoral_padre_id" id="pastoral_padre_id" class="form-select">
+                            <option value="">Ninguna — pastoral suelta o Comisión</option>
+                            <?php foreach ($padresDisponibles as $candidato): ?>
+                            <option value="<?= (int) $candidato['id'] ?>"
+                                <?= (!$esNueva && (int) ($pastoral['pastoral_padre_id'] ?? 0) === (int) $candidato['id']) ? 'selected' : '' ?>>
+                                <?= e($candidato['nombre']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">Si esta pastoral pertenece a una Comisión (Litúrgica, Profética...), elígela aquí.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="descripcion_corta" class="form-label fw-semibold">Descripción breve</label>
                         <input type="text" name="descripcion_corta" id="descripcion_corta" class="form-control"
                                value="<?= e($esNueva ? '' : (string) $pastoral['descripcion_corta']) ?>" maxlength="255">

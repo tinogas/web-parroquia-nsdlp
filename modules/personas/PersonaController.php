@@ -17,9 +17,25 @@ class PersonaController extends Controller
     {
         $this->requirePermiso('personas.ver');
 
+        // Filtro de conveniencia, no de acceso: quien llega aquí ya ve a todo
+        // el equipo (personas.ver solo lo tienen roles con alcance global).
+        // Se reusan los helpers de Controller.php igual —recortan las
+        // opciones del selector solas si el permiso se abre a un rol acotado
+        // algún día—, pero sin pastoralesVisibles()/centrosVisibles(): esos
+        // permiten ver además "lo general sin pastoral", un concepto que no
+        // existe en personas.
+        $pastorales = $this->pastoralesDelFiltro();
+        $centros    = $this->centrosDelFiltro();
+        [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
+        [$filtroCentro,   $idsCentro]   = $this->filtroCentro($centros);
+
         $this->render('personas/lista', [
-            'titulo'   => 'Equipo pastoral',
-            'personas' => $this->modelo->todas(),
+            'titulo'         => 'Equipo pastoral',
+            'personas'       => $this->modelo->todas($idsPastoral, $idsCentro),
+            'pastorales'     => $pastorales,
+            'filtroPastoral' => $filtroPastoral,
+            'centros'        => $centros,
+            'filtroCentro'   => $filtroCentro,
         ]);
     }
 
@@ -30,7 +46,7 @@ class PersonaController extends Controller
         $this->render('personas/form', [
             'titulo'           => 'Nueva persona',
             'persona'          => null,
-            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'agrupado'         => (new PastoralModel())->activasAgrupadas(),
             'asignadas'        => [],
             'centros'          => (new CentroModel())->activos(),
             'centrosAsignados' => [],
@@ -51,7 +67,7 @@ class PersonaController extends Controller
         $this->render('personas/form', [
             'titulo'           => $persona['nombre'],
             'persona'          => $persona,
-            'pastorales'       => (new PastoralModel())->paraSelector(),
+            'agrupado'         => (new PastoralModel())->activasAgrupadas(),
             'asignadas'        => $this->modelo->pastoralesDe((int) $persona['id']),
             'centros'          => (new CentroModel())->activos(),
             'centrosAsignados' => $this->modelo->centrosDe((int) $persona['id']),
@@ -108,6 +124,7 @@ class PersonaController extends Controller
             'foto'       => $foto,
             'email'      => $this->postStr('email') ?: null,
             'telefono'   => $this->postStr('telefono') ?: null,
+            'fecha_nacimiento' => $this->postStrONull('fecha_nacimiento'),
             'orden'      => $this->postInt('orden'),
             'activo'     => $this->postBool('activo'),
             'pastorales' => $pastorales,

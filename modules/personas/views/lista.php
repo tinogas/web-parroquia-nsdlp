@@ -11,11 +11,71 @@
     </a>
 </div>
 
+<?php
+// Filtro de conveniencia (por pertenencia propia de la ficha), no de acceso:
+// quien llega aquí ya ve a todo el equipo.
+$porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
+$porCentro   = $filtroCentro !== '' ? ['centro' => $filtroCentro] : [];
+$porAmbito   = $porPastoral + $porCentro;
+?>
+
+<form method="GET" action="<?= e(url_admin('personas')) ?>" class="row g-2 align-items-end mb-3">
+    <?php if (!URLS_AMIGABLES): ?>
+    <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
+             descarta la del action: hay que repetirla como campos. */ ?>
+    <input type="hidden" name="area" value="admin">
+    <input type="hidden" name="modulo" value="personas">
+    <?php endif; ?>
+    <div class="col-auto">
+        <label for="pastoral" class="form-label small fw-semibold mb-1">Pastoral</label>
+        <select name="pastoral" id="pastoral" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            <?php foreach ($pastorales as $unaPastoral): ?>
+            <option value="<?= (int) $unaPastoral['id'] ?>"
+                    <?= $filtroPastoral === (string) $unaPastoral['id'] ? 'selected' : '' ?>>
+                <?= e($unaPastoral['nombre']) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <?php if (count($centros) > 1): /* Con una sola sede el selector no elige nada. */ ?>
+    <div class="col-auto">
+        <label for="centro" class="form-label small fw-semibold mb-1">Sede</label>
+        <select name="centro" id="centro" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            <?php foreach ($centros as $unCentro): ?>
+            <option value="<?= (int) $unCentro['id'] ?>"
+                    <?= $filtroCentro === (string) $unCentro['id'] ? 'selected' : '' ?>>
+                <?= e($unCentro['nombre']) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <?php endif; ?>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+    </div>
+    <?php if ($porAmbito): ?>
+    <div class="col-auto">
+        <a href="<?= e(url_admin('personas')) ?>" class="btn btn-sm btn-outline-secondary">Quitar</a>
+    </div>
+    <?php endif; ?>
+</form>
+
 <div class="card border-0 shadow-sm">
     <?php if (!$personas): ?>
         <div class="card-body text-center py-5">
             <div class="display-6 text-body-tertiary mb-2"><i class="bi bi-person-badge"></i></div>
+            <?php if ($porAmbito): ?>
+            <p class="text-muted mb-2">Nadie coincide con el filtro.</p>
+            <a href="<?= e(url_admin('personas')) ?>" class="btn btn-sm btn-outline-secondary">
+                Ver todo el equipo
+            </a>
+            <?php else: ?>
             <p class="text-muted mb-0">Todavía no hay nadie registrado.</p>
+            <?php endif; ?>
         </div>
     <?php else: ?>
     <div class="table-responsive">
@@ -45,6 +105,13 @@
                                 if ($ambitos):
                                 ?>
                                 <div class="text-muted small"><i class="bi bi-people me-1"></i><?= e(implode(', ', $ambitos)) ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($persona['pastorales_coordina'])): ?>
+                                <div class="small mt-1">
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">
+                                        <i class="bi bi-star-fill me-1"></i>Coordina: <?= e($persona['pastorales_coordina']) ?>
+                                    </span>
+                                </div>
                                 <?php endif; ?>
                             </div>
                         </div>

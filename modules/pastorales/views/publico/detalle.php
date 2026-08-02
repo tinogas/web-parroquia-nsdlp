@@ -1,10 +1,16 @@
 <div class="row justify-content-center">
     <div class="col-lg-9">
 
-        <nav aria-label="Ubicación" class="mb-3">
-            <a href="<?= e(url_publica('pastorales')) ?>" class="small text-decoration-none">
+        <nav aria-label="Ubicación" class="mb-3 small">
+            <a href="<?= e(url_publica('pastorales')) ?>" class="text-decoration-none">
                 <i class="bi bi-arrow-left me-1"></i>Todas las pastorales
             </a>
+            <?php if ($comisionPadre): ?>
+            <span class="text-muted mx-1">·</span>
+            <a href="<?= e(url_publica('pastorales', ['slug' => $comisionPadre['slug']])) ?>" class="text-decoration-none">
+                <?= e($comisionPadre['nombre']) ?>
+            </a>
+            <?php endif; ?>
         </nav>
 
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -24,6 +30,24 @@
                 </div>
                 <?php elseif ($pastoral['descripcion_corta']): ?>
                 <p class="mb-4"><?= e($pastoral['descripcion_corta']) ?></p>
+                <?php endif; ?>
+
+                <?php if ($hijas): ?>
+                <h2 class="h5 fw-bold mb-3">Pastorales de esta comisión</h2>
+                <div class="row g-3 mb-4">
+                    <?php foreach ($hijas as $hija): ?>
+                    <div class="col-md-6">
+                        <a href="<?= e(url_publica('pastorales', ['slug' => $hija['slug']])) ?>" class="text-decoration-none">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body p-3 d-flex align-items-center gap-2">
+                                    <i class="bi <?= e($hija['icono'] ?: 'bi-people') ?> fs-4 text-dorado"></i>
+                                    <h3 class="h6 fw-bold mb-0 text-body"><?= e($hija['nombre']) ?></h3>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
                 <?php endif; ?>
 
                 <?php if ($actividades): ?>

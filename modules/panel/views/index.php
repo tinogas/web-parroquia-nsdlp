@@ -19,7 +19,7 @@ $secciones = [
     ['pastorales',    'Pastorales',         'bi-people',             'pastorales.ver'],
     ['mesc',          'MESC',               'bi-heart-pulse',        'mesc.ver'],
     ['catequesis',    'Catequesis',         'bi-book',               'catequesis.ver'],
-    ['lector',        'Liturgia',           'bi-mic',                'lector.ver'],
+    ['lector',        'Lectores',           'bi-mic',                'lector.ver'],
     ['sacramentos',   'Sacramentos',        null,                    'sacramentos.ver'],
     ['cursos',        'Cursos',             'bi-mortarboard',        'cursos.ver'],
     ['inscripciones', 'Inscripciones',      'bi-pencil-square',      'inscripciones.ver'],
@@ -60,6 +60,30 @@ $disponibles = array_values(array_filter(
         <i class="bi bi-box-arrow-up-right me-1"></i>Ver el sitio
     </a>
 </div>
+
+<?php if ($cumpleanerosMes): ?>
+<?php
+$meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+          'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+$mesActual = $meses[(int) date('n') - 1];
+?>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <h2 class="h6 fw-bold mb-3">
+            <i class="bi bi-balloon-heart-fill text-dorado me-1"></i>Cumpleaños de <?= e($mesActual) ?>
+        </h2>
+        <div class="d-flex flex-wrap gap-3">
+            <?php foreach ($cumpleanerosMes as $persona): ?>
+            <div class="d-flex align-items-center gap-2">
+                <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 32)) ?>"
+                     class="rounded-circle" style="width:28px;height:28px;object-fit:cover" alt="">
+                <span class="small"><?= e($persona['nombre']) ?> <span class="text-muted">· día <?= (int) $persona['dia'] ?></span></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if (!$disponibles): ?>
 <div class="card border-0 shadow-sm">

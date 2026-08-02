@@ -22,8 +22,18 @@ class PersonaModel extends Model
         'staff'     => 'Personal de oficina',
     ];
 
-    public function todas(): array
+    /**
+     * @param ?array $pastorales Filtro opcional por pertenencia (persona_pastorales): null = todas, [] = ninguna.
+     * @param ?array $centros    Igual, por pertenencia a centro/sede (persona_centros).
+     */
+    public function todas(?array $pastorales = null, ?array $centros = null): array
     {
+        [$condPastoral, $paramsPastoral] = $this->condicionPertenece($pastorales, 'persona_pastorales', 'pastoral_id');
+        [$condCentro,   $paramsCentro]   = $this->condicionPertenece($centros, 'persona_centros', 'centro_id');
+
+        $condiciones = array_filter([$condPastoral, $condCentro], static fn (string $c): bool => $c !== '');
+        $where = $condiciones ? ('WHERE ' . implode(' AND ', $condiciones)) : '';
+
         return $this->fetchAll(
             "SELECT p.*,
                     (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ', ')
@@ -31,10 +41,45 @@ class PersonaModel extends Model
                       WHERE pp.persona_id = p.id) AS pastorales_nombres,
                     (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
                        FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
-                      WHERE pc.persona_id = p.id) AS centros_nombres
+                      WHERE pc.persona_id = p.id) AS centros_nombres,
+                    (SELECT GROUP_CONCAT(pa2.nombre ORDER BY pa2.nombre SEPARATOR ', ')
+                       FROM pastorales pa2 WHERE pa2.responsable_persona_id = p.id) AS pastorales_coordina
                FROM personas p
-              ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre"
+               {$where}
+              ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre",
+            $paramsPastoral + $paramsCentro
         );
+    }
+
+    /**
+     * Condición EXISTS para acotar `personas` a quienes pertenecen a alguno de estos ids,
+     * vía una tabla pivote propia de la ficha (no el alcance de una cuenta). Mismo contrato
+     * que Model::condicionAlcance(), pero con EXISTS en vez de columna directa: aquí la
+     * pertenencia vive en persona_pastorales/persona_centros, no en personas.pastoral_id.
+     *
+     * @return array{0: string, 1: array} [condición SQL o cadena vacía, parámetros]
+     */
+    private function condicionPertenece(?array $ids, string $tabla, string $columna): array
+    {
+        if ($ids === null) {
+            return ['', []];
+        }
+        if (!$ids) {
+            return ['1 = 0', []];
+        }
+
+        $marcadores = [];
+        $params     = [];
+        foreach (array_values($ids) as $i => $id) {
+            $clave          = ":{$columna}{$i}";
+            $marcadores[]   = $clave;
+            $params[$clave] = (int) $id;
+        }
+
+        return [
+            "EXISTS (SELECT 1 FROM {$tabla} x WHERE x.persona_id = p.id AND x.{$columna} IN (" . implode(',', $marcadores) . '))',
+            $params,
+        ];
     }
 
     public function porId(int $id): ?array
@@ -87,8 +132,10 @@ class PersonaModel extends Model
         $this->beginTransaction();
         try {
             $this->execute(
-                'INSERT INTO personas (nombre, cargo, tipo, semblanza, foto, email, telefono, orden, activo)
-                 VALUES (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :orden, :activo)',
+                'INSERT INTO personas
+                    (nombre, cargo, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo)
+                 VALUES
+                    (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :fechaNacimiento, :orden, :activo)',
                 $this->parametros($datos)
             );
             $id = $this->lastInsertId();
@@ -109,7 +156,8 @@ class PersonaModel extends Model
             $filas = $this->execute(
                 'UPDATE personas
                     SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
-                        foto = :foto, email = :email, telefono = :telefono, orden = :orden, activo = :activo
+                        foto = :foto, email = :email, telefono = :telefono,
+                        fecha_nacimiento = :fechaNacimiento, orden = :orden, activo = :activo
                   WHERE id = :id',
                 $this->parametros($datos) + [':id' => $id]
             );
@@ -227,16 +275,34 @@ class PersonaModel extends Model
     private function parametros(array $datos): array
     {
         return [
-            ':nombre'    => $datos['nombre'],
-            ':cargo'     => $datos['cargo'],
-            ':tipo'      => $datos['tipo'],
-            ':semblanza' => $datos['semblanza'],
-            ':foto'      => $datos['foto'],
-            ':email'     => $datos['email'],
-            ':telefono'  => $datos['telefono'],
-            ':orden'     => $datos['orden'],
-            ':activo'    => $datos['activo'],
+            ':nombre'          => $datos['nombre'],
+            ':cargo'           => $datos['cargo'],
+            ':tipo'            => $datos['tipo'],
+            ':semblanza'       => $datos['semblanza'],
+            ':foto'            => $datos['foto'],
+            ':email'           => $datos['email'],
+            ':telefono'        => $datos['telefono'],
+            ':fechaNacimiento' => $datos['fecha_nacimiento'],
+            ':orden'           => $datos['orden'],
+            ':activo'          => $datos['activo'],
         ];
+    }
+
+    /**
+     * Personas activas que cumplen años en el mes dado (el actual si no se
+     * especifica), ordenadas por día — para "Cumpleaños del mes" en el panel
+     * de inicio. Solo mes y día importan: no se calcula ni se expone edad.
+     */
+    public function cumpleanerosDelMes(?int $mes = null): array
+    {
+        $mes ??= (int) date('n');
+        return $this->fetchAll(
+            'SELECT id, nombre, foto, DAY(fecha_nacimiento) AS dia
+               FROM personas
+              WHERE activo = 1 AND fecha_nacimiento IS NOT NULL AND MONTH(fecha_nacimiento) = :mes
+              ORDER BY DAY(fecha_nacimiento), nombre',
+            [':mes' => $mes]
+        );
     }
 
     private function ordenTipos(): string

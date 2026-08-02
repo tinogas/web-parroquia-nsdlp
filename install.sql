@@ -383,6 +383,10 @@ CREATE TABLE IF NOT EXISTS personas (
     foto       VARCHAR(255)      NULL,
     email      VARCHAR(150)      NULL,
     telefono   VARCHAR(20)       NULL,
+    -- Solo mes y día importan (avisar cumpleaños en el panel de inicio); el
+    -- año viaja igual porque DATE no permite guardar uno sin el otro, pero no
+    -- se muestra ni se usa para calcular edad.
+    fecha_nacimiento DATE         NULL,
     orden      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo     TINYINT(1)        NOT NULL DEFAULT 1,
     created_at DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -466,6 +470,13 @@ CREATE TABLE IF NOT EXISTS horarios (
 CREATE TABLE IF NOT EXISTS pastorales (
     id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
     centro_id          SMALLINT UNSIGNED NULL,
+    -- pastoral_padre_id agrupa pastorales bajo la Comisión que las coordina
+    -- (Litúrgica, Profética...). Máximo 2 niveles, igual que en la vida real
+    -- de la parroquia: no lo garantiza un CHECK entre filas, lo valida
+    -- PastoralController::guardar() (una Comisión no puede a su vez tener
+    -- padre, y una pastoral con hijas no puede recibir una). "Es Comisión" no
+    -- es una columna aparte: se deriva de "tiene alguna hija".
+    pastoral_padre_id  TINYINT UNSIGNED NULL,
     slug               VARCHAR(80)  NOT NULL,
     nombre             VARCHAR(120) NOT NULL,
     descripcion_corta  VARCHAR(255) NULL,
@@ -496,8 +507,10 @@ CREATE TABLE IF NOT EXISTS pastorales (
     UNIQUE KEY uq_pas_slug (slug),
     KEY idx_pas_centro (centro_id),
     KEY idx_pas_responsable (responsable_persona_id),
+    KEY idx_pas_padre (pastoral_padre_id),
     CONSTRAINT fk_pas_centro      FOREIGN KEY (centro_id)              REFERENCES centros(id)  ON DELETE SET NULL,
-    CONSTRAINT fk_pas_responsable FOREIGN KEY (responsable_persona_id) REFERENCES personas(id) ON DELETE SET NULL
+    CONSTRAINT fk_pas_responsable FOREIGN KEY (responsable_persona_id) REFERENCES personas(id) ON DELETE SET NULL,
+    CONSTRAINT fk_pas_padre       FOREIGN KEY (pastoral_padre_id)      REFERENCES pastorales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Actividades comunitarias y de apoyo social de cada pastoral.

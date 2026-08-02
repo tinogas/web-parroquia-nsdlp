@@ -960,6 +960,35 @@ una pastoral activa, se ignora el filtro — la página cae en el calendario com
 de mostrar uno vacío), y el filtro viaja en las propias URLs de navegación y de cambio de
 vista, así que `calendario.js` lo arrastra sin tener que saber que existe.
 
+### Jerarquía de pastorales: Comisión y sus pastorales hijas
+
+La parroquia organiza su acción pastoral en Comisiones (Profética, Litúrgica, Pastoral de
+la Salud, De la Familia, De la Comunicación) que agrupan pastorales concretas —estructura
+real, no solo una forma de ordenar el listado—. `pastorales.pastoral_padre_id` (self-FK,
+`ON DELETE SET NULL`) la modela con el mismo patrón que `organigrama_nodos.padre_id`, pero
+a diferencia de aquel (hasta 4 niveles) aquí son exactamente 2: una Comisión no puede a su
+vez tener padre, y una pastoral que agrupa hijas no puede recibir uno. Ninguna de las dos
+reglas es un CHECK de SQL —no puede mirar otras filas—, las valida
+`PastoralController::guardar()`; la UI (`candidatosPadre()`) ya solo ofrece candidatos
+válidos, así que la validación en el controlador es defensa ante un POST manipulado, no un
+caso de uso real.
+
+**No hay columna `tipo`/`es_comision`.** Sin padre y sin hijas es una pastoral suelta; sin
+padre y con hijas es una Comisión; con padre es una pastoral hija — los tres estados se
+derivan de los datos (`PastoralModel::tieneHijos()`), no se guardan aparte, para que nunca
+puedan desincronizarse de la realidad si alguien reasigna un padre sin acordarse de tocar
+un flag.
+
+**Lectores se separó de Litúrgica al introducir esto, sin migrar ningún dato.** Antes de
+la jerarquía, la fila `slug='liturgia'` era a la vez "la pastoral Litúrgica" y, en la
+práctica, el contenido operativo completo de Lectores (sus eventos, su foto, su
+coordinadora con cuenta) — `PASTORAL_LECTOR` resolvía por ese slug. Al necesitar que
+Litúrgica agrupe también a MESC, Coros, Monaguillos, Piedad Popular y Social, esa misma
+fila se renombró a "Lectores" **conservando su slug** —`PASTORAL_LECTOR` sigue apuntando
+ahí sin cambiar una línea de código— y se creó una fila nueva y vacía para la Comisión
+"Litúrgica". Migrar en cambio el contenido a una fila "Lectores" nueva habría significado
+mover quince registros entre cuatro tablas para el mismo resultado, con mucho más riesgo.
+
 ### MESC: visitas a enfermos y rutas (issue #3)
 
 `modules/mesc/` es, a propósito, el único módulo del sitio **sin ningún controlador

@@ -206,9 +206,14 @@ Señor"). Ver [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sede y centros".
 
 Párroco, vicarios, diáconos, religiosos, laicos y personal. `nombre`, `cargo`, `tipo`
 ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`, `staff`), `semblanza`, `foto`,
-`email`, `telefono`, `orden`, `activo`.
+`email`, `telefono`, `fecha_nacimiento`, `orden`, `activo`.
 
 Solo se publica el correo institucional. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
+
+`fecha_nacimiento` (DATE, opcional) es para `PersonaModel::cumpleanerosDelMes()`, que arma
+la tarjeta "Cumpleaños de [mes]" del panel de inicio (`PanelController::index()`). Solo
+importan mes y día: no se muestra el año ni se calcula edad en ningún lado, aunque la
+columna lo guarde porque `DATE` no admite mes/día sin año.
 
 ### `persona_pastorales`
 
@@ -270,7 +275,7 @@ muestra de cada fila.
 ### `pastorales`
 
 `centro_id` (issue #3: FK a `centros`, `ON DELETE SET NULL`, NULL en las que ya existían
-antes de este campo), `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
+antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
 `responsable_nombre`, `responsable_persona_id`, `contacto_email`, `contacto_telefono`,
 `dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
@@ -282,6 +287,15 @@ ficha y del correo de acceso de su cuenta, si tiene una— y dejan de ser editab
 `responsable_nombre` solo se sigue escribiendo libre cuando `responsable_persona_id` es
 NULL (la persona todavía no está de alta en el equipo). Ver
 [`ARQUITECTURA.md`](ARQUITECTURA.md#contenido-propio-por-pastoral-issue-3).
+
+`pastoral_padre_id` (self-FK, `ON DELETE SET NULL`, índice `idx_pas_padre`) agrupa
+pastorales bajo la Comisión que las coordina (Litúrgica agrupa a MESC, Coros...;
+Profética agrupa a Catequesis, Misión). Máximo 2 niveles: una Comisión no puede a su vez
+tener padre, y una pastoral que ya agrupa hijas no puede recibir uno — ninguna de las dos
+reglas es un CHECK de SQL (no puede mirar otras filas), las valida
+`PastoralController::guardar()`. No hay columna `tipo`/`es_comision`: "es Comisión" se
+deriva de "tiene alguna hija" (`PastoralModel::tieneHijos()`), calculado en cada lectura
+en vez de guardado aparte, para que nunca pueda desincronizarse de la realidad.
 
 ### `pastoral_actividades`
 

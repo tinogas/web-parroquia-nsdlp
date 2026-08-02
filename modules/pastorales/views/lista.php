@@ -12,7 +12,7 @@
     <?php endif; ?>
 </div>
 
-<?php if (!$pastorales): ?>
+<?php if (!$comisiones && !$sueltas): ?>
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center py-5">
         <div class="display-6 text-body-tertiary mb-2"><i class="bi bi-people"></i></div>
@@ -21,14 +21,16 @@
 </div>
 <?php endif; ?>
 
-<div class="row g-3">
-    <?php foreach ($pastorales as $pastoral): ?>
+<?php
+/** Una tarjeta de pastoral, igual para hijas de Comisión y para pastorales sueltas. */
+$dibujarTarjeta = static function (array $pastoral): void {
+    ?>
     <div class="col-md-6 col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?> fs-4 text-primary"></i>
-                    <h2 class="h6 fw-bold mb-0"><?= e($pastoral['nombre']) ?></h2>
+                    <h3 class="h6 fw-bold mb-0"><?= e($pastoral['nombre']) ?></h3>
                 </div>
                 <?php if ($pastoral['descripcion_corta']): ?>
                 <p class="small text-muted mb-2"><?= e($pastoral['descripcion_corta']) ?></p>
@@ -53,10 +55,52 @@
             </div>
         </div>
     </div>
-    <?php endforeach; ?>
-</div>
+    <?php
+};
+?>
 
-<?php foreach ($pastorales as $pastoral): ?>
+<?php foreach ($comisiones as $grupo): ?>
+<div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold text-uppercase text-muted mb-0">
+            <i class="bi <?= e($grupo['padre']['icono'] ?: 'bi-people') ?> me-1"></i>
+            <?= e($grupo['padre']['nombre']) ?>
+        </h2>
+        <a href="<?= e(url_admin('pastorales', 'editar', ['id' => $grupo['padre']['id']])) ?>"
+           class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Editar Comisión
+        </a>
+    </div>
+    <div class="row g-3">
+        <?php foreach ($grupo['hijas'] as $pastoral): ?>
+        <?php $dibujarTarjeta($pastoral); ?>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endforeach; ?>
+
+<?php if ($sueltas): ?>
+<div class="mb-4">
+    <?php if ($comisiones): ?>
+    <h2 class="h6 fw-bold text-uppercase text-muted mb-3">Otras pastorales</h2>
+    <?php endif; ?>
+    <div class="row g-3">
+        <?php foreach ($sueltas as $pastoral): ?>
+        <?php $dibujarTarjeta($pastoral); ?>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php
+// Los modales de borrado cubren toda pastoral visible: Comisiones, sus hijas y las sueltas.
+$todasParaModales = $sueltas;
+foreach ($comisiones as $grupo) {
+    $todasParaModales[] = $grupo['padre'];
+    $todasParaModales   = array_merge($todasParaModales, $grupo['hijas']);
+}
+?>
+<?php foreach ($todasParaModales as $pastoral): ?>
     <div class="modal fade" id="borrar<?= (int) $pastoral['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -68,6 +112,9 @@
                     <p class="mb-0">
                         Se eliminará la pastoral y sus actividades. Los avisos, eventos y fotos que ya
                         le pertenecían quedarán como contenido parroquial general, no se borran.
+                        <?php if ($pastoral['pastoral_padre_id'] === null): ?>
+                        Si agrupaba otras pastorales, esas quedarán sueltas, sin Comisión.
+                        <?php endif; ?>
                     </p>
                 </div>
                 <div class="modal-footer border-0">

@@ -48,7 +48,7 @@ class LectorModel extends Model
         $this->execute(
             'INSERT INTO lector_lectores (pastoral_id, persona_id, nombre, telefono, email, orden, activo)
              VALUES (:pastoral, :persona, :nombre, :telefono, :email, :orden, :activo)',
-            $this->parametrosLector($datos)
+            $this->parametrosLector($datos) + [':pastoral' => $datos['pastoral_id']]
         );
         return $this->lastInsertId();
     }
@@ -69,10 +69,15 @@ class LectorModel extends Model
         return $this->execute('DELETE FROM lector_lectores WHERE id = :id', [':id' => $id]);
     }
 
+    /**
+     * Sin :pastoral: pastoral_id se fija una sola vez al crear (este módulo
+     * es exclusivo de una única pastoral) y actualizarLector() no lo toca —
+     * incluirlo aquí rompía el UPDATE con PDO::ATTR_EMULATE_PREPARES en
+     * false, que rechaza cualquier parámetro que el SQL no declare.
+     */
     private function parametrosLector(array $datos): array
     {
         return [
-            ':pastoral' => $datos['pastoral_id'],
             ':persona'  => $datos['persona_id'],
             ':nombre'   => $datos['nombre'],
             ':telefono' => $datos['telefono'],

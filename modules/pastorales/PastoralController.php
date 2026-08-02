@@ -18,18 +18,29 @@ class PastoralController extends Controller
     {
         $this->requirePermiso('pastorales.ver');
 
-        $todas = $this->modelo->todas();
+        $agrupado = $this->modelo->todasAgrupadas();
+
         if (!Auth::tieneAlcanceGlobal()) {
             $permitidas = Auth::pastoralesPermitidas();
-            $todas = array_values(array_filter(
-                $todas,
-                static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true)
-            ));
+            $puede = static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true);
+
+            // La Comisión-padre se conserva como encabezado de solo lectura si el
+            // coordinador administra al menos una hija, aunque no administre la
+            // Comisión en sí: es presentación, no un cambio de a qué tiene acceso.
+            $agrupado['comisiones'] = array_values(array_filter(array_map(
+                static function (array $grupo) use ($puede): ?array {
+                    $hijas = array_values(array_filter($grupo['hijas'], $puede));
+                    return $hijas ? ['padre' => $grupo['padre'], 'hijas' => $hijas] : null;
+                },
+                $agrupado['comisiones']
+            )));
+            $agrupado['sueltas'] = array_values(array_filter($agrupado['sueltas'], $puede));
         }
 
         $this->render('pastorales/lista', [
             'titulo'     => 'Pastorales',
-            'pastorales' => $todas,
+            'comisiones' => $agrupado['comisiones'],
+            'sueltas'    => $agrupado['sueltas'],
         ]);
     }
 
@@ -43,6 +54,8 @@ class PastoralController extends Controller
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
             'responsableCuenta' => null,
+            'padresDisponibles' => $this->modelo->candidatosPadre(),
+            'tieneHijos'        => false,
         ]);
     }
 
@@ -68,6 +81,8 @@ class PastoralController extends Controller
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
             'responsableCuenta' => $responsableCuenta,
+            'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
+            'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
             'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
             'documentos'        => $this->modelo->documentos((int) $pastoral['id']),
             'scriptExtra'       => $this->scriptEditor(),
@@ -127,6 +142,23 @@ class PastoralController extends Controller
             $responsablePersonaId = null;   // id inválido: se ignora en silencio, como el resto de selects opcionales
         }
 
+        // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
+        // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
+        // puede a la vez agrupar hijas y tener un padre. La UI ya solo ofrece
+        // candidatos válidos (PastoralModel::candidatosPadre()) y oculta el
+        // selector si tieneHijos, así que esto es defensa ante un POST
+        // manipulado, no un caso de uso real — se ignora en silencio, como el
+        // resto de selects opcionales.
+        $pastoralPadreId = $this->postIntONull('pastoral_padre_id');
+        if ($pastoralPadreId !== null) {
+            $padre  = $this->modelo->porId($pastoralPadreId);
+            $valido = $padre && $pastoralPadreId !== $id && $padre['pastoral_padre_id'] === null
+                   && !($id && $this->modelo->tieneHijos($id));
+            if (!$valido) {
+                $pastoralPadreId = null;
+            }
+        }
+
         if ($responsablePersona) {
             $responsableNombre = $responsablePersona['nombre'];
             $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
@@ -138,6 +170,7 @@ class PastoralController extends Controller
 
         $datos = [
             'centro_id'          => $this->postIntONull('centro_id'),
+            'pastoral_padre_id'  => $pastoralPadreId,
             'slug'               => $slug,
             'nombre'             => $nombre,
             'descripcion_corta'  => $this->postStr('descripcion_corta') ?: null,
