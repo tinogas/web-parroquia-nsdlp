@@ -19,9 +19,9 @@ class PanelController extends Controller
             $modeloPastoral->agrupadoVisible(Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas())
         );
 
-        // Lo último que se ha publicado hacia dentro para sus pastorales. Solo
-        // se consulta si puede ver esa sección: a quien no tiene avisos.ver no
-        // se le enseñan avisos aquí por la puerta de atrás.
+        // Todo lo publicado a sus pastorales este mes. Cada sección se consulta
+        // solo si puede verla: a quien no tiene avisos.ver no se le enseñan
+        // avisos aquí por la puerta de atrás.
         $audiencia = $this->audienciaInterna();
 
         $this->render('panel/index', [
@@ -30,9 +30,9 @@ class PanelController extends Controller
             'comisionesMenu'   => $agrupadoMenu['comisiones'],
             'sueltasMenu'      => $agrupadoMenu['sueltas'],
             'avisosInternos'   => Auth::tienePermiso('avisos.ver')
-                ? (new AvisoModel())->internosPara($audiencia) : [],
+                ? (new AvisoModel())->internosDelMes($audiencia) : [],
             'cursosInternos'   => Auth::tienePermiso('cursos.ver')
-                ? (new CursoModel())->internosPara($audiencia) : [],
+                ? (new CursoModel())->internosDelMes($audiencia) : [],
             'accesoAnterior'   => Session::get('usuario_acceso_anterior'),
         ]);
     }

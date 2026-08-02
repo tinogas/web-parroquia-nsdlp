@@ -130,26 +130,37 @@ class CursoModel extends Model
     }
 
     /**
-     * Lo último publicado hacia dentro que le toca leer a esta persona, para
-     * las miniaturas del panel. Mismo criterio que AvisoModel::internosPara():
-     * incluye lo que además ya es público, y ordena por el momento real de
-     * publicación, no por la fecha de inicio del curso.
+     * Todo lo publicado a la pastoral en el mes dado, para el tablón del
+     * panel. Gemelo de AvisoModel::internosDelMes(), con la misma regla
+     * traducida a lo que un curso tiene: no importa cuándo empieza —uno que
+     * aún no ha arrancado es justo del que hay que enterarse—, pero uno que ya
+     * terminó no pinta nada en el tablón. Un curso sin fechas se queda: existe
+     * y sigue abierto. Mismo criterio que proximos().
      *
      * @param ?array $audiencia Formato de Controller::audienciaInterna(); null = alcance global
      */
-    public function internosPara(?array $audiencia, int $limite = 4): array
+    public function internosDelMes(?array $audiencia, ?string $mes = null): array
     {
         [$condicion, $params] = $this->condicionAlcance($audiencia, 'c.pastoral_id');
 
-        $where = 'c.publicado_interno = 1' . ($condicion !== '' ? ' AND ' . $condicion : '');
+        $mes = $mes ?? date('Y-m');
+        $params += [
+            ':desde' => $mes . '-01 00:00:00',
+            ':hasta' => date('Y-m-01 00:00:00', strtotime($mes . '-01 +1 month')),
+        ];
+
+        $where = 'c.publicado_interno = 1
+                  AND c.publicado_interno_at >= :desde AND c.publicado_interno_at < :hasta
+                  AND (COALESCE(c.fecha_fin, c.fecha_inicio) >= CURDATE()
+                       OR (c.fecha_inicio IS NULL AND c.fecha_fin IS NULL))'
+               . ($condicion !== '' ? ' AND ' . $condicion : '');
 
         return $this->fetchAll(
             "SELECT c.*, p.nombre AS pastoral_nombre
                FROM cursos c
                LEFT JOIN pastorales p ON p.id = c.pastoral_id
               WHERE {$where}
-              ORDER BY c.publicado_interno_at DESC, c.id DESC
-              LIMIT " . max(1, $limite),
+              ORDER BY c.publicado_interno_at DESC, c.id DESC",
             $params
         );
     }

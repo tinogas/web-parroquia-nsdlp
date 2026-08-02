@@ -72,21 +72,20 @@ class AvisoModel extends Model
     }
 
     /**
-     * La ventana de fechas del aviso, sin decir nada de en qué escalón está:
-     * fecha_publicacion funciona como "visible desde" (una fecha futura no se
-     * muestra hasta llegar ese día) y vigente_hasta como "visible hasta" del
-     * issue #3 —nulo significa sin fecha de baja—. Con las dos, un aviso se
-     * publica y se retira solo, sin que nadie vuelva a tocarlo.
+     * Condición SQL de vigencia, compartida por toda consulta pública: además
+     * de publicado=1 y fecha_publicacion <= hoy (ya existían desde la etapa 5
+     * y funcionan como "visible desde"), vigente_hasta es el "visible hasta"
+     * del issue #3 — nulo significa sin fecha de baja. Con esto, un aviso se
+     * publica y despublica solo, sin que nadie tenga que volver a tocarlo.
      *
-     * Va aparte de VIGENTE porque el escalón interno necesita la misma ventana
-     * sin el `publicado = 1`: un aviso que aún no ha llegado su fecha tampoco
-     * debe salir en las novedades del panel, y uno caducado tampoco.
+     * Es solo del sitio web: el tablón interno del panel no la usa, porque
+     * ahí lo que se enseña es lo publicado a la pastoral **este mes**, y una
+     * ventana pensada para el escaparate público no tiene por qué esconderle
+     * a un ministro lo que su coordinadora acaba de anunciarle. Ver
+     * internosDelMes().
      */
-    private const EN_FECHA = "fecha_publicacion <= CURDATE()
-                              AND (vigente_hasta IS NULL OR vigente_hasta >= CURDATE())";
-
-    /** Condición de visibilidad pública, compartida por toda consulta del sitio web. */
-    private const VIGENTE = 'publicado = 1 AND ' . self::EN_FECHA;
+    private const VIGENTE = "publicado = 1 AND fecha_publicacion <= CURDATE()
+                             AND (vigente_hasta IS NULL OR vigente_hasta >= CURDATE())";
 
     /** Detalle público: solo publicados y vigentes. */
     public function porSlugPublicado(string $slug): ?array
@@ -144,25 +143,39 @@ class AvisoModel extends Model
     }
 
     /**
-     * Lo último publicado hacia dentro que le toca leer a esta persona, para
-     * las miniaturas del panel. Incluye lo que además ya es público: que un
-     * aviso haya salido al sitio no lo hace menos novedad para su pastoral.
+     * Todo lo publicado a la pastoral en el mes dado (el actual si no se pide
+     * otro), para el tablón del panel. Sin límite: el mes ya acota cuánto es.
      *
-     * Ordena por publicado_interno_at, que es el momento real de publicación
-     * —no fecha_publicacion, que es una fecha que escribe la persona, ni
-     * created_at, que es cuando se empezó el borrador—.
+     * De las dos fechas de la ventana pública solo pesa la de baja:
+     *
+     *  - `fecha_publicacion` se ignora, así que un aviso con fecha futura sí
+     *    aparece. Dentro de casa interesa justamente saber lo que viene, y esa
+     *    fecha es cuándo debe salir al escaparate, no cuándo enterarse.
+     *  - `vigente_hasta` se respeta: lo caducado ya no le sirve a nadie y solo
+     *    estorbaría en el tablón.
+     *
+     * Incluye lo que además ya es público: que un aviso haya salido al sitio
+     * no lo hace menos novedad para los suyos.
+     *
+     * El mes se mide por `publicado_interno_at`, el momento real en que se
+     * publicó hacia dentro, y como rango en vez de con DATE_FORMAT para que
+     * pueda usarse el índice idx_avi_interno.
      *
      * @param ?array $audiencia Formato de Controller::audienciaInterna(); null = alcance global
      */
-    public function internosPara(?array $audiencia, int $limite = 4): array
+    public function internosDelMes(?array $audiencia, ?string $mes = null): array
     {
         [$condicion, $params] = $this->condicionAlcance($audiencia, 'a.pastoral_id');
 
-        $where = 'a.publicado_interno = 1 AND ' . str_replace(
-            ['fecha_publicacion', 'vigente_hasta'],
-            ['a.fecha_publicacion', 'a.vigente_hasta'],
-            self::EN_FECHA
-        );
+        $mes = $mes ?? date('Y-m');
+        $params += [
+            ':desde' => $mes . '-01 00:00:00',
+            ':hasta' => date('Y-m-01 00:00:00', strtotime($mes . '-01 +1 month')),
+        ];
+
+        $where = 'a.publicado_interno = 1
+                  AND a.publicado_interno_at >= :desde AND a.publicado_interno_at < :hasta
+                  AND (a.vigente_hasta IS NULL OR a.vigente_hasta >= CURDATE())';
         if ($condicion !== '') {
             $where .= ' AND ' . $condicion;
         }
@@ -172,8 +185,7 @@ class AvisoModel extends Model
                FROM avisos a
                LEFT JOIN pastorales p ON p.id = a.pastoral_id
               WHERE {$where}
-              ORDER BY a.publicado_interno_at DESC, a.id DESC
-              LIMIT " . max(1, $limite),
+              ORDER BY a.publicado_interno_at DESC, a.id DESC",
             $params
         );
     }

@@ -61,12 +61,14 @@ $disponibles = array_values(array_filter(
     </a>
 </div>
 
-<?php if ($cumpleanerosMes): ?>
 <?php
+// Lo usan la tarjeta de cumpleaños y el tablón de novedades, las dos «del mes».
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
           'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $mesActual = $meses[(int) date('n') - 1];
 ?>
+
+<?php if ($cumpleanerosMes): ?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-3">
         <h2 class="h6 fw-bold mb-3">
@@ -87,9 +89,11 @@ $mesActual = $meses[(int) date('n') - 1];
 
 <?php
 /**
- * Lo último publicado hacia dentro para sus pastorales, avisos y cursos
- * mezclados y ordenados juntos por el momento real de publicación: a quien
- * entra le importa qué hay de nuevo, no de qué sección viene.
+ * Todo lo publicado a sus pastorales este mes, avisos y cursos mezclados y
+ * ordenados juntos por el momento real de publicación: a quien entra le
+ * importa qué se ha anunciado, no de qué sección viene. Sin recorte — el mes
+ * ya acota cuánto es, y esconder parte de lo que la pastoral anunció sería
+ * justo lo contrario de para lo que está este tablón.
  *
  * «Nuevo» se decide contra el ingreso anterior de esta persona
  * (usuario_acceso_anterior, sellado al iniciar sesión), no contra una tabla de
@@ -107,11 +111,13 @@ usort($novedades, static fn (array $a, array $b): int => strcmp(
     (string) $b['publicado_interno_at'],
     (string) $a['publicado_interno_at']
 ));
-$novedades = array_slice($novedades, 0, 6);
 ?>
 
 <?php if ($novedades): ?>
-<h2 class="h6 fw-bold text-uppercase text-muted mb-3">De tus pastorales</h2>
+<h2 class="h6 fw-bold text-uppercase text-muted mb-3">
+    De tus pastorales en <?= e($mesActual) ?>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1"><?= count($novedades) ?></span>
+</h2>
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 mb-4">
     <?php foreach ($novedades as $item): ?>
     <?php $esNuevo = $accesoAnterior !== null && $item['publicado_interno_at'] > $accesoAnterior; ?>
