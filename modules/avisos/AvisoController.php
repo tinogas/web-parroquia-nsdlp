@@ -18,10 +18,20 @@ class AvisoController extends Controller
         $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
             ? $this->getStr('filtro') : 'todos';
 
+        // Mismo criterio que Eventos: el filtro que la persona eligió en
+        // pantalla (o llegó ya puesto desde el panel básico de una pastoral),
+        // cruzado con su alcance real.
+        $pastorales = $this->pastoralesDelFiltro();
+        [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
+        $idsPastoral = $this->pastoralesVisibles($idsPastoral);
+
         $this->render('avisos/lista', [
-            'titulo'  => 'Avisos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
-            'filtro'  => $filtro,
+            'titulo'         => 'Avisos',
+            'listado'        => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $idsPastoral),
+            'filtro'         => $filtro,
+            'pastorales'     => $pastorales,
+            'filtroPastoral' => $filtroPastoral,
+            'tieneAlcance'   => Auth::pastoralesPermitidas() !== [],
         ]);
     }
 
@@ -30,9 +40,10 @@ class AvisoController extends Controller
         $this->requirePermiso('avisos.crear');
 
         $this->render('avisos/form', array_merge($this->opcionesPastoral(), [
-            'titulo'      => 'Nuevo aviso',
-            'aviso'       => null,
-            'scriptExtra' => $this->scriptEditor(),
+            'titulo'                    => 'Nuevo aviso',
+            'aviso'                     => null,
+            'pastoralIdPreseleccionado' => $this->pastoralIdPreseleccionado(),
+            'scriptExtra'               => $this->scriptEditor(),
         ]));
     }
 

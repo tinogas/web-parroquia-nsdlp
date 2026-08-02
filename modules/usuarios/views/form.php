@@ -107,45 +107,15 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                     </div>
 
                     <?php if ($esNuevo || in_array($cuenta['rol'], ROLES_CON_ALCANCE_PASTORAL, true)): ?>
-                    <?php /* Las dos mitades del alcance. Marcar pastorales dice QUÉ administra;
-                             marcar sedes acota DÓNDE. Ni una ni otra reparte nada por su cuenta:
-                             una sede marcada no da las demás pastorales de esa sede. */ ?>
+                    <?php /* Las dos mitades del alcance. Marcar sedes acota DÓNDE; marcar
+                             pastorales dice QUÉ administra ahí. Ni una ni otra reparte nada
+                             por su cuenta: una sede marcada no da las demás pastorales de esa
+                             sede. Sede primero porque acota lo que sigue, no al revés. */ ?>
                     <div class="mb-0">
-                        <label class="form-label fw-semibold">Pastorales que administra</label>
-                        <div class="form-text mb-2">
-                            Esta cuenta trabajará <strong>únicamente</strong> con lo que se marque aquí: sus
-                            eventos, sus cursos y su contenido. Solo se guarda con un rol acotado por
-                            pastoral (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector);
-                            con cualquier otro rol se ignora.
-                        </div>
-                        <?php if (!$pastorales): ?>
-                        <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
-                        <?php else: ?>
-                        <div class="row row-cols-1 row-cols-sm-2 g-1">
-                            <?php foreach ($pastorales as $pastoral): ?>
-                            <div class="col">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="pastorales[]"
-                                           value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
-                                           <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
-                                        <?= e($pastoral['nombre']) ?>
-                                    </label>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="mb-0 mt-3">
                         <label class="form-label fw-semibold">Sedes en las que trabaja</label>
                         <div class="form-text mb-2">
-                            Acota lo de arriba a esas comunidades: quien coordina la catequesis de Jesús
-                            el Señor marca «Catecismo» arriba y «Jesús el Señor» aquí, y no verá ni tocará
-                            la catequesis de las otras sedes. <strong>Sin marcar ninguna administra su
-                            pastoral en toda la parroquia</strong>, que es como se representa una
-                            coordinación general.
+                            En qué comunidades trabaja. <strong>Sin marcar ninguna trabaja en toda la
+                            parroquia</strong>, que es como se representa una coordinación general.
                         </div>
                         <?php if (!$centros): ?>
                         <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>
@@ -159,6 +129,38 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                            <?= in_array((int) $centro['id'], $centrosAsignados, true) ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="cen<?= (int) $centro['id'] ?>">
                                         <?= e($centro['nombre']) ?>
+                                    </label>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mb-0 mt-3">
+                        <label class="form-label fw-semibold">Pastorales que administra</label>
+                        <div class="form-text mb-2">
+                            Esta cuenta trabajará <strong>únicamente</strong> con lo que se marque aquí: sus
+                            eventos, sus cursos y su contenido, acotado a la sede de arriba si marcaste
+                            alguna —quien coordina la catequesis de Jesús el Señor marca «Jesús el Señor»
+                            arriba y «Catecismo» aquí—. Solo se guarda con un rol acotado por pastoral
+                            (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector); con
+                            cualquier otro rol se ignora. No aparecen las Comisiones (Litúrgica,
+                            Profética...): agrupan a otras pastorales, pero no tienen contenido propio que
+                            administrar, y el alcance no se hereda de una Comisión a las que agrupa.
+                        </div>
+                        <?php if (!$pastorales): ?>
+                        <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
+                        <?php else: ?>
+                        <div class="row row-cols-1 row-cols-sm-2 g-1">
+                            <?php foreach ($pastorales as $pastoral): ?>
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                           value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
+                                           <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
+                                        <?= e($pastoral['nombre']) ?>
                                     </label>
                                 </div>
                             </div>

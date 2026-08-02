@@ -32,6 +32,26 @@ class Controller
     }
 
     /**
+     * Para acciones irreversibles o que cambian qué ve todo el mundo (activar
+     * una pastoral en el menú, borrarla): exige además que quien la ejecuta
+     * reescriba su propia contraseña en el momento, no solo tener el rol.
+     * `Auth::esAdmin()` ya excluye por sí solo una sesión de impersonación
+     * (durante ella `usuario_rol` es el del usuario suplantado), así que no
+     * hace falta distinguir aparte al "admin real".
+     */
+    protected function requireAdminConPassword(): void
+    {
+        $this->requireAdmin();
+
+        require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+        $usuario = (new UsuarioModel())->porId((int) Auth::usuario()['id']);
+        if (!$usuario || !password_verify($this->postStr('confirmar_password'), $usuario['password_hash'])) {
+            Session::flash('error', 'Contraseña incorrecta.');
+            $this->redirectBack();
+        }
+    }
+
+    /**
      * Segunda comprobación, complementaria a requirePermiso(): el permiso dice
      * qué acción puede hacer, esto dice sobre qué registro.
      *
@@ -115,11 +135,17 @@ class Controller
      * Las pastorales que ofrece el selector de un listado del panel: todas si
      * quien mira tiene alcance global, y si no, las suyas. Ofrecer una pastoral
      * ajena en un listado que no la va a mostrar es prometer algo que no pasa.
+     *
+     * $excluirComisiones lo usa el formulario de usuarios: una Comisión no
+     * tiene contenido operativo propio y su alcance no se hereda a sus
+     * hijas, así que no tiene sentido ofrecerla como "pastoral que
+     * administra" un coordinador (ver PastoralModel::sinComisiones()).
      */
-    protected function pastoralesDelFiltro(): array
+    protected function pastoralesDelFiltro(bool $excluirComisiones = false): array
     {
         require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
-        $todas = (new PastoralModel())->paraSelector();
+        $modelo = new PastoralModel();
+        $todas  = $excluirComisiones ? $modelo->sinComisiones() : $modelo->paraSelector();
 
         if (Auth::tieneAlcanceGlobal()) {
             return $todas;
@@ -316,6 +342,23 @@ class Controller
             return $enviado;
         }
         throw new RuntimeException('Selecciona una de tus pastorales.');
+    }
+
+    /**
+     * pastoral_id sugerido por querystring (?pastoral_id=), para que "Nuevo
+     * aviso/evento/curso" llegue con el selector ya puesto cuando se entra
+     * desde el panel básico de una pastoral. A diferencia de
+     * pastoralIdValidado(), esto es una sugerencia de UI, no un dato que se
+     * vaya a guardar: un valor fuera de alcance se ignora en silencio en vez
+     * de fallar, igual que el resto de selects opcionales del proyecto.
+     */
+    protected function pastoralIdPreseleccionado(): ?int
+    {
+        $id = $this->getInt('pastoral_id', 0) ?: null;
+        if ($id === null || Auth::tieneAlcanceGlobal()) {
+            return $id;
+        }
+        return in_array($id, Auth::pastoralesPermitidas(), true) ? $id : null;
     }
 
     protected function validarCsrf(): void

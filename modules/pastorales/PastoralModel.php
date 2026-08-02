@@ -39,6 +39,24 @@ class PastoralModel extends Model
         return $this->fetchAll('SELECT id, nombre FROM pastorales WHERE activa = 1 ORDER BY nombre');
     }
 
+    /**
+     * Igual que paraSelector(), pero sin las Comisiones (las que agrupan
+     * hijas): una Comisión no organiza nada operativo por sí misma, y el
+     * alcance de un coordinador no se hereda de Comisión a hija
+     * (Auth::pastoralesPermitidas() no mira pastoral_padre_id), así que
+     * marcársela ahí no le daría acceso a nada real. Para el checklist de
+     * "qué pastorales administra" al dar de alta un usuario.
+     */
+    public function sinComisiones(): array
+    {
+        return $this->fetchAll(
+            'SELECT id, nombre FROM pastorales p
+              WHERE activa = 1
+                AND NOT EXISTS (SELECT 1 FROM pastorales h WHERE h.pastoral_padre_id = p.id)
+              ORDER BY nombre'
+        );
+    }
+
     public function crear(array $datos): int
     {
         $this->execute(
@@ -97,6 +115,19 @@ class PastoralModel extends Model
         );
     }
 
+    /**
+     * Publica la pastoral en el bloque "Pastorales y comisiones" del menú del
+     * panel. Deliberadamente no hay `desactivarEnMenu()`: no se pidió, y
+     * agregar el interruptor simétrico sin un caso de uso real solo abriría
+     * una pregunta de UX (¿qué le pasa a quien ya la tenía marcada de
+     * favorita, a los enlaces ya compartidos?) que nadie necesita responder
+     * todavía. Ver PastoralController::menuActivar().
+     */
+    public function activarEnMenu(int $id): int
+    {
+        return $this->execute('UPDATE pastorales SET visible_en_menu = 1 WHERE id = :id', [':id' => $id]);
+    }
+
     /** Pastorales hijas activas de una Comisión, para su ficha pública. */
     public function hijasActivas(int $padreId): array
     {
@@ -116,6 +147,45 @@ class PastoralModel extends Model
     public function activasAgrupadas(): array
     {
         return $this->agrupar($this->activas());
+    }
+
+    /**
+     * `todasAgrupadas()` recortado al alcance de quien lo pide: $permitidas
+     * son los ids de pastoral que puede ver, o null para alcance global (ve
+     * todo). Reutilizado por PastoralController::index() (la lista completa
+     * de administración) y por PanelController::index() (que además lo
+     * recorta a lo publicado en el menú, ver soloEnMenu()) — así ambos
+     * aplican el mismo criterio de "la Comisión-padre se conserva como
+     * encabezado de solo lectura si el usuario ve al menos una hija, aunque
+     * no vea a la Comisión en sí".
+     */
+    public function agrupadoVisible(?array $permitidas): array
+    {
+        $agrupado = $this->todasAgrupadas();
+        if ($permitidas === null) {
+            return $agrupado;
+        }
+        return $this->recortarGrupos($agrupado, static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true));
+    }
+
+    /** Recorta un agrupado ya resuelto a solo lo publicado en el menú (visible_en_menu = 1). */
+    public function soloEnMenu(array $agrupado): array
+    {
+        return $this->recortarGrupos($agrupado, static fn (array $p): bool => (bool) $p['visible_en_menu']);
+    }
+
+    /** @param callable(array): bool $criterio */
+    private function recortarGrupos(array $agrupado, callable $criterio): array
+    {
+        $agrupado['comisiones'] = array_values(array_filter(array_map(
+            static function (array $grupo) use ($criterio): ?array {
+                $hijas = array_values(array_filter($grupo['hijas'], $criterio));
+                return $hijas ? ['padre' => $grupo['padre'], 'hijas' => $hijas] : null;
+            },
+            $agrupado['comisiones']
+        )));
+        $agrupado['sueltas'] = array_values(array_filter($agrupado['sueltas'], $criterio));
+        return $agrupado;
     }
 
     /**
@@ -151,7 +221,13 @@ class PastoralModel extends Model
         return ['comisiones' => $comisiones, 'sueltas' => $sueltas];
     }
 
-    /** Borrado lógico preferido: desactivarla conserva su historial de avisos/eventos. */
+    /**
+     * Borrado físico de la fila (no un desactivado): `pastoral_actividades` y
+     * `pastoral_documentos` se van con ella en cascada, pero avisos, eventos
+     * y cursos (`ON DELETE SET NULL`) no se borran, quedan sin pastoral, como
+     * contenido parroquial general. Por eso PastoralController::eliminar()
+     * exige confirmar con contraseña de Administrador.
+     */
     public function eliminar(int $id): int
     {
         return $this->execute('DELETE FROM pastorales WHERE id = :id', [':id' => $id]);

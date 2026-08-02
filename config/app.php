@@ -117,6 +117,19 @@ define('PASTORAL_MESC',       'ministro-extraordinario-de-la-sagrada-comunion');
 define('PASTORAL_CATEQUESIS', 'catecismo');
 define('PASTORAL_LECTOR',     'liturgia');
 
+/**
+ * El reverso del mapa de arriba: slug de pastoral → módulo dedicado.
+ * PastoralController::panel() lo usa para ofrecer, desde el panel básico de
+ * MESC/Catequesis/Lector, un salto directo a su módulo de turnos y catálogo
+ * — esas tres pastorales siguen operando con su módulo propio, el panel
+ * básico no lo reemplaza.
+ */
+define('MODULO_POR_PASTORAL', [
+    PASTORAL_MESC       => 'mesc',
+    PASTORAL_CATEQUESIS => 'catequesis',
+    PASTORAL_LECTOR     => 'lector',
+]);
+
 // ------------------------------------------------------------
 // Permisos por rol — notación modulo.accion, comodín '*'
 // ------------------------------------------------------------

@@ -35,17 +35,35 @@ $dibujarTarjeta = static function (array $pastoral): void {
                 <?php if ($pastoral['descripcion_corta']): ?>
                 <p class="small text-muted mb-2"><?= e($pastoral['descripcion_corta']) ?></p>
                 <?php endif; ?>
-                <?php if ($pastoral['activa']): ?>
-                <span class="badge bg-success-subtle text-success-emphasis mb-2">Visible</span>
-                <?php else: ?>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis mb-2">Oculta</span>
-                <?php endif; ?>
-                <div class="d-flex gap-2 mt-2">
+                <div class="d-flex gap-1 flex-wrap mb-2">
+                    <?php if ($pastoral['activa']): ?>
+                    <span class="badge bg-success-subtle text-success-emphasis">Visible</span>
+                    <?php else: ?>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Oculta</span>
+                    <?php endif; ?>
+                    <?php if ($pastoral['visible_en_menu']): ?>
+                    <span class="badge bg-primary-subtle text-primary-emphasis">
+                        <i class="bi bi-grid-1x2 me-1"></i>En el menú
+                    </span>
+                    <?php endif; ?>
+                </div>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    <a href="<?= e(url_admin('pastorales', 'panel', ['id' => $pastoral['id']])) ?>"
+                       class="btn btn-sm btn-outline-secondary flex-grow-1">
+                        <i class="bi bi-grid-1x2 me-1"></i>Panel básico
+                    </a>
                     <a href="<?= e(url_admin('pastorales', 'editar', ['id' => $pastoral['id']])) ?>"
                        class="btn btn-sm btn-outline-primary flex-grow-1">
                         <i class="bi bi-pencil me-1"></i>Editar
                     </a>
-                    <?php if (Auth::tienePermiso('pastorales.eliminar')): ?>
+                    <?php if (Auth::esAdmin() && !$pastoral['visible_en_menu']): ?>
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="modal" data-bs-target="#activarMenu<?= (int) $pastoral['id'] ?>"
+                            title="Crear menú y grupo">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
+                    <?php endif; ?>
+                    <?php if (Auth::esAdmin()): ?>
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             data-bs-toggle="modal" data-bs-target="#borrar<?= (int) $pastoral['id'] ?>">
                         <i class="bi bi-trash"></i>
@@ -100,33 +118,35 @@ foreach ($comisiones as $grupo) {
     $todasParaModales   = array_merge($todasParaModales, $grupo['hijas']);
 }
 ?>
-<?php foreach ($todasParaModales as $pastoral): ?>
-    <div class="modal fade" id="borrar<?= (int) $pastoral['id'] ?>" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h2 class="h6 modal-title fw-bold">Eliminar «<?= e($pastoral['nombre']) ?>»</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-0">
-                        Se eliminará la pastoral y sus actividades. Los avisos, eventos y fotos que ya
-                        le pertenecían quedarán como contenido parroquial general, no se borran.
-                        <?php if ($pastoral['pastoral_padre_id'] === null): ?>
-                        Si agrupaba otras pastorales, esas quedarán sueltas, sin Comisión.
-                        <?php endif; ?>
-                    </p>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form method="POST" accept-charset="UTF-8"
-                          action="<?= e(url_post('admin', 'pastorales', 'eliminar')) ?>" class="m-0">
-                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                        <input type="hidden" name="id" value="<?= (int) $pastoral['id'] ?>">
-                        <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Eliminar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endforeach; ?>
+<?php foreach ($todasParaModales as $pastoral):
+    $mcp_idModal       = 'borrar' . (int) $pastoral['id'];
+    $mcp_titulo        = 'Eliminar «' . $pastoral['nombre'] . '»';
+    $mcp_mensaje       = 'Se eliminará <strong>permanentemente</strong> a «' . e($pastoral['nombre']) . '», sus '
+                       . 'actividades y sus documentos. Los avisos, eventos y cursos que ya le pertenecían '
+                       . 'quedarán como contenido parroquial general (sin pastoral), no se borran.'
+                       . ($pastoral['pastoral_padre_id'] === null
+                           ? ' Si agrupaba otras pastorales, esas quedarán sueltas, sin Comisión.' : '')
+                       . ' Esta acción no se puede deshacer.';
+    $mcp_accionUrl     = url_post('admin', 'pastorales', 'eliminar');
+    $mcp_camposOcultos = ['id' => (int) $pastoral['id']];
+    $mcp_csrf          = $csrf;
+    $mcp_textoBoton    = 'Eliminar';
+    $mcp_claseBoton    = 'btn-danger';
+    require BASE_PATH . '/shared/views/parciales/modal_confirmar_password.php';
+endforeach; ?>
+
+<?php if (Auth::esAdmin()):
+    foreach ($todasParaModales as $pastoral):
+        if ($pastoral['visible_en_menu']) { continue; }
+        $mcp_idModal       = 'activarMenu' . (int) $pastoral['id'];
+        $mcp_titulo        = 'Crear menú y grupo de «' . $pastoral['nombre'] . '»';
+        $mcp_mensaje       = 'Esto hará visible a <strong>' . e($pastoral['nombre']) . '</strong> en el menú del '
+                           . 'panel, agrupada bajo su Comisión, con acceso a avisos, eventos, cursos y documentos.';
+        $mcp_accionUrl     = url_post('admin', 'pastorales', 'menuActivar');
+        $mcp_camposOcultos = ['id' => (int) $pastoral['id']];
+        $mcp_csrf          = $csrf;
+        $mcp_textoBoton    = 'Crear menú y grupo';
+        $mcp_claseBoton    = 'btn-success';
+        require BASE_PATH . '/shared/views/parciales/modal_confirmar_password.php';
+    endforeach;
+endif; ?>

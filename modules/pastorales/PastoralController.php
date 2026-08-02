@@ -18,24 +18,7 @@ class PastoralController extends Controller
     {
         $this->requirePermiso('pastorales.ver');
 
-        $agrupado = $this->modelo->todasAgrupadas();
-
-        if (!Auth::tieneAlcanceGlobal()) {
-            $permitidas = Auth::pastoralesPermitidas();
-            $puede = static fn (array $p): bool => in_array((int) $p['id'], $permitidas, true);
-
-            // La Comisión-padre se conserva como encabezado de solo lectura si el
-            // coordinador administra al menos una hija, aunque no administre la
-            // Comisión en sí: es presentación, no un cambio de a qué tiene acceso.
-            $agrupado['comisiones'] = array_values(array_filter(array_map(
-                static function (array $grupo) use ($puede): ?array {
-                    $hijas = array_values(array_filter($grupo['hijas'], $puede));
-                    return $hijas ? ['padre' => $grupo['padre'], 'hijas' => $hijas] : null;
-                },
-                $agrupado['comisiones']
-            )));
-            $agrupado['sueltas'] = array_values(array_filter($agrupado['sueltas'], $puede));
-        }
+        $agrupado = $this->modelo->agrupadoVisible(Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas());
 
         $this->render('pastorales/lista', [
             'titulo'     => 'Pastorales',
@@ -87,6 +70,68 @@ class PastoralController extends Controller
             'documentos'        => $this->modelo->documentos((int) $pastoral['id']),
             'scriptExtra'       => $this->scriptEditor(),
         ]);
+    }
+
+    /**
+     * Panel básico: avisos, eventos, cursos y documentos de una pastoral,
+     * todos genéricos por pastoral_id —solo se enlaza a ellos ya filtrados,
+     * no se duplica su CRUD—, salvo documentos, que se gestionan aquí mismo
+     * porque ya vivían en este mismo Controller (ver documentoGuardar()).
+     */
+    public function panel(): void
+    {
+        $this->requirePermiso('pastorales.ver');
+
+        $pastoral = $this->modelo->porId($this->getInt('id'));
+        if (!$pastoral) {
+            Session::flash('error', 'No encontramos esa pastoral.');
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $pastoral['id']);
+
+        $comisionPadre = $pastoral['pastoral_padre_id']
+            ? $this->modelo->porId((int) $pastoral['pastoral_padre_id'])
+            : null;
+
+        $this->render('pastorales/panel', [
+            'titulo'        => $pastoral['nombre'],
+            'pastoral'      => $pastoral,
+            'comisionPadre' => $comisionPadre,
+            'moduloDedicado' => MODULO_POR_PASTORAL[$pastoral['slug']] ?? null,
+            'documentos'    => $this->modelo->documentos((int) $pastoral['id']),
+            'puedeEditar'   => Auth::tienePermiso('pastorales.editar'),
+        ]);
+    }
+
+    /**
+     * Publicarla en el menú es deliberado y separado de guardar(): solo
+     * Administrador, confirmando su contraseña. Ver
+     * Controller::requireAdminConPassword() y PastoralModel::activarEnMenu().
+     */
+    public function menuActivar(): void
+    {
+        $this->requirePermiso('pastorales.editar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+        $this->requireAdminConPassword();
+
+        $id       = $this->postInt('id');
+        $pastoral = $this->modelo->porId($id);
+        if (!$pastoral) {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+
+        $this->modelo->activarEnMenu($id);
+        $this->auditoria('activar_menu', 'pastorales', $id, $pastoral['nombre']);
+        Session::flash('success', '«' . $pastoral['nombre'] . '» ya aparece en el menú del panel.');
+
+        $this->redirect(url_admin('pastorales'));
     }
 
     public function guardar(): void
@@ -214,6 +259,9 @@ class PastoralController extends Controller
             return;
         }
         $this->validarCsrf();
+        // Borra la fila de verdad (ver PastoralModel::eliminar()), no un
+        // desactivado: solo Administrador, confirmando su contraseña.
+        $this->requireAdminConPassword();
 
         $id       = $this->postInt('id');
         $pastoral = $this->modelo->porId($id);

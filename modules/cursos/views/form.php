@@ -134,7 +134,7 @@ $puedePublicar = Auth::tienePermiso('cursos.publicar');
                     // Mismo selector acotado al alcance que avisos y eventos: un
                     // coordinador no ve una lista abierta de pastorales, y si
                     // solo administra una va fija sin que tenga que elegirla.
-                    $sp_valorActual = $esNuevo ? null : $curso['pastoral_id'];
+                    $sp_valorActual = $esNuevo ? ($pastoralIdPreseleccionado ?? null) : $curso['pastoral_id'];
                     require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
 
                     $sc_valorActual = $esNuevo ? null : $curso['centro_id'];

@@ -60,7 +60,7 @@ $puedePublicar = Auth::tienePermiso('avisos.publicar');
                 <div class="card-body p-4">
 
                     <?php
-                    $sp_valorActual = $esNuevo ? null : $aviso['pastoral_id'];
+                    $sp_valorActual = $esNuevo ? ($pastoralIdPreseleccionado ?? null) : $aviso['pastoral_id'];
                     require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
                     ?>
 
