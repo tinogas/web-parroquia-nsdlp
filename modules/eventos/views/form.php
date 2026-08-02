@@ -94,7 +94,7 @@ $paraInput = static fn (?string $valor): string => $valor ? str_replace(' ', 'T'
                     ?>
 
                     <?php
-                    $sp_valorActual = $esNuevo ? null : $evento['pastoral_id'];
+                    $sp_valorActual = $esNuevo ? ($pastoralIdPreseleccionado ?? null) : $evento['pastoral_id'];
                     require BASE_PATH . '/shared/views/parciales/selector_pastoral.php';
 
                     $sc_valorActual = $esNuevo ? null : $evento['centro_id'];

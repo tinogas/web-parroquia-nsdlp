@@ -114,9 +114,10 @@ class EventoController extends Controller
         $this->requirePermiso('eventos.crear');
 
         $this->render('eventos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
-            'titulo'      => 'Nuevo evento',
-            'evento'      => null,
-            'scriptExtra' => $this->scriptEditor(),
+            'titulo'                    => 'Nuevo evento',
+            'evento'                    => null,
+            'pastoralIdPreseleccionado' => $this->pastoralIdPreseleccionado(),
+            'scriptExtra'               => $this->scriptEditor(),
         ]));
     }
 

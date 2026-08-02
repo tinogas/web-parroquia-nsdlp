@@ -10,13 +10,48 @@
     <?php endif; ?>
 </div>
 
-<div class="btn-group btn-group-sm mb-3" role="group">
-    <a href="<?= e(url_admin('avisos')) ?>"
-       class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-    <a href="<?= e(url_admin('avisos', '', ['filtro' => 'publicados'])) ?>"
-       class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-    <a href="<?= e(url_admin('avisos', '', ['filtro' => 'borradores'])) ?>"
-       class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+<?php
+// Los dos filtros —estado y pastoral— se combinan, así que cada uno tiene
+// que arrastrar el estado del otro (mismo patrón que Eventos).
+$porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
+?>
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div class="btn-group btn-group-sm" role="group">
+        <a href="<?= e(url_admin('avisos', '', $porPastoral)) ?>"
+           class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
+        <a href="<?= e(url_admin('avisos', '', ['filtro' => 'publicados'] + $porPastoral)) ?>"
+           class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
+        <a href="<?= e(url_admin('avisos', '', ['filtro' => 'borradores'] + $porPastoral)) ?>"
+           class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+    </div>
+
+    <form method="GET" action="<?= e(url_admin('avisos')) ?>" class="row g-2 align-items-end">
+        <?php if (!URLS_AMIGABLES): ?>
+        <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
+                 descarta la del action: hay que repetirla como campos. */ ?>
+        <input type="hidden" name="area" value="admin">
+        <input type="hidden" name="modulo" value="avisos">
+        <?php endif; ?>
+        <?php if ($filtro !== 'todos'): ?>
+        <input type="hidden" name="filtro" value="<?= e($filtro) ?>">
+        <?php endif; ?>
+        <div class="col-auto">
+            <label for="pastoral" class="form-label small fw-semibold mb-1">Pastoral</label>
+            <select name="pastoral" id="pastoral" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value=""><?= Auth::tieneAlcanceGlobal() ? 'Todas' : 'Las mías y las generales' ?></option>
+                <?php if ($tieneAlcance): ?>
+                <option value="mias" <?= $filtroPastoral === 'mias' ? 'selected' : '' ?>>Solo las mías</option>
+                <?php endif; ?>
+                <?php foreach ($pastorales as $unaPastoral): ?>
+                <option value="<?= (int) $unaPastoral['id'] ?>"
+                        <?= $filtroPastoral === (string) $unaPastoral['id'] ? 'selected' : '' ?>>
+                    <?= e($unaPastoral['nombre']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </form>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -89,7 +124,7 @@
 
 <?php
 $paginacion = $listado;
-$paginaBase = url_admin('avisos', '', $filtro !== 'todos' ? ['filtro' => $filtro] : []);
+$paginaBase = url_admin('avisos', '', ($filtro !== 'todos' ? ['filtro' => $filtro] : []) + $porPastoral);
 require BASE_PATH . '/shared/views/parciales/paginacion.php';
 ?>
 

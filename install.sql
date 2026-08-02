@@ -502,6 +502,11 @@ CREATE TABLE IF NOT EXISTS pastorales (
     acepta_voluntarios TINYINT(1)   NOT NULL DEFAULT 1,
     orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activa             TINYINT(1)   NOT NULL DEFAULT 1,
+    -- Publicarla en el menú del panel (agrupada bajo su Comisión, con acceso
+    -- a avisos/eventos/cursos/documentos) es un paso aparte y deliberado, no
+    -- automático al crearla: solo Administrador puede activarlo (confirmando
+    -- su contraseña), vía PastoralController::menuActivar().
+    visible_en_menu    TINYINT(1)   NOT NULL DEFAULT 0,
     created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_pas_slug (slug),

@@ -65,11 +65,12 @@ class CursoController extends Controller
         $this->requirePermiso('cursos.crear');
 
         $this->render('cursos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
-            'titulo'      => 'Nuevo curso',
-            'curso'       => null,
-            'sesiones'    => [],
-            'instructores'=> (new PersonaModel())->paraSelector(),
-            'scriptExtra' => $this->scriptEditor(),
+            'titulo'                    => 'Nuevo curso',
+            'curso'                     => null,
+            'sesiones'                  => [],
+            'instructores'              => (new PersonaModel())->paraSelector(),
+            'pastoralIdPreseleccionado' => $this->pastoralIdPreseleccionado(),
+            'scriptExtra'               => $this->scriptEditor(),
         ]));
     }
 

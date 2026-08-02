@@ -110,3 +110,51 @@ $mesActual = $meses[(int) date('n') - 1];
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
+
+<?php if ($comisionesMenu || $sueltasMenu): ?>
+<?php
+/** Misma tarjeta que el grid de arriba, apuntando al panel básico de la pastoral. */
+$dibujarTarjetaMenu = static function (array $pastoral): void {
+    ?>
+    <div class="col">
+        <a href="<?= e(url_admin('pastorales', 'panel', ['id' => $pastoral['id']])) ?>"
+           class="card border-0 shadow-sm h-100 text-decoration-none text-body">
+            <div class="card-body p-3 text-center">
+                <div class="fs-3 text-dorado mb-2"><i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?>"></i></div>
+                <div class="small fw-semibold"><?= e($pastoral['nombre']) ?></div>
+            </div>
+        </a>
+    </div>
+    <?php
+};
+?>
+<h2 class="h6 fw-bold text-uppercase text-muted mb-3 mt-4">Pastorales y comisiones</h2>
+
+<?php foreach ($comisionesMenu as $grupo): ?>
+<div class="mb-3">
+    <div class="small fw-semibold text-muted mb-2">
+        <i class="bi <?= e($grupo['padre']['icono'] ?: 'bi-people') ?> me-1"></i>
+        <?php if ($grupo['padre']['visible_en_menu']): ?>
+        <a href="<?= e(url_admin('pastorales', 'panel', ['id' => $grupo['padre']['id']])) ?>" class="text-decoration-none text-muted">
+            <?= e($grupo['padre']['nombre']) ?>
+        </a>
+        <?php else: ?>
+        <?= e($grupo['padre']['nombre']) ?>
+        <?php endif; ?>
+    </div>
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3">
+        <?php foreach ($grupo['hijas'] as $pastoral): ?>
+        <?php $dibujarTarjetaMenu($pastoral); ?>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endforeach; ?>
+
+<?php if ($sueltasMenu): ?>
+<div class="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3 mb-3">
+    <?php foreach ($sueltasMenu as $pastoral): ?>
+    <?php $dibujarTarjetaMenu($pastoral); ?>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+<?php endif; ?>

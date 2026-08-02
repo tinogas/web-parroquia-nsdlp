@@ -278,7 +278,8 @@ muestra de cada fila.
 antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
 `responsable_nombre`, `responsable_persona_id`, `contacto_email`, `contacto_telefono`,
-`dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
+`dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`,
+`visible_en_menu`.
 
 `responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
 es el select del formulario: el responsable se elige del equipo pastoral. Con persona
@@ -296,6 +297,14 @@ reglas es un CHECK de SQL (no puede mirar otras filas), las valida
 `PastoralController::guardar()`. No hay columna `tipo`/`es_comision`: "es Comisión" se
 deriva de "tiene alguna hija" (`PastoralModel::tieneHijos()`), calculado en cada lectura
 en vez de guardado aparte, para que nunca pueda desincronizarse de la realidad.
+
+`visible_en_menu` (`TINYINT(1)`, default 0) decide si la pastoral aparece en el bloque
+"Pastorales y comisiones" del menú del panel, con acceso a su panel básico (avisos,
+eventos, cursos, documentos — ver `PastoralController::panel()`). No se activa sola al
+crear la pastoral: es una acción deliberada y separada
+(`PastoralController::menuActivar()`), restringida a `Auth::esAdmin()` y con confirmación
+de contraseña, para no generar accesos de más antes de que de verdad se quiera exponer la
+pastoral. Ver [`ARQUITECTURA.md`](ARQUITECTURA.md#panel-básico-por-pastoral-y-activación-en-el-menú).
 
 ### `pastoral_actividades`
 

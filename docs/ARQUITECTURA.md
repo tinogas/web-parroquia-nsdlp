@@ -989,6 +989,34 @@ ahí sin cambiar una línea de código— y se creó una fila nueva y vacía par
 "Litúrgica". Migrar en cambio el contenido a una fila "Lectores" nueva habría significado
 mover quince registros entre cuatro tablas para el mismo resultado, con mucho más riesgo.
 
+### Panel básico por pastoral y activación en el menú
+
+Antes de esto, dar de alta una pastoral nueva no le daba ningún acceso visible en el
+panel: avisos, eventos, cursos y `pastoral_documentos` ya resolvían `pastoral_id`
+dinámicamente, pero nadie sabía que existían para esa pastoral sin entrar módulo por
+módulo y elegirla a mano en un selector. `PastoralController::panel()` (ruta
+`pastorales/panel?id=`) es la respuesta: una ficha con tarjetas a esos cuatro genéricos ya
+filtrados —Documentos se gestiona ahí mismo, reusando `documentoGuardar()`/
+`documentoEliminar()`; Avisos, Eventos y Cursos solo se enlazan ya filtrados
+(`?pastoral=`) y con "nuevo" ya preseleccionado (`?pastoral_id=`), no se duplica su CRUD—.
+Si la pastoral tiene módulo dedicado (MESC/Catequesis/Lector, `MODULO_POR_PASTORAL` en
+`config/app.php`), el panel agrega un botón de salto a su módulo de turnos y catálogo, que
+sigue existiendo tal cual.
+
+**Aparecer en el menú del panel (`pastorales.visible_en_menu`) es un paso deliberado, no
+automático al crear la pastoral.** El bloque "Pastorales y comisiones" de
+`modules/panel/views/index.php` (agrupado por Comisión, igual criterio de alcance y de
+"encabezado de solo lectura" que `PastoralController::index()` — ambos comparten
+`PastoralModel::agrupadoVisible()`) solo muestra las que tienen `visible_en_menu = 1`
+(`PastoralModel::soloEnMenu()`). Publicarla es una acción de
+`PastoralController::menuActivar()` restringida a `Auth::esAdmin()` **y** a confirmar la
+propia contraseña en el momento (`Controller::requireAdminConPassword()`), para que crear
+una pastoral no genere de más accesos ni estructura hasta que de verdad se quiera exponer.
+El mismo candado protege `eliminar()`, que es un `DELETE` físico de la fila (no un
+desactivado): confirmar con contraseña es la única fricción entre un clic y perder la
+pastoral y sus documentos/actividades para siempre (avisos, eventos y cursos sobreviven
+como contenido general, por `ON DELETE SET NULL`).
+
 ### MESC: visitas a enfermos y rutas (issue #3)
 
 `modules/mesc/` es, a propósito, el único módulo del sitio **sin ningún controlador

@@ -37,7 +37,7 @@ class UsuarioController extends Controller
             // administra sería prometer un alcance que luego el guardado
             // rechaza; los mismos helpers que acotan el selector de eventos y
             // cursos sirven aquí tal cual.
-            'pastorales'       => $this->pastoralesDelFiltro(),
+            'pastorales'       => $this->pastoralesDelFiltro(true),
             'asignadas'        => [],
             'centros'          => $this->centrosDelFiltro(),
             'centrosAsignados' => [],
@@ -72,7 +72,7 @@ class UsuarioController extends Controller
             'fichaCuenta'      => $cuenta['persona_id'] !== null
                 ? (new PersonaModel())->porId((int) $cuenta['persona_id'])
                 : null,
-            'pastorales'       => $this->pastoralesDelFiltro(),
+            'pastorales'       => $this->pastoralesDelFiltro(true),
             'asignadas'        => $this->modelo->pastoralesDe((int) $cuenta['id']),
             'centros'          => $this->centrosDelFiltro(),
             'centrosAsignados' => $this->modelo->centrosDe((int) $cuenta['id']),
