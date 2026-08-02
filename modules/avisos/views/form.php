@@ -126,18 +126,12 @@ $puedePublicar = Auth::tienePermiso('avisos.publicar');
                         <label class="form-check-label fw-semibold" for="destacado">Destacado</label>
                     </div>
 
-                    <?php if ($puedePublicar): ?>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               name="publicado" id="publicado" value="1"
-                               <?= ($esNuevo || $aviso['publicado']) ? 'checked' : '' ?>>
-                        <label class="form-check-label fw-semibold" for="publicado">Publicado</label>
-                    </div>
-                    <?php else: ?>
-                    <p class="small text-muted mb-0">
-                        <i class="bi bi-info-circle me-1"></i>Este aviso se enviará como borrador para que un editor lo publique.
-                    </p>
-                    <?php endif; ?>
+                    <?php
+                    $se_estadoActual  = $esNuevo ? 'borrador' : estado_publicacion($aviso);
+                    $se_puedePublicar = $puedePublicar;
+                    $se_quien         = 'los miembros de la pastoral que elijas arriba';
+                    require BASE_PATH . '/shared/views/parciales/selector_escalon.php';
+                    ?>
 
                 </div>
             </div>

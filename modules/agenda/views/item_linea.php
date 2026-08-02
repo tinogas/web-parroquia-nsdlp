@@ -27,8 +27,8 @@ $marca = $it['url'] ? 'a' : 'span';
             <?php if (!empty($it['centro_nombre'])): ?>
             <span class="badge bg-light text-secondary border me-1"><?= e($it['centro_nombre']) ?></span>
             <?php endif; ?>
-            <?php if (!$it['publicado']): ?>
-            <span class="badge bg-warning-subtle text-warning-emphasis me-1">Borrador</span>
+            <?php if ($it['estado'] !== 'publico'): ?>
+            <span class="me-1"><?= badge_escalon(['publicado' => 0, 'publicado_interno' => $it['estado'] === 'interno']) ?></span>
             <?php endif; ?>
             <?php if (!empty($it['horario'])): ?>
             <span class="me-1"><i class="bi bi-clock me-1"></i><?= e($it['horario']) ?></span>

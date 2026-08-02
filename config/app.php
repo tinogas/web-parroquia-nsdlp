@@ -88,6 +88,21 @@ define('ROLES_NOMBRES', [
 ]);
 
 /**
+ * Los tres escalones por los que pasa un aviso o un curso, en orden. La clave
+ * es lo que viaja por el formulario y por la cadena de consulta del listado.
+ *
+ * No son una columna: se leen de `publicado_interno` y `publicado`, que es lo
+ * que permitió partir la publicación en dos sin tocar una sola de las consultas
+ * públicas, que siguen preguntando por `publicado = 1`. Ver install.sql y
+ * estado_publicacion() en core/helpers.php.
+ */
+define('ESTADOS_PUBLICACION', [
+    'borrador' => 'Borrador',
+    'interno'  => 'Publicado para la pastoral',
+    'publico'  => 'Publicado en la página',
+]);
+
+/**
  * Roles cuyo acceso queda acotado a lo que se les marque en la cuenta:
  * pastorales (usuarios_pastorales) y sedes (usuarios_centros), las dos mitades
  * del alcance — Auth::puedeSobrePastoral() y Auth::puedeSobreCentro(), ver
@@ -144,7 +159,7 @@ define('MODULO_POR_PASTORAL', [
 define('PERMISOS_COORDINACION', [
     'panel.ver',
     'agenda.ver',
-    'avisos.ver', 'avisos.crear', 'avisos.editar',
+    'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.publicar',
     'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.publicar',
     'galeria.ver', 'galeria.crear', 'galeria.eliminar',
     'pastorales.ver', 'pastorales.editar',
@@ -200,11 +215,18 @@ define('PERMISOS', [
     // sedes— es que solo General administra cuentas, y solo las de su propia
     // pastoral: ver más abajo y docs/ARQUITECTURA.md.
     //
-    // Publican sus eventos y sus cursos, pero no sus avisos ni su galería: lo
-    // que se pone en el calendario es una fecha que la pastoral ya tiene
-    // decidida y que las demás necesitan ver publicada sin esperar a que un
-    // editor pase a revisarla; un aviso, en cambio, es un texto dirigido a toda
-    // la parroquia y sigue entrando como borrador.
+    // Publican sus eventos, sus cursos y sus avisos, pero no su galería.
+    //
+    // Avisos entraba antes siempre como borrador, porque un aviso es un texto
+    // dirigido a toda la parroquia y publicarlo era saltar directo a la
+    // portada. Eso dejó de ser cierto al partir la publicación en dos
+    // escalones (avisos.publicado_interno / .publicado): ahora el primer paso
+    // solo alcanza a los miembros de la propia pastoral, que es exactamente lo
+    // que una coordinadora necesita poder hacer sin pedir permiso, y el salto
+    // al sitio web sigue siendo un acto aparte y deliberado. Se les da también
+    // ese segundo salto —igual que ya lo tenían en eventos y cursos— porque
+    // quien responde de lo que su pastoral comunica es ella misma; lo que
+    // gobierna el alcance no es este permiso sino la pastoral asignada.
     //
     // Los permisos de los tres módulos dedicados —mesc.*, catequesis.*,
     // lector.*— los llevan todos los coordinadores, y quien entra de verdad a
@@ -228,12 +250,19 @@ define('PERMISOS', [
     // Solo mira. Para el ministro, catequista o lector de a pie que entra a ver
     // su propio calendario y el de la parroquia, sin nada que tocar. Su
     // pastoral y su sede acotan lo que ve, igual que a un coordinador.
+    //
+    // avisos.ver es lo que le permite leer lo que su pastoral publica hacia
+    // dentro: sin él, el escalón "publicado para la pastoral" no tendría a
+    // nadie a quien llegar, porque este es justamente el rol de sus miembros.
+    // Ver los borradores ajenos sigue sin poder: eso lo recorta el listado,
+    // no la matriz.
     ROL_CONSULTA => [
         'panel.ver',
         'agenda.ver',
         'pastorales.ver',
         'actividades.ver',
         'documentos.ver',
+        'avisos.ver',
         'eventos.ver',
         'cursos.ver',
         'mesc.ver',

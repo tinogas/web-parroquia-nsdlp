@@ -28,7 +28,7 @@
                     <?php
                     $titulo = $it['titulo'] . ' · ' . ($it['pastoral_nombre'] ?? 'General')
                             . (empty($it['centro_nombre']) ? '' : ' · ' . $it['centro_nombre'])
-                            . ($it['publicado'] ? '' : ' (borrador)');
+                            . ($it['estado'] === 'publico' ? '' : ' (' . mb_strtolower(ESTADOS_PUBLICACION[$it['estado']]) . ')');
                     ?>
                     <?php if ($it['url']): ?>
                     <a href="<?= e($it['url']) ?>"

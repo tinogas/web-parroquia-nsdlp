@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 class AvisoController extends Controller
 {
@@ -15,19 +16,25 @@ class AvisoController extends Controller
     {
         $this->requirePermiso('avisos.ver');
 
-        $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
-            ? $this->getStr('filtro') : 'todos';
+        $filtro = isset(ESTADOS_PUBLICACION[$this->getStr('filtro')]) ? $this->getStr('filtro') : 'todos';
 
-        // Mismo criterio que Eventos: el filtro que la persona eligió en
-        // pantalla (o llegó ya puesto desde el panel básico de una pastoral),
-        // cruzado con su alcance real.
+        // Dos recortes distintos que se cruzan: lo que la persona eligió ver en
+        // pantalla (o llegó ya puesto desde el panel de una pastoral), y lo que
+        // le corresponde leer. Lo segundo no es el alcance de escritura de
+        // siempre: audienciaInterna() sube a las Comisiones que agrupan sus
+        // pastorales, y los borradores se recortan aparte dentro del modelo.
         $pastorales = $this->pastoralesDelFiltro();
         [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
-        $idsPastoral = $this->pastoralesVisibles($idsPastoral);
+        [$audiencia, $propias] = $this->acotarAudiencia($idsPastoral);
 
         $this->render('avisos/lista', [
             'titulo'         => 'Avisos',
-            'listado'        => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $idsPastoral),
+            'listado'        => $this->modelo->listar(
+                max(1, $this->getInt('pagina', 1)),
+                $filtro,
+                $audiencia,
+                $propias
+            ),
             'filtro'         => $filtro,
             'pastorales'     => $pastorales,
             'filtroPastoral' => $filtroPastoral,
@@ -118,10 +125,9 @@ class AvisoController extends Controller
             Session::flash('warning', 'El aviso se guardó, pero hubo un problema con un archivo: ' . $e->getMessage());
         }
 
-        $puedePublicar = Auth::tienePermiso('avisos.publicar');
-        $publicado = $puedePublicar ? $this->postBool('publicado') : ($existente['publicado'] ?? 0);
+        $escalon = $this->escalonPublicacion('avisos.publicar', $existente);
 
-        $datos = [
+        $datos = $escalon + [
             'slug'              => $slug,
             'titulo'            => $titulo,
             'resumen'           => $this->postStr('resumen') ?: null,
@@ -133,7 +139,6 @@ class AvisoController extends Controller
             'fecha_publicacion' => $fechaPublicacion,
             'vigente_hasta'     => $vigenteHasta,
             'destacado'         => $this->postBool('destacado'),
-            'publicado'         => $publicado,
         ];
 
         if ($existente) {
@@ -143,10 +148,44 @@ class AvisoController extends Controller
         } else {
             $id = $this->modelo->crear($datos, (int) Auth::usuario()['id']);
             $this->auditoria('crear', 'avisos', $id, $titulo);
-            Session::flash('success', $puedePublicar ? 'Aviso creado.' : 'Aviso enviado como borrador para revisión.');
+            Session::flash('success', 'Aviso creado como «'
+                . ESTADOS_PUBLICACION[estado_publicacion($datos)] . '».');
         }
 
         $this->redirect(url_admin('avisos'));
+    }
+
+    /**
+     * Lectura de solo lectura dentro del panel: es lo que abre un miembro de la
+     * pastoral cuando le llega un aviso interno, y el destino de las miniaturas
+     * del panel de inicio. Hace falta porque hasta ahora el listado solo sabía
+     * llevar al formulario de edición, y un aviso que todavía no es público no
+     * tiene página que enseñar.
+     */
+    public function ver(): void
+    {
+        $this->requirePermiso('avisos.ver');
+
+        $aviso = $this->modelo->porId($this->getInt('id'));
+        if (!$aviso) {
+            Session::flash('error', 'No encontramos ese aviso.');
+            $this->redirect(url_admin('avisos'));
+            return;
+        }
+
+        $pastoralId = $aviso['pastoral_id'] !== null ? (int) $aviso['pastoral_id'] : null;
+        if (!$this->puedeLeerInterno($pastoralId, (bool) $aviso['publicado_interno'])) {
+            Session::flash('error', 'Ese aviso no está publicado para tus pastorales.');
+            $this->redirect(url_admin('avisos'));
+            return;
+        }
+
+        $this->render('avisos/ver', [
+            'titulo'      => $aviso['titulo'],
+            'aviso'       => $aviso,
+            'pastoral'    => $pastoralId ? (new PastoralModel())->porId($pastoralId) : null,
+            'puedeEditar' => Auth::tienePermiso('avisos.editar') && Auth::puedeSobrePastoral($pastoralId),
+        ]);
     }
 
     public function eliminar(): void

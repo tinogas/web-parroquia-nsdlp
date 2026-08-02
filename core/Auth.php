@@ -5,7 +5,7 @@ class Auth
     {
         $db   = Database::getInstance();
         $stmt = $db->prepare(
-            'SELECT id, nombre, email, password_hash, rol, foto
+            'SELECT id, nombre, email, password_hash, rol, foto, ultimo_acceso
              FROM usuarios
              WHERE email = :email AND activo = 1
              LIMIT 1'
@@ -26,6 +26,13 @@ class Auth
         Session::set('usuario_email',  $usuario['email']);
         Session::set('usuario_rol',    $usuario['rol']);
         Session::set('usuario_foto',   $usuario['foto'] ?? null);
+        // El acceso ANTERIOR, leído justo antes de pisarlo con NOW() arriba:
+        // es lo que deja marcar como «Nuevo» en el panel lo publicado desde la
+        // última vez que esta persona entró. Guardarlo en sesión evita una
+        // columna más y evita también que la marca se apague sola a mitad de
+        // la sesión. Null la primera vez que alguien entra: entonces todo lo
+        // que vea es nuevo para esa persona, que es literalmente cierto.
+        Session::set('usuario_acceso_anterior', $usuario['ultimo_acceso']);
 
         // Las pastorales asignadas se cachean aquí para no consultarlas en cada
         // listado del panel. La tabla usuarios_pastorales llega en la etapa 6;
@@ -90,6 +97,39 @@ class Auth
     public static function pastoralesPermitidas(): array
     {
         return Session::get('usuario_pastorales', []);
+    }
+
+    /**
+     * Las pastorales cuyo contenido interno puede LEER: las suyas más las
+     * Comisiones que las agrupan, porque un aviso publicado en Litúrgica va
+     * dirigido también a quien está en Lectores o en Coros.
+     *
+     * Deliberadamente aparte de pastoralesPermitidas(), no una ampliación
+     * suya: aquella gobierna la ESCRITURA (puedeSobrePastoral(),
+     * Controller::pastoralIdValidado()) y sigue sin heredar nada, que es la
+     * decisión documentada en el comentario de cargarPastorales(). Estar en
+     * Lectores te deja leer lo de Litúrgica; no te deja escribir en Litúrgica.
+     *
+     * Tampoco se cachea en sesión, a diferencia de las pastorales asignadas:
+     * ahí el dato solo cambia cuando cambia la cuenta, pero esto depende de
+     * pastoral_padre_id, y reasignar el padre de una pastoral no debería
+     * esperar a que todo el mundo vuelva a entrar. Se resuelve una vez por
+     * petición, como Auth::administraPastoral().
+     */
+    public static function pastoralesAudiencia(): array
+    {
+        static $audiencia = null;
+        if ($audiencia !== null) {
+            return $audiencia;
+        }
+
+        $propias = self::pastoralesPermitidas();
+        if (!$propias) {
+            return $audiencia = [];
+        }
+
+        require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+        return $audiencia = (new PastoralModel())->conAncestros($propias);
     }
 
     /**
@@ -262,6 +302,10 @@ class Auth
         Session::set('usuario_foto',       $objetivo['foto'] ?? null);
         Session::set('usuario_pastorales', self::cargarPastorales((int) $objetivo['id']));
         Session::set('usuario_centros',    self::cargarCentros((int) $objetivo['id']));
+        // Sin marcas de «Nuevo» mientras se usa otra cuenta: la del
+        // administrador no dice nada de lo que esa persona ha visto, y la de
+        // ella tampoco es asunto de quien la está suplantando.
+        Session::set('usuario_acceso_anterior', null);
     }
 
     /** Restaura la sesión del administrador real y borra el rastro de la impersonación. */
@@ -274,6 +318,7 @@ class Auth
         Session::set('usuario_foto',       null);
         Session::set('usuario_pastorales', []);
         Session::set('usuario_centros',    []);
+        Session::set('usuario_acceso_anterior', null);
 
         Session::delete('_impersonando');
         Session::delete('_admin_real_id');

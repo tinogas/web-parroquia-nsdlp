@@ -23,10 +23,12 @@ $porAmbito   = $porPastoral + $porCentro;
     <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
         <a href="<?= e(url_admin('cursos', '', $porAmbito)) ?>"
            class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-        <a href="<?= e(url_admin('cursos', '', ['filtro' => 'publicados'] + $porAmbito)) ?>"
-           class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-        <a href="<?= e(url_admin('cursos', '', ['filtro' => 'borradores'] + $porAmbito)) ?>"
-           class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+        <?php foreach (ESTADOS_PUBLICACION as $clave => $etiqueta): ?>
+        <a href="<?= e(url_admin('cursos', '', ['filtro' => $clave] + $porAmbito)) ?>"
+           class="btn <?= $filtro === $clave ? 'btn-primary' : 'btn-outline-secondary' ?>">
+            <?= e($clave === 'borrador' ? 'Borradores' : ($clave === 'interno' ? 'De la pastoral' : 'En la página')) ?>
+        </a>
+        <?php endforeach; ?>
     </div>
 
     <form method="GET" action="<?= e(url_admin('cursos')) ?>" class="row g-2 align-items-end">
@@ -133,13 +135,13 @@ $porAmbito   = $porPastoral + $porCentro;
                         <?= $curso['fecha_inicio'] ? e(fecha_larga($curso['fecha_inicio'])) : '—' ?>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <?php if ($curso['publicado']): ?>
-                            <span class="badge bg-success-subtle text-success-emphasis">Publicado</span>
-                        <?php else: ?>
-                            <span class="badge bg-warning-subtle text-warning-emphasis">Borrador</span>
-                        <?php endif; ?>
+                        <?= badge_escalon($curso) ?>
                     </td>
                     <td class="text-end text-nowrap">
+                        <a href="<?= e(url_admin('cursos', 'ver', ['id' => $curso['id']])) ?>"
+                           class="btn btn-sm btn-outline-secondary" title="Leer">
+                            <i class="bi bi-eye"></i>
+                        </a>
                         <?php if ($curso['publicado']): ?>
                         <a href="<?= e(url_publica('cursos', ['slug' => $curso['slug']])) ?>"
                            class="btn btn-sm btn-outline-secondary" target="_blank" title="Ver en el sitio">

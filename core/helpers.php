@@ -241,6 +241,32 @@ if (!function_exists('e')) {
         return !empty($foto) ? url_activo($foto) : avatar_iniciales($nombre, $size);
     }
 
+    /**
+     * En cuál de los ESTADOS_PUBLICACION está un aviso o un curso. Los dos
+     * booleanos se leen siempre juntos y en este orden, así que vale la pena
+     * preguntarlo en un solo sitio: `publicado` implica `publicado_interno`
+     * (chk_avi_escalon / chk_cur_escalon), de modo que basta mirar el de fuera
+     * primero.
+     */
+    function estado_publicacion(array $fila): string
+    {
+        if (!empty($fila['publicado'])) {
+            return 'publico';
+        }
+        return !empty($fila['publicado_interno']) ? 'interno' : 'borrador';
+    }
+
+    /** La etiqueta de color del escalón, igual en el listado de avisos y en el de cursos. */
+    function badge_escalon(array $fila): string
+    {
+        $estado = estado_publicacion($fila);
+        $color  = ['borrador' => 'warning', 'interno' => 'info', 'publico' => 'success'][$estado];
+        $corta  = ['borrador' => 'Borrador', 'interno' => 'De la pastoral', 'publico' => 'En la página'][$estado];
+
+        return '<span class="badge bg-' . $color . '-subtle text-' . $color . '-emphasis" title="'
+             . e(ESTADOS_PUBLICACION[$estado]) . '">' . e($corta) . '</span>';
+    }
+
     /** Rectángulo gris con leyenda, para tarjetas sin imagen. */
     function placeholder_rect(string $texto = '', int $w = 400, int $h = 240): string
     {

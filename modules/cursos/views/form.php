@@ -215,18 +215,12 @@ $puedePublicar = Auth::tienePermiso('cursos.publicar');
                         <input type="number" name="orden" id="orden" class="form-control"
                                value="<?= (int) ($esNuevo ? 0 : $curso['orden']) ?>" min="0" max="999">
                     </div>
-                    <?php if ($puedePublicar): ?>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               name="publicado" id="publicado" value="1"
-                               <?= ($esNuevo || $curso['publicado']) ? 'checked' : '' ?>>
-                        <label class="form-check-label fw-semibold" for="publicado">Publicado</label>
-                    </div>
-                    <?php else: ?>
-                    <p class="small text-muted mb-0">
-                        <i class="bi bi-info-circle me-1"></i>Este curso se enviará como borrador para revisión.
-                    </p>
-                    <?php endif; ?>
+                    <?php
+                    $se_estadoActual  = $esNuevo ? 'borrador' : estado_publicacion($curso);
+                    $se_puedePublicar = $puedePublicar;
+                    $se_quien         = 'los miembros de la pastoral que elijas';
+                    require BASE_PATH . '/shared/views/parciales/selector_escalon.php';
+                    ?>
                 </div>
             </div>
 

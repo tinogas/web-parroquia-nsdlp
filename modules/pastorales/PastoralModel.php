@@ -107,6 +107,44 @@ class PastoralModel extends Model
         );
     }
 
+    /**
+     * Esos ids más las Comisiones que los agrupan, sin repetidos. Es la
+     * audiencia de lectura de Auth::pastoralesAudiencia(): quien está en
+     * Lectores tiene que poder leer lo que se publique en Litúrgica.
+     *
+     * Una sola consulta y no un recorrido recursivo porque la jerarquía es de
+     * dos niveles exactos y así está garantizado (ver candidatosPadre()): el
+     * padre de una pastoral nunca tiene padre a su vez.
+     *
+     * @param  array $ids Pastorales asignadas a la cuenta
+     * @return array Esas mismas más sus padres
+     */
+    public function conAncestros(array $ids): array
+    {
+        if (!$ids) {
+            return [];
+        }
+
+        $marcadores = [];
+        $params     = [];
+        foreach (array_values($ids) as $i => $id) {
+            $clave          = ":id{$i}";
+            $marcadores[]   = $clave;
+            $params[$clave] = (int) $id;
+        }
+
+        $padres = $this->fetchAll(
+            'SELECT DISTINCT pastoral_padre_id FROM pastorales
+              WHERE id IN (' . implode(',', $marcadores) . ') AND pastoral_padre_id IS NOT NULL',
+            $params
+        );
+
+        return array_values(array_unique(array_merge(
+            array_map('intval', array_values($ids)),
+            array_map(static fn (array $f): int => (int) $f['pastoral_padre_id'], $padres)
+        )));
+    }
+
     public function tieneHijos(int $id): bool
     {
         return (bool) $this->fetchColumn(
