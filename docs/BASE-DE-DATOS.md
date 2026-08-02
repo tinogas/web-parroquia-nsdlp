@@ -1,10 +1,12 @@
 # Base de datos
 
-Diccionario de las 23 tablas del sistema: las 24 de las diez etapas del plan original, más
-`respaldos_log` y `centros` (issue #3), menos `sacramento_campos`, `solicitudes_sacramento`
-y `solicitudes_bitacora` (también issue #3: se eliminó el formulario de solicitud en línea
-de sacramentos). El esquema real vive en `install.sql`; este documento explica el porqué de
-cada tabla y sus columnas relevantes.
+Diccionario de las **42 tablas** del sistema: las 24 de las diez etapas del plan original,
+más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
+`respaldos_log`, las siete tablas de MESC, las cinco de Catequesis y las tres de Lector,
+entre otras—, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
+(el issue #3 eliminó el formulario de solicitud en línea de sacramentos). El desglose exacto
+está en el resumen del final. El esquema real vive en `install.sql`; este documento explica
+el porqué de cada tabla y sus columnas relevantes.
 
 ## Convenciones
 
@@ -25,6 +27,12 @@ Las mismas del sistema de inventario, sin excepciones:
 No hay sistema de migraciones. `install.sql` es un archivo único acumulativo que se
 mantiene sincronizado etapa por etapa, hasta que el sitio salga a producción.
 
+Cuidado con una consecuencia que antes no existía: **la base local ya contiene contenido real
+que `install.sql` no siembra** (la agenda de 2026, los centros, las pastorales con sus
+ministros y catequistas, el equipo pastoral, los horarios). Reimportar el archivo desde cero
+sigue siendo la prueba de que el esquema está completo, pero hay que respaldar y restaurar
+alrededor. Ver [`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores).
+
 ---
 
 ## Núcleo y seguridad
@@ -39,7 +47,8 @@ Cuentas del panel de administración.
 | `nombre` | VARCHAR(120) | |
 | `email` | VARCHAR(150) | `uq_usr_email`; es el identificador de acceso |
 | `password_hash` | VARCHAR(255) | bcrypt con coste 12 |
-| `rol` | ENUM | `admin`, `editor`, `coordinador`, `secretaria`, y el par administrador/consulta de cada pastoral con módulo propio: `admin_mesc`/`consulta_mesc`, `admin_catequesis`/`consulta_catequesis`, `admin_lector`/`consulta_lector` |
+| `persona_id` | SMALLINT UNSIGNED NULL | `uq_usr_persona`, FK a `personas` `ON DELETE SET NULL`. Su ficha del equipo pastoral, de donde salen nombre, teléfono y foto. NULL = cuenta sin ficha (la del administrador), que así no aparece en el directorio público |
+| `rol` | ENUM | `admin`, `editor`, `secretaria`, `coordinador`, `coordinador_general`, `consulta`. Los seis roles con la pastoral en el nombre (`admin_mesc`, `consulta_catequesis`…) se retiraron: ver [`ARQUITECTURA.md`](ARQUITECTURA.md#roles-y-permisos) |
 | `foto` | VARCHAR(255) | Opcional |
 | `telefono` | VARCHAR(20) | |
 | `activo` | TINYINT(1) | Baja lógica |
@@ -48,18 +57,27 @@ Cuentas del panel de administración.
 
 ### `usuarios_pastorales`
 
-Pivote. Una persona puede coordinar varias pastorales a la vez, que es lo habitual.
-Clave primaria compuesta `(usuario_id, pastoral_id)`, ambas foráneas con
+Pivote. Una persona puede coordinar varias pastorales a la vez, que es lo habitual —y es
+también como se representa a quien coordina la misma pastoral en varias sedes: una fila por
+sede. **Es la única fuente del alcance**: `Auth::cargarPastorales()` no lee ninguna otra
+tabla. Clave primaria compuesta `(usuario_id, pastoral_id)`, ambas foráneas con
 `ON DELETE CASCADE`.
 
 ### `usuarios_centros`
 
-Pivote análogo, pero por centro/sede completo (issue #3, "usuarios por centro/sede"):
-quien administra un centro administra todas sus pastorales sin que alguien tenga que
-marcarlas una por una en `usuarios_pastorales`. Clave primaria compuesta
-`(usuario_id, centro_id)`, ambas foráneas con `ON DELETE CASCADE`.
-`Auth::pastoralesPermitidas()` calcula la unión de ambas tablas (ver
-[`ARQUITECTURA.md`](ARQUITECTURA.md)).
+Las sedes en las que trabaja la persona, y **la otra mitad del alcance**: acota sus
+pastorales a esas comunidades. Clave primaria compuesta `(usuario_id, centro_id)`, ambas
+foráneas con `ON DELETE CASCADE`.
+
+**Ninguna fila significa «en todas las sedes»**, al revés que `usuarios_pastorales`, donde
+ninguna fila es no poder con nada. Así se representa una coordinación general. La asimetría
+está explicada en [`ARQUITECTURA.md`](ARQUITECTURA.md), "El alcance tiene dos mitades".
+
+Ojo con el histórico: hasta la revisión de alcance esta misma tabla significaba «administra
+el centro completo» y *añadía* todas las pastorales de esa sede. Un respaldo anterior a ese
+cambio tiene filas que hoy quieren decir otra cosa —donde antes daban permiso de más, ahora
+recortan—, así que conviene revisarlas al restaurarlo. No confundir tampoco con
+`persona_centros`: esa es la adscripción de alguien del directorio a una sede, no un permiso.
 
 ### `auditoria`
 
@@ -242,13 +260,28 @@ el nombre del centro como etiqueta en cada horario); un id concreto acota todo a
 sola sede/centro. El listado de admin (`todos()`) conserva el orden por `tipo` (misa
 primero) y sin agrupar ni filtrar por centro, para facilitar la edición masiva.
 
+**`tipo = 'otro'` es hoy la mitad de la tabla**: 22 de las 42 filas son las actividades
+semanales de la agenda parroquial 2026 (grupos, ensayos, catequesis), cargadas con
+`herramientas/importar_agenda.php`. Entraron aquí y no en `eventos` porque son recurrencia de
+día y hora, que es exactamente para lo que existe esta tabla; el nombre de la actividad va en
+`nota`, ya que `horarios` no tiene columna de título y la nota es lo que la página pública
+muestra de cada fila.
+
 ### `pastorales`
 
 `centro_id` (issue #3: FK a `centros`, `ON DELETE SET NULL`, NULL en las que ya existían
 antes de este campo), `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
-`responsable_nombre`, `contacto_email`, `contacto_telefono`, `dia_reunion`,
-`hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
+`responsable_nombre`, `responsable_persona_id`, `contacto_email`, `contacto_telefono`,
+`dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`.
+
+`responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
+es el select del formulario: el responsable se elige del equipo pastoral. Con persona
+elegida, `responsable_nombre` y `contacto_email` se recalculan solos —del nombre de su
+ficha y del correo de acceso de su cuenta, si tiene una— y dejan de ser editables a mano;
+`responsable_nombre` solo se sigue escribiendo libre cuando `responsable_persona_id` es
+NULL (la persona todavía no está de alta en el equipo). Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#contenido-propio-por-pastoral-issue-3).
 
 ### `pastoral_actividades`
 
@@ -305,12 +338,18 @@ cercano sobre distancia Haversine (línea recta, no ruta real por calles), parti
 ### `mesc_ministros`
 
 Catálogo de quién sirve como Ministro Extraordinario de la Comunión (issue #3,
-"calendario de turnos"). `pastoral_id` (FK, `ON DELETE CASCADE`), `nombre`, `telefono`,
-`activo` (solo los activos se pueden asignar a un turno nuevo), `created_at`.
+"calendario de turnos"). `pastoral_id` (FK, `ON DELETE CASCADE`), `persona_id`
+(FK a `personas`, `ON DELETE SET NULL`, `UNIQUE` — `uq_mmi_persona`), `nombre`,
+`telefono`, `activo` (solo los activos se pueden asignar a un turno nuevo), `created_at`.
 
-Aparte de `personas` a propósito: `personas` es el equipo pastoral que se muestra en
-público, con foto y semblanza; un ministro MESC es un voluntario interno que no
-necesariamente forma parte de esa vitrina. Índice `idx_mmi_pastoral (pastoral_id, activo)`.
+Sigue siendo una tabla aparte de `personas` a propósito: `personas` es el equipo
+pastoral que se muestra en público, con foto y semblanza, y un ministro MESC es un
+voluntario interno que no necesariamente forma parte de esa vitrina. `persona_id` es el
+puente opcional entre ambas cuando sí coinciden: con la persona elegida, `nombre` y
+`telefono` se toman de su ficha y `PersonaModel::sincronizarPersonal()` los mantiene al
+día si la ficha cambia; sin persona (todavía no está de alta en el equipo), los dos
+campos son texto libre como siempre. Mismo patrón en `catequesis_catequistas` y
+`lector_lectores`, ver más abajo. Índice `idx_mmi_pastoral (pastoral_id, activo)`.
 
 ### `mesc_colores_liturgicos`
 
@@ -345,10 +384,12 @@ público ni datos sensibles.
 
 ### `catequesis_catequistas`
 
-Solo nombre y contacto: `pastoral_id` (FK a `pastorales`, `ON DELETE CASCADE`), `nombre`,
-`telefono`, `email`, `orden`, `activo`. **No tiene grado ni sacramento** — ver
-`catequesis_periodo_catequistas`: un catequista normalmente no da el mismo grado cada
-ciclo, así que ese dato no puede ser fijo de la persona.
+Nombre y contacto: `pastoral_id` (FK a `pastorales`, `ON DELETE CASCADE`), `persona_id`
+(FK a `personas`, `ON DELETE SET NULL`, `UNIQUE` — `uq_ctq_persona`, mismo patrón que
+`mesc_ministros.persona_id`), `nombre`, `telefono`, `email`, `orden`, `activo`. **No
+tiene grado ni sacramento** — ver `catequesis_periodo_catequistas`: un catequista
+normalmente no da el mismo grado cada ciclo, así que ese dato no puede ser fijo de la
+persona.
 
 ### `catequesis_periodos`
 
@@ -391,14 +432,17 @@ Documentos descargables, mismo patrón que `pastoral_documentos`: `pastoral_id`,
 
 ## Lector — turnos y catálogo de lectores
 
-Módulo dedicado para la pastoral de Lectores, calcado de
+Módulo dedicado para la pastoral de Liturgia (se llamaba "Lectores"; el nombre del
+módulo y de sus tablas no cambió, ver la nota de `PASTORAL_LECTOR` en
+`config/app.php`), calcado de
 `mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: un
 lector proclama la Palabra en misa, no reparte comunión a domicilio.
 
 ### `lector_lectores`
 
-Catálogo de lectores. `pastoral_id` (FK, `ON DELETE CASCADE`), `nombre`, `telefono`,
-`email`, `orden`, `activo`.
+Catálogo de lectores. `pastoral_id` (FK, `ON DELETE CASCADE`), `persona_id` (FK a
+`personas`, `ON DELETE SET NULL`, `UNIQUE` — `uq_lec_persona`, mismo patrón que
+`mesc_ministros.persona_id`), `nombre`, `telefono`, `email`, `orden`, `activo`.
 
 ### `lector_turnos` y `lector_turno_lectores`
 
@@ -440,6 +484,21 @@ enfermos.
 `pastoral_id`, `cupo`, `aportacion`, `fecha_inicio`, `fecha_fin`, `horario`, `lugar`,
 `inscripciones_abiertas`, `fecha_cierre_inscripcion`, `requiere_tutor`, `publicado`,
 `orden`.
+
+`pastoral_id` empezó siendo una etiqueta organizativa y desde el issue de filtrado por
+pastoral pesa lo mismo que `avisos.pastoral_id` o `eventos.pastoral_id`: decide quién puede
+editar el curso, y NULL significa curso parroquial general, que solo tocan los roles con
+alcance global. La columna no cambió; lo que cambió es quién la respeta.
+
+`centro_id` (SMALLINT UNSIGNED NULL, FK a `centros` `ON DELETE SET NULL`, índice
+`idx_cur_centro`) es la segunda mitad de esa decisión: en qué sede se da el curso. Las dos se
+exigen juntas para editar —ver [`ARQUITECTURA.md`](ARQUITECTURA.md), "El alcance tiene dos
+mitades"—. NULL = de toda la parroquia.
+
+`fecha_inicio` y `fecha_fin` son DATE, sin hora —la hora vive como texto libre en
+`horario`—, así que en la agenda interna un curso ocupa días enteros. Un curso sin
+`fecha_inicio` no se dibuja en el calendario: `CursoModel::sinFechas()` lo recoge para
+listarlo aparte.
 
 ### `curso_sesiones`
 
@@ -497,9 +556,25 @@ histórico de lo que la parroquia ha organizado.
 ### `eventos`
 
 `slug` con `uq_eve_slug`, `titulo`, `descripcion`, `imagen`, `lugar`, `fecha_inicio`
-DATETIME, `fecha_fin` DATETIME NULL, `todo_el_dia`, `pastoral_id`, `color` VARCHAR(7) para
-el calendario, `publicado`, `usuario_id`. Índices `idx_eve_fecha (fecha_inicio)` e
-`idx_eve_pub (publicado, fecha_inicio)`.
+DATETIME, `fecha_fin` DATETIME NULL, `todo_el_dia`, `pastoral_id`, `centro_id`, `color`
+VARCHAR(7) para el calendario, `publicado`, `usuario_id`. Índices `idx_eve_fecha
+(fecha_inicio)`, `idx_eve_pub (publicado, fecha_inicio)` e `idx_eve_centro (centro_id)`.
+
+`pastoral_id` dice quién organiza el evento y `centro_id` (FK a `centros`, `ON DELETE SET
+NULL`) en qué sede ocurre; las dos juntas son el alcance de quien puede editarlo. NULL en
+`centro_id` = evento de toda la parroquia. Los 467 eventos de la agenda 2026 quedaron
+marcados como de la sede principal al añadirse la columna.
+
+`fecha_fin` cubre dos cosas a la vez: la hora de término dentro del mismo día y el periodo de
+varios días. Cuando cae en otro día, el evento se marca en **todos** los días que dura, tanto
+en el calendario público como en el JSON de `?accion=datos`.
+
+**Es hoy la tabla con más filas del sistema**: 467, la agenda parroquial de 2026
+completa, cargada con `herramientas/importar_agenda.php` y no desde el panel (ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#carga-de-la-agenda-parroquial-2026-herramientas)). Dos
+consecuencias prácticas: esas 467 filas **no tienen contrapartida en `auditoria`**, porque la
+carga no pasó por un controlador; y `idx_eve_fecha` dejó de ser decorativo — el filtro por
+fecha del listado del panel compara por rango precisamente para poder usarlo.
 
 ### `mensajes_contacto`
 

@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/mesc/MescModel.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 
 /**
  * MescController — Exclusivo de la pastoral "Ministro Extraordinario de la
@@ -366,6 +367,7 @@ class MescController extends Controller
             'titulo'     => 'Ministros MESC',
             'pastoralId' => $pastoralId,
             'ministros'  => $this->modelo->ministros($pastoralId),
+            'personas'   => (new PersonaModel())->paraSelector(),
         ]);
     }
 
@@ -387,17 +389,32 @@ class MescController extends Controller
         }
         $this->requireAlcancePastoral($pastoralId);
 
-        $nombre = $this->postStr('nombre');
+        // El ministro se elige del equipo pastoral; si todavía no está ahí, el
+        // nombre libre de abajo es el respaldo. Con persona elegida, su
+        // nombre y su teléfono mandan sobre los campos de texto (que se
+        // ignoran) — mismo patrón que el responsable de una pastoral.
+        $personaId = $this->postIntONull('persona_id');
+        $persona   = $personaId ? (new PersonaModel())->porId($personaId) : null;
+        if ($persona) {
+            $nombre   = $persona['nombre'];
+            $telefono = $persona['telefono'];
+        } else {
+            $personaId = null;
+            $nombre    = $this->postStr('nombre');
+            $telefono  = $this->postStr('telefono') ?: null;
+        }
+
         if ($nombre === '') {
-            Session::flash('error', 'El ministro necesita un nombre.');
+            Session::flash('error', 'El ministro necesita un nombre, o elige a alguien del equipo pastoral.');
             $this->redirect(url_admin('mesc', 'ministros'));
             return;
         }
 
         $datos = [
             'pastoral_id' => $pastoralId,
+            'persona_id'  => $personaId,
             'nombre'      => $nombre,
-            'telefono'    => $this->postStr('telefono') ?: null,
+            'telefono'    => $telefono,
             'activo'      => $this->postBool('activo'),
         ];
 

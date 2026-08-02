@@ -1,12 +1,14 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/lector/LectorModel.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 
 /**
- * LectorController — Exclusivo de la pastoral "Lectores": ninguna acción
- * muestra ni acepta otra pastoral, igual que MESC y Catequesis.
- * pastoralIdOFallar() resuelve esa única pastoral y corta el flujo con un
- * mensaje claro si todavía no existe.
+ * LectorController — Exclusivo de la pastoral "Liturgia" (antes se llamaba
+ * "Lectores"; el nombre cambió, el slug y esta constante no —ver
+ * PASTORAL_LECTOR en config/app.php—): ninguna acción muestra ni acepta otra
+ * pastoral, igual que MESC y Catequesis. pastoralIdOFallar() resuelve esa
+ * única pastoral y corta el flujo con un mensaje claro si todavía no existe.
  */
 class LectorController extends Controller
 {
@@ -41,7 +43,7 @@ class LectorController extends Controller
         $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
 
         $this->render('lector/turnos', [
-            'titulo'          => 'Calendario de lectores',
+            'titulo'          => 'Calendario de liturgia',
             'anio'            => $anio,
             'mes'             => $mes,
             'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
@@ -193,9 +195,10 @@ class LectorController extends Controller
         }
 
         $this->render('lector/lectores_lista', [
-            'titulo'     => 'Catálogo de lectores',
+            'titulo'     => 'Catálogo de liturgia',
             'pastoralId' => $pastoralId,
             'lectores'   => $this->modelo->lectores($pastoralId),
+            'personas'   => (new PersonaModel())->paraSelector(),
         ]);
     }
 
@@ -217,18 +220,35 @@ class LectorController extends Controller
         }
         $this->requireAlcancePastoral($pastoralId);
 
-        $nombre = $this->postStr('nombre');
+        // El lector se elige del equipo pastoral; si todavía no está ahí, los
+        // campos libres de abajo son el respaldo. Mismo patrón que el
+        // responsable de una pastoral, los ministros de MESC y los
+        // catequistas.
+        $personaId = $this->postIntONull('persona_id');
+        $persona   = $personaId ? (new PersonaModel())->porId($personaId) : null;
+        if ($persona) {
+            $nombre   = $persona['nombre'];
+            $telefono = $persona['telefono'];
+            $email    = $persona['email'];
+        } else {
+            $personaId = null;
+            $nombre    = $this->postStr('nombre');
+            $telefono  = $this->postStr('telefono') ?: null;
+            $email     = $this->postStr('email') ?: null;
+        }
+
         if ($nombre === '') {
-            Session::flash('error', 'El lector necesita un nombre.');
+            Session::flash('error', 'El lector necesita un nombre, o elige a alguien del equipo pastoral.');
             $this->redirect(url_admin('lector', 'lectores'));
             return;
         }
 
         $datos = [
             'pastoral_id' => $pastoralId,
+            'persona_id'  => $personaId,
             'nombre'      => $nombre,
-            'telefono'    => $this->postStr('telefono') ?: null,
-            'email'       => $this->postStr('email') ?: null,
+            'telefono'    => $telefono,
+            'email'       => $email,
             'orden'       => $this->postInt('orden'),
             'activo'      => $this->postBool('activo'),
         ];
@@ -271,7 +291,7 @@ class LectorController extends Controller
     // ── Privados ─────────────────────────────────────────────────────────
 
     /**
-     * Resuelve la pastoral de Lectores, la única que administra este
+     * Resuelve la pastoral de Liturgia, la única que administra este
      * módulo. Si todavía no existe (instalación nueva) o el usuario no
      * tiene alcance sobre ella, corta el flujo con un mensaje claro.
      */
@@ -279,12 +299,12 @@ class LectorController extends Controller
     {
         $pastoralId = $this->modelo->pastoralId();
         if ($pastoralId === null) {
-            Session::flash('error', 'Todavía no existe la pastoral "Lectores". Créala primero desde Pastorales.');
+            Session::flash('error', 'Todavía no existe la pastoral "Liturgia". Créala primero desde Pastorales.');
             $this->redirect(url_admin('pastorales'));
             return null;
         }
         if (!Auth::puedeSobrePastoral($pastoralId)) {
-            Session::flash('error', 'No administras la pastoral de Lectores.');
+            Session::flash('error', 'No administras la pastoral de Liturgia.');
             $this->redirect(url_admin('panel'));
             return null;
         }

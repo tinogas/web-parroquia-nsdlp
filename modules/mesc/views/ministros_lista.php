@@ -52,8 +52,9 @@
 </div>
 
 <?php
-$dibujarModalMinistro = static function (string $idModal, ?array $ministro, int $pastoralId, string $csrf) {
-    $vacio = $ministro === null;
+$dibujarModalMinistro = static function (string $idModal, ?array $ministro, int $pastoralId, string $csrf, array $personas) {
+    $vacio     = $ministro === null;
+    $personaId = $vacio ? 0 : (int) ($ministro['persona_id'] ?? 0);
     ?>
     <div class="modal fade" id="<?= e($idModal) ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -69,14 +70,34 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nombre</label>
+                        <label class="form-label small fw-semibold">¿Quién es?</label>
+                        <select name="persona_id" class="form-select form-select-sm">
+                            <option value="">— Todavía no está en el equipo pastoral —</option>
+                            <?php foreach ($personas as $persona): ?>
+                            <option value="<?= (int) $persona['id'] ?>"
+                                <?= $personaId === (int) $persona['id'] ? 'selected' : '' ?>>
+                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Nombre, si no está en el equipo pastoral</label>
                         <input type="text" name="nombre" class="form-control form-control-sm"
-                               value="<?= e($vacio ? '' : $ministro['nombre']) ?>" maxlength="150" required>
+                               value="<?= e($vacio || $personaId ? '' : $ministro['nombre']) ?>" maxlength="150">
+                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>
+                        <?php if ($personaId): ?>
+                        <p class="form-control-plaintext form-control-sm py-1 mb-0 small">
+                            <?= e((string) ($ministro['telefono'] ?: '—')) ?>
+                        </p>
+                        <div class="form-text">Viene de su ficha del equipo pastoral.</div>
+                        <?php else: ?>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
                                value="<?= e($vacio ? '' : (string) $ministro['telefono']) ?>" maxlength="20">
+                        <?php endif; ?>
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" name="activo" value="1"
@@ -104,8 +125,8 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
     <?php
 };
 
-$dibujarModalMinistro('ministroNuevo', null, $pastoralId, $csrf);
+$dibujarModalMinistro('ministroNuevo', null, $pastoralId, $csrf, $personas);
 foreach ($ministros as $ministro) {
-    $dibujarModalMinistro('ministro' . (int) $ministro['id'], $ministro, $pastoralId, $csrf);
+    $dibujarModalMinistro('ministro' . (int) $ministro['id'], $ministro, $pastoralId, $csrf, $personas);
 }
 ?>

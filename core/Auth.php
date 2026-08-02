@@ -83,17 +83,22 @@ class Auth
     // una entrada por pastoral en la matriz. Ver docs/ARQUITECTURA.md
 
     /**
-     * IDs de las pastorales que administra el usuario, ya sea porque se le
-     * asignó directo (usuarios_pastorales) o porque administra el centro/sede
-     * completo (usuarios_centros) al que esa pastoral está ligada — issue #3,
-     * "usuarios por centro/sede". Vacío si tiene alcance global.
+     * IDs de las pastorales que administra el usuario: exactamente las que se
+     * le marcaron en su cuenta (usuarios_pastorales), ni una más. Vacío si
+     * tiene alcance global.
      */
     public static function pastoralesPermitidas(): array
     {
         return Session::get('usuario_pastorales', []);
     }
 
-    /** IDs de los centros/sedes que el usuario administra completos. Vacío si no tiene ninguno. */
+    /**
+     * IDs de las sedes/centros en los que trabaja, o vacío si no se le marcó
+     * ninguno, que significa **todos**: así se representa a quien coordina su
+     * pastoral en toda la parroquia. Es la otra mitad del alcance, y solo
+     * acota: nunca añade pastorales (eso es lo que hacía la herencia por
+     * centro que se retiró; ver docs/ARQUITECTURA.md).
+     */
     public static function centrosPermitidos(): array
     {
         return Session::get('usuario_centros', []);
@@ -124,21 +129,84 @@ class Auth
     }
 
     /**
-     * Unión de dos fuentes: pastorales asignadas directo, más las de
-     * cualquier centro/sede que el usuario administre completo (issue #3).
-     * PDO con ATTR_EMULATE_PREPARES=false no admite repetir :id, de ahí :id2.
+     * ¿Administra la pastoral de este slug? Es la pregunta de los tres módulos
+     * dedicados —PASTORAL_MESC, PASTORAL_CATEQUESIS, PASTORAL_LECTOR—, que
+     * trabajan sobre una pastoral fija y no sobre la que se elija en pantalla.
+     *
+     * Existe porque el permiso ya no distingue: `mesc.*` lo llevan todos los
+     * coordinadores desde que se retiraron los roles con la pastoral en el
+     * nombre, así que el menú dibujaría los tres módulos a cualquiera. El id se
+     * resuelve una vez por petición; no se cachea en sesión a propósito, porque
+     * una pastoral renombrada o dada de alta debe surtir efecto sin volver a
+     * entrar.
+     */
+    public static function administraPastoral(string $slug): bool
+    {
+        if (self::tieneAlcanceGlobal()) {
+            return true;
+        }
+
+        static $idPorSlug = [];
+        if (!array_key_exists($slug, $idPorSlug)) {
+            try {
+                $stmt = Database::getInstance()->prepare('SELECT id FROM pastorales WHERE slug = :slug');
+                $stmt->execute([':slug' => $slug]);
+                $id = $stmt->fetchColumn();
+                $idPorSlug[$slug] = $id !== false ? (int) $id : null;
+            } catch (PDOException $e) {
+                $idPorSlug[$slug] = null;
+            }
+        }
+
+        return $idPorSlug[$slug] !== null && self::puedeSobrePastoral($idPorSlug[$slug]);
+    }
+
+    /**
+     * ¿Puede tocar un registro de esta sede?
+     *
+     * Sin sedes marcadas trabaja en todas, así que esto no le quita nada: es
+     * el caso de una coordinación general. Con sedes marcadas queda acotado a
+     * ellas, y el contenido sin sede —de toda la parroquia— le queda fuera,
+     * por lo mismo que un coordinador no toca el contenido sin pastoral.
+     *
+     * Se comprueba SIEMPRE junto a puedeSobrePastoral(), nunca sola: la
+     * pastoral dice qué equipo organiza algo y la sede dónde, y hacen falta
+     * las dos para que sea suyo. Ver Controller::requireAlcanceContenido().
+     */
+    public static function puedeSobreCentro(?int $centroId): bool
+    {
+        if (self::tieneAlcanceGlobal()) {
+            return true;
+        }
+        $propios = self::centrosPermitidos();
+        if (!$propios) {
+            return true;
+        }
+        if ($centroId === null) {
+            return false;
+        }
+        return in_array($centroId, $propios, true);
+    }
+
+    /**
+     * Una sola fuente: las pastorales marcadas en la cuenta.
+     *
+     * Hasta la revisión de alcance esto hacía la UNIÓN con las pastorales de
+     * cualquier centro/sede asignado (issue #3, "quien administra un centro
+     * administra todas sus pastorales"). En la práctica esa herencia repartía
+     * alcance que nadie había pedido: a la administradora de MESC, marcada en
+     * los tres centros porque MESC opera en los tres, el centro le entregaba
+     * también Catecismo, AMA, Raíces y JECSA, que son las otras pastorales
+     * ligadas a esa misma sede. Quien deba administrar una sede completa lleva
+     * marcadas sus pastorales, que además es lo que se ve en pantalla.
      */
     private static function cargarPastorales(int $usuarioId): array
     {
         try {
             $stmt = Database::getInstance()->prepare(
-                'SELECT pastoral_id FROM usuarios_pastorales WHERE usuario_id = :id
-                 UNION
-                 SELECT p.id FROM pastorales p
-                   INNER JOIN usuarios_centros uc ON uc.centro_id = p.centro_id
-                  WHERE uc.usuario_id = :id2'
+                'SELECT pastoral_id FROM usuarios_pastorales WHERE usuario_id = :id'
             );
-            $stmt->execute([':id' => $usuarioId, ':id2' => $usuarioId]);
+            $stmt->execute([':id' => $usuarioId]);
             return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
         } catch (PDOException $e) {
             // Las tablas aún no existen (etapas previas a la 6). No es un error.
@@ -146,6 +214,7 @@ class Auth
         }
     }
 
+    /** Las sedes en las que trabaja. Vacío = todas; ver centrosPermitidos(). */
     private static function cargarCentros(int $usuarioId): array
     {
         try {

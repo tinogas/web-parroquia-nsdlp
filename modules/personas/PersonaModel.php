@@ -115,6 +115,9 @@ class PersonaModel extends Model
             );
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
+            $this->sincronizarCuenta($id, $datos);
+            $this->sincronizarResponsable($id, $datos['nombre']);
+            $this->sincronizarPersonal($id, $datos);
             $this->commit();
             return $filas;
         } catch (Throwable $e) {
@@ -126,6 +129,70 @@ class PersonaModel extends Model
     public function eliminar(int $id): int
     {
         return $this->execute('DELETE FROM personas WHERE id = :id', [':id' => $id]);
+    }
+
+    /**
+     * Si esta persona tiene cuenta en el panel, su nombre, teléfono y foto van
+     * detrás: la ficha es el registro principal y la cuenta no guarda una
+     * versión propia que pueda quedarse vieja. Lo que NO se toca son sus
+     * permisos —rol, pastorales y sedes de la cuenta—, que se deciden aparte:
+     * figurar en una pastoral no es administrarla. Ver docs/ARQUITECTURA.md
+     */
+    private function sincronizarCuenta(int $personaId, array $datos): void
+    {
+        $this->execute(
+            'UPDATE usuarios SET nombre = :nombre, telefono = :telefono, foto = :foto
+              WHERE persona_id = :persona',
+            [
+                ':nombre'   => $datos['nombre'],
+                ':telefono' => $datos['telefono'],
+                ':foto'     => $datos['foto'],
+                ':persona'  => $personaId,
+            ]
+        );
+    }
+
+    /**
+     * Si esta persona es la responsable de alguna pastoral (`pastorales.
+     * responsable_persona_id`), su nombre ahí también viene de aquí: la
+     * pastoral no guarda su propia copia editable una vez que se elige a
+     * alguien del equipo. Ver PastoralController::guardar(), que hace el
+     * mismo cálculo al elegir responsable.
+     */
+    private function sincronizarResponsable(int $personaId, string $nombre): void
+    {
+        $this->execute(
+            'UPDATE pastorales SET responsable_nombre = :nombre WHERE responsable_persona_id = :persona',
+            [':nombre' => $nombre, ':persona' => $personaId]
+        );
+    }
+
+    /**
+     * Si esta persona está registrada como ministro de MESC, catequista o
+     * lector —`mesc_ministros`/`catequesis_catequistas`/`lector_lectores`,
+     * cualquiera de las tres, incluso más de una a la vez—, su nombre y su
+     * teléfono (y su correo, en las dos tablas que lo tienen) van detrás,
+     * igual que en `sincronizarCuenta()`. Corrige de raíz el mismo problema
+     * que ya se vio con los responsables de pastoral: antes de este vínculo,
+     * Zulema estaba escrita como "Zulema" en `mesc_ministros`, "Zulema
+     * Alvarez" en `catequesis_catequistas" y con su nombre completo aquí en
+     * `personas` — tres grafías de la misma persona, sin nada que las
+     * mantuviera iguales.
+     */
+    private function sincronizarPersonal(int $personaId, array $datos): void
+    {
+        $this->execute(
+            'UPDATE mesc_ministros SET nombre = :nombre, telefono = :telefono WHERE persona_id = :persona',
+            [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':persona' => $personaId]
+        );
+        $this->execute(
+            'UPDATE catequesis_catequistas SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
+            [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
+        );
+        $this->execute(
+            'UPDATE lector_lectores SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
+            [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
+        );
     }
 
     private function sincronizarPastorales(int $personaId, array $pastoralIds): void

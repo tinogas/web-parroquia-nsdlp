@@ -4,6 +4,20 @@ require_once BASE_PATH . '/modules/cursos/CursoModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
+/**
+ * Los cursos se administran por pastoral, igual que los eventos: cada una
+ * mantiene los suyos y en este listado ve los suyos y los generales, y el
+ * administrador puede dejar uno sin pastoral —«general», de la parroquia— o
+ * asignarlo a cualquiera. Lo que hay programado en toda la parroquia se
+ * consulta en la agenda interna, que no recorta por pastoral.
+ *
+ * Antes del issue de filtrado por pastoral, `pastoral_id` se tomaba del POST
+ * tal cual y ninguna acción comprobaba alcance, porque solo admin y editor
+ * llegaban aquí. Al abrirle el módulo a coordinadores y administradores de
+ * pastoral eso dejó de ser inocuo, y ahora rige la misma regla que en el resto
+ * del sistema: el pastoral_id que decide se lee de la base al editar, nunca del
+ * formulario.
+ */
 class CursoController extends Controller
 {
     private CursoModel $modelo;
@@ -20,25 +34,43 @@ class CursoController extends Controller
         $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
             ? $this->getStr('filtro') : 'todos';
 
+        // Mismo recorte que el listado de eventos: lo de su pastoral y su sede,
+        // más lo general de la parroquia. Lo demás se consulta en la agenda.
+        $pastorales = $this->pastoralesDelFiltro();
+        $centros    = $this->centrosDelFiltro();
+        [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
+        [$filtroCentro,   $idsCentro]   = $this->filtroCentro($centros);
+        $idsPastoral = $this->pastoralesVisibles($idsPastoral);
+        $idsCentro   = $this->centrosVisibles($idsCentro);
+
         $this->render('cursos/lista', [
             'titulo'  => 'Cursos',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro),
+            'listado' => $this->modelo->listar(
+                max(1, $this->getInt('pagina', 1)),
+                $filtro,
+                $idsPastoral,
+                $idsCentro
+            ),
             'filtro'  => $filtro,
+            'pastorales'     => $pastorales,
+            'filtroPastoral' => $filtroPastoral,
+            'centros'        => $centros,
+            'filtroCentro'   => $filtroCentro,
+            'tieneAlcance'   => Auth::pastoralesPermitidas() !== [],
         ]);
     }
 
     public function nuevo(): void
     {
-        $this->requirePermiso('cursos.editar');
+        $this->requirePermiso('cursos.crear');
 
-        $this->render('cursos/form', [
+        $this->render('cursos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
             'titulo'      => 'Nuevo curso',
             'curso'       => null,
             'sesiones'    => [],
             'instructores'=> (new PersonaModel())->paraSelector(),
-            'pastorales'  => (new PastoralModel())->paraSelector(),
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function editar(): void
@@ -51,28 +83,38 @@ class CursoController extends Controller
             $this->redirect(url_admin('cursos'));
             return;
         }
+        $this->requireAlcanceContenido(
+            $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null,
+            $curso['centro_id'] !== null ? (int) $curso['centro_id'] : null
+        );
 
-        $this->render('cursos/form', [
+        $this->render('cursos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
             'titulo'      => $curso['titulo'],
             'curso'       => $curso,
             'sesiones'    => $this->modelo->sesiones((int) $curso['id']),
             'instructores'=> (new PersonaModel())->paraSelector(),
-            'pastorales'  => (new PastoralModel())->paraSelector(),
             'scriptExtra' => $this->scriptEditor(),
-        ]);
+        ]));
     }
 
     public function guardar(): void
     {
-        $this->requirePermiso('cursos.editar');
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(url_admin('cursos'));
             return;
         }
         $this->validarCsrf();
 
-        $id     = $this->postInt('id');
+        $id        = $this->postInt('id');
+        $existente = $id ? $this->modelo->porId($id) : null;
+        $this->requirePermiso($existente ? 'cursos.editar' : 'cursos.crear');
+        if ($existente) {
+            $this->requireAlcanceContenido(
+                $existente['pastoral_id'] !== null ? (int) $existente['pastoral_id'] : null,
+                $existente['centro_id'] !== null ? (int) $existente['centro_id'] : null
+            );
+        }
+
         $titulo = $this->postStr('titulo');
         if ($titulo === '') {
             Session::flash('error', 'El curso necesita un título.');
@@ -80,7 +122,15 @@ class CursoController extends Controller
             return;
         }
 
-        $existente  = $id ? $this->modelo->porId($id) : null;
+        try {
+            $pastoralId = $this->pastoralIdValidado();
+            $centroId   = $this->centroIdValidado();
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+            $this->redirect($id ? url_admin('cursos', 'editar', ['id' => $id]) : url_admin('cursos', 'nuevo'));
+            return;
+        }
+
         $slugPedido = $this->postStr('slug');
         $slug = $slugPedido !== ''
             ? Slug::unico($slugPedido, 'cursos', $id ?: null)
@@ -110,7 +160,8 @@ class CursoController extends Controller
             'imagen'                   => $imagen,
             'modalidad'                => isset(CursoModel::MODALIDADES[$this->postStr('modalidad')]) ? $this->postStr('modalidad') : 'presencial',
             'instructor_id'            => $this->postIntONull('instructor_id'),
-            'pastoral_id'              => $this->postIntONull('pastoral_id'),
+            'pastoral_id'              => $pastoralId,
+            'centro_id'                => $centroId,
             'cupo'                     => $this->postIntONull('cupo'),
             'aportacion'               => $this->postStr('aportacion') ?: null,
             'fecha_inicio'             => $this->postStr('fecha_inicio') ?: null,
@@ -150,6 +201,10 @@ class CursoController extends Controller
         $id    = $this->postInt('id');
         $curso = $this->modelo->porId($id);
         if ($curso) {
+            $this->requireAlcanceContenido(
+                $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null,
+                $curso['centro_id'] !== null ? (int) $curso['centro_id'] : null
+            );
             Upload::borrar($curso['imagen']);
             $this->modelo->eliminar($id);
             $this->auditoria('eliminar', 'cursos', $id, $curso['titulo']);
@@ -172,11 +227,17 @@ class CursoController extends Controller
         $this->validarCsrf();
 
         $cursoId = $this->postInt('curso_id');
-        if (!$this->modelo->porId($cursoId)) {
+        $curso   = $this->modelo->porId($cursoId);
+        if (!$curso) {
             Session::flash('error', 'No encontramos ese curso.');
             $this->redirect(url_admin('cursos'));
             return;
         }
+        // El temario hereda el alcance de su curso: no es una entidad aparte.
+        $this->requireAlcanceContenido(
+            $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null,
+            $curso['centro_id'] !== null ? (int) $curso['centro_id'] : null
+        );
 
         $titulo = $this->postStr('titulo');
         if ($titulo === '') {
@@ -221,6 +282,11 @@ class CursoController extends Controller
         $id      = $this->postInt('id');
         $sesion  = $this->modelo->sesionPorId($id);
         if ($sesion) {
+            $curso = $this->modelo->porId((int) $sesion['curso_id']);
+            $this->requireAlcanceContenido(
+                $curso && $curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null,
+                $curso && $curso['centro_id'] !== null ? (int) $curso['centro_id'] : null
+            );
             $this->modelo->eliminarSesion($id);
             $this->auditoria('eliminar', 'curso_sesiones', $id);
             Session::flash('success', 'Sesión eliminada.');

@@ -57,8 +57,9 @@
 </div>
 
 <?php
-$dibujarModalCatequista = static function (string $idModal, ?array $catequista, int $pastoralId, string $csrf) {
-    $vacio = $catequista === null;
+$dibujarModalCatequista = static function (string $idModal, ?array $catequista, int $pastoralId, string $csrf, array $personas) {
+    $vacio     = $catequista === null;
+    $personaId = $vacio ? 0 : (int) ($catequista['persona_id'] ?? 0);
     ?>
     <div class="modal fade" id="<?= e($idModal) ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -74,10 +75,39 @@ $dibujarModalCatequista = static function (string $idModal, ?array $catequista, 
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nombre</label>
-                        <input type="text" name="nombre" class="form-control form-control-sm"
-                               value="<?= e($vacio ? '' : $catequista['nombre']) ?>" maxlength="140" required>
+                        <label class="form-label small fw-semibold">¿Quién es?</label>
+                        <select name="persona_id" class="form-select form-select-sm">
+                            <option value="">— Todavía no está en el equipo pastoral —</option>
+                            <?php foreach ($personas as $persona): ?>
+                            <option value="<?= (int) $persona['id'] ?>"
+                                <?= $personaId === (int) $persona['id'] ? 'selected' : '' ?>>
+                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Nombre, si no está en el equipo pastoral</label>
+                        <input type="text" name="nombre" class="form-control form-control-sm"
+                               value="<?= e($vacio || $personaId ? '' : $catequista['nombre']) ?>" maxlength="140">
+                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
+                    </div>
+                    <?php if ($personaId): ?>
+                    <?php
+                    $contacto = trim(
+                        (string) ($catequista['telefono'] ?? '')
+                        . (($catequista['telefono'] ?? '') && ($catequista['email'] ?? '') ? ' · ' : '')
+                        . (string) ($catequista['email'] ?? '')
+                    );
+                    ?>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Contacto</label>
+                        <p class="form-control-plaintext form-control-sm py-1 mb-0 small">
+                            <?= $contacto !== '' ? e($contacto) : '—' ?>
+                        </p>
+                        <div class="form-text">Viene de su ficha del equipo pastoral.</div>
+                    </div>
+                    <?php else: ?>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
@@ -88,6 +118,7 @@ $dibujarModalCatequista = static function (string $idModal, ?array $catequista, 
                         <input type="email" name="email" class="form-control form-control-sm"
                                value="<?= e($vacio ? '' : (string) $catequista['email']) ?>" maxlength="150">
                     </div>
+                    <?php endif; ?>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" name="activo" value="1"
                                id="act<?= e($idModal) ?>" <?= ($vacio || $catequista['activo']) ? 'checked' : '' ?>>
@@ -114,8 +145,8 @@ $dibujarModalCatequista = static function (string $idModal, ?array $catequista, 
     <?php
 };
 
-$dibujarModalCatequista('catequistaNuevo', null, $pastoralId, $csrf);
+$dibujarModalCatequista('catequistaNuevo', null, $pastoralId, $csrf, $personas);
 foreach ($catequistas as $catequista) {
-    $dibujarModalCatequista('catequista' . (int) $catequista['id'], $catequista, $pastoralId, $csrf);
+    $dibujarModalCatequista('catequista' . (int) $catequista['id'], $catequista, $pastoralId, $csrf, $personas);
 }
 ?>

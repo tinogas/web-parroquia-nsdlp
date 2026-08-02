@@ -287,6 +287,31 @@ if (!function_exists('e')) {
     }
 
     /**
+     * Páginas libres marcadas con «Mostrar en el menú», ya publicadas y en su
+     * orden. Vive aquí por lo mismo que pagina_publicada(): el menú se dibuja
+     * en TODAS las páginas públicas, así que no puede depender de que el
+     * módulo de páginas esté cargado.
+     */
+    function paginas_del_menu(): array
+    {
+        static $cache = null;
+
+        if ($cache === null) {
+            try {
+                $cache = Database::getInstance()->query(
+                    'SELECT slug, titulo FROM paginas
+                      WHERE publicada = 1 AND en_menu = 1
+                      ORDER BY orden, titulo'
+                )->fetchAll();
+            } catch (PDOException $e) {
+                $cache = [];
+            }
+        }
+
+        return $cache;
+    }
+
+    /**
      * Cruz latina (la de Cristo: travesaño en el tercio superior, no un "+"
      * centrado) como SVG inline. Bootstrap Icons 1.11 no trae ningún ícono
      * de temática religiosa —ni "cross" ni "church"—, así que en vez de

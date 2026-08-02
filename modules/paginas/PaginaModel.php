@@ -37,13 +37,10 @@ class PaginaModel extends Model
         );
     }
 
-    /** Páginas marcadas para aparecer en el menú del sitio. */
-    public function enMenu(): array
-    {
-        return $this->fetchAll(
-            'SELECT slug, titulo FROM paginas WHERE publicada = 1 AND en_menu = 1 ORDER BY orden, titulo'
-        );
-    }
+    // Las páginas del menú del sitio las lee paginas_del_menu() en
+    // core/helpers.php, no este modelo: el menú se dibuja en todas las páginas
+    // públicas y no puede depender de que el módulo de páginas esté cargado.
+    // Ver el comentario de pagina_publicada(), que existe por lo mismo.
 
     public function crear(array $datos, int $usuarioId): int
     {

@@ -117,33 +117,57 @@ class Model
     }
 
     /**
-     * Fragmento SQL y parámetros para filtrar por una lista de pastorales
-     * permitidas. Lo usan avisos, eventos y galería para aplicar el alcance
-     * del rol coordinador sin repetir esta lógica tres veces.
+     * Fragmento SQL y parámetros para acotar un listado a una lista de ids.
+     * Lo usan avisos, eventos, cursos y galería para aplicar el alcance —por
+     * pastoral y, en eventos y cursos, también por sede— sin repetir esta
+     * lógica en cada modelo. La columna se pasa como argumento justamente
+     * porque las dos dimensiones se filtran igual.
      *
-     * null   = sin filtro (alcance global, ve todo)
-     * []     = no debe ver nada (alcance limitado sin ninguna pastoral asignada)
-     * [1,3]  = solo esas pastorales
+     * null       = sin filtro (alcance global, ve todo)
+     * []         = no debe ver nada (alcance limitado sin ninguna asignación)
+     * [1,3]      = solo esos ids
+     * [null,1,3] = esos ids y además las filas con la columna en NULL
+     *
+     * Un null dentro de la lista significa el contenido general —el que no es
+     * de ninguna pastoral, o el que no es de ninguna sede—, que a veces hay que
+     * incluir. Va por separado porque `IN (…)` nunca casa con NULL.
      *
      * @return array{0: string, 1: array} [condición SQL o cadena vacía, parámetros]
      */
-    protected function condicionPastoral(?array $pastoralesPermitidas, string $columna = 'pastoral_id'): array
+    protected function condicionAlcance(?array $permitidos, string $columna = 'pastoral_id'): array
     {
-        if ($pastoralesPermitidas === null) {
+        if ($permitidos === null) {
             return ['', []];
         }
-        if (!$pastoralesPermitidas) {
+        if (!$permitidos) {
             return ['1 = 0', []];
         }
 
+        $generales = in_array(null, $permitidos, true);
+        $ids       = array_values(array_filter(
+            $permitidos,
+            static fn ($id): bool => $id !== null
+        ));
+
+        if (!$ids) {
+            return ["{$columna} IS NULL", []];
+        }
+
+        // El nombre del marcador sale de la columna: una misma consulta filtra
+        // por pastoral y por sede a la vez, y con un prefijo fijo el segundo
+        // juego de parámetros pisaría al primero.
+        $prefijo = preg_replace('/[^a-z0-9]/i', '', $columna);
+
         $params     = [];
         $marcadores = [];
-        foreach (array_values($pastoralesPermitidas) as $i => $id) {
-            $clave         = ":pas{$i}";
+        foreach ($ids as $i => $id) {
+            $clave         = ":{$prefijo}{$i}";
             $marcadores[]  = $clave;
             $params[$clave] = (int) $id;
         }
-        return ["{$columna} IN (" . implode(',', $marcadores) . ')', $params];
+        $enLista = "{$columna} IN (" . implode(',', $marcadores) . ')';
+
+        return [$generales ? "({$columna} IS NULL OR {$enLista})" : $enLista, $params];
     }
 
     /**

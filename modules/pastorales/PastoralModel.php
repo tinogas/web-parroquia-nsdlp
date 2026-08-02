@@ -43,11 +43,13 @@ class PastoralModel extends Model
     {
         $this->execute(
             'INSERT INTO pastorales
-                (centro_id, slug, nombre, descripcion_corta, descripcion, imagen, icono, responsable_nombre,
+                (centro_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
+                 responsable_nombre, responsable_persona_id,
                  contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
                  acepta_voluntarios, orden, activa)
              VALUES
-                (:centro, :slug, :nombre, :descCorta, :desc, :imagen, :icono, :responsable,
+                (:centro, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
+                 :responsable, :responsablePersona,
                  :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
                  :voluntarios, :orden, :activa)',
             $this->parametros($datos)
@@ -61,7 +63,8 @@ class PastoralModel extends Model
             'UPDATE pastorales
                 SET centro_id = :centro, slug = :slug, nombre = :nombre, descripcion_corta = :descCorta,
                     descripcion = :desc, imagen = :imagen, icono = :icono,
-                    responsable_nombre = :responsable, contacto_email = :email,
+                    responsable_nombre = :responsable, responsable_persona_id = :responsablePersona,
+                    contacto_email = :email,
                     contacto_telefono = :telefono, dia_reunion = :diaReunion,
                     hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
                     acepta_voluntarios = :voluntarios, orden = :orden, activa = :activa
@@ -201,7 +204,8 @@ class PastoralModel extends Model
             ':desc'        => $datos['descripcion'],
             ':imagen'      => $datos['imagen'],
             ':icono'       => $datos['icono'],
-            ':responsable' => $datos['responsable_nombre'],
+            ':responsable'         => $datos['responsable_nombre'],
+            ':responsablePersona'  => $datos['responsable_persona_id'],
             ':email'       => $datos['contacto_email'],
             ':telefono'    => $datos['contacto_telefono'],
             ':diaReunion'  => $datos['dia_reunion'],

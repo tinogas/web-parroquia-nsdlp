@@ -13,12 +13,12 @@ if (!function_exists('lector_texto_legible')) {
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <h1 class="h4 fw-bold mb-1">Calendario de lectores</h1>
+        <h1 class="h4 fw-bold mb-1">Calendario de liturgia</h1>
         <p class="text-muted mb-0 small">Quién proclama la Palabra en cada misa.</p>
     </div>
     <div class="d-flex gap-2">
         <a href="<?= e(url_admin('lector', 'lectores')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-people me-1"></i>Lectores
+            <i class="bi bi-people me-1"></i>Liturgia
         </a>
         <?php if (Auth::tienePermiso('lector.crear')): ?>
         <a href="<?= e(url_admin('lector', 'turno_nuevo')) ?>" class="btn btn-primary">

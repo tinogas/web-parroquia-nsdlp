@@ -44,7 +44,8 @@ class ConfiguracionModel extends Model
         'latitud'            => ['Latitud',                'texto',    'contacto', 'Opcional.'],
         'longitud'           => ['Longitud',               'texto',    'contacto', 'Opcional.'],
 
-        'facebook'           => ['Facebook',  'url', 'redes', ''],
+        'facebook'           => ['Facebook',  'url', 'redes',
+                                 'Además del icono del pie, la portada muestra un pequeño recuadro con las últimas publicaciones de esta página.'],
         'instagram'          => ['Instagram', 'url', 'redes', ''],
         'youtube'            => ['YouTube',   'url', 'redes', ''],
 

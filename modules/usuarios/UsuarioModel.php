@@ -14,10 +14,49 @@ require_once BASE_PATH . '/core/Model.php';
  */
 class UsuarioModel extends Model
 {
-    public function todos(): array
+    /**
+     * Listado del panel de usuarios. `$pastorales` es el alcance de quien
+     * mira, igual que en el resto del sistema: null = alcance global (ve
+     * todas las cuentas), o la lista de pastorales que administra.
+     *
+     * Con alcance acotado se aplican dos filtros a la vez, no uno: además de
+     * pastoral compartida, el rango de la cuenta objetivo tiene que ser
+     * Coordinador o Consulta — un Coordinador general nunca ve en esta lista
+     * a otro Coordinador general, a Secretaría, a Editor ni a Administrador,
+     * aunque coincida la pastoral. Es la misma regla que aplica
+     * UsuarioController::dentroDeMiAlcance() cuando se llega por id directo;
+     * aquí se hace por si sola para no traer de la base cuentas que ese
+     * acceso directo rechazaría de todos modos.
+     */
+    public function todos(?array $pastorales = null): array
     {
+        $where  = '';
+        $params = [];
+
+        if ($pastorales !== null) {
+            if (!$pastorales) {
+                $where = 'WHERE 1 = 0';
+            } else {
+                $marcadores = [];
+                foreach (array_values($pastorales) as $i => $pid) {
+                    $clave          = ":pas{$i}";
+                    $marcadores[]   = $clave;
+                    $params[$clave] = (int) $pid;
+                }
+                $params[':rolCoord']    = ROL_COORDINADOR;
+                $params[':rolConsulta'] = ROL_CONSULTA;
+                $where = 'WHERE u.rol IN (:rolCoord, :rolConsulta)
+                            AND EXISTS (
+                                  SELECT 1 FROM usuarios_pastorales up2
+                                   WHERE up2.usuario_id = u.id
+                                     AND up2.pastoral_id IN (' . implode(',', $marcadores) . ')
+                                )';
+            }
+        }
+
         return $this->fetchAll(
             "SELECT u.*,
+                    pe.cargo,
                     (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
                        FROM usuarios_pastorales up JOIN pastorales p ON p.id = up.pastoral_id
                       WHERE up.usuario_id = u.id) AS pastorales_nombres,
@@ -25,7 +64,10 @@ class UsuarioModel extends Model
                        FROM usuarios_centros uc JOIN centros c ON c.id = uc.centro_id
                       WHERE uc.usuario_id = u.id) AS centros_nombres
                FROM usuarios u
-              ORDER BY u.nombre"
+               LEFT JOIN personas pe ON pe.id = u.persona_id
+               {$where}
+              ORDER BY u.nombre",
+            $params
         );
     }
 
@@ -45,6 +87,34 @@ class UsuarioModel extends Model
         return $this->fetchOne('SELECT * FROM usuarios WHERE id = :id', [':id' => $id]);
     }
 
+    /** La cuenta de esa ficha del equipo pastoral, si ya tiene una. */
+    public function porPersona(int $personaId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT * FROM usuarios WHERE persona_id = :id',
+            [':id' => $personaId]
+        );
+    }
+
+    /**
+     * Las fichas del equipo pastoral a las que se les puede dar cuenta: las
+     * activas que todavía no tienen una, más la de la cuenta que se esté
+     * editando —si no, al guardar cualquier otro campo se perdería el vínculo
+     * porque su propia persona no estaría en la lista—.
+     */
+    public function personasSinCuenta(?int $exceptoUsuarioId = null): array
+    {
+        return $this->fetchAll(
+            'SELECT p.id, p.nombre, p.cargo
+               FROM personas p
+               LEFT JOIN usuarios u ON u.persona_id = p.id
+              WHERE p.activo = 1
+                AND (u.id IS NULL OR u.id = :usuario)
+              ORDER BY p.nombre',
+            [':usuario' => $exceptoUsuarioId ?? 0]
+        );
+    }
+
     /** IDs de pastoral asignadas, para marcar las casillas del formulario. */
     public function pastoralesDe(int $id): array
     {
@@ -55,7 +125,7 @@ class UsuarioModel extends Model
         return array_map(static fn (array $f): int => (int) $f['pastoral_id'], $filas);
     }
 
-    /** IDs de centro/sede asignados completos (issue #3, "usuarios por centro/sede"). */
+    /** IDs de las sedes en las que trabaja. Vacío = todas. */
     public function centrosDe(int $id): array
     {
         $filas = $this->fetchAll(
@@ -84,9 +154,10 @@ class UsuarioModel extends Model
         $this->beginTransaction();
         try {
             $this->execute(
-                'INSERT INTO usuarios (nombre, email, password_hash, rol, telefono, foto, activo)
-                 VALUES (:nombre, :email, :hash, :rol, :telefono, :foto, :activo)',
+                'INSERT INTO usuarios (persona_id, nombre, email, password_hash, rol, telefono, foto, activo)
+                 VALUES (:persona, :nombre, :email, :hash, :rol, :telefono, :foto, :activo)',
                 [
+                    ':persona'  => $datos['persona_id'],
                     ':nombre'   => $datos['nombre'],
                     ':email'    => $datos['email'],
                     ':hash'     => password_hash($datos['password'], PASSWORD_BCRYPT, ['cost' => 12]),
@@ -99,6 +170,7 @@ class UsuarioModel extends Model
             $id = $this->lastInsertId();
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
+            $this->sincronizarPastoralResponsable($datos['persona_id'], $datos['email']);
             $this->commit();
             return $id;
         } catch (Throwable $e) {
@@ -113,12 +185,14 @@ class UsuarioModel extends Model
         $this->beginTransaction();
         try {
             $sql = $datos['password'] !== ''
-                ? 'UPDATE usuarios SET nombre=:nombre, email=:email, password_hash=:hash, rol=:rol,
+                ? 'UPDATE usuarios SET persona_id=:persona, nombre=:nombre, email=:email,
+                       password_hash=:hash, rol=:rol,
                        telefono=:telefono, foto=:foto, activo=:activo WHERE id=:id'
-                : 'UPDATE usuarios SET nombre=:nombre, email=:email, rol=:rol,
+                : 'UPDATE usuarios SET persona_id=:persona, nombre=:nombre, email=:email, rol=:rol,
                        telefono=:telefono, foto=:foto, activo=:activo WHERE id=:id';
 
             $params = [
+                ':persona' => $datos['persona_id'],
                 ':nombre' => $datos['nombre'], ':email' => $datos['email'], ':rol' => $datos['rol'],
                 ':telefono' => $datos['telefono'], ':foto' => $datos['foto'], ':activo' => $datos['activo'],
                 ':id' => $id,
@@ -130,6 +204,7 @@ class UsuarioModel extends Model
             $this->execute($sql, $params);
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
+            $this->sincronizarPastoralResponsable($datos['persona_id'], $datos['email']);
             $this->commit();
         } catch (Throwable $e) {
             $this->rollback();
@@ -143,6 +218,7 @@ class UsuarioModel extends Model
         $this->execute('UPDATE usuarios SET activo = 0 WHERE id = :id', [':id' => $id]);
     }
 
+    /** Qué administra. Estas filas son el alcance, sin herencias de por medio. */
     private function sincronizarPastorales(int $usuarioId, array $pastoralIds): void
     {
         $this->execute('DELETE FROM usuarios_pastorales WHERE usuario_id = :id', [':id' => $usuarioId]);
@@ -154,6 +230,39 @@ class UsuarioModel extends Model
         }
     }
 
+    /**
+     * Si esta cuenta es la de la persona responsable de alguna pastoral, su
+     * correo de contacto público se toma de aquí —el correo de acceso, «el
+     * del rol»— para que no queden dos direcciones distintas de la misma
+     * cuenta. Sin esto, `pastorales.contacto_email` es un campo libre que
+     * diverge en cuanto alguien cambia su correo de acceso sin acordarse de
+     * ir a editar también la ficha de su pastoral (fue justo lo que le pasó
+     * a la de MESC: contacto_email tenía un correo con una letra distinta al
+     * de la cuenta real de la coordinadora). Ver
+     * PastoralController::guardar(), que hace el mismo cálculo al elegir
+     * responsable, para que no haya que esperar a que la cuenta se vuelva a
+     * guardar.
+     */
+    private function sincronizarPastoralResponsable(?int $personaId, string $email): void
+    {
+        if ($personaId === null) {
+            return;
+        }
+        $this->execute(
+            'UPDATE pastorales SET contacto_email = :email WHERE responsable_persona_id = :persona',
+            [':email' => $email, ':persona' => $personaId]
+        );
+    }
+
+    /**
+     * Dónde lo administra. Ninguna fila aquí significa «en toda la parroquia»,
+     * no «en ninguna parte»: es lo contrario que las pastorales, y por eso son
+     * dos tablas y no una columna más.
+     *
+     * Hasta la revisión de alcance esta tabla hacía algo muy distinto —quien
+     * administraba un centro heredaba todas sus pastorales—; ver
+     * docs/ARQUITECTURA.md.
+     */
     private function sincronizarCentros(int $usuarioId, array $centroIds): void
     {
         $this->execute('DELETE FROM usuarios_centros WHERE usuario_id = :id', [':id' => $usuarioId]);

@@ -28,15 +28,25 @@ SET foreign_key_checks = 0;
 -- NÚCLEO Y SEGURIDAD
 -- ------------------------------------------------------------
 
+-- persona_id ata la cuenta a su ficha del equipo pastoral, que es el registro
+-- principal: de ahí salen el organigrama y las cuentas, y de ahí vienen el
+-- nombre, el teléfono y la foto (la cuenta guarda copia y PersonaModel la
+-- refresca al guardar la ficha). Es NULL para las cuentas que no deben
+-- aparecer en el directorio público, como la del administrador. UNIQUE: una
+-- persona, una cuenta. FK a personas, creada más abajo en este script.
 CREATE TABLE IF NOT EXISTS usuarios (
     id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    persona_id    SMALLINT UNSIGNED NULL,
     nombre        VARCHAR(120) NOT NULL,
     email         VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    rol           ENUM('admin','editor','coordinador','secretaria',
-                       'admin_mesc','consulta_mesc',
-                       'admin_catequesis','consulta_catequesis',
-                       'admin_lector','consulta_lector') NOT NULL DEFAULT 'coordinador',
+    -- El rol dice QUÉ puede hacer; las pastorales y sedes asignadas, SOBRE QUÉ.
+    -- Hubo seis roles con la pastoral en el nombre (admin_mesc, consulta_lector…)
+    -- y se retiraron: no sabían distinguir a tres coordinadoras de catequesis,
+    -- una por comunidad. Ver docs/ARQUITECTURA.md
+    rol           ENUM('admin','editor','secretaria',
+                       'coordinador','coordinador_general','consulta')
+                  NOT NULL DEFAULT 'coordinador',
     foto          VARCHAR(255) NULL,
     telefono      VARCHAR(20)  NULL,
     activo        TINYINT(1)   NOT NULL DEFAULT 1,
@@ -44,7 +54,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_usr_email (email),
-    KEY idx_usr_rol (rol, activo)
+    UNIQUE KEY uq_usr_persona (persona_id),
+    KEY idx_usr_rol (rol, activo),
+    CONSTRAINT fk_usr_persona FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Pivote: un coordinador puede administrar más de una pastoral a la vez (es
@@ -59,10 +71,13 @@ CREATE TABLE IF NOT EXISTS usuarios_pastorales (
     CONSTRAINT fk_up_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Pivote análogo, pero por centro/sede completo (issue #3: "usuarios por
--- centro/sede"): quien administra un centro administra TODAS sus pastorales,
--- sin tener que asignarse una por una. Auth::pastoralesPermitidas() hace la
--- unión de esta tabla con usuarios_pastorales. FK a centros, creada más abajo.
+-- Las sedes en las que trabaja, que acotan sus pastorales: la otra mitad del
+-- alcance. NINGUNA fila = todas las sedes, al revés que usuarios_pastorales
+-- (ninguna fila = nada), y así se representa una coordinación general.
+--
+-- Ojo con los respaldos anteriores a la revisión de alcance: entonces esta
+-- tabla decía "administra el centro completo" y AÑADÍA todas las pastorales de
+-- esa sede. Ver docs/ARQUITECTURA.md. FK a centros, creada más abajo.
 CREATE TABLE IF NOT EXISTS usuarios_centros (
     usuario_id INT UNSIGNED      NOT NULL,
     centro_id  SMALLINT UNSIGNED NOT NULL,
@@ -263,6 +278,11 @@ CREATE TABLE IF NOT EXISTS avisos (
 
 -- Fecha concreta, no recurrencia: lo que se repite cada semana vive en
 -- horarios, no aquí. color alimenta el calendario del sitio público.
+--
+-- pastoral_id dice QUIÉN lo organiza y centro_id DÓNDE. Las dos juntas son el
+-- alcance: la catequesis de Jesús el Señor y la de la sede son el mismo equipo
+-- en dos comunidades, y cada coordinadora administra la suya. NULL en centro_id
+-- = evento de toda la parroquia. Ver docs/ARQUITECTURA.md, "Alcance por sede".
 CREATE TABLE IF NOT EXISTS eventos (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
     slug         VARCHAR(160) NOT NULL,
@@ -274,6 +294,7 @@ CREATE TABLE IF NOT EXISTS eventos (
     fecha_fin    DATETIME     NULL,
     todo_el_dia  TINYINT(1)   NOT NULL DEFAULT 0,
     pastoral_id  TINYINT UNSIGNED NULL,
+    centro_id    SMALLINT UNSIGNED NULL,
     color        VARCHAR(7)   NULL,
     publicado    TINYINT(1)   NOT NULL DEFAULT 0,
     usuario_id   INT UNSIGNED NULL,
@@ -283,7 +304,9 @@ CREATE TABLE IF NOT EXISTS eventos (
     KEY idx_eve_fecha (fecha_inicio),
     KEY idx_eve_pub (publicado, fecha_inicio),
     KEY idx_eve_pastoral (pastoral_id),
-    CONSTRAINT fk_eve_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL
+    KEY idx_eve_centro (centro_id),
+    CONSTRAINT fk_eve_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL,
+    CONSTRAINT fk_eve_centro   FOREIGN KEY (centro_id)   REFERENCES centros(id)    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mensajes del formulario de contacto. Contienen datos personales de quien
@@ -449,7 +472,17 @@ CREATE TABLE IF NOT EXISTS pastorales (
     descripcion        MEDIUMTEXT   NULL,
     imagen             VARCHAR(255) NULL,
     icono              VARCHAR(40)  NULL,
-    responsable_nombre VARCHAR(140) NULL,
+    -- responsable_nombre es el respaldo para cuando el responsable todavía no
+    -- tiene ficha en el equipo pastoral (p. ej. un voluntario sin cuenta ni
+    -- ficha propia); en cuanto se elige de responsable_persona_id, este campo
+    -- se limpia y el nombre se toma de personas.nombre — PastoralModel no lo
+    -- duplica, PersonaModel::sincronizarCuenta() lo mantiene si la ficha cambia
+    -- de nombre. Ver docs/ARQUITECTURA.md
+    responsable_nombre     VARCHAR(140) NULL,
+    responsable_persona_id SMALLINT UNSIGNED NULL,
+    -- contacto_email se sincroniza con el correo de acceso (usuarios.email) de
+    -- la cuenta del responsable, si tiene una — UsuarioModel lo empuja aquí en
+    -- cada guardado. Sin cuenta vinculada, es un campo libre normal.
     contacto_email     VARCHAR(150) NULL,
     contacto_telefono  VARCHAR(20)  NULL,
     dia_reunion        VARCHAR(60)  NULL,
@@ -462,7 +495,9 @@ CREATE TABLE IF NOT EXISTS pastorales (
     PRIMARY KEY (id),
     UNIQUE KEY uq_pas_slug (slug),
     KEY idx_pas_centro (centro_id),
-    CONSTRAINT fk_pas_centro FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE SET NULL
+    KEY idx_pas_responsable (responsable_persona_id),
+    CONSTRAINT fk_pas_centro      FOREIGN KEY (centro_id)              REFERENCES centros(id)  ON DELETE SET NULL,
+    CONSTRAINT fk_pas_responsable FOREIGN KEY (responsable_persona_id) REFERENCES personas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Actividades comunitarias y de apoyo social de cada pastoral.
@@ -574,17 +609,22 @@ CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
 -- las mismas protecciones reforzadas. Se modela aparte de personas (que es el
 -- equipo pastoral PÚBLICO mostrado en "Quiénes somos" con foto y semblanza):
 -- un ministro MESC es un voluntario interno, no necesariamente parte de esa
--- vitrina pública.
+-- vitrina pública — de ahí que persona_id sea opcional: vincula con su ficha
+-- cuando sí está de alta ahí (para que nombre/teléfono se tomen de una sola
+-- fuente, ver PersonaModel::sincronizarPersonal()), y queda NULL cuando no.
 CREATE TABLE IF NOT EXISTS mesc_ministros (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED NOT NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
     nombre      VARCHAR(150) NOT NULL,
     telefono    VARCHAR(20)  NULL,
     activo      TINYINT(1)   NOT NULL DEFAULT 1,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_mmi_pastoral (pastoral_id, activo),
-    CONSTRAINT fk_mmi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+    UNIQUE KEY uq_mmi_persona (persona_id),
+    CONSTRAINT fk_mmi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mmi_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Un turno cubre una misa o evento en una fecha concreta. Deliberadamente sin
@@ -652,10 +692,13 @@ CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
 
 -- Catequista: solo nombre y contacto. El grado que da NO es un dato fijo
 -- suyo —vive en catequesis_periodo_catequistas—, porque normalmente no da
--- el mismo grado cada ciclo (ver esa tabla).
+-- el mismo grado cada ciclo (ver esa tabla). persona_id opcional, mismo
+-- criterio que mesc_ministros.persona_id: vincula con el equipo pastoral
+-- cuando ya está de alta ahí, NULL cuando todavía no.
 CREATE TABLE IF NOT EXISTS catequesis_catequistas (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED  NOT NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
     nombre      VARCHAR(140)      NOT NULL,
     telefono    VARCHAR(20)       NULL,
     email       VARCHAR(150)      NULL,
@@ -663,7 +706,9 @@ CREATE TABLE IF NOT EXISTS catequesis_catequistas (
     activo      TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     KEY idx_ctq_pastoral (pastoral_id),
-    CONSTRAINT fk_ctq_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+    UNIQUE KEY uq_ctq_persona (persona_id),
+    CONSTRAINT fk_ctq_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ctq_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Ciclo de catecismo (ej. "2026-2027", agosto a junio). Para saber qué
@@ -736,7 +781,9 @@ CREATE TABLE IF NOT EXISTS catequesis_documentos (
 -- ------------------------------------------------------------
 -- LECTOR — TURNOS Y CATÁLOGO DE LECTORES
 -- ------------------------------------------------------------
--- Módulo dedicado para la pastoral de Lectores, calcado de
+-- Módulo dedicado para la pastoral de Liturgia (se llamaba "Lectores"; el
+-- nombre del módulo, de sus tablas y su ruta /admin/lector no cambiaron, ver
+-- la nota de PASTORAL_LECTOR en config/app.php), calcado de
 -- mesc_turnos/mesc_ministros/mesc_turno_ministros pero sin rutas ni
 -- visitas: un lector proclama la Palabra en misa, no reparte comunión a
 -- domicilio. color_liturgico_id reutiliza el catálogo de MESC
@@ -746,6 +793,7 @@ CREATE TABLE IF NOT EXISTS catequesis_documentos (
 CREATE TABLE IF NOT EXISTS lector_lectores (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED  NOT NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
     nombre      VARCHAR(140)      NOT NULL,
     telefono    VARCHAR(20)       NULL,
     email       VARCHAR(150)      NULL,
@@ -753,7 +801,9 @@ CREATE TABLE IF NOT EXISTS lector_lectores (
     activo      TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     KEY idx_lec_pastoral (pastoral_id),
-    CONSTRAINT fk_lec_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
+    UNIQUE KEY uq_lec_persona (persona_id),
+    CONSTRAINT fk_lec_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_lec_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS lector_turnos (
@@ -807,10 +857,10 @@ CREATE TABLE IF NOT EXISTS sacramentos (
 -- ------------------------------------------------------------
 -- CURSOS
 -- ------------------------------------------------------------
--- A diferencia de avisos/eventos/galería, aquí pastoral_id es solo una
--- etiqueta organizativa: el rol coordinador no administra cursos (no tiene
--- cursos.crear ni cursos.editar), así que no hace falta el mismo alcance por
--- pastoral ni su validación en el servidor.
+-- pastoral_id y centro_id rigen igual que en eventos: quién organiza el curso
+-- y en qué sede se da. Dejaron de ser etiquetas informativas cuando el
+-- coordinador y los administradores de pastoral recibieron cursos.crear /
+-- cursos.editar; hoy se validan en el servidor al guardar y al borrar.
 
 CREATE TABLE IF NOT EXISTS cursos (
     id                       SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -823,6 +873,7 @@ CREATE TABLE IF NOT EXISTS cursos (
     modalidad                ENUM('presencial','en_linea','mixta') NOT NULL DEFAULT 'presencial',
     instructor_id            SMALLINT UNSIGNED NULL,
     pastoral_id              TINYINT UNSIGNED  NULL,
+    centro_id                SMALLINT UNSIGNED NULL,
     cupo                     SMALLINT UNSIGNED NULL,
     aportacion               VARCHAR(60)  NULL,
     fecha_inicio             DATE         NULL,
@@ -838,8 +889,10 @@ CREATE TABLE IF NOT EXISTS cursos (
     PRIMARY KEY (id),
     UNIQUE KEY uq_cur_slug (slug),
     KEY idx_cur_pub (publicado, fecha_inicio),
+    KEY idx_cur_centro (centro_id),
     CONSTRAINT fk_cur_instructor FOREIGN KEY (instructor_id) REFERENCES personas(id)   ON DELETE SET NULL,
-    CONSTRAINT fk_cur_pastoral   FOREIGN KEY (pastoral_id)   REFERENCES pastorales(id) ON DELETE SET NULL
+    CONSTRAINT fk_cur_pastoral   FOREIGN KEY (pastoral_id)   REFERENCES pastorales(id) ON DELETE SET NULL,
+    CONSTRAINT fk_cur_centro     FOREIGN KEY (centro_id)     REFERENCES centros(id)    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Temario. Hoy es contenido público informativo; en fase 2 es el ancla del

@@ -68,13 +68,18 @@ whitelist de dos valores y `publico` por defecto.
 
 ```
 área pública   inicio · nosotros · horarios · sacramentos · pastorales · cursos
-               avisos · eventos · contacto · pagina · sitemap
+               avisos · eventos · galeria · contacto · pagina · sitemap
 
-área admin     auth · panel · configuracion · bloques · paginas · personas · centros
-               organigrama · horarios · sacramentos · pastorales
+área admin     auth · panel · agenda · configuracion · bloques · paginas
+               personas · centros · organigrama · horarios · sacramentos
+               pastorales · mesc · catequesis · lector
                cursos · inscripciones · avisos · eventos · galeria · carrusel
                mensajes · usuarios · auditoria · respaldos
 ```
+
+Los tres módulos de pastoral dedicada —`mesc`, `catequesis`, `lector`— aparecen **solo en
+la tabla de administración**: ninguno tiene controlador público, a diferencia de los demás
+módulos de contenido. La razón está en su propia sección, más abajo.
 
 Flujo de `dispatch()`:
 
@@ -407,6 +412,17 @@ que necesita cada diseño es distinto de raíz.
 
 ### Calendario propio
 
+**El motor vive en `core/Calendario.php`, compartido por las dos caras.** Nació dentro de
+`EventoPublicoController`, que era el único calendario del sitio; al aparecer la agenda
+interna del panel (ver "Agenda interna", más abajo) hubo que elegir entre duplicar las
+cuatro vistas o compartirlas. El calendario de turnos MESC sí duplicó su cuadrícula, y con
+razón —eran veinte líneas—; aquí son doscientas, y dos copias de eso se separan a la
+primera corrección que se aplique solo en una. `Calendario` no construye URLs ni consulta
+la base: recibe «ítems» —cualquier arreglo con `fecha_inicio`, `fecha_fin`, `todo_el_dia`,
+`titulo` y `color`— y devuelve los periodos, sus saltos, sus títulos y las cuadrículas ya
+repartidas por día. Lo propio de cada cara —qué se lee y a dónde enlaza— se queda en su
+controlador.
+
 Mejora progresiva de verdad, no solo de palabra: `EventoPublicoController::index()` arma
 el periodo solicitado **en el servidor** y lo sirve como HTML normal — funciona sin
 JavaScript, incluida la navegación y el cambio de vista, porque todos esos enlaces son
@@ -470,22 +486,127 @@ queda más remedio que usarlas. Un día que no existe en su mes devuelve `1 = 0`
 rango: sin eso, el "29 de febrero de 2026" se normalizaría al 1 de marzo y el listado
 mostraría los eventos de otro día.
 
+Son **cuatro** filtros combinables: estado, fecha, pastoral (todas / solo las mías / una
+concreta) y sede. Los dos últimos se cruzan con el alcance de quien mira —ver "Coordinarse y
+administrar son dos pantallas, no una" y "El alcance tiene dos mitades"—, así que dentro de
+lo que le corresponde puede acotar a mano. El de sede no se dibuja cuando solo hay una que
+elegir. Cada filtro arrastra el estado de los demás en sus enlaces, y la paginación los
+conserva todos.
+
 El selector de año se llena con `aniosConEventos()`, que solo ofrece los años que de verdad
-tienen eventos y respeta el alcance por pastoral de quien mira; el de día ofrece los del mes
+tienen eventos y acompaña al filtro de pastoral que esté puesto —para que los años ofrecidos
+correspondan a lo que se está viendo, no a todo el histórico—; el de día ofrece los del mes
 elegido (28, 29, 30 o 31), y 31 mientras no haya mes. Cualquier valor fuera de rango se
 ignora y el listado vuelve a mostrarlo todo: es un filtro, no una búsqueda que deba fallar
 con un error. Si el día deja de existir al cambiar de mes —del 31 de enero a febrero— se
 descarta el día y queda el mes, que es lo que la persona tenía delante.
 
-### Publicación con moderación, ya preparada
+### Agenda interna: el calendario del equipo, aparte del del sitio
 
-`avisos.publicado` y `eventos.publicado` arrancan en 0. Los controladores comprueban el
-permiso `*.publicar` por separado de `*.crear`/`*.editar` — hoy tanto `admin` como
-`editor` lo tienen, así que en la práctica todo el contenido que crean se publica según
-ellos decidan. La separación existe para la etapa 6: el rol coordinador tendrá
-`*.crear`/`*.editar` pero no `*.publicar`, así que lo que escriba entrará como borrador
-para que un editor lo revise, sin tocar un solo controlador de esta etapa. Se aplicó el
-mismo patrón a `galeria.publicar`, independiente de `galeria.editar`.
+El sitio tenía un solo calendario, el público, y el panel una lista paginada. Para
+coordinarse entre pastorales eso no alcanza: lo que el equipo necesita ver es *todo* lo que
+hay programado —lo publicado y lo que sigue en borrador, los eventos y también los cursos—,
+y el sitio público no debe enseñar ni una cosa ni la otra.
+
+De ahí `modules/agenda/`, en `/admin/agenda`, con las mismas cuatro vistas que el público
+(día, semana, mes, año) y **sin tocar el calendario del sitio**, que quedó exactamente como
+estaba. Tres decisiones lo definen:
+
+- **Mezcla eventos y cursos.** `EventoModel::agenda()` y `CursoModel::agenda()` son las
+  consultas de esta pantalla; ninguna filtra por `publicado`, que es justamente la
+  diferencia con las públicas. `AgendaController` normaliza cada fila a la forma que
+  `Calendario` espera: un curso tiene `fecha_inicio`/`fecha_fin` en DATE, sin hora, así que
+  entra como «todo el día» y su `horario` ("martes de 19:00 a 21:00") viaja como texto,
+  que es como está escrito. Un curso sin fecha de inicio no cabe en ninguna casilla: en
+  vez de desaparecerlo en silencio, `sinFechas()` los recoge y la vista los lista debajo
+  del calendario.
+- **Sin AJAX**, igual que el calendario de turnos MESC y a diferencia del público: cada
+  cambio de periodo es un enlace normal que recarga. El panel no tiene el tráfico que
+  justifique un endpoint de fragmentos aparte.
+- **Los estilos se copiaron otra vez de `publico.css` a `app.css`**, ahora los de las
+  vistas de día, semana y año —MESC ya había copiado los de la cuadrícula de mes—, porque
+  el panel carga una hoja distinta y las dos no comparten variables de color. Es
+  duplicación consciente, marcada con un comentario en ambos bloques.
+
+`agenda.ver` es un permiso propio, y lo tienen todos los roles del panel que administran o
+consultan contenido, **incluidos los seis de Consulta**: para un ministro, catequista o
+lector es la única pantalla que verán además de la de su pastoral, y es la que responde
+"¿qué hay programado esta semana?" sin darles con qué editar nada.
+
+### Coordinarse y administrar son dos pantallas, no una
+
+Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y
+qué se puede *ver*. `EventoModel::listar()` recibía `Auth::pastoralesPermitidas()` y un
+coordinador solo veía sus eventos en el panel.
+
+Eso hace imposible coordinarse. Si la pastoral juvenil no ve que catequesis ya tiene el
+salón ocupado el sábado, lo va a apartar igual. Pero lo contrario tampoco funciona: un
+listado de trabajo con los eventos de las seis pastorales mezclados no sirve para
+administrar los propios. Cada pregunta acabó teniendo su pantalla:
+
+- **La agenda interna no recorta nada.** `/admin/agenda` enseña todas las pastorales,
+  publicado y borrador, eventos y cursos. Es *la* pantalla de coordinarse, y por eso
+  `agenda.ver` lo tienen hasta los seis roles de Consulta. Ninguna de sus consultas pasa
+  por el alcance.
+- **Los listados de eventos y cursos traen lo suyo y lo general.**
+  `Controller::pastoralesVisibles()` cruza el filtro elegido en pantalla
+  —`filtroPastoral()`: vacío, `mias` o el id de una— con el alcance real de quien mira.
+  Sin alcance global eso son sus pastorales **más el contenido sin pastoral**: 311 de los
+  467 eventos de la agenda 2026 son parroquiales generales, y esconderlos dejaría a cada
+  pastoral administrando su propio recorte del calendario. Los generales viajan al modelo
+  como un `null` dentro de la lista de ids, porque `IN (…)` nunca casa con `NULL`
+  (`Model::condicionPastoral()`).
+- **Escribir sigue igual de acotado.** `requireAlcancePastoral()` con el `pastoral_id`
+  leído de la base, en editar, guardar y eliminar, sin una sola excepción; y los botones de
+  editar y borrar no se dibujan sobre lo ajeno, por lo mismo que ya se aplicó al calendario
+  de turnos MESC cuando aparecieron los roles de consulta: un enlace que acaba en «ese
+  contenido pertenece a otra pastoral» es peor que no tener enlace. El modal de borrado
+  tampoco se genera —ocultar el botón y dejar el modal en el HTML sería teatro—, aunque el
+  límite de verdad siga estando en el controlador. Un evento general se ve pero no se toca:
+  `Auth::puedeSobrePastoral(null)` es falso para todo el que no tenga alcance global.
+
+El selector de pastoral del listado se acota igual (`pastoralesDelFiltro()`): ofrecer una
+pastoral cuyos eventos ese listado no va a mostrar es prometer algo que no ocurre. De paso
+cierra la puerta trasera, porque un id que no está en el selector cae a «todas» —que para
+esa persona son las suyas y las generales—, así que escribir `?pastoral=` a mano no asoma a
+lo ajeno.
+
+**Avisos y galería no cambiaron**: ahí `filtroPastoralSql()` sigue recortando el listado al
+alcance. No es incoherencia sino falta de motivo: nadie necesita leer los borradores de
+avisos de otra pastoral para no pisarse, que es lo que sí pasa con las fechas. El día que
+haga falta, el camino ya está hecho.
+
+**Los cursos pasaron a tener alcance de verdad.** `cursos.pastoral_id` existía desde el
+principio, pero era "solo una etiqueta organizativa" —así estaba escrito en `CursoModel`—
+porque únicamente admin y editor entraban al módulo: `pastoral_id` se tomaba del POST tal
+cual y ninguna acción comprobaba nada. Al darle `cursos.crear`/`cursos.editar` al
+coordinador y a los tres administradores de pastoral, eso dejó de ser inocuo, y el módulo
+adoptó el mismo patrón que eventos: selector acotado con `opcionesPastoral()`,
+`pastoralIdValidado()` al guardar y `requireAlcancePastoral()` al editar, borrar y también
+al tocar el temario, que hereda el alcance de su curso en vez de tener el suyo. Con
+`cursos.publicar`, igual que sus eventos: ver abajo.
+
+### Publicación: el calendario lo publica quien lo organiza
+
+`avisos.publicado` y `eventos.publicado` arrancan en 0, y los controladores comprueban el
+permiso `*.publicar` por separado de `*.crear`/`*.editar`. Esa separación es la que permite
+que el mismo formulario sirva para dos regímenes distintos, sin una línea de código
+condicional más allá de `Auth::tienePermiso()`:
+
+- **Fechas —eventos y cursos— las publica la propia pastoral.** Además de `admin` y
+  `editor`, tienen `eventos.publicar` y `cursos.publicar` el coordinador y los tres
+  administradores de pastoral (MESC, Catequesis, Lector). Una fecha en el calendario es
+  algo que la pastoral ya decidió, y que las demás necesitan ver publicada para no pisarla;
+  hacerla esperar a que un editor pase a revisarla convertía la moderación en un cuello de
+  botella sobre información que de todos modos es cierta.
+- **Textos —avisos y galería— siguen moderados.** Ahí el coordinador tiene
+  `*.crear`/`*.editar` pero no `*.publicar`: un aviso va dirigido a toda la parroquia y
+  entra como borrador para que un editor lo revise. `galeria.publicar` sigue el mismo
+  patrón, independiente de `galeria.editar`.
+
+Cuando falta el permiso, el controlador fuerza el valor guardado (`$puedePublicar ?
+$this->postBool('publicado') : …`) y el formulario cambia la casilla por el aviso de que
+eso se enviará como borrador. El límite está en el controlador; la vista solo lo explica.
 
 ### Vigencia de avisos (issue #3)
 
@@ -505,15 +626,136 @@ No se replicó el mismo campo en `eventos`: un evento ya tiene su propio ciclo d
 (`fecha_inicio`/`fecha_fin`), y ocultar automáticamente los que ya pasaron trabajaría contra
 el interés de conservar un registro histórico de lo organizado.
 
+### Lo último de Facebook, en la portada
+
+`modules/inicio/views/publico/index.php` muestra, cuando `Config::tiene('facebook')`, el
+Page Plugin oficial de Facebook: un `<iframe>` a `facebook.com/plugins/page.php` que la propia
+Facebook mantiene con las últimas publicaciones de la página, en su propio diseño. Reutiliza
+el campo `facebook` de Configuración → Redes sociales que ya alimentaba el icono del pie —no
+se agregó un campo nuevo—, así que en cuanto hay una URL capturada ahí, el widget aparece
+solo.
+
+Se eligió esta variante y no la API de Graph con un Page Access Token por lo que exige cada
+una: el Page Plugin es un iframe público, sin cuenta de desarrollador, sin token que
+renovar y sin caché que mantener del lado del servidor; a cambio, el diseño de esa tarjeta
+es el de Facebook, no personalizable con el CSS del sitio. Es la variante consistente con
+"cero dependencias en el servidor": nada que el sitio deba pedir, cachear ni volver a
+autenticar.
+
+**Único cambio de superficie:** `frame-src` en la CSP del `.htaccess` suma
+`https://www.facebook.com`. No hizo falta tocar `script-src`: el Page Plugin sin SDK no
+carga ningún script en el documento del sitio, todo el JavaScript que pinta el feed corre
+dentro del propio `<iframe>`, bajo el origen y la CSP de Facebook, no la del sitio.
+
 ## Roles y permisos
 
 ```
-ROL_ADMIN        Todo, incluidos usuarios, configuración y auditoría.
-ROL_EDITOR       Todo el contenido del sitio; publica y modera.
-                 Sin acceso a usuarios ni configuración.
-ROL_COORDINADOR  Contenido de su o sus pastorales. No puede publicar.
-ROL_SECRETARIA   Solicitudes, inscripciones y mensajes. No edita el sitio.
+ROL_ADMIN               Todo, incluidos usuarios, configuración y auditoría.
+ROL_EDITOR              Todo el contenido del sitio; publica y modera.
+                        Sin acceso a usuarios ni configuración.
+ROL_COORDINADOR         Su pastoral en UNA sede. Publica sus eventos y sus
+                        cursos; sus avisos y su galería quedan en borrador.
+ROL_COORDINADOR_GENERAL Lo mismo, en varias sedes o en todas. Además administra
+                        las cuentas Coordinador y Consulta de su propia pastoral.
+ROL_CONSULTA            Solo mira lo de su pastoral y su sede.
+ROL_SECRETARIA          Inscripciones y mensajes. No edita el sitio.
 ```
+
+**El rol dice qué puede hacer; la pastoral y la sede asignadas, sobre qué.** Hubo seis roles
+con la pastoral en el nombre —`admin_mesc`, `consulta_catequesis`, `admin_lector`…— pensados
+para que se leyera de un vistazo qué administraba cada cuenta. Se retiraron cuando aparecieron
+**tres coordinadoras de catequesis, una por comunidad**: el rol no sabía distinguirlas, porque
+lo que las separa es la sede, no la función. Hoy «coordinadora de catequesis en Jesús el
+Señor» es el rol Coordinador con Catecismo y esa sede, y el nombre bonito —su cargo real—
+vive en su ficha del equipo pastoral, que es donde ya estaba.
+
+Coordinador y Coordinador general **comparten la lista de permisos**, `PERMISOS_COORDINACION`,
+para que no puedan divergir por descuido; lo que los separa lo exige el formulario de
+usuarios: el primero necesita **exactamente una** sede marcada y el segundo admite varias o
+ninguna. Sin esa regla, un coordinador de sede al que se le olvidara marcarla acabaría
+mandando en las tres, que es justo el error que se quería evitar.
+
+**Los tres módulos dedicados se ofrecen por pastoral, no por permiso.** `mesc.*`,
+`catequesis.*` y `lector.*` los lleva cualquier coordinador, así que mostrarían los tres a
+todo el mundo si solo se mirara el permiso; `Auth::administraPastoral(PASTORAL_MESC)` y sus
+gemelas son las que deciden, y el controlador del módulo lo revalida con
+`puedeSobrePastoral()`. Los slugs de esas tres pastorales están en `config/app.php`
+(`PASTORAL_MESC`, `PASTORAL_CATEQUESIS`, `PASTORAL_LECTOR`) en vez de repetidos a mano en
+cada modelo.
+
+Este cruce vive en **dos** sitios, no uno: el menú lateral
+(`shared/views/parciales/admin_sidebar.php`) y las tarjetas de acceso rápido del panel
+(`modules/panel/views/index.php`) —cada uno arma su propia lista de secciones y aplica el
+mismo `Auth::administraPastoral()` por su cuenta—. Los dos hay que revisarlos si algún día
+se agrega un cuarto módulo dedicado: un permiso nuevo sin este cruce en cualquiera de los
+dos vuelve a abrir el mismo hueco que dejaba ver la tarjeta de un módulo ajeno aunque el
+clic ya estuviera bien protegido.
+
+### La cuenta es de alguien del equipo pastoral
+
+`personas` es el registro principal de quién es quién: de ahí sale el organigrama
+(`organigrama_nodos.persona_id`) y de ahí salen ahora también las cuentas
+(`usuarios.persona_id`, único, `ON DELETE SET NULL`). El formulario de usuarios empieza
+preguntando **quién es**, y solo ofrece a las personas activas que aún no tienen cuenta.
+
+Lo pidió el uso real: la coordinadora general de catequesis estaba escrita de tres formas
+distintas entre las dos tablas —Ivett, Ivette, Iveth; Vilanueva, Villareal— y el alcance de
+otra decía una cosa en su ficha y otra en su cuenta. Con el vínculo, **el nombre, el teléfono
+y la foto son de la ficha**: la cuenta guarda copia y `PersonaModel::sincronizarCuenta()` la
+refresca cada vez que se guarda la ficha, así que no hay dos versiones que puedan discrepar.
+
+Tres decisiones que lo acotan:
+
+- **El vínculo es opcional.** Una ficha con `activo = 1` se publica en «Quiénes somos», y la
+  cuenta técnica del administrador no tiene por qué salir en el directorio de la parroquia.
+  `persona_id` nulo es legítimo y el listado lo marca como «Sin ficha en el equipo».
+- **Los permisos no se heredan de la ficha, se copian al crear.** Si no se marca alcance en el
+  formulario, se toman las pastorales y sedes de la ficha —lo que evita cuentas sin nada
+  asignado—, pero a partir de ahí viven en la cuenta. Servir en una pastoral no es
+  administrarla: el vicario figura en Raíces y en las tres sedes, y no por eso publica nada.
+  Si el alcance se leyera de la ficha, cualquier retoque del organigrama cambiaría permisos
+  sin que nadie lo pidiera.
+- **Una persona, una cuenta** (`uq_usr_persona`). `UsuarioController::personaDelPost()` lo
+  comprueba antes para poder explicarlo con un mensaje, pero el límite de verdad es el índice.
+
+### Coordinador general también administra cuentas — de su propia pastoral
+
+`usuarios.*` era, hasta esta revisión, exclusivamente del administrador: toda cuenta nueva
+—incluida la de un coordinador de sede— la daba de alta él. En la práctica eso convertía a
+un administrador técnico en el cuello de botella para algo puramente organizativo: la
+coordinadora general de una pastoral es quien sabe si necesita un coordinador nuevo en una
+sede, no quien administra la base de datos.
+
+`ROL_COORDINADOR_GENERAL` tiene ahora `usuarios.ver`/`crear`/`editar`, pero acotados por
+`UsuarioController::dentroDeMiAlcance()`, que exige las **dos** condiciones a la vez:
+
+- **La cuenta objetivo es de rango que administra**: `ROL_COORDINADOR` o `ROL_CONSULTA`,
+  nunca otro `ROL_COORDINADOR_GENERAL` —ni siquiera de su misma pastoral, eso sigue siendo
+  cosa del administrador—, y nunca `ROL_SECRETARIA`, `ROL_EDITOR` ni `ROL_ADMIN`.
+- **Comparte alguna de sus propias pastorales** (`Auth::pastoralesPermitidas()` cruzado con
+  las de la cuenta objetivo). La sede no entra en esta cuenta: administrar cuentas es por
+  pastoral entera, no por sede, porque quien da de alta a un coordinador de sede necesita
+  poder hacerlo aunque él mismo tenga otra sede asignada.
+
+Esta doble condición se aplica en tres sitios con la misma función, nunca solo en la vista:
+`index()` filtra el listado (`UsuarioModel::todos()` recibe las pastorales del que mira, o
+`null` con alcance global), y `editar()`/`guardar()`/`eliminar()` la revalidan por id antes de
+tocar nada — llegar por URL a la cuenta de otra pastoral, o a un rango superior, redirige con
+"Esa cuenta no está dentro de lo que administras" en vez de un error de PHP.
+
+**Deliberadamente sin excepción para "es mi propia cuenta".** El rol de un Coordinador
+general (`coordinador_general`) no está entre los que puede asignar
+(`UsuarioController::rolesAsignables()` solo ofrece `coordinador`/`consulta` sin alcance
+global), así que si se editara a sí mismo el `<select>` de rol no traería su propio valor
+entre las opciones, y guardar lo degradaría a Coordinador sin avisar. No poder auto-editarse
+desde esta pantalla no es una regresión: antes de este cambio tampoco podía, porque la
+pantalla entera era solo del administrador.
+
+Tres capas de validación server-side, no solo ocultar opciones en el formulario: el rol
+enviado se revalida contra `rolesAsignables()` (no solo lo que el `<select>` ofrece), y las
+pastorales/sedes enviadas se revalidan como subconjunto de `Auth::pastoralesPermitidas()`/
+`centrosPermitidos()` — un POST manipulado que intente asignar una pastoral ajena o un rol
+superior se rechaza con un mensaje, nunca se guarda parcialmente.
 
 La matriz `PERMISOS` vive en `config/app.php`, con notación `modulo.accion` y comodín
 `'*'`, exactamente igual que en inventario.
@@ -546,44 +788,38 @@ filtroPastoralSql(): ?array
 
 Reglas sin excepción:
 
-- Toda escritura sobre `avisos`, `eventos`, `galeria_imagenes` y `pastoral_actividades`
-  llama a `requireAlcancePastoral()` con el `pastoral_id` **leído de la base de datos**
-  cuando se edita o borra, nunca el que venga en el POST.
-- Todo listado del panel pasa `pastoralesPermitidas()` al modelo, que añade
-  `AND pastoral_id IN (…)`.
+- Toda escritura sobre `avisos`, `eventos`, `cursos`, `galeria_imagenes` y
+  `pastoral_actividades` llama a `requireAlcancePastoral()` con el `pastoral_id` **leído de
+  la base de datos** cuando se edita o borra, nunca el que venga en el POST.
+- Los listados del panel de `avisos` y `galeria_imagenes` pasan `pastoralesPermitidas()` al
+  modelo, que añade `AND pastoral_id IN (…)`. **Eventos, cursos y la agenda ya no**: ahí
+  leer es de todos y solo escribir está acotado — ver "Ver es de todos, editar es de la
+  pastoral dueña".
 - Al crear, el coordinador no elige pastoral en un select abierto: si tiene una sola, va
   en un campo oculto; si tiene varias, el select se construye solo con las suyas. En
   ambos casos se revalida en el servidor.
 - `pastoral_id NULL` significa contenido parroquial global. Un coordinador nunca lo toca.
 
-### Administrador y Consulta por pastoral (revisión de módulos)
+### Administrador y Consulta por pastoral (revisión de módulos), y su retirada
 
-`ROL_COORDINADOR` es genérico: sirve para cualquier pastoral, sin importar cuál. Pero las
-pastorales con un módulo propio y dedicado —MESC, Catequesis, Lector, calcadas unas de
-otras— ganaron además un par de roles con nombre explícito cada una:
-`ROL_ADMIN_MESC`/`ROL_CONSULTA_MESC`, `ROL_ADMIN_CATEQUESIS`/`ROL_CONSULTA_CATEQUESIS`,
-`ROL_ADMIN_LECTOR`/`ROL_CONSULTA_LECTOR`.
+Las pastorales con módulo propio —MESC, Catequesis, Lector— tuvieron durante un tiempo un
+par de roles con nombre explícito cada una: `ROL_ADMIN_MESC`/`ROL_CONSULTA_MESC` y sus
+equivalentes. La idea era que crear la cuenta diera de una vez claridad sobre qué
+administraba, en vez de un rol abstracto más una asignación de pastoral aparte.
 
-- **Administrador de X** tiene el mismo alcance de contenido que Coordinador (avisos,
-  eventos, galería, `pastoral_actividades`/`pastoral_documentos` de su pastoral) más
-  control total (`ver`/`crear`/`editar`/`eliminar`) del módulo específico de esa
-  pastoral. Es, en la práctica, "Coordinador con nombre puesto": mismo mecanismo de
-  alcance, para que crear la cuenta dé de una vez claridad sobre qué administra, en vez
-  de un rol abstracto más una asignación de pastoral aparte.
-- **Consulta de X** es de solo lectura: únicamente el permiso `X.ver` (además de
-  `panel.ver`). Pensado para que un ministro, catequista o lector de a pie entre al
-  panel solo a ver su propio calendario o los documentos de su pastoral, sin poder
-  editar nada.
+**Se retiraron.** El nombre del rol es un mal sitio para guardar un dato: en cuanto la misma
+pastoral tuvo tres coordinadoras, una por comunidad, «Administrador Catequesis» dejó de
+identificar a nadie, y las seis entradas de la matriz eran seis copias de la misma lista de
+permisos esperando a divergir. Hoy quedan tres roles acotados —Coordinador, Coordinador
+general y Consulta—, la pastoral y la sede se asignan, y el nombre con el que la parroquia
+llama a cada quien vive en su ficha del equipo pastoral, que el listado de usuarios muestra
+debajo del rol. `ROLES_CON_ALCANCE_PASTORAL` sigue agrupándolos para que el formulario y su
+guardado no repitan `=== ROL_COORDINADOR` en cada punto.
 
-Los seis roles reutilizan exactamente el mismo mecanismo de alcance que Coordinador
-(`usuarios_pastorales`/`usuarios_centros`, cacheado en sesión por `Auth::cargarPastorales()`
-al iniciar sesión, sin distinción de rol): al crear la cuenta hay que asignarle la
-pastoral correspondiente, igual que a un coordinador. La constante
-`ROLES_CON_ALCANCE_PASTORAL` en `config/app.php` agrupa los siete roles que necesitan
-este checklist (Coordinador más los seis nuevos), para que el formulario de usuarios
-(`modules/usuarios/views/form.php`) y su guardado (`UsuarioController::guardar()`) no
-repitan `=== ROL_COORDINADOR` en cada punto — un error fácil de cometer si un rol nuevo
-se agrega en un solo lugar y se olvida el otro.
+Lo que sí se conservó es la idea de **Consulta**: solo lectura, para que un ministro,
+catequista o lector de a pie entre al panel a ver su propio calendario y sus documentos sin
+poder cambiar nada; con `agenda.ver` ve además lo que hay programado en toda la parroquia,
+que es la pregunta que traía la mayoría de las veces.
 
 ### Un botón sin permiso no se muestra, no se muestra deshabilitado
 
@@ -606,23 +842,82 @@ mismo color y título) para que Consulta vea su turno, solo que no es clickeable
 es además de la comprobación real en el controlador (`requirePermiso()` sigue ahí):
 ocultar el botón es una cortesía de UX, no el límite de seguridad.
 
-### Alcance por centro/sede (issue #3)
+### El alcance tiene dos mitades: la pastoral y la sede
 
-Cada pastoral ahora está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`,
-NULL en las que ya existían antes de este campo). El issue pidió, además de "usuarios
+Una pastoral no vive en un solo sitio. La catequesis se da en la sede y en los dos centros,
+y cada comunidad tiene su coordinadora: Zulema en la parroquia, Carmelita en Jesús el Señor,
+Yaneth en San Pío; por encima, una coordinación general que responde por las tres. Con el
+alcance atado solo a `pastoral_id`, las tres coordinadoras eran indistinguibles: quien
+tuviera «Catecismo» tenía toda la catequesis de la parroquia.
+
+De ahí `eventos.centro_id` y `cursos.centro_id`, y la regla que las junta:
+
+```
+puede tocar  ⇔  Auth::puedeSobrePastoral(pastoral_id)  ∧  Auth::puedeSobreCentro(centro_id)
+```
+
+Las dos mitades no funcionan igual, y esa asimetría es deliberada:
+
+| | Sin ninguna asignada | Con algunas asignadas | Contenido sin valor (NULL) |
+|---|---|---|---|
+| **Pastorales** (`usuarios_pastorales`) | no puede con nada | solo con esas | solo alcance global |
+| **Sedes** (`usuarios_centros`) | **puede en todas** | solo en esas | solo quien no tenga sedes |
+
+No marcar sedes es la forma de decir «coordinación general», que es lo que son Aimeé en MESC
+e Ivett en catequesis; y no marcar pastorales sigue siendo no tener nada que administrar. Por
+eso son dos tablas con reglas propias y no una sola columna.
+
+Del lado de la lectura, `Controller::centrosVisibles()` hace con la sede lo mismo que
+`pastoralesVisibles()` con la pastoral, y `EventoModel::listar()` aplica las dos condiciones
+con la misma `Model::condicionAlcance()`, que recibe la columna como argumento —de ahí que
+el nombre del marcador SQL se derive de la columna: con un prefijo fijo, el segundo juego de
+parámetros pisaría al primero—. En los formularios, `opcionesCentro()` y `centroIdValidado()`
+son los gemelos de `opcionesPastoral()` y `pastoralIdValidado()`: quien trabaja en una sola
+sede no ve un desplegable de una sola opción, la lleva en un campo oculto, y el POST se
+revalida contra sus sedes reales.
+
+**La agenda interna no aplica nada de esto**, a propósito: ahí se ven las tres sedes y todas
+las pastorales, porque su función es que nadie aparte el mismo salón dos veces. Lo único que
+respeta el alcance es el lápiz de editar.
+
+**Los tres módulos dedicados —MESC, Catequesis, Lector— siguen siendo por pastoral, sin
+sede.** Cada uno resuelve la suya por slug (`MescModel::pastoralId()`), así que los
+catequistas, los periodos y los turnos son de la pastoral entera y los comparten las tres
+coordinadoras. Separarlos por sede exigiría que el catálogo de pastorales se desdoblara —una
+«Catequesis» por comunidad— y que esos módulos supieran elegir entre las hermanas; es un
+trabajo distinto y hoy no hace falta, porque lo que se pisaba eran las fechas, no los
+catequistas.
+
+### Alcance por centro/sede (issue #3), y por qué se retiró la herencia
+
+Cada pastoral está ligada a un `centro_id` (FK a `centros`, `ON DELETE SET NULL`, NULL en
+las que ya existían antes de este campo). El issue pidió, además de "usuarios
 administradores de la pastoral" (ya cubierto por `usuarios_pastorales`), "usuarios por
-centro/sede": alguien que administra San Pío de Pietrelcina completo no debería tener que
-marcar, una por una, cada pastoral que ese centro tenga hoy o llegue a tener mañana.
+centro/sede": alguien que administrara San Pío de Pietrelcina completo no tendría que
+marcar, una por una, cada pastoral que ese centro tenga hoy o llegue a tener mañana. Se
+implementó con `usuarios_centros`, la pivote análoga a `usuarios_pastorales`, y
+`Auth::cargarPastorales()` devolvía la **unión** de las dos fuentes con un `UNION` SQL.
 
-`usuarios_centros` es la tabla pivote análoga a `usuarios_pastorales`.
-`Auth::pastoralesPermitidas()` calcula la **unión** de ambas fuentes con un solo `UNION`
-SQL — pastorales asignadas directo, más las de cualquier centro que el usuario administre
-completo — y cachea el resultado ya unido en sesión, exactamente igual que antes. Ningún
-otro método de `Auth` ni de `Controller` cambió: `puedeSobrePastoral()`,
-`requireAlcancePastoral()` y `filtroPastoralSql()` siguen leyendo `pastoralesPermitidas()`
-sin saber que ahora tiene dos orígenes. `Auth::centrosPermitidos()` expone aparte los
-centros asignados directo, para el formulario de usuarios y para mostrar qué centro
-administra alguien; no se usa para autorizar nada por sí solo.
+**Esa herencia se quitó.** El uso real la desmintió: MESC opera en las tres sedes, así que
+a su administradora se le marcaron los tres centros —que es lo que parecía significar «esta
+persona trabaja en los tres centros»—, y lo que el `UNION` le entregó fueron las **cinco**
+pastorales ligadas al centro principal: MESC, Catecismo, AMA, Raíces y Grupo JECSA. Terminó
+pudiendo editar los cursos de catequesis. El problema no era el dato mal capturado sino la
+regla: en esta parroquia el eje de responsabilidad es la pastoral, no la sede, y una misma
+pastoral se coordina en varias sedes a la vez. Un modelo que reparte alcance «hacia los
+lados» —a las vecinas de sede— no describe cómo se organiza el equipo.
+
+Hoy `Auth::cargarPastorales()` lee solo `usuarios_pastorales`: **lo que administra una
+cuenta es exactamente lo que se le marcó, y se ve en pantalla**, sin herencia ninguna.
+
+`usuarios_centros` no desapareció: cambió de significado, que es lo que cuenta la sección
+anterior. Antes decía «administra este centro entero» y repartía pastorales; ahora dice «esta
+persona trabaja en esta sede» y solo **acota** lo que ya tiene. Marcar los tres centros a
+Aimeé, que fue lo que provocó el problema, hoy es exactamente lo mismo que no marcarle
+ninguno: MESC en las tres sedes.
+
+La adscripción de una **persona** del equipo a un centro (`persona_centros`) es otra cosa
+distinta de las dos y sigue igual: eso es un dato de directorio, no un permiso.
 
 ### Contenido propio por pastoral (issue #3)
 
@@ -634,6 +929,23 @@ mensual completo en `/eventos?pastoral=slug`, y sus documentos descargables
 (`pastoral_documentos`, solo agregar/quitar — para cambiar uno se sube uno nuevo, no hay
 edición de archivo). El centro/sede al que pertenece se muestra en la tarjeta de
 información.
+
+**El responsable se elige del equipo pastoral, no se escribe a mano.**
+`pastorales.responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`) es el select del
+formulario; `responsable_nombre` sigue existiendo solo como respaldo para cuando esa persona
+todavía no tiene ficha en el equipo (AMA y Grupo JECSA, hoy). Con persona elegida, el nombre
+mostrado **no es editable**: viene de `personas.nombre` y `PersonaModel::sincronizarResponsable()`
+lo vuelve a copiar cada vez que la ficha se guarda, exactamente con el mismo mecanismo que ya
+mantiene sincronizados `usuarios.nombre/telefono/foto` (`PersonaModel::sincronizarCuenta()`).
+
+El correo de contacto sigue la misma idea, pero en la dirección contraria: si la persona
+elegida tiene cuenta en el panel, `contacto_email` se toma de `usuarios.email` —el correo de
+acceso, «el del rol»— y `UsuarioModel::sincronizarPastoralResponsable()` lo vuelve a empujar
+cada vez que esa cuenta se guarda. Sin esto, `contacto_email` era un campo libre independiente
+que podía divergir del correo real de quien administra la pastoral, que es exactamente lo que
+pasaba con MESC: la ficha decía `aime.dessens@…` y la cuenta de la coordinadora era
+`aimee.dessens@…`, una letra distinta. Sin cuenta vinculada (el caso de Padre Germán Valdéz en
+Raíces), el campo sigue siendo de texto libre.
 
 **Deliberadamente no hay un "organigrama de esta pastoral" aparte.**
 `organigrama_nodos.pastoral_id` ya existe desde antes de este issue: cada nodo del
@@ -789,7 +1101,8 @@ vez de duplicar la fila. `catequesis_actividades` es un tablero con vigencia y
 `pastoral_actividades`; `catequesis_documentos` es una copia directa de
 `pastoral_documentos` (mismo patrón de subida vía `Upload::documento()`).
 
-**Lector** (pastoral "Lectores"): recorta MESC a sus dos piezas no sensibles y
+**Lector** (pastoral "Liturgia" —se llamaba "Lectores"; ver la nota de `PASTORAL_LECTOR`
+en `config/app.php`—): recorta MESC a sus dos piezas no sensibles y
 extrapolables —`lector_turnos`/`lector_turno_lectores` calcan
 `mesc_turnos`/`mesc_turno_ministros` entrada por entrada, y `lector_lectores` calca
 `mesc_ministros`—, y deja fuera lo que no aplica: nada de `mesc_rutas`/`mesc_visitas`, un
@@ -799,12 +1112,75 @@ color litúrgico es el mismo calendario para toda la parroquia, no un dato propi
 módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
 catálogo de MESC directamente.
 
+**El ministro/catequista/lector también se elige del equipo pastoral —tercera vez que
+se construye este vínculo.** `mesc_ministros`, `catequesis_catequistas` y
+`lector_lectores` tenían el mismo problema que ya se había resuelto antes para
+`usuarios` y para el responsable de una pastoral: el nombre era texto libre, sin
+relación con `personas`, y eso permitía —de hecho, ya había pasado— que la misma
+persona real quedara escrita de formas distintas en cada tabla. Encontrado al revisar
+por qué el panel de una coordinadora mostraba módulos ajenos: Zulema estaba como
+"Zulema" en `mesc_ministros`, "Zulema Alvarez" en `catequesis_catequistas` y con su
+nombre completo en `personas` —mismo teléfono en las tres filas, misma persona sirviendo
+a la vez como ministra MESC y catequista—.
+
+Las tres tablas ganaron `persona_id` (FK a `personas`, `ON DELETE SET NULL`, `UNIQUE`
+por tabla —la unicidad es solo dentro de cada catálogo, nunca cruzada entre las tres: el
+caso de Zulema muestra que una misma persona sirve legítimamente en más de uno a la
+vez—). Con persona elegida, `nombre`/`telefono` (y `email`, en las dos tablas que lo
+tienen; `mesc_ministros` no lo necesitó nunca y no se le agregó) se toman de la ficha y
+`PersonaModel::sincronizarPersonal()` los mantiene al día si la ficha cambia —mismo
+mecanismo que `sincronizarCuenta()` para `usuarios` y `sincronizarResponsable()` para
+`pastorales.responsable_nombre`—; sin persona, los campos de texto libre de siempre
+siguen funcionando igual, para quien todavía no está de alta en el equipo pastoral.
+
+Deliberadamente **sin migración automática** de los 13 ministros y 5 catequistas que ya
+existían: a diferencia del responsable de pastoral, donde tres coincidencias de nombre
+eran inequívocas, aquí ninguna fila coincide por texto exacto contra `personas` —el
+caso de Zulema se encontró por teléfono, no por nombre—, evidencia insuficiente para
+vincular sin que alguien lo confirme. Quedan con `persona_id NULL` hasta que se
+vinculen a mano desde el panel.
+
 ### Moderación
 
-Los coordinadores no tienen los permisos `*.publicar`, así que el campo `publicado` se
-fuerza a 0 en todas sus escrituras y el panel del editor muestra una bandeja de
+Los coordinadores no tienen `avisos.publicar` ni `galeria.publicar`, así que en esas dos
+escrituras el campo `publicado` se fuerza a 0 y el panel del editor muestra una bandeja de
 "Pendientes de publicar". Con diez coordinadores con cuenta, esto es lo que evita que la
-web parroquial amanezca con cualquier cosa.
+web parroquial amanezca con cualquier cosa. Sus eventos y sus cursos sí se publican solos
+—ver "Publicación: el calendario lo publica quien lo organiza"—: una fecha del calendario
+no es un texto dirigido a la parroquia, y la demora de la revisión costaba más que el
+riesgo que evitaba.
+
+## Dependencias: lo que se sirve y lo que solo está declarado
+
+La regla de cero dependencias sigue en pie **del lado de PHP**: no hay Composer, no hay
+`vendor/`, y lo que hace falta se escribe con funciones nativas —de ahí el sanitizador
+sobre `DOMDocument`, el editor en JavaScript vanilla, el volcado de respaldos vía PDO y el
+CSV en vez de un PDF—.
+
+Del lado del navegador sí se cargan tres cosas de `cdn.jsdelivr.net`, las únicas
+autorizadas en la CSP del `.htaccess`:
+
+| Qué | Versión | Dónde |
+|---|---|---|
+| Bootstrap, hoja de estilos | 5.3.3 | Los dos layouts, `login.php` y `setup.php` |
+| Bootstrap, JavaScript (`bundle`) | 5.3.3 | Solo los dos layouts — login e instalador no lo necesitan |
+| Bootstrap Icons (fuente) | 1.11.3 | Los cuatro |
+| Leaflet + los iconos de su marcador | 1.9.4 | Solo el formulario de visita de MESC (`MescController::assetsMapa()`) |
+
+**`package.json` declara una dependencia que hoy no se sirve.** El repositorio versiona un
+`package.json`/`package-lock.json` con `bootstrap-icons ^1.13.1`, y `node_modules/` queda
+ignorado (se reinstala con `npm install`). Es constancia de un `npm install bootstrap-icons`
+que se corrió en la máquina de desarrollo, no un cambio en lo que el sitio entrega: las
+cuatro plantillas que cargan los iconos siguen apuntando al CDN, así que **la copia local no
+se usa** y su versión (`^1.13.1`) ni siquiera coincide con la que piden las plantillas
+(1.11.3). Mientras eso siga así la discrepancia no afecta a nada, y `npm` no hace falta ni
+para instalar ni para desplegar el sitio.
+
+Servir los iconos desde el propio repositorio —para no depender del CDN, que es la razón
+por la que valdría la pena— es una decisión aparte y no se ha tomado: exigiría copiar
+`node_modules/bootstrap-icons/font/` a `assets/`, cambiar las cuatro plantillas y ajustar
+`font-src` en la CSP. Se deja anotado aquí para que la incoherencia no se lea como un
+descuido.
 
 ## Ícono de sacramentos: SVG propio, no una librería nueva
 
@@ -998,6 +1374,48 @@ administra `inscripciones.*` (ver, cambiar estado, exportar) pero no toca `curso
 punta a punta con los tres roles (`coordinador`, `editor`, `secretaria`) contra
 `/admin/cursos` y `/admin/inscripciones`.
 
+## La portada
+
+`InicioController::index()` es el controlador que consulta más modelos de todo el sitio —seis—
+y todo lo que arma son listas cortas con enlace a la sección completa: el carrusel
+(`CarruselModel`, vía `hero()`), la bienvenida del párroco y las ligas de interés (dos bloques
+de `bloques_contenido`), `HorarioModel::proximasMisas(3)`, `EventoModel::proximos(3)`,
+`CursoModel::proximos(3)` y `AvisoModel::recientes(3)`. Cada sección desaparece por completo
+si su consulta viene vacía, en vez de dejar un encabezado con un hueco debajo; es lo que
+permite desplegar el sitio con el contenido a medio cargar sin que se note como un error.
+
+**Próximos cursos, en su propia columna junto a los eventos.** La portada no anunciaba los
+cursos, que son de lo poco del sitio con una fecha límite real —cuando alguien se enteraba,
+la inscripción podía llevar semanas cerrada—. Ahora eventos y cursos van uno en cada mitad
+de una misma fila, y los avisos bajan a la suya.
+
+`CursoModel::proximos()` **no** es una copia de `EventoModel::proximos()`, y la diferencia es
+deliberada:
+
+- Trae los publicados que no han terminado (`COALESCE(fecha_fin, fecha_inicio) >= CURDATE()`)
+  **más los que todavía no tienen fechas puestas** — un curso permanente, o uno cuyas fechas
+  aún no se deciden, sigue siendo información útil para quien quiere apuntarse.
+- Un curso ya terminado deja de aparecer. Un evento pasado sí se conserva como registro
+  histórico de lo que la parroquia organizó; a un curso lo que le importa es que alguien se
+  pueda inscribir, y anunciar uno que ya acabó solo confunde.
+- El orden es `(fecha_inicio IS NULL), fecha_inicio, orden, titulo`: primero lo que tiene
+  fecha, en orden cronológico, y los sin fecha al final, donde el `orden` del catálogo
+  decide.
+
+La tarjeta anuncia "inscripciones abiertas" **solo si de verdad se puede uno inscribir**: la
+casilla `inscripciones_abiertas` activa *y*, si hay `fecha_cierre_inscripcion`, que no haya
+pasado. Es la misma condición que aplica `CursoPublicoController` al decidir si dibuja el
+formulario; anunciarlo con una sola de las dos mitades llevaría a la gente a una ficha sin
+formulario.
+
+**Fuera el bloque de contacto rápido.** Repetía dirección, teléfono, correo y horario de
+oficina que el pie de página ya lleva en **todas** las pantallas del sitio, incluida la
+portada. Ese bloque venía del planteamiento de landing page (ver
+[`PLAN.md`](PLAN.md#sitio-tradicional-no-landing-page)), donde tiene sentido porque no hay
+otra página a la que ir; aquí no lo tenía. De paso, las secciones de eventos y avisos iban a
+ancho completo mientras el resto de la portada va centrado en `col-lg-8`, así que quedaban
+desalineadas entre sí: ahora todas usan el mismo contenedor.
+
 ## Usuarios, roles y auditoría
 
 El CRUD de cuentas y la bandeja de auditoría son, por diseño del plan, exclusivos del
@@ -1074,7 +1492,8 @@ la identidad real del administrador en claves de sesión aparte (`_admin_real_id
 objetivo —recargando sus pastorales reales, no las del administrador—. A partir de ahí,
 `Auth::tienePermiso()` y `Auth::tieneAlcanceGlobal()` ven exactamente el rol impersonado:
 mientras se actúa como un coordinador, el panel se comporta como si ese coordinador hubiera
-iniciado sesión, incluidas sus limitaciones (sin publicar, acotado a sus pastorales, sin
+iniciado sesión, incluidas sus limitaciones (sin publicar avisos, acotado a sus pastorales
+también en lo que *ve* en eventos y cursos, sin
 `usuarios.*`/`auditoria.*`/`respaldos.*`). Para recuperar el acceso de administrador hay que
 volver primero.
 
@@ -1166,7 +1585,9 @@ suficiente red antes de esta operación, acotada además a solo administrador.
 `RespaldoController`), la tabla (`respaldos_log`), las claves de permiso (`respaldos.*`) y
 el texto de la interfaz sí lo respetan. La carpeta se crea sola en el primer respaldo
 (`mkdir` recursivo) y está bloqueada por HTTP en `.htaccess`, igual que `config/`, `core/`,
-`modules/`, `shared/`, `docs/` y `cli/`.
+`modules/`, `shared/` y `docs/`. Esa misma regla del `.htaccess` nombra además `cli/`, que se
+eliminó con el formulario de solicitud de sacramentos y ya no existe, y no nombra
+`herramientas/`, que sí (ver "Carga de la agenda parroquial 2026").
 
 **`respaldos.*` es exclusivo de administrador**, igual que `usuarios.*` y `auditoria.*`:
 sin entradas propias en la matriz de `config/app.php` para los demás roles, llega solo por
@@ -1208,6 +1629,100 @@ parroquia, no de una pastoral en particular — el coordinador nunca lo toca.
 texto libre. El mapa con selección de pin es un requisito de la visita a enfermos de MESC
 (la ubicación de la persona visitada, no la del centro), no de este catálogo; si más
 adelante un centro necesita su propio mapa, se agrega ahí cuando haga falta.
+
+## Carga de la agenda parroquial 2026 (`herramientas/`)
+
+Primera carga masiva de contenido real del proyecto: la agenda impresa de 2026 completa —467
+eventos y 22 actividades semanales— en vez de capturarla evento por evento desde el panel.
+Dos scripts, ninguno de los cuales forma parte del sitio: `herramientas/` no se despliega, y
+nada de lo que hay ahí se ejecuta durante una petición HTTP.
+
+**Por qué dos scripts y no uno.** El punto de partida es un `.xlsx` en el que alguien
+transcribió la agenda impresa, y está montado para imprimirse, no para leerse con un
+programa:
+
+- Las actividades no están en las celdas, sino en **cuadros de texto flotantes**; las celdas
+  solo llevan los números de día.
+- Cada bloque de 8 columnas trae **dos medios meses**, porque así se imprime: DOM-MIE de un
+  mes con fondo blanco y JUE-SAB de **otro** mes con fondo amarillo, donde el mes amarillo es
+  el complemento a 12 del blanco (mayo↔julio, abril↔agosto…).
+- Los títulos de las barras de periodo vienen con las letras separadas
+  (`S E M A N A   D E   C A T E Q U E S I S`) para que ocupen todo el ancho, y troceados
+  entre varios cuadros cuando el periodo cruza semanas.
+
+`extraer_agenda.py` lee la geometría de esos cuadros (posición y tamaño en EMU), la cruza con
+la rejilla del calendario para deducir a qué día corresponde cada uno —con un umbral de
+solape del 30 %, porque los cuadros se dibujan más anchos que la celda y desbordan a las
+vecinas— y saca **una hoja revisable**, no la carga directa. Parsea el XML del `.xlsx` a mano
+porque `openpyxl.load_workbook()` se cae con este archivo (un `pitchFamily` del drawing está
+fuera del rango que acepta); openpyxl sí se usa para *escribir* el resultado.
+
+La hoja de salida (`agenda-2026-extraida.xlsx`) tiene cuatro pestañas, y el paso por Excel es
+el punto de la herramienta: **lo que no se puede resolver automáticamente se marca en vez de
+adivinarse**. La pestaña `Revisar` reúne los números de día mal transcritos, las barras de
+periodo que no se pudieron recomponer, las horas sin a.m./p.m. y las filas sin fecha
+resuelta; `Resumen` da los totales por mes y por clase, y el mapa de qué mes cayó en cada
+mitad de cada bloque, que es lo que permite detectar un bloque leído al revés de un vistazo.
+Las tres clases de fila (`evento`, `mensual` para lo recurrente de cada mes, `periodo` para
+las barras de varios días) solo deciden el color del evento —verde para los periodos, azul
+para el resto— y aparecen en el resumen.
+
+`importar_agenda.php` es la segunda mitad, y solo corre desde la línea de órdenes: si llega
+por HTTP responde 403 y no hace nada. Tres decisiones:
+
+- **Escribe con `EventoModel` y `HorarioModel`, no con SQL a pelo**, para que las filas queden
+  exactamente como si se hubieran creado desde el panel: mismos valores por omisión, mismo
+  `Slug::unico()` resolviendo colisiones. El texto que va a `descripcion` se escapa con
+  `htmlspecialchars()` y se envuelve en un `<p>` —en vez de pasar por
+  `SanitizadorHtml`— porque lo que llega de la hoja es texto plano, no HTML: no hay etiquetas
+  que filtrar, solo acentos y `&` que escapar.
+- **Es idempotente, comparando por día + título + hora, no por slug.** Un slug es lo primero
+  que cambia si el mismo evento se capturó a mano con otro título, así que compararlo no
+  sirve para "¿ya está esto?". La hora entra en la comparación porque la misma celebración a
+  otra hora **sí** es otro evento: el Miércoles de Ceniza son cuatro misas ese día, no una
+  fila repetida cuatro veces. Con esa regla, las 478 filas del JSON dieron 467 eventos y 11
+  omisiones —repeticiones de la misma actividad en más de un cuadro de la hoja—, y volver a
+  ejecutarlo no crea nada.
+- **No deja rastro en `auditoria`.** Al no pasar por un controlador no hay
+  `Controller::auditoria()` que lo registre, y añadirlo a mano habría significado 467 filas de
+  bitácora para una sola operación. Está advertido en la cabecera del script y en su salida;
+  la constancia de la carga es el respaldo previo (`backups/antes-agenda-2026.sql`), no la
+  bitácora.
+
+**Las actividades semanales van a `horarios`, no a `eventos`**, que es exactamente la
+distinción de "Las misas recurrentes no son eventos" (§ arriba) aplicada a una carga
+automática: el panel de "actividades semanales" de la agenda es recurrencia de día de la
+semana más hora. Entran con `tipo = 'otro'` y el nombre de la actividad en `nota`, porque
+`horarios` no tiene columna de título —lo que la página pública muestra de cada horario es
+precisamente la nota—. Antes de insertar, el propio extractor consulta los horarios ya
+cargados y marca cada fila en la columna `¿Ya existe?`: coincidir día + hora + centro es "ya
+está" y no se reimporta; coincidir solo día y hora se avisa como "quizá, misma hora en otra
+sede", que es una decisión para la persona que revisa, no para el script.
+
+**El paso intermedio por JSON existe por una limitación del entorno, no por diseño:** el PHP
+de este XAMPP no trae la extensión `zip`, así que no puede abrir un `.xlsx`. `--a-json`
+convierte la hoja ya revisada a lo que el importador lee. Si algún día ese PHP tuviera `zip`,
+el paso se podría quitar sin cambiar nada más.
+
+**Dos cosas que este par de scripts asume, y conviene saber antes de reutilizarlos:**
+
+1. **Python y `openpyxl` son dependencias de desarrollo, no del proyecto.** No las necesita
+   ni el sitio ni el despliegue; solo la máquina donde se convierte la hoja. La regla de cero
+   dependencias es sobre lo que corre en el servidor.
+2. **Los ids de `centros` y `pastorales` están escritos en el propio script Python.** No se
+   siembran en `install.sql` —se generan al crearlos desde el panel—, así que las tablas
+   `CENTROS` y `PASTORALES` de `extraer_agenda.py` reflejan la instalación local de hoy
+   (sede = 1, San Pío = 2, Jesús el Señor = 3; MESC = 16, Catecismo = 18…). En otra base de
+   datos habría que revisarlos, o el evento acabaría colgado de la pastoral equivocada. Las
+   casas de oración y Didec se reconocen como lugar pero no existen como centro, así que se
+   guardan solo en el texto de `lugar`, con `centro_id` nulo.
+
+**Pendiente conocido:** la lista de carpetas que el `.htaccess` bloquea por HTTP
+(`^(config|core|modules|shared|docs|cli|backups)/`) sigue nombrando `cli/`, que ya no existe,
+y **no incluye `herramientas/`**. Hoy nada es explotable —el importador rechaza cualquier
+invocación que no venga de la línea de órdenes, y el `.py` se serviría como texto—, pero es
+defensa en profundidad que falta, y `herramientas/` tampoco está en la lista de exclusiones
+del paquete de despliegue de [`DESPLIEGUE.md`](DESPLIEGUE.md).
 
 ## SEO
 

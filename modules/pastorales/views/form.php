@@ -163,15 +163,46 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     require BASE_PATH . '/shared/views/parciales/campo_imagen.php';
                     ?>
 
+                    <?php $responsablePersonaId = $esNueva ? 0 : (int) ($pastoral['responsable_persona_id'] ?? 0); ?>
                     <div class="mb-3">
-                        <label for="responsable_nombre" class="form-label fw-semibold">Responsable</label>
-                        <input type="text" name="responsable_nombre" id="responsable_nombre" class="form-control"
-                               value="<?= e($esNueva ? '' : (string) $pastoral['responsable_nombre']) ?>" maxlength="140">
+                        <label for="responsable_persona_id" class="form-label fw-semibold">Responsable</label>
+                        <select name="responsable_persona_id" id="responsable_persona_id" class="form-select">
+                            <option value="">— Elegir del equipo pastoral —</option>
+                            <?php foreach ($personas as $persona): ?>
+                            <option value="<?= (int) $persona['id'] ?>"
+                                <?= $responsablePersonaId === (int) $persona['id'] ? 'selected' : '' ?>>
+                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">
+                            Su nombre se toma de su ficha del equipo pastoral. Si todavía no está de alta ahí,
+                            escríbelo abajo en vez de elegir uno de la lista.
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label for="contacto_email" class="form-label fw-semibold">Correo de contacto</label>
+                        <label for="responsable_nombre" class="form-label fw-semibold">
+                            Nombre, si no está en el equipo pastoral
+                        </label>
+                        <input type="text" name="responsable_nombre" id="responsable_nombre" class="form-control"
+                               value="<?= e($esNueva || $responsablePersonaId ? '' : (string) $pastoral['responsable_nombre']) ?>"
+                               maxlength="140">
+                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Correo de contacto</label>
+                        <?php if ($responsableCuenta): ?>
+                        <p class="form-control-plaintext mb-0">
+                            <i class="bi bi-envelope me-1"></i><?= e($responsableCuenta['email']) ?>
+                        </p>
+                        <div class="form-text">
+                            Es el correo de acceso de la cuenta de <?= e($pastoral['responsable_nombre']) ?>;
+                            si el suyo cambia, este cambia solo.
+                        </div>
+                        <?php else: ?>
                         <input type="email" name="contacto_email" id="contacto_email" class="form-control"
                                value="<?= e($esNueva ? '' : (string) $pastoral['contacto_email']) ?>">
+                        <?php endif; ?>
                     </div>
                     <div class="mb-3">
                         <label for="contacto_telefono" class="form-label fw-semibold">Teléfono de contacto</label>

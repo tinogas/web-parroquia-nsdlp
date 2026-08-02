@@ -18,6 +18,15 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-speedometer2"></i> Panel
         </a>
 
+        <?php /* La agenda va suelta arriba, sin sección: es transversal —eventos y
+                 cursos de todas las pastorales— y para los roles de consulta es lo
+                 único que verán además de su propio módulo. */ ?>
+        <?php if (Auth::tienePermiso('agenda.ver')): ?>
+        <a href="<?= e(url_admin('agenda')) ?>" class="sidebar-link <?= $activo('agenda') ?>">
+            <i class="bi bi-calendar3"></i> Agenda
+        </a>
+        <?php endif; ?>
+
         <?php if (Auth::tienePermiso('bloques.ver') || Auth::tienePermiso('paginas.ver')): ?>
         <div class="sidebar-section mt-2">Contenido</div>
         <?php endif; ?>
@@ -32,9 +41,18 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
+        <?php
+        /* Los tres módulos dedicados se ofrecen a quien administra ESA pastoral,
+           no a quien lleva el permiso: `mesc.*` lo tienen todos los coordinadores
+           desde que el rol dejó de nombrar la pastoral, y un enlace que acaba en
+           «no administras la pastoral de MESC» es peor que no tener enlace. */
+        $verMesc       = Auth::tienePermiso('mesc.ver')       && Auth::administraPastoral(PASTORAL_MESC);
+        $verCatequesis = Auth::tienePermiso('catequesis.ver') && Auth::administraPastoral(PASTORAL_CATEQUESIS);
+        $verLector     = Auth::tienePermiso('lector.ver')     && Auth::administraPastoral(PASTORAL_LECTOR);
+        ?>
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
-                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver') || Auth::tienePermiso('mesc.ver')
-                || Auth::tienePermiso('catequesis.ver') || Auth::tienePermiso('lector.ver')): ?>
+                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')
+                || $verMesc || $verCatequesis || $verLector): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -62,19 +80,19 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-people"></i> Pastorales
         </a>
         <?php endif; ?>
-        <?php if (Auth::tienePermiso('mesc.ver')): ?>
+        <?php if ($verMesc): ?>
         <a href="<?= e(url_admin('mesc')) ?>" class="sidebar-link <?= $activo('mesc') ?>">
             <i class="bi bi-heart-pulse"></i> MESC
         </a>
         <?php endif; ?>
-        <?php if (Auth::tienePermiso('catequesis.ver')): ?>
+        <?php if ($verCatequesis): ?>
         <a href="<?= e(url_admin('catequesis')) ?>" class="sidebar-link <?= $activo('catequesis') ?>">
             <i class="bi bi-book"></i> Catequesis
         </a>
         <?php endif; ?>
-        <?php if (Auth::tienePermiso('lector.ver')): ?>
+        <?php if ($verLector): ?>
         <a href="<?= e(url_admin('lector')) ?>" class="sidebar-link <?= $activo('lector') ?>">
-            <i class="bi bi-mic"></i> Lectores
+            <i class="bi bi-mic"></i> Liturgia
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>

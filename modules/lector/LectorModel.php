@@ -14,7 +14,10 @@ class LectorModel extends Model
     /** La única pastoral que administra este módulo, resuelta por slug (no por id fijo: los id no se siembran en install.sql). */
     public function pastoralId(): ?int
     {
-        return $this->fetchColumn("SELECT id FROM pastorales WHERE slug = 'lectores'") ?: null;
+        return $this->fetchColumn(
+            'SELECT id FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_LECTOR]
+        ) ?: null;
     }
 
     // ── Lectores ─────────────────────────────────────────────────────────
@@ -43,8 +46,8 @@ class LectorModel extends Model
     public function crearLector(array $datos): int
     {
         $this->execute(
-            'INSERT INTO lector_lectores (pastoral_id, nombre, telefono, email, orden, activo)
-             VALUES (:pastoral, :nombre, :telefono, :email, :orden, :activo)',
+            'INSERT INTO lector_lectores (pastoral_id, persona_id, nombre, telefono, email, orden, activo)
+             VALUES (:pastoral, :persona, :nombre, :telefono, :email, :orden, :activo)',
             $this->parametrosLector($datos)
         );
         return $this->lastInsertId();
@@ -54,7 +57,8 @@ class LectorModel extends Model
     {
         return $this->execute(
             'UPDATE lector_lectores
-                SET nombre = :nombre, telefono = :telefono, email = :email, orden = :orden, activo = :activo
+                SET persona_id = :persona, nombre = :nombre, telefono = :telefono, email = :email,
+                    orden = :orden, activo = :activo
               WHERE id = :id',
             $this->parametrosLector($datos) + [':id' => $id]
         );
@@ -69,6 +73,7 @@ class LectorModel extends Model
     {
         return [
             ':pastoral' => $datos['pastoral_id'],
+            ':persona'  => $datos['persona_id'],
             ':nombre'   => $datos['nombre'],
             ':telefono' => $datos['telefono'],
             ':email'    => $datos['email'],

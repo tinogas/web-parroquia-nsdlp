@@ -10,13 +10,78 @@
     <?php endif; ?>
 </div>
 
-<div class="btn-group btn-group-sm mb-3" role="group">
-    <a href="<?= e(url_admin('cursos')) ?>"
-       class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
-    <a href="<?= e(url_admin('cursos', '', ['filtro' => 'publicados'])) ?>"
-       class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
-    <a href="<?= e(url_admin('cursos', '', ['filtro' => 'borradores'])) ?>"
-       class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+<?php
+// Los filtros —estado, pastoral y sede— se combinan, así que cada uno arrastra
+// el estado de los otros.
+$porEstado   = $filtro !== 'todos' ? ['filtro' => $filtro] : [];
+$porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
+$porCentro   = $filtroCentro !== '' ? ['centro' => $filtroCentro] : [];
+$porAmbito   = $porPastoral + $porCentro;
+?>
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
+        <a href="<?= e(url_admin('cursos', '', $porAmbito)) ?>"
+           class="btn <?= $filtro === 'todos' ? 'btn-primary' : 'btn-outline-secondary' ?>">Todos</a>
+        <a href="<?= e(url_admin('cursos', '', ['filtro' => 'publicados'] + $porAmbito)) ?>"
+           class="btn <?= $filtro === 'publicados' ? 'btn-primary' : 'btn-outline-secondary' ?>">Publicados</a>
+        <a href="<?= e(url_admin('cursos', '', ['filtro' => 'borradores'] + $porAmbito)) ?>"
+           class="btn <?= $filtro === 'borradores' ? 'btn-primary' : 'btn-outline-secondary' ?>">Borradores</a>
+    </div>
+
+    <form method="GET" action="<?= e(url_admin('cursos')) ?>" class="row g-2 align-items-end">
+        <?php if (!URLS_AMIGABLES): ?>
+        <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
+                 descarta la del action: hay que repetirla como campos. */ ?>
+        <input type="hidden" name="area" value="admin">
+        <input type="hidden" name="modulo" value="cursos">
+        <?php endif; ?>
+        <?php if ($filtro !== 'todos'): ?>
+        <input type="hidden" name="filtro" value="<?= e($filtro) ?>">
+        <?php endif; ?>
+        <div class="col-auto">
+            <label for="pastoral" class="form-label small fw-semibold mb-1">Pastoral</label>
+            <select name="pastoral" id="pastoral" class="form-select form-select-sm">
+                <?php /* Igual que en eventos: sin alcance global el listado trae
+                         lo suyo y lo general, y «Todas» prometería de más. */ ?>
+                <option value=""><?= Auth::tieneAlcanceGlobal() ? 'Todas' : 'Las mías y las generales' ?></option>
+                <?php if ($tieneAlcance): ?>
+                <option value="mias" <?= $filtroPastoral === 'mias' ? 'selected' : '' ?>>Solo las mías</option>
+                <?php endif; ?>
+                <?php foreach ($pastorales as $unaPastoral): ?>
+                <option value="<?= (int) $unaPastoral['id'] ?>"
+                        <?= $filtroPastoral === (string) $unaPastoral['id'] ? 'selected' : '' ?>>
+                    <?= e($unaPastoral['nombre']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php if (count($centros) > 1): ?>
+        <div class="col-auto">
+            <label for="centro" class="form-label small fw-semibold mb-1">Sede</label>
+            <select name="centro" id="centro" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                <?php foreach ($centros as $unCentro): ?>
+                <option value="<?= (int) $unCentro['id'] ?>"
+                        <?= $filtroCentro === (string) $unCentro['id'] ? 'selected' : '' ?>>
+                    <?= e($unCentro['nombre']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php endif; ?>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+        </div>
+        <?php if ($porAmbito): ?>
+        <div class="col-auto">
+            <a href="<?= e(url_admin('cursos', '', $porEstado)) ?>"
+               class="btn btn-sm btn-outline-secondary">Quitar</a>
+        </div>
+        <?php endif; ?>
+    </form>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -39,9 +104,26 @@
             </thead>
             <tbody>
             <?php foreach ($listado['filas'] as $curso): ?>
+                <?php
+                // Suyo es lo de su pastoral y su sede, igual que en eventos.
+                $suyo = Auth::puedeSobrePastoral($curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null)
+                     && Auth::puedeSobreCentro($curso['centro_id'] !== null ? (int) $curso['centro_id'] : null);
+                $puedeEditar = $suyo && Auth::tienePermiso('cursos.editar');
+                $puedeBorrar = $suyo && Auth::tienePermiso('cursos.eliminar');
+                ?>
                 <tr>
                     <td>
-                        <div class="fw-semibold"><?= e($curso['titulo']) ?></div>
+                        <div class="fw-semibold">
+                            <?= e($curso['titulo']) ?>
+                            <span class="badge bg-light text-secondary border">
+                                <?= e($curso['pastoral_nombre'] ?? 'General') ?>
+                            </span>
+                            <?php if ($curso['centro_nombre']): ?>
+                            <span class="badge bg-light text-secondary border">
+                                <i class="bi bi-geo-alt me-1"></i><?= e($curso['centro_nombre']) ?>
+                            </span>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($curso['instructor_nombre']): ?>
                         <div class="text-muted small"><?= e($curso['instructor_nombre']) ?></div>
                         <?php endif; ?>
@@ -64,9 +146,11 @@
                             <i class="bi bi-box-arrow-up-right"></i>
                         </a>
                         <?php endif; ?>
+                        <?php if ($puedeEditar): ?>
                         <a href="<?= e(url_admin('cursos', 'editar', ['id' => $curso['id']])) ?>"
                            class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                        <?php if (Auth::tienePermiso('cursos.eliminar')): ?>
+                        <?php endif; ?>
+                        <?php if ($puedeBorrar): ?>
                         <button type="button" class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal" data-bs-target="#borrar<?= (int) $curso['id'] ?>">
                             <i class="bi bi-trash"></i>
@@ -83,11 +167,17 @@
 
 <?php
 $paginacion = $listado;
-$paginaBase = url_admin('cursos', '', $filtro !== 'todos' ? ['filtro' => $filtro] : []);
+$paginaBase = url_admin('cursos', '', $porEstado + $porAmbito);
 require BASE_PATH . '/shared/views/parciales/paginacion.php';
 ?>
 
 <?php foreach ($listado['filas'] as $curso): ?>
+    <?php // El modal solo existe si su botón existe: ver un curso ajeno no da acceso a borrarlo.
+    if (!Auth::tienePermiso('cursos.eliminar')
+        || !Auth::puedeSobrePastoral($curso['pastoral_id'] !== null ? (int) $curso['pastoral_id'] : null)
+        || !Auth::puedeSobreCentro($curso['centro_id'] !== null ? (int) $curso['centro_id'] : null)) {
+        continue;
+    } ?>
     <div class="modal fade" id="borrar<?= (int) $curso['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

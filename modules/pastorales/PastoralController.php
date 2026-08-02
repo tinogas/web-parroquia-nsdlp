@@ -2,6 +2,8 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 
 class PastoralController extends Controller
 {
@@ -36,9 +38,11 @@ class PastoralController extends Controller
         $this->requirePermiso('pastorales.crear');
 
         $this->render('pastorales/form', [
-            'titulo'   => 'Nueva pastoral',
-            'pastoral' => null,
-            'centros'  => (new CentroModel())->activos(),
+            'titulo'            => 'Nueva pastoral',
+            'pastoral'          => null,
+            'centros'           => (new CentroModel())->activos(),
+            'personas'          => (new PersonaModel())->paraSelector(),
+            'responsableCuenta' => null,
         ]);
     }
 
@@ -54,13 +58,19 @@ class PastoralController extends Controller
         }
         $this->requireAlcancePastoral((int) $pastoral['id']);
 
+        $responsableCuenta = $pastoral['responsable_persona_id']
+            ? (new UsuarioModel())->porPersona((int) $pastoral['responsable_persona_id'])
+            : null;
+
         $this->render('pastorales/form', [
-            'titulo'      => $pastoral['nombre'],
-            'pastoral'    => $pastoral,
-            'centros'     => (new CentroModel())->activos(),
-            'actividades' => $this->modelo->actividades((int) $pastoral['id']),
-            'documentos'  => $this->modelo->documentos((int) $pastoral['id']),
-            'scriptExtra' => $this->scriptEditor(),
+            'titulo'            => $pastoral['nombre'],
+            'pastoral'          => $pastoral,
+            'centros'           => (new CentroModel())->activos(),
+            'personas'          => (new PersonaModel())->paraSelector(),
+            'responsableCuenta' => $responsableCuenta,
+            'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
+            'documentos'        => $this->modelo->documentos((int) $pastoral['id']),
+            'scriptExtra'       => $this->scriptEditor(),
         ]);
     }
 
@@ -104,6 +114,28 @@ class PastoralController extends Controller
             Session::flash('warning', 'La pastoral se guardó, pero la imagen no: ' . $e->getMessage());
         }
 
+        // El responsable se elige del equipo pastoral; si no está ahí todavía,
+        // el nombre libre de abajo es el respaldo. Con persona elegida, su
+        // nombre manda sobre el campo de texto (que se ignora) y su correo de
+        // acceso —si tiene cuenta— manda sobre el de contacto: es la misma
+        // regla que corrige el caso real de MESC, donde el correo de contacto
+        // llevaba una letra distinta al de la cuenta de la coordinadora.
+        $responsablePersonaId = $this->postIntONull('responsable_persona_id');
+        $responsablePersona   = $responsablePersonaId
+            ? (new PersonaModel())->porId($responsablePersonaId) : null;
+        if ($responsablePersonaId && !$responsablePersona) {
+            $responsablePersonaId = null;   // id inválido: se ignora en silencio, como el resto de selects opcionales
+        }
+
+        if ($responsablePersona) {
+            $responsableNombre = $responsablePersona['nombre'];
+            $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
+            $contactoEmail     = $cuentaResponsable ? $cuentaResponsable['email'] : ($this->postStr('contacto_email') ?: null);
+        } else {
+            $responsableNombre = $this->postStr('responsable_nombre') ?: null;
+            $contactoEmail     = $this->postStr('contacto_email') ?: null;
+        }
+
         $datos = [
             'centro_id'          => $this->postIntONull('centro_id'),
             'slug'               => $slug,
@@ -112,8 +144,9 @@ class PastoralController extends Controller
             'descripcion'        => SanitizadorHtml::limpiar($this->postHtml('descripcion')) ?: null,
             'imagen'             => $imagen,
             'icono'              => $this->postStr('icono') ?: 'bi-people',
-            'responsable_nombre' => $this->postStr('responsable_nombre') ?: null,
-            'contacto_email'     => $this->postStr('contacto_email') ?: null,
+            'responsable_nombre'      => $responsableNombre,
+            'responsable_persona_id'  => $responsablePersonaId,
+            'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
             'hora_reunion'       => $this->postStr('hora_reunion') ?: null,

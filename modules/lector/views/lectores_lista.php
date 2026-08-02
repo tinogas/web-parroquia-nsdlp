@@ -2,11 +2,11 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Lectores</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Liturgia</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Catálogo</li>
             </ol>
         </nav>
-        <h1 class="h4 fw-bold mb-0">Catálogo de lectores</h1>
+        <h1 class="h4 fw-bold mb-0">Catálogo de liturgia</h1>
     </div>
     <a href="<?= e(url_admin('lector')) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver al calendario
@@ -54,8 +54,14 @@
 </div>
 
 <?php
-$dibujarModalLector = static function (string $idModal, ?array $lector, int $pastoralId, string $csrf) {
-    $vacio = $lector === null;
+$dibujarModalLector = static function (string $idModal, ?array $lector, int $pastoralId, string $csrf, array $personas) {
+    $vacio     = $lector === null;
+    $personaId = $vacio ? 0 : (int) ($lector['persona_id'] ?? 0);
+    $contacto  = $vacio ? '' : trim(
+        (string) ($lector['telefono'] ?? '')
+        . (($lector['telefono'] ?? '') && ($lector['email'] ?? '') ? ' · ' : '')
+        . (string) ($lector['email'] ?? '')
+    );
     ?>
     <div class="modal fade" id="<?= e($idModal) ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -71,10 +77,32 @@ $dibujarModalLector = static function (string $idModal, ?array $lector, int $pas
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nombre</label>
-                        <input type="text" name="nombre" class="form-control form-control-sm"
-                               value="<?= e($vacio ? '' : $lector['nombre']) ?>" maxlength="140" required>
+                        <label class="form-label small fw-semibold">¿Quién es?</label>
+                        <select name="persona_id" class="form-select form-select-sm">
+                            <option value="">— Todavía no está en el equipo pastoral —</option>
+                            <?php foreach ($personas as $persona): ?>
+                            <option value="<?= (int) $persona['id'] ?>"
+                                <?= $personaId === (int) $persona['id'] ? 'selected' : '' ?>>
+                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Nombre, si no está en el equipo pastoral</label>
+                        <input type="text" name="nombre" class="form-control form-control-sm"
+                               value="<?= e($vacio || $personaId ? '' : $lector['nombre']) ?>" maxlength="140">
+                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
+                    </div>
+                    <?php if ($personaId): ?>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Contacto</label>
+                        <p class="form-control-plaintext form-control-sm py-1 mb-0 small">
+                            <?= $contacto !== '' ? e($contacto) : '—' ?>
+                        </p>
+                        <div class="form-text">Viene de su ficha del equipo pastoral.</div>
+                    </div>
+                    <?php else: ?>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
@@ -85,6 +113,7 @@ $dibujarModalLector = static function (string $idModal, ?array $lector, int $pas
                         <input type="email" name="email" class="form-control form-control-sm"
                                value="<?= e($vacio ? '' : (string) $lector['email']) ?>" maxlength="150">
                     </div>
+                    <?php endif; ?>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" name="activo" value="1"
                                id="act<?= e($idModal) ?>" <?= ($vacio || $lector['activo']) ? 'checked' : '' ?>>
@@ -111,8 +140,8 @@ $dibujarModalLector = static function (string $idModal, ?array $lector, int $pas
     <?php
 };
 
-$dibujarModalLector('lectorNuevo', null, $pastoralId, $csrf);
+$dibujarModalLector('lectorNuevo', null, $pastoralId, $csrf, $personas);
 foreach ($lectores as $lector) {
-    $dibujarModalLector('lector' . (int) $lector['id'], $lector, $pastoralId, $csrf);
+    $dibujarModalLector('lector' . (int) $lector['id'], $lector, $pastoralId, $csrf, $personas);
 }
 ?>

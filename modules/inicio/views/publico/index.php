@@ -170,6 +170,35 @@
 </div>
 <?php endif; ?>
 
+<?php /* El widget oficial de Facebook (Page Plugin, sin SDK): un iframe que
+         Facebook mismo mantiene con las últimas publicaciones de la página,
+         tal como se ven ahí. Se activa capturando la URL en Configuración →
+         Redes sociales, el mismo campo que ya alimentaba el icono del pie. */ ?>
+<?php if (Config::tiene('facebook')): ?>
+<div class="row justify-content-center mt-4">
+<div class="col-lg-8">
+    <h2 class="h6 text-uppercase text-muted mb-3">Lo último en Facebook</h2>
+    <?php
+    $facebookSrc = 'https://www.facebook.com/plugins/page.php?' . http_build_query([
+        'href'                  => Config::get('facebook'),
+        'tabs'                  => 'timeline',
+        'width'                 => 500,
+        'height'                => 460,
+        'small_header'          => 'false',
+        'adapt_container_width' => 'true',
+        'hide_cover'            => 'false',
+        'show_facepile'         => 'true',
+    ]);
+    ?>
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <iframe src="<?= e($facebookSrc) ?>" width="100%" height="460"
+                style="border:none;overflow:hidden" scrolling="no" loading="lazy"
+                allowfullscreen="true" title="Publicaciones recientes en Facebook"></iframe>
+    </div>
+</div>
+</div>
+<?php endif; ?>
+
 <?php if (!empty($bloques['ligas_interes']['contenido'])): ?>
 <div class="row justify-content-center mt-4">
     <div class="col-lg-8">

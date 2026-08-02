@@ -10,6 +10,9 @@
  * existeRutaPublica (un interruptor de código, permanente una vez conectado
  * el módulo), este es un interruptor del panel (Configuración → Secciones
  * del sitio) para ocultar la sección aunque el módulo siga funcionando.
+ *
+ * Después de las secciones fijas van las páginas libres marcadas con «Mostrar
+ * en el menú» (paginas_del_menu()), en el orden que se les haya puesto.
  */
 $secciones = [
     'nosotros'    => ['Quiénes somos', 'bi-people'],
@@ -60,6 +63,18 @@ $moduloActual = $_GET['modulo'] ?? 'inicio';
                     </li>
                     <?php endif; ?>
                 <?php endforeach; ?>
+
+                <?php if (Router::existeRutaPublica('pagina')): ?>
+                    <?php foreach (paginas_del_menu() as $paginaMenu): ?>
+                    <li class="nav-item">
+                        <?php /* El router deja $_GET['slug'] tanto en /mi-pagina como en /pagina/mi-pagina. */ ?>
+                        <a class="nav-link <?= ($_GET['slug'] ?? '') === $paginaMenu['slug'] ? 'active' : '' ?>"
+                           href="<?= e(url_publica('pagina', ['slug' => $paginaMenu['slug']])) ?>">
+                            <?= e($paginaMenu['titulo']) ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                <?php endif; ?>
 
                 <?php if (Router::existeRutaPublica('contacto')): ?>
                 <li class="nav-item ms-lg-2">

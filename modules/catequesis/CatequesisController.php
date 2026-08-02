@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/catequesis/CatequesisModel.php';
+require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 
 /**
  * CatequesisController — Igual que MESC y Lector, este módulo es exclusivo
@@ -33,6 +34,7 @@ class CatequesisController extends Controller
             'titulo'      => 'Catequesis — Catequistas',
             'pastoralId'  => $pastoralId,
             'catequistas' => $this->modelo->catequistas($pastoralId),
+            'personas'    => (new PersonaModel())->paraSelector(),
         ]);
     }
 
@@ -54,18 +56,34 @@ class CatequesisController extends Controller
         }
         $this->requireAlcancePastoral($pastoralId);
 
-        $nombre = $this->postStr('nombre');
+        // El catequista se elige del equipo pastoral; si todavía no está ahí,
+        // los campos libres de abajo son el respaldo. Mismo patrón que el
+        // responsable de una pastoral y que los ministros de MESC.
+        $personaId = $this->postIntONull('persona_id');
+        $persona   = $personaId ? (new PersonaModel())->porId($personaId) : null;
+        if ($persona) {
+            $nombre   = $persona['nombre'];
+            $telefono = $persona['telefono'];
+            $email    = $persona['email'];
+        } else {
+            $personaId = null;
+            $nombre    = $this->postStr('nombre');
+            $telefono  = $this->postStr('telefono') ?: null;
+            $email     = $this->postStr('email') ?: null;
+        }
+
         if ($nombre === '') {
-            Session::flash('error', 'El catequista necesita un nombre.');
+            Session::flash('error', 'El catequista necesita un nombre, o elige a alguien del equipo pastoral.');
             $this->redirect(url_admin('catequesis'));
             return;
         }
 
         $datos = [
             'pastoral_id' => $pastoralId,
+            'persona_id'  => $personaId,
             'nombre'      => $nombre,
-            'telefono'    => $this->postStr('telefono') ?: null,
-            'email'       => $this->postStr('email') ?: null,
+            'telefono'    => $telefono,
+            'email'       => $email,
             'orden'       => $this->postInt('orden'),
             'activo'      => $this->postBool('activo'),
         ];

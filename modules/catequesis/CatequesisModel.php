@@ -27,12 +27,18 @@ class CatequesisModel extends Model
     /** La única pastoral que administra este módulo, resuelta por slug (no por id fijo: los id no se siembran en install.sql). */
     public function pastoralId(): ?int
     {
-        return $this->fetchColumn("SELECT id FROM pastorales WHERE slug = 'catecismo'") ?: null;
+        return $this->fetchColumn(
+            'SELECT id FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_CATEQUESIS]
+        ) ?: null;
     }
 
     public function pastoral(): ?array
     {
-        return $this->fetchOne("SELECT * FROM pastorales WHERE slug = 'catecismo'");
+        return $this->fetchOne(
+            'SELECT * FROM pastorales WHERE slug = :slug',
+            [':slug' => PASTORAL_CATEQUESIS]
+        );
     }
 
     // ── Catequistas ──────────────────────────────────────────────────────
@@ -61,8 +67,8 @@ class CatequesisModel extends Model
     public function crearCatequista(array $datos): int
     {
         $this->execute(
-            'INSERT INTO catequesis_catequistas (pastoral_id, nombre, telefono, email, orden, activo)
-             VALUES (:pastoral, :nombre, :telefono, :email, :orden, :activo)',
+            'INSERT INTO catequesis_catequistas (pastoral_id, persona_id, nombre, telefono, email, orden, activo)
+             VALUES (:pastoral, :persona, :nombre, :telefono, :email, :orden, :activo)',
             $this->parametrosCatequista($datos)
         );
         return $this->lastInsertId();
@@ -72,7 +78,8 @@ class CatequesisModel extends Model
     {
         return $this->execute(
             'UPDATE catequesis_catequistas
-                SET nombre = :nombre, telefono = :telefono, email = :email, orden = :orden, activo = :activo
+                SET persona_id = :persona, nombre = :nombre, telefono = :telefono, email = :email,
+                    orden = :orden, activo = :activo
               WHERE id = :id',
             $this->parametrosCatequista($datos) + [':id' => $id]
         );
@@ -87,6 +94,7 @@ class CatequesisModel extends Model
     {
         return [
             ':pastoral' => $datos['pastoral_id'],
+            ':persona'  => $datos['persona_id'],
             ':nombre'   => $datos['nombre'],
             ':telefono' => $datos['telefono'],
             ':email'    => $datos['email'],
