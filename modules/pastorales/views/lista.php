@@ -56,13 +56,11 @@ $dibujarTarjeta = static function (array $pastoral): void {
                        class="btn btn-sm btn-outline-primary flex-grow-1">
                         <i class="bi bi-pencil me-1"></i>Editar
                     </a>
-                    <?php if (Auth::esAdmin() && !$pastoral['visible_en_menu']): ?>
-                    <button type="button" class="btn btn-sm btn-outline-success"
-                            data-bs-toggle="modal" data-bs-target="#activarMenu<?= (int) $pastoral['id'] ?>"
-                            title="Crear menú y grupo">
-                        <i class="bi bi-plus-circle"></i>
-                    </button>
-                    <?php endif; ?>
+                    <?php /* Botón "Crear menú y grupo" (activar visible_en_menu desde aquí):
+                             retirado de la interfaz, el flujo de un botón por pastoral no era
+                             el que se buscaba. PastoralController::menuActivar() y el modal de
+                             confirmación siguen en el código, comentados, a la espera de
+                             decidir el mecanismo correcto. */ ?>
                     <?php if (Auth::esAdmin()): ?>
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             data-bs-toggle="modal" data-bs-target="#borrar<?= (int) $pastoral['id'] ?>">
@@ -135,7 +133,15 @@ foreach ($comisiones as $grupo) {
     require BASE_PATH . '/shared/views/parciales/modal_confirmar_password.php';
 endforeach; ?>
 
-<?php if (Auth::esAdmin()):
+<?php
+/* Modal "Crear menú y grupo" (activar pastorales.visible_en_menu desde aquí),
+ * pendiente: se retiró el botón que lo abría porque un botón por pastoral no
+ * era el mecanismo que se buscaba para publicar en el menú. Se deja el bloque
+ * comentado, no borrado, junto con PastoralController::menuActivar() y
+ * PastoralModel::activarEnMenu(), a la espera de decidir cómo debe activarse
+ * de verdad.
+
+if (Auth::esAdmin()):
     foreach ($todasParaModales as $pastoral):
         if ($pastoral['visible_en_menu']) { continue; }
         $mcp_idModal       = 'activarMenu' . (int) $pastoral['id'];
@@ -149,4 +155,6 @@ endforeach; ?>
         $mcp_claseBoton    = 'btn-success';
         require BASE_PATH . '/shared/views/parciales/modal_confirmar_password.php';
     endforeach;
-endif; ?>
+endif;
+*/
+?>

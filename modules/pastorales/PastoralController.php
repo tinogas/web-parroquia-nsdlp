@@ -104,11 +104,17 @@ class PastoralController extends Controller
         ]);
     }
 
-    /**
-     * Publicarla en el menú es deliberado y separado de guardar(): solo
-     * Administrador, confirmando su contraseña. Ver
-     * Controller::requireAdminConPassword() y PastoralModel::activarEnMenu().
-     */
+    /*
+     * PENDIENTE — comentado, no borrado: el botón que llamaba a esta acción
+     * (uno por pastoral, en pastorales/views/lista.php) se retiró de la
+     * interfaz porque ese mecanismo no era el que se buscaba para publicar
+     * una pastoral en el menú. Queda aquí, junto con
+     * PastoralModel::activarEnMenu() y Controller::requireAdminConPassword(),
+     * a la espera de decidir el flujo correcto.
+     *
+     * Publicarla en el menú era deliberado y separado de guardar(): solo
+     * Administrador, confirmando su contraseña.
+     *
     public function menuActivar(): void
     {
         $this->requirePermiso('pastorales.editar');
@@ -133,6 +139,7 @@ class PastoralController extends Controller
 
         $this->redirect(url_admin('pastorales'));
     }
+    */
 
     public function guardar(): void
     {
