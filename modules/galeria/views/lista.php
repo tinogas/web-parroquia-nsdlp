@@ -33,8 +33,15 @@
     <?php foreach ($listado['filas'] as $imagen): ?>
     <div class="col-6 col-md-4 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
-            <img src="<?= e(url_activo($imagen['archivo'])) ?>" class="card-img-top" alt=""
-                 style="height:140px;object-fit:cover">
+            <?php /* Solo la foto abre el visor; el botón Editar de abajo queda
+                     fuera del <a> para que un clic ahí no dispare las dos cosas.
+                     lightbox_galeria.js es el mismo script del sitio público. */ ?>
+            <a href="<?= e(url_activo($imagen['archivo'])) ?>" target="_blank" rel="noopener"
+               class="d-block tarjeta-galeria" title="<?= e($imagen['titulo'] ?: 'Ver en tamaño completo') ?>"
+               <?php if ($imagen['titulo']): ?>data-titulo="<?= e($imagen['titulo']) ?>"<?php endif; ?>>
+                <img src="<?= e(url_activo($imagen['archivo'])) ?>" class="card-img-top" alt=""
+                     style="height:140px;object-fit:cover">
+            </a>
             <div class="card-body p-2">
                 <div class="d-flex flex-wrap gap-1 mb-2">
                     <?php if ($imagen['publicada']): ?>
@@ -69,6 +76,25 @@ $paginacion = $listado;
 $paginaBase = url_admin('galeria', '', $filtro !== 'todas' ? ['filtro' => $filtro] : []);
 require BASE_PATH . '/shared/views/parciales/paginacion.php';
 ?>
+
+<?php if ($listado['filas']): ?>
+<div class="lightbox-galeria" id="lightboxGaleria" role="dialog" aria-modal="true" aria-label="Visor de fotografías" hidden>
+    <button type="button" class="lightbox-cerrar" aria-label="Cerrar">
+        <i class="bi bi-x-lg"></i>
+    </button>
+    <button type="button" class="lightbox-nav lightbox-anterior" aria-label="Foto anterior">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+    <figure class="lightbox-contenido">
+        <img src="" alt="">
+        <figcaption hidden></figcaption>
+    </figure>
+    <button type="button" class="lightbox-nav lightbox-siguiente" aria-label="Foto siguiente">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+    <div class="lightbox-contador"></div>
+</div>
+<?php endif; ?>
 
 <?php foreach ($listado['filas'] as $imagen): ?>
 <div class="modal fade" id="editar<?= (int) $imagen['id'] ?>" tabindex="-1" aria-hidden="true">

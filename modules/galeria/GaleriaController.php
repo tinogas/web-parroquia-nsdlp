@@ -19,9 +19,11 @@ class GaleriaController extends Controller
             ? $this->getStr('filtro') : 'todas';
 
         $this->render('galeria/lista', [
-            'titulo'  => 'Galería',
-            'listado' => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
-            'filtro'  => $filtro,
+            'titulo'      => 'Galería',
+            'listado'     => $this->modelo->listar(max(1, $this->getInt('pagina', 1)), $filtro, $this->filtroPastoralSql()),
+            'filtro'      => $filtro,
+            'scriptExtra' => '<script src="' . e(url_activo('assets/js/lightbox_galeria.js'))
+                            . '?v=' . e(APP_VERSION) . '"></script>',
         ]);
     }
 
