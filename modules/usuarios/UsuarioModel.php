@@ -218,6 +218,28 @@ class UsuarioModel extends Model
         $this->execute('UPDATE usuarios SET activo = 0 WHERE id = :id', [':id' => $id]);
     }
 
+    /**
+     * Sincroniza SOLO el alcance (pastorales y sedes) de una cuenta ya
+     * existente, sin tocar nombre, rol, correo, contraseña, foto ni activo.
+     * Para cuando el cambio se origina fuera del formulario de Usuarios: hoy
+     * lo usa únicamente PersonaModel::actualizar(), al guardar la ficha de
+     * alguien que ya tiene cuenta vinculada, para que el alcance de la cuenta
+     * nunca quede desincronizado de lo que la ficha dice. Ver
+     * docs/ARQUITECTURA.md.
+     */
+    public function sincronizarAlcance(int $usuarioId, array $pastoralIds, array $centroIds): void
+    {
+        $this->beginTransaction();
+        try {
+            $this->sincronizarPastorales($usuarioId, $pastoralIds);
+            $this->sincronizarCentros($usuarioId, $centroIds);
+            $this->commit();
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
+    }
+
     /** Qué administra. Estas filas son el alcance, sin herencias de por medio. */
     private function sincronizarPastorales(int $usuarioId, array $pastoralIds): void
     {

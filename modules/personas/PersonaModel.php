@@ -1,5 +1,6 @@
 <?php
 require_once BASE_PATH . '/core/Model.php';
+require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 
 /**
  * PersonaModel — Sacerdote, diáconos, religiosos, laicos y personal.
@@ -164,6 +165,7 @@ class PersonaModel extends Model
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
             $this->sincronizarCuenta($id, $datos);
+            $this->sincronizarCuentaAlcance($id, $datos['pastorales'], $datos['centros']);
             $this->sincronizarResponsable($id, $datos['nombre']);
             $this->sincronizarPersonal($id, $datos);
             $this->commit();
@@ -198,6 +200,28 @@ class PersonaModel extends Model
                 ':persona'  => $personaId,
             ]
         );
+    }
+
+    /**
+     * Si esta persona ya tiene cuenta vinculada y esa cuenta usa alcance por
+     * pastoral (Coordinador, Coordinador general o Consulta), su alcance se
+     * sincroniza aquí mismo con lo recién guardado en la ficha —para que
+     * agregar o quitar una pastoral en el equipo pastoral no exija además
+     * volver a abrir "Editar" en Usuarios—. Con un rol sin alcance
+     * (Administrador, Editor, Secretaría) no se toca nada: esa cuenta no usa
+     * usuarios_pastorales/usuarios_centros para nada.
+     *
+     * Límite conocido y aceptado: si esa persona tiene sesión abierta en este
+     * momento, no lo verá hasta volver a iniciar sesión —
+     * Auth::pastoralesPermitidas() se cachea en sesión al iniciar sesión.
+     */
+    private function sincronizarCuentaAlcance(int $personaId, array $pastoralIds, array $centroIds): void
+    {
+        $cuenta = (new UsuarioModel())->porPersona($personaId);
+        if (!$cuenta || !in_array($cuenta['rol'], ROLES_CON_ALCANCE_PASTORAL, true)) {
+            return;
+        }
+        (new UsuarioModel())->sincronizarAlcance((int) $cuenta['id'], $pastoralIds, $centroIds);
     }
 
     /**

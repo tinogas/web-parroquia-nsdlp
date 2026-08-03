@@ -35,7 +35,8 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
 
                     <div class="mb-3">
                         <label for="persona_id" class="form-label fw-semibold">¿Quién es?</label>
-                        <select name="persona_id" id="persona_id" class="form-select">
+                        <select name="persona_id" id="persona_id" class="form-select"
+                                data-id-vinculada="<?= $vinculada ? (int) $fichaCuenta['id'] : '' ?>">
                             <option value="">— Cuenta sin ficha en el equipo pastoral —</option>
                             <?php foreach ($personas as $persona): ?>
                             <option value="<?= (int) $persona['id'] ?>"
@@ -46,10 +47,10 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                         </select>
                         <div class="form-text">
                             El equipo pastoral es el registro principal: de ahí salen el organigrama y las
-                            cuentas. Al elegir a alguien, <strong>su nombre, su teléfono y su foto se toman
-                            de su ficha</strong> —para cambiarlos se edita la ficha, no la cuenta— y, si no
-                            marcas nada abajo, también sus pastorales y sus sedes. Solo aparecen las
-                            personas que todavía no tienen cuenta.
+                            cuentas. Al elegir a alguien, <strong>su nombre, su teléfono, su foto y —si el rol
+                            lo usa— sus pastorales y sus sedes se toman siempre de su ficha</strong>: para
+                            cambiarlos se edita la ficha, no la cuenta. Solo aparecen las personas que
+                            todavía no tienen cuenta.
                         </div>
                     </div>
 
@@ -110,63 +111,122 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                     <?php /* Las dos mitades del alcance. Marcar sedes acota DÓNDE; marcar
                              pastorales dice QUÉ administra ahí. Ni una ni otra reparte nada
                              por su cuenta: una sede marcada no da las demás pastorales de esa
-                             sede. Sede primero porque acota lo que sigue, no al revés. */ ?>
-                    <div class="mb-0">
-                        <label class="form-label fw-semibold">Sedes en las que trabaja</label>
-                        <div class="form-text mb-2">
-                            En qué comunidades trabaja. <strong>Sin marcar ninguna trabaja en toda la
-                            parroquia</strong>, que es como se representa una coordinación general.
-                        </div>
-                        <?php if (!$centros): ?>
-                        <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>
-                        <?php else: ?>
-                        <div class="row row-cols-1 row-cols-sm-2 g-1">
-                            <?php foreach ($centros as $centro): ?>
-                            <div class="col">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="centros[]"
-                                           value="<?= (int) $centro['id'] ?>" id="cen<?= (int) $centro['id'] ?>"
-                                           <?= in_array((int) $centro['id'], $centrosAsignados, true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="cen<?= (int) $centro['id'] ?>">
-                                        <?= e($centro['nombre']) ?>
-                                    </label>
-                                </div>
+                             sede. Sede primero porque acota lo que sigue, no al revés.
+
+                             Con persona vinculada, ninguno de los dos se marca aquí: se heredan
+                             siempre de su ficha (ver UsuarioController::guardar()), y esta
+                             sección solo los resume de solo lectura. Cuál de los tres bloques
+                             de abajo se ve lo decide el JS al final del archivo, según la
+                             persona elegida arriba en cada momento —la ya vinculada al cargar,
+                             otra distinta, o ninguna—, para que cambiar la selección sin
+                             guardar no deje en pantalla el resumen de otra persona. */ ?>
+
+                    <div id="bloqueAlcanceManual" class="<?= $vinculada ? 'd-none' : '' ?>">
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold">Sedes en las que trabaja</label>
+                            <div class="form-text mb-2">
+                                En qué comunidades trabaja. <strong>Sin marcar ninguna trabaja en toda la
+                                parroquia</strong>, que es como se representa una coordinación general.
                             </div>
-                            <?php endforeach; ?>
+                            <?php if (!$centros): ?>
+                            <p class="text-muted small">Todavía no hay centros o sedes dados de alta.</p>
+                            <?php else: ?>
+                            <div class="row row-cols-1 row-cols-sm-2 g-1">
+                                <?php foreach ($centros as $centro): ?>
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="centros[]"
+                                               value="<?= (int) $centro['id'] ?>" id="cen<?= (int) $centro['id'] ?>"
+                                               <?= in_array((int) $centro['id'], $centrosAsignados, true) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="cen<?= (int) $centro['id'] ?>">
+                                            <?= e($centro['nombre']) ?>
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
                         </div>
-                        <?php endif; ?>
+
+                        <div class="mb-0 mt-3">
+                            <label class="form-label fw-semibold">Pastorales que administra</label>
+                            <div class="form-text mb-2">
+                                Esta cuenta trabajará <strong>únicamente</strong> con lo que se marque aquí: sus
+                                eventos, sus cursos y su contenido, acotado a la sede de arriba si marcaste
+                                alguna —quien coordina la catequesis de Jesús el Señor marca «Jesús el Señor»
+                                arriba y «Catecismo» aquí—. Solo se guarda con un rol acotado por pastoral
+                                (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector); con
+                                cualquier otro rol se ignora. No aparecen las Comisiones (Litúrgica,
+                                Profética...): agrupan a otras pastorales, pero no tienen contenido propio que
+                                administrar, y el alcance no se hereda de una Comisión a las que agrupa.
+                            </div>
+                            <?php if (!$pastorales): ?>
+                            <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
+                            <?php else: ?>
+                            <div class="row row-cols-1 row-cols-sm-2 g-1">
+                                <?php foreach ($pastorales as $pastoral): ?>
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                               value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
+                                               <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
+                                            <?= e($pastoral['nombre']) ?>
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
-                    <div class="mb-0 mt-3">
-                        <label class="form-label fw-semibold">Pastorales que administra</label>
+                    <?php
+                        // Nombres resueltos de solo lectura para quien YA estaba vinculada al
+                        // cargar la página. Se cruza contra el catálogo COMPLETO (pastoralesTodas/
+                        // centrosTodos, sin acotar por alcance ni excluir Comisiones): la ficha
+                        // pudo editarla alguien con más alcance que quien ve esta pantalla, o
+                        // incluir una Comisión (Litúrgica, Profética) que el checklist normal
+                        // nunca ofrece.
+                        $nombresCentrosFicha = $vinculada ? array_values(array_filter(array_map(
+                            static fn (array $c): ?string => in_array((int) $c['id'], $centrosAsignados, true) ? $c['nombre'] : null,
+                            $centrosTodos
+                        ))) : [];
+                        $nombresPastoralesFicha = $vinculada ? array_values(array_filter(array_map(
+                            static fn (array $p): ?string => in_array((int) $p['id'], $asignadas, true) ? $p['nombre'] : null,
+                            $pastoralesTodas
+                        ))) : [];
+                    ?>
+                    <div id="resumenAlcanceFicha" class="<?= $vinculada ? '' : 'd-none' ?>">
+                        <label class="form-label fw-semibold">Sedes y pastorales</label>
                         <div class="form-text mb-2">
-                            Esta cuenta trabajará <strong>únicamente</strong> con lo que se marque aquí: sus
-                            eventos, sus cursos y su contenido, acotado a la sede de arriba si marcaste
-                            alguna —quien coordina la catequesis de Jesús el Señor marca «Jesús el Señor»
-                            arriba y «Catecismo» aquí—. Solo se guarda con un rol acotado por pastoral
-                            (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector); con
-                            cualquier otro rol se ignora. No aparecen las Comisiones (Litúrgica,
-                            Profética...): agrupan a otras pastorales, pero no tienen contenido propio que
-                            administrar, y el alcance no se hereda de una Comisión a las que agrupa.
+                            Se toman siempre de
+                            <a href="<?= e(url_admin('personas', 'editar', ['id' => $vinculada ? (int) $fichaCuenta['id'] : 0])) ?>">su
+                            ficha en el equipo pastoral</a>; no se marcan aquí.
                         </div>
-                        <?php if (!$pastorales): ?>
-                        <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
-                        <?php else: ?>
-                        <div class="row row-cols-1 row-cols-sm-2 g-1">
-                            <?php foreach ($pastorales as $pastoral): ?>
-                            <div class="col">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="pastorales[]"
-                                           value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
-                                           <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
-                                        <?= e($pastoral['nombre']) ?>
-                                    </label>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
+                        <p class="mb-1">
+                            <span class="fw-semibold small">Sedes:</span>
+                            <?= $nombresCentrosFicha
+                                ? e(implode(' · ', $nombresCentrosFicha))
+                                : '<span class="text-muted">Toda la parroquia (ninguna marcada)</span>' ?>
+                        </p>
+                        <p class="mb-0">
+                            <span class="fw-semibold small">Pastorales:</span>
+                            <?= $nombresPastoralesFicha
+                                ? e(implode(' · ', $nombresPastoralesFicha))
+                                : '<span class="text-muted">Ninguna en su ficha todavía</span>' ?>
+                        </p>
+                    </div>
+
+                    <div id="resumenAlcanceGenerico" class="d-none">
+                        <label class="form-label fw-semibold">Sedes y pastorales</label>
+                        <div class="form-text mb-0">
+                            Se tomarán de
+                            <a href="#" id="lnkFichaGenerica"
+                               data-url-base="<?= e(url_admin('personas', 'editar', ['id' => '__ID__'])) ?>">su
+                            ficha en el equipo pastoral</a>; no se marcan aquí. Podrás verlas en esta
+                            pantalla después de guardar.
                         </div>
-                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
 
@@ -236,3 +296,33 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
         </div>
     </div>
 </form>
+
+<script>
+(function () {
+    var selectPersona = document.getElementById('persona_id');
+    var bloqueManual    = document.getElementById('bloqueAlcanceManual');
+    var resumenFicha     = document.getElementById('resumenAlcanceFicha');
+    var resumenGenerico  = document.getElementById('resumenAlcanceGenerico');
+    if (!selectPersona || (!bloqueManual && !resumenFicha && !resumenGenerico)) { return; }
+
+    var idVinculada = selectPersona.dataset.idVinculada || '';
+
+    function actualizarAlcancePorPersona() {
+        var valor = selectPersona.value;
+        var esLaVinculada = valor !== '' && valor === idVinculada;
+        var esOtraPersona = valor !== '' && valor !== idVinculada;
+
+        if (bloqueManual)   { bloqueManual.classList.toggle('d-none', valor !== ''); }
+        if (resumenFicha)   { resumenFicha.classList.toggle('d-none', !esLaVinculada); }
+        if (resumenGenerico) { resumenGenerico.classList.toggle('d-none', !esOtraPersona); }
+
+        if (esOtraPersona) {
+            var lnk = document.getElementById('lnkFichaGenerica');
+            if (lnk && lnk.dataset.urlBase) { lnk.href = lnk.dataset.urlBase.replace('__ID__', valor); }
+        }
+    }
+
+    selectPersona.addEventListener('change', actualizarAlcancePorPersona);
+    actualizarAlcancePorPersona();
+})();
+</script>
