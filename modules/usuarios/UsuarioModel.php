@@ -60,6 +60,8 @@ class UsuarioModel extends Model
                     (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
                        FROM usuarios_pastorales up JOIN pastorales p ON p.id = up.pastoral_id
                       WHERE up.usuario_id = u.id) AS pastorales_nombres,
+                    (SELECT GROUP_CONCAT(up.pastoral_id)
+                       FROM usuarios_pastorales up WHERE up.usuario_id = u.id) AS pastorales_ids,
                     (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
                        FROM usuarios_centros uc JOIN centros c ON c.id = uc.centro_id
                       WHERE uc.usuario_id = u.id) AS centros_nombres
@@ -216,6 +218,28 @@ class UsuarioModel extends Model
     public function desactivar(int $id): void
     {
         $this->execute('UPDATE usuarios SET activo = 0 WHERE id = :id', [':id' => $id]);
+    }
+
+    /**
+     * Sincroniza SOLO el alcance (pastorales y sedes) de una cuenta ya
+     * existente, sin tocar nombre, rol, correo, contraseña, foto ni activo.
+     * Para cuando el cambio se origina fuera del formulario de Usuarios: hoy
+     * lo usa únicamente PersonaModel::actualizar(), al guardar la ficha de
+     * alguien que ya tiene cuenta vinculada, para que el alcance de la cuenta
+     * nunca quede desincronizado de lo que la ficha dice. Ver
+     * docs/ARQUITECTURA.md.
+     */
+    public function sincronizarAlcance(int $usuarioId, array $pastoralIds, array $centroIds): void
+    {
+        $this->beginTransaction();
+        try {
+            $this->sincronizarPastorales($usuarioId, $pastoralIds);
+            $this->sincronizarCentros($usuarioId, $centroIds);
+            $this->commit();
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
     /** Qué administra. Estas filas son el alcance, sin herencias de por medio. */

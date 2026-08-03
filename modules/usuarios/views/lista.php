@@ -17,6 +17,16 @@
     </a>
 </div>
 
+<?php if ($usuarios): ?>
+<div class="mb-3">
+    <div class="input-group input-group-sm" style="max-width: 340px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" id="buscarUsuario" class="form-control"
+               placeholder="Buscar por nombre, correo, rol o pastoral...">
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="card border-0 shadow-sm">
     <?php if (!$usuarios): ?>
         <div class="card-body text-center py-5">
@@ -65,8 +75,24 @@
                         <?php endif; ?>
                     </td>
                     <td class="d-none d-lg-table-cell small text-muted">
-                        <?= $usuario['pastorales_nombres'] ? e($usuario['pastorales_nombres']) : '—' ?>
-                        <?php if ($usuario['pastorales_nombres']): ?>
+                        <?php $hayPastorales = $usuario['pastorales_agrupadas']['comisiones'] || $usuario['pastorales_agrupadas']['sueltas']; ?>
+                        <?php if (!$hayPastorales): ?>
+                        —
+                        <?php else: ?>
+                        <?php /* Padre (Comisión) primero, sus hijas detrás en la misma línea: mismo
+                                 agrupado que el checklist del formulario, en un formato compacto para
+                                 la tabla. */ ?>
+                        <?php foreach ($usuario['pastorales_agrupadas']['comisiones'] as $grupo): ?>
+                        <div>
+                            <span class="fw-semibold text-body-secondary"><?= e($grupo['padre']['nombre']) ?>:</span>
+                            <?= e(implode(' · ', array_column($grupo['hijas'], 'nombre'))) ?>
+                        </div>
+                        <?php endforeach; ?>
+                        <?php if ($usuario['pastorales_agrupadas']['sueltas']): ?>
+                        <div><?= e(implode(' · ', array_column($usuario['pastorales_agrupadas']['sueltas'], 'nombre'))) ?></div>
+                        <?php endif; ?>
+                        <?php endif; ?>
+                        <?php if ($hayPastorales): ?>
                         <?php /* Sin sedes marcadas administra su pastoral en toda la parroquia. */ ?>
                         <div class="text-body-tertiary">
                             <i class="bi bi-geo-alt me-1"></i>
@@ -134,3 +160,18 @@
         </div>
     </div>
 <?php endforeach; ?>
+
+<script>
+(function () {
+    var buscador = document.getElementById('buscarUsuario');
+    var filas    = document.querySelectorAll('table tbody tr');
+    if (!buscador || !filas.length) { return; }
+
+    buscador.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        filas.forEach(function (tr) {
+            tr.classList.toggle('d-none', q !== '' && !tr.textContent.toLowerCase().includes(q));
+        });
+    });
+})();
+</script>
