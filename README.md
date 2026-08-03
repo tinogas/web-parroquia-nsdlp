@@ -30,8 +30,8 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   cuatro vistas. Ahí todas las pastorales ven la agenda completa; en los listados de
   eventos y cursos, en cambio, cada una trabaja sobre lo suyo y sobre lo general de la
   parroquia. Los cursos pasaron a administrarse por pastoral, igual que los eventos, y una
-  y otros los publica la propia pastoral que los organiza —los avisos y la galería siguen
-  pasando por revisión de un editor—. El calendario del sitio público no cambió.
+  y otros los publica la propia pastoral que los organiza. El calendario del sitio público
+  no cambió.
 - **Los roles se simplificaron y las cuentas salen del equipo pastoral**: se retiraron los
   seis roles con la pastoral en el nombre (Administrador MESC, Consulta Catequesis…) y
   quedan Administrador, Editor, Coordinador, Coordinador general, Consulta y Secretaría —el
@@ -66,6 +66,20 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   "Zulema Alvarez" en otro y con su nombre completo en su ficha—. Con persona elegida,
   nombre y teléfono se toman de su ficha y se mantienen al día solos; sin persona, sigue
   funcionando el nombre libre de siempre.
+- **Las pastorales se organizan en Comisiones** (Litúrgica, Profética, Pastoral de la
+  Salud, De la Familia, De la Comunicación) que agrupan a las demás —MESC, Lectores y
+  Coros bajo Litúrgica; Catequesis y Misión bajo Profética, etc.—, tanto en el listado del
+  panel como en el sitio público. Dar de alta una pastoral nueva le da automáticamente,
+  desde su propio panel básico (`Pastorales → Panel básico`), acceso a sus avisos, sus
+  eventos, sus cursos y sus documentos, sin escribir código; que aparezca además en el
+  menú del panel es un paso aparte que solo el Administrador puede activar, confirmando su
+  contraseña.
+- **Avisos y cursos se publican en dos escalones, no en uno.** Antes de salir al sitio web,
+  una pastoral puede publicar hacia dentro, para sus propios miembros —y, si es una
+  Comisión, también para los de las pastorales que agrupa—, sin que eso lo saque a la
+  portada. El panel de inicio muestra lo publicado a cada quien ese mes, marcado como
+  nuevo hasta que lo revisa. Con esto, Coordinador y Coordinador general ya publican
+  también sus avisos, igual que ya publicaban sus eventos y sus cursos.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

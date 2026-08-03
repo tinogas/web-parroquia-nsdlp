@@ -100,7 +100,7 @@ avisan con contadores en el panel.
 |---|---|
 | Administrador | Todo, incluidos usuarios, configuración, respaldos y auditoría |
 | Editor | Todo el contenido del sitio; publica y modera. Sin acceso a usuarios ni configuración |
-| Coordinador de pastoral | Contenido de su o sus pastorales, en las sedes que se le marquen (sin marcar ninguna, en todas). Publica sus eventos y sus cursos; sus avisos y su galería quedan en borrador hasta que un editor los publica |
+| Coordinador de pastoral | Contenido de su o sus pastorales, en las sedes que se le marquen (sin marcar ninguna, en todas). Publica sus eventos, sus cursos y sus avisos —estos dos últimos en dos escalones: primero hacia dentro, para su pastoral, y luego, si quiere, también al sitio—; su galería queda en borrador hasta que un editor la publica |
 | Secretaría | Inscripciones a cursos y mensajes de contacto. No edita el sitio |
 
 El rol de secretaría existe por una razón legal, no organizativa: separa a quien ve datos
@@ -180,6 +180,8 @@ pedidos después, cada uno con su origen; todos están implementados y probados 
 | Catequesis y Lector | Dos módulos más de pastoral dedicada sobre el patrón de MESC: catequistas con periodos y grado, y turnos de lectores | Issue #3 |
 | Revisión de módulos | Roles de administrador y consulta por pastoral, botones que no se dibujan sin permiso, horarios públicos agrupados por tipo con filtro de sede, eventos de varios días, datos de tutor en inscripciones, organigrama responsivo y su vista de impresión en árbol | Uso real del panel |
 | Calendario y agenda 2026 | Vistas de día, semana, mes y año; filtros de fecha en el listado del panel; y la carga de la agenda impresa completa con los scripts de `herramientas/` | Necesidad de publicar la agenda del año |
+| Jerarquía de pastorales y menú dinámico | Las pastorales se agrupan en Comisiones (Litúrgica, Profética...); cada pastoral gana un panel básico con acceso ya filtrado a avisos, eventos, cursos y documentos, sin necesitar un módulo dedicado; publicarla en el menú es un paso aparte, exclusivo del Administrador y con confirmación de contraseña | Uso real del panel |
+| Publicación en dos escalones | Avisos y cursos ganan un peldaño intermedio entre borrador y sitio público: publicado hacia dentro, visible a la pastoral (y a sus hijas si es una Comisión) desde el panel de inicio, marcado como nuevo hasta que se revisa | Uso real del panel |
 
 El detalle de cada decisión —y de los errores que estos bloques encontraron en el código de
 la fase 1— está en [`ARQUITECTURA.md`](ARQUITECTURA.md).
