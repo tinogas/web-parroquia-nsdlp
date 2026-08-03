@@ -60,6 +60,8 @@ class UsuarioModel extends Model
                     (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
                        FROM usuarios_pastorales up JOIN pastorales p ON p.id = up.pastoral_id
                       WHERE up.usuario_id = u.id) AS pastorales_nombres,
+                    (SELECT GROUP_CONCAT(up.pastoral_id)
+                       FROM usuarios_pastorales up WHERE up.usuario_id = u.id) AS pastorales_ids,
                     (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
                        FROM usuarios_centros uc JOIN centros c ON c.id = uc.centro_id
                       WHERE uc.usuario_id = u.id) AS centros_nombres

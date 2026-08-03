@@ -156,26 +156,58 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                 alguna —quien coordina la catequesis de Jesús el Señor marca «Jesús el Señor»
                                 arriba y «Catecismo» aquí—. Solo se guarda con un rol acotado por pastoral
                                 (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector); con
-                                cualquier otro rol se ignora. No aparecen las Comisiones (Litúrgica,
-                                Profética...): agrupan a otras pastorales, pero no tienen contenido propio que
-                                administrar, y el alcance no se hereda de una Comisión a las que agrupa.
+                                cualquier otro rol se ignora. Cada Comisión (Litúrgica, Profética...) aparece
+                                solo como encabezado para agrupar a sus pastorales: no tiene contenido propio
+                                que administrar, no se marca aquí, y el alcance no se hereda de una Comisión a
+                                las que agrupa.
                             </div>
-                            <?php if (!$pastorales): ?>
+                            <?php if (!$pastoralesAgrupadas['comisiones'] && !$pastoralesAgrupadas['sueltas']): ?>
                             <p class="text-muted small">Todavía no hay pastorales dadas de alta.</p>
                             <?php else: ?>
-                            <div class="row row-cols-1 row-cols-sm-2 g-1">
-                                <?php foreach ($pastorales as $pastoral): ?>
+                            <?php /* Padre arriba, hijas debajo, cada Comisión en su propia columna: el
+                                     mismo agrupado que ya usa el panel (PastoralModel::agrupadoVisible()),
+                                     recortado al alcance de quien edita. El nombre de la Comisión es solo
+                                     un encabezado visual —no hay checkbox para ella—, las hijas sí. */ ?>
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                                <?php foreach ($pastoralesAgrupadas['comisiones'] as $grupo): ?>
                                 <div class="col">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="pastorales[]"
-                                               value="<?= (int) $pastoral['id'] ?>" id="pas<?= (int) $pastoral['id'] ?>"
-                                               <?= in_array((int) $pastoral['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="pas<?= (int) $pastoral['id'] ?>">
-                                            <?= e($pastoral['nombre']) ?>
-                                        </label>
+                                    <div class="border rounded-3 p-2 h-100">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-2 pb-1 border-bottom">
+                                            <?= e($grupo['padre']['nombre']) ?>
+                                        </p>
+                                        <?php foreach ($grupo['hijas'] as $hija): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                                   value="<?= (int) $hija['id'] ?>" id="pas<?= (int) $hija['id'] ?>"
+                                                   <?= in_array((int) $hija['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                            <label class="form-check-label" for="pas<?= (int) $hija['id'] ?>">
+                                                <?= e($hija['nombre']) ?>
+                                            </label>
+                                        </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
+
+                                <?php if ($pastoralesAgrupadas['sueltas']): ?>
+                                <div class="col">
+                                    <div class="border rounded-3 p-2 h-100">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-2 pb-1 border-bottom">
+                                            Otras pastorales
+                                        </p>
+                                        <?php foreach ($pastoralesAgrupadas['sueltas'] as $suelta): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="pastorales[]"
+                                                   value="<?= (int) $suelta['id'] ?>" id="pas<?= (int) $suelta['id'] ?>"
+                                                   <?= in_array((int) $suelta['id'], $asignadas, true) ? 'checked' : '' ?>>
+                                            <label class="form-check-label" for="pas<?= (int) $suelta['id'] ?>">
+                                                <?= e($suelta['nombre']) ?>
+                                            </label>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -183,18 +215,15 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
 
                     <?php
                         // Nombres resueltos de solo lectura para quien YA estaba vinculada al
-                        // cargar la página. Se cruza contra el catálogo COMPLETO (pastoralesTodas/
-                        // centrosTodos, sin acotar por alcance ni excluir Comisiones): la ficha
-                        // pudo editarla alguien con más alcance que quien ve esta pantalla, o
-                        // incluir una Comisión (Litúrgica, Profética) que el checklist normal
-                        // nunca ofrece.
+                        // cargar la página. Se cruza contra el catálogo COMPLETO (centrosTodos,
+                        // sin acotar por alcance): la ficha pudo editarla alguien con más alcance
+                        // que quien ve esta pantalla. Las pastorales usan pastoralesFichaAgrupadas
+                        // (ya calculado en el controlador con PastoralModel::agruparIds()), que
+                        // agrupa padre/hijas incluso cuando la propia Comisión está marcada en la
+                        // ficha (como Litúrgica y Profética en la de Zulema).
                         $nombresCentrosFicha = $vinculada ? array_values(array_filter(array_map(
                             static fn (array $c): ?string => in_array((int) $c['id'], $centrosAsignados, true) ? $c['nombre'] : null,
                             $centrosTodos
-                        ))) : [];
-                        $nombresPastoralesFicha = $vinculada ? array_values(array_filter(array_map(
-                            static fn (array $p): ?string => in_array((int) $p['id'], $asignadas, true) ? $p['nombre'] : null,
-                            $pastoralesTodas
                         ))) : [];
                     ?>
                     <div id="resumenAlcanceFicha" class="<?= $vinculada ? '' : 'd-none' ?>">
@@ -204,18 +233,41 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                             <a href="<?= e(url_admin('personas', 'editar', ['id' => $vinculada ? (int) $fichaCuenta['id'] : 0])) ?>">su
                             ficha en el equipo pastoral</a>; no se marcan aquí.
                         </div>
-                        <p class="mb-1">
-                            <span class="fw-semibold small">Sedes:</span>
+                        <p class="mb-3">
+                            <span class="fw-semibold small d-block mb-1">Sedes</span>
                             <?= $nombresCentrosFicha
                                 ? e(implode(' · ', $nombresCentrosFicha))
                                 : '<span class="text-muted">Toda la parroquia (ninguna marcada)</span>' ?>
                         </p>
-                        <p class="mb-0">
-                            <span class="fw-semibold small">Pastorales:</span>
-                            <?= $nombresPastoralesFicha
-                                ? e(implode(' · ', $nombresPastoralesFicha))
-                                : '<span class="text-muted">Ninguna en su ficha todavía</span>' ?>
-                        </p>
+                        <div>
+                            <span class="fw-semibold small d-block mb-2">Pastorales</span>
+                            <?php if (!$pastoralesFichaAgrupadas['comisiones'] && !$pastoralesFichaAgrupadas['sueltas']): ?>
+                            <span class="text-muted">Ninguna en su ficha todavía</span>
+                            <?php else: ?>
+                            <div class="row row-cols-1 row-cols-md-2 g-2">
+                                <?php foreach ($pastoralesFichaAgrupadas['comisiones'] as $grupo): ?>
+                                <div class="col">
+                                    <div class="border rounded-3 p-2 h-100">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-1 pb-1 border-bottom">
+                                            <?= e($grupo['padre']['nombre']) ?>
+                                        </p>
+                                        <p class="mb-0 small"><?= e(implode(' · ', array_column($grupo['hijas'], 'nombre'))) ?></p>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                                <?php if ($pastoralesFichaAgrupadas['sueltas']): ?>
+                                <div class="col">
+                                    <div class="border rounded-3 p-2 h-100">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-1 pb-1 border-bottom">
+                                            Otras pastorales
+                                        </p>
+                                        <p class="mb-0 small"><?= e(implode(' · ', array_column($pastoralesFichaAgrupadas['sueltas'], 'nombre'))) ?></p>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div id="resumenAlcanceGenerico" class="d-none">

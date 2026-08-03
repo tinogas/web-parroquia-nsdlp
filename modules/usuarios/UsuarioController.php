@@ -19,9 +19,22 @@ class UsuarioController extends Controller
     {
         $this->requirePermiso('usuarios.ver');
 
+        $usuarios      = $this->modelo->todos(Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas());
+        $pastoralModel = new PastoralModel();
+        // Padre arriba, hijas debajo, igual que en el formulario: se agrupa
+        // aquí (no en la vista) porque cruza contra el catálogo completo de
+        // pastorales, no contra algo que ya venga en $usuarios.
+        foreach ($usuarios as &$usuario) {
+            $ids = $usuario['pastorales_ids'] !== null
+                ? array_map('intval', explode(',', $usuario['pastorales_ids']))
+                : [];
+            $usuario['pastorales_agrupadas'] = $pastoralModel->agruparIds($ids);
+        }
+        unset($usuario);
+
         $this->render('usuarios/lista', [
             'titulo'          => 'Usuarios',
-            'usuarios'        => $this->modelo->todos(Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas()),
+            'usuarios'        => $usuarios,
             'alcanceLimitado' => !Auth::tieneAlcanceGlobal(),
         ]);
     }
@@ -40,8 +53,15 @@ class UsuarioController extends Controller
             // rechaza; los mismos helpers que acotan el selector de eventos y
             // cursos sirven aquí tal cual.
             'pastorales'       => $this->pastoralesDelFiltro(true),
+            // Mismas pastorales que arriba (sin Comisiones, acotadas al
+            // alcance de quien crea la cuenta), pero agrupadas por Comisión
+            // padre para el checklist: ver nota en views/form.php.
+            'pastoralesAgrupadas' => (new PastoralModel())->agrupadoVisible(
+                Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas()
+            ),
             'pastoralesTodas'  => (new PastoralModel())->paraSelector(),
             'asignadas'        => [],
+            'pastoralesFichaAgrupadas' => ['comisiones' => [], 'sueltas' => []],
             'centros'          => $this->centrosDelFiltro(),
             'centrosTodos'     => (new CentroModel())->activos(),
             'centrosAsignados' => [],
@@ -69,6 +89,9 @@ class UsuarioController extends Controller
         $fichaCuenta = $cuenta['persona_id'] !== null
             ? (new PersonaModel())->porId((int) $cuenta['persona_id'])
             : null;
+        $asignadas = $fichaCuenta
+            ? (new PersonaModel())->pastoralesDe((int) $fichaCuenta['id'])
+            : $this->modelo->pastoralesDe((int) $cuenta['id']);
 
         $this->render('usuarios/form', [
             'titulo'           => $cuenta['nombre'],
@@ -84,14 +107,24 @@ class UsuarioController extends Controller
             'personas'         => $this->modelo->personasSinCuenta((int) $cuenta['id']),
             'fichaCuenta'      => $fichaCuenta,
             'pastorales'       => $this->pastoralesDelFiltro(true),
+            // Mismas pastorales que arriba (sin Comisiones, acotadas al
+            // alcance de quien edita), pero agrupadas por Comisión padre para
+            // el checklist: ver nota en views/form.php.
+            'pastoralesAgrupadas' => (new PastoralModel())->agrupadoVisible(
+                Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas()
+            ),
             // Catálogo sin acotar por alcance ni por "sin Comisiones": para
             // resolver el NOMBRE de lo que diga la ficha aunque incluya una
             // Comisión, o una pastoral fuera de lo que administra quien edita
             // (ver nota del resumen de solo lectura en views/form.php).
             'pastoralesTodas'  => (new PastoralModel())->paraSelector(),
-            'asignadas'        => $fichaCuenta
-                ? (new PersonaModel())->pastoralesDe((int) $fichaCuenta['id'])
-                : $this->modelo->pastoralesDe((int) $cuenta['id']),
+            'asignadas'        => $asignadas,
+            // Las pastorales de la ficha (o de la cuenta, sin vínculo), pero
+            // agrupadas por Comisión padre para el resumen de solo lectura:
+            // agruparIds() ya resuelve bien el caso donde la propia Comisión
+            // está marcada (como Litúrgica/Profética en la ficha de Zulema),
+            // agrupándola con sus hijas también marcadas.
+            'pastoralesFichaAgrupadas' => (new PastoralModel())->agruparIds($asignadas),
             'centros'          => $this->centrosDelFiltro(),
             'centrosTodos'     => (new CentroModel())->activos(),
             'centrosAsignados' => $fichaCuenta

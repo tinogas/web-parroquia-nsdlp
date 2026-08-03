@@ -64,6 +64,16 @@ $porAmbito   = $porPastoral + $porCentro;
     <?php endif; ?>
 </form>
 
+<?php if ($personas): ?>
+<div class="mb-3">
+    <div class="input-group input-group-sm" style="max-width: 340px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" id="buscarPersona" class="form-control"
+               placeholder="Buscar por nombre o cargo...">
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="card border-0 shadow-sm">
     <?php if (!$personas): ?>
         <div class="card-body text-center py-5">
@@ -172,3 +182,18 @@ $porAmbito   = $porPastoral + $porCentro;
         </div>
     </div>
 <?php endforeach; ?>
+
+<script>
+(function () {
+    var buscador = document.getElementById('buscarPersona');
+    var filas    = document.querySelectorAll('table tbody tr');
+    if (!buscador || !filas.length) { return; }
+
+    buscador.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        filas.forEach(function (tr) {
+            tr.classList.toggle('d-none', q !== '' && !tr.textContent.toLowerCase().includes(q));
+        });
+    });
+})();
+</script>

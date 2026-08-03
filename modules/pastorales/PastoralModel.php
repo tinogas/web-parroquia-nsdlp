@@ -145,6 +145,52 @@ class PastoralModel extends Model
         )));
     }
 
+    /**
+     * Agrupa estos ids de pastoral (asignados a una cuenta o a una ficha) por
+     * su Comisión padre, para listados compactos (Usuarios, equipo pastoral):
+     * mismo criterio de agrupado que agrupadoVisible(), pero sobre un
+     * conjunto arbitrario de ids en vez de "todas recortadas a un alcance".
+     *
+     * Trae también el padre de cada id aunque el padre en sí no esté entre
+     * los ids —nunca lo está: una Comisión no se asigna directamente—, solo
+     * para tener su nombre como encabezado. agrupar() ya deja fuera, sin
+     * ayuda extra, cualquier hija de esa Comisión que no esté en $ids: la
+     * consulta no la trae.
+     */
+    public function agruparIds(array $ids): array
+    {
+        if (!$ids) {
+            return ['comisiones' => [], 'sueltas' => []];
+        }
+
+        // Dos marcadores por id, no uno reutilizado: con
+        // PDO::ATTR_EMULATE_PREPARES en false (ver config/database.php), MySQL
+        // usa prepared statements nativos, que no admiten el mismo parámetro
+        // nombrado dos veces en la misma consulta.
+        $marcadoresA = [];
+        $marcadoresB = [];
+        $params      = [];
+        foreach (array_values($ids) as $i => $id) {
+            $marcadoresA[]      = ":idA{$i}";
+            $marcadoresB[]      = ":idB{$i}";
+            $params[":idA{$i}"] = (int) $id;
+            $params[":idB{$i}"] = (int) $id;
+        }
+
+        $filas = $this->fetchAll(
+            "SELECT id, nombre, pastoral_padre_id FROM pastorales
+              WHERE id IN (" . implode(',', $marcadoresA) . ")
+                 OR id IN (
+                       SELECT DISTINCT pastoral_padre_id FROM pastorales
+                        WHERE id IN (" . implode(',', $marcadoresB) . ") AND pastoral_padre_id IS NOT NULL
+                    )
+              ORDER BY orden, nombre",
+            $params
+        );
+
+        return $this->agrupar($filas);
+    }
+
     public function tieneHijos(int $id): bool
     {
         return (bool) $this->fetchColumn(
