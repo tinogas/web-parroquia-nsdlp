@@ -79,6 +79,23 @@ cambio tiene filas que hoy quieren decir otra cosa —donde antes daban permiso 
 recortan—, así que conviene revisarlas al restaurarlo. No confundir tampoco con
 `persona_centros`: esa es la adscripción de alguien del directorio a una sede, no un permiso.
 
+### `usuarios_perfiles`
+
+Perfiles adicionales de acceso: una persona con dos responsabilidades de nivel distinto a
+la vez (coordina una pastoral, solo consulta otra) sin necesitar una segunda cuenta —
+`usuarios.persona_id` es UNIQUE a propósito, una persona tiene como máximo una fila en
+`usuarios`—. Cada fila es "un rol distinto sobre UNA pastoral distinta"; a diferencia de
+`usuarios_pastorales`/`usuarios_centros` no es un pivote, `pastoral_id` y `centro_id` son
+columnas directas: nadie necesita hoy que un solo perfil adicional cubra varias pastorales
+a la vez —si fuera el mismo nivel, esa pastoral se agrega al checklist normal de la
+cuenta—. `centro_id` NULL significa «todas las sedes», misma semántica que
+`usuarios_centros`. `rol` se restringe en código a los roles con alcance por pastoral
+(nunca admin/editor/secretaría).
+
+Quien inicia sesión y tiene 1+ perfiles adicionales activos elige con cuál entrar antes de
+completar el login (`Auth::intentarLogin()`/`AuthController::elegirPerfil()`); sin
+perfiles, el login es idéntico al de siempre. Ver [`ARQUITECTURA.md`](ARQUITECTURA.md).
+
 ### `auditoria`
 
 Bitácora de acciones. `id BIGINT UNSIGNED`, más `usuario_id`, `admin_real_id` (FK a
@@ -656,7 +673,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 
 | Grupo | Tablas |
 |---|---|
-| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `auditoria`, `respaldos_log`, `configuracion` |
+| Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
@@ -666,8 +683,8 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 42 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
-`centros`, `usuarios_centros`, `persona_pastorales`, `persona_centros`,
+**Total: 43 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+`centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
 `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
 `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,

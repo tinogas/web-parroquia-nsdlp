@@ -29,6 +29,23 @@
             <i class="bi bi-box-arrow-up-right me-1"></i><span class="d-none d-md-inline">Ver el sitio</span>
         </a>
 
+        <?php
+        // Perfiles adicionales propios: no aplica mientras se impersona -eso
+        // sigue entrando siempre con el principal, ver AuthController::
+        // cambiarPerfil()-. cuentaBase trae el rol REAL de usuarios.rol, no
+        // el del perfil activo en sesión, para poder ofrecerlo como opción
+        // cuando no es el que ya está en uso.
+        $perfilesPropios = [];
+        $cuentaBase      = null;
+        if (Auth::estaAutenticado() && !Auth::estaImpersonando()) {
+            require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
+            $perfilesPropios = (new UsuarioPerfilModel())->activosDeUsuario((int) $usuario['id']);
+            if ($perfilesPropios) {
+                require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+                $cuentaBase = (new UsuarioModel())->porId((int) $usuario['id']);
+            }
+        }
+        ?>
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-2"
                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -39,6 +56,24 @@
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><span class="dropdown-item-text text-muted small"><?= e($usuario['email'] ?? '') ?></span></li>
                 <li><span class="dropdown-item-text text-muted small"><?= e(Auth::nombreRol()) ?></span></li>
+                <?php if (!empty($usuario['perfil_nombre'])): ?>
+                <?php /* Con cuál de sus perfiles adicionales entró hoy — ver
+                         docs/ARQUITECTURA.md, "Perfiles adicionales". */ ?>
+                <li>
+                    <span class="dropdown-item-text small">
+                        <span class="badge bg-info-subtle text-info-emphasis">
+                            <i class="bi bi-person-badge me-1"></i><?= e($usuario['perfil_nombre']) ?>
+                        </span>
+                    </span>
+                </li>
+                <?php endif; ?>
+                <?php if ($perfilesPropios): ?>
+                <li>
+                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPerfil">
+                        <i class="bi bi-arrow-left-right me-1"></i> Cambiar de perfil
+                    </button>
+                </li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
                 <?php if (Auth::estaImpersonando()): ?>
                 <li>
@@ -89,6 +124,53 @@
     <?php require BASE_PATH . '/shared/views/parciales/flash.php'; ?>
     <?php require $vistaPath; ?>
 </div>
+
+<?php if ($perfilesPropios): ?>
+<div class="modal fade" id="modalCambiarPerfil" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h2 class="h6 modal-title fw-bold">Cambiar de perfil</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Elige con cuál sigues, sin cerrar sesión.</p>
+                <div class="list-group">
+                    <?php if ($usuario['perfil_id'] !== null && Auth::rolPrincipalTieneAlcance($cuentaBase)): ?>
+                    <?php /* El principal no está activo ahora mismo y sí tiene alguna
+                             pastoral asignada: se ofrece de vuelta. Sin pastorales, no
+                             lleva a nada -Auth::rolPrincipalTieneAlcance()-, así que no
+                             se ofrece. */ ?>
+                    <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'auth', 'cambiar_perfil')) ?>"
+                          class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2 py-2">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <input type="hidden" name="perfil_id" value="">
+                        <span class="fw-semibold"><?= e(ROLES_NOMBRES[$cuentaBase['rol']] ?? $cuentaBase['rol']) ?></span>
+                        <button type="submit" class="btn btn-sm btn-outline-primary flex-shrink-0">Usar</button>
+                    </form>
+                    <?php endif; ?>
+                    <?php foreach ($perfilesPropios as $perfil): ?>
+                        <?php if ((int) $perfil['id'] === (int) ($usuario['perfil_id'] ?? 0)) continue; ?>
+                        <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'auth', 'cambiar_perfil')) ?>"
+                              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2 py-2">
+                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                            <input type="hidden" name="perfil_id" value="<?= (int) $perfil['id'] ?>">
+                            <span>
+                                <span class="fw-semibold"><?= e($perfil['nombre']) ?></span>
+                                <span class="text-muted small d-block">
+                                    <?= e(ROLES_NOMBRES[$perfil['rol']] ?? $perfil['rol']) ?> de
+                                    <?= e($perfil['pastoral_nombre']) ?>
+                                </span>
+                            </span>
+                            <button type="submit" class="btn btn-sm btn-outline-primary flex-shrink-0">Usar</button>
+                        </form>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if (Auth::tienePermiso('usuarios.impersonar') && !Auth::estaImpersonando()): ?>
 <?php

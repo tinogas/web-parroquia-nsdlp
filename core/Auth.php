@@ -1,6 +1,9 @@
 <?php
 class Auth
 {
+    /** Segundos que puede quedar un login a medias, esperando que se elija un perfil (10 min). */
+    private const LOGIN_PENDIENTE_TTL = 600;
+
     public static function intentarLogin(string $email, string $password): bool
     {
         $db   = Database::getInstance();
@@ -20,28 +23,147 @@ class Auth
         $db->prepare('UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = :id')
            ->execute([':id' => $usuario['id']]);
 
+        // Perfiles adicionales: coordina una pastoral y solo consulta otra, a
+        // la vez, sin segunda cuenta (ver docs/ARQUITECTURA.md). Con uno o más
+        // activos, la contraseña ya se verificó pero la sesión NO se completa
+        // todavía: queda pendiente de elegir con cuál entrar. Mientras tanto
+        // usuario_id real no se fija, así que Auth::estaAutenticado() sigue en
+        // false y nada del panel es alcanzable —Session::regenerar() aquí
+        // además evita que ese estado a medias reutilice el id de sesión
+        // previo a verificar la contraseña.
+        $perfiles = self::cargarPerfilesActivos((int) $usuario['id']);
+        if ($perfiles) {
+            // Si alguien migró TODA su responsabilidad real a perfiles
+            // adicionales, el rol principal puede quedar sin ninguna
+            // pastoral asignada —un vestigio que no lleva a nada—. Con un
+            // único perfil real en ese caso, no hay nada que elegir: se
+            // entra directo a él. AuthController::elegirPerfil() aplica el
+            // mismo criterio para no OFRECER el principal cuando sí hay más
+            // de un perfil entre los que elegir.
+            if (!self::rolPrincipalTieneAlcance($usuario) && count($perfiles) === 1) {
+                self::completarLogin($usuario, $perfiles[0]);
+                return true;
+            }
+
+            Session::regenerar();
+            Session::set('_login_pendiente_id',    $usuario['id']);
+            Session::set('_login_pendiente_desde', time());
+            return true;
+        }
+
+        self::completarLogin($usuario, null);
+        return true;
+    }
+
+    /**
+     * ¿El rol principal de esta cuenta (usuarios.rol + usuarios_pastorales)
+     * le da acceso a algo OPERATIVO? Falso para un rol acotado por pastoral
+     * (Coordinador, Coordinador general o Consulta) sin ninguna pastoral
+     * asignada, o con solo Comisiones —que no tienen contenido propio que
+     * administrar, ver docs/ARQUITECTURA.md—: el caso de quien movió toda su
+     * responsabilidad real a perfiles adicionales, dejando en el rol
+     * principal solo lo que "vino de arrastre" en su ficha sin cumplir
+     * ninguna función. Administrador, Editor y Secretaría siempre son
+     * "útiles": no dependen de pastoral asignada.
+     */
+    public static function rolPrincipalTieneAlcance(array $usuario): bool
+    {
+        if (!in_array($usuario['rol'], ROLES_CON_ALCANCE_PASTORAL, true)) {
+            return true;
+        }
+        $pastorales = self::cargarPastorales((int) $usuario['id']);
+        if (!$pastorales) {
+            return false;
+        }
+        require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+        $modelo = new PastoralModel();
+        foreach ($pastorales as $id) {
+            if (!$modelo->tieneHijos($id)) {
+                return true; // Al menos una es una pastoral operativa (hoja), no una Comisión.
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Completa el llenado de sesión de un login ya verificado: con el perfil
+     * PRINCIPAL de la cuenta ($perfil null, el rol/pastorales/centros de
+     * siempre) o con uno adicional ($perfil = fila de usuarios_perfiles).
+     * Separado de intentarLogin() para poder llamarse también desde
+     * AuthController::elegirPerfil(), después de la pantalla intermedia.
+     */
+    public static function completarLogin(array $usuario, ?array $perfil): void
+    {
         Session::regenerar();
         Session::set('usuario_id',     $usuario['id']);
         Session::set('usuario_nombre', $usuario['nombre']);
         Session::set('usuario_email',  $usuario['email']);
-        Session::set('usuario_rol',    $usuario['rol']);
+        Session::set('usuario_rol',    $perfil['rol'] ?? $usuario['rol']);
         Session::set('usuario_foto',   $usuario['foto'] ?? null);
-        // El acceso ANTERIOR, leído justo antes de pisarlo con NOW() arriba:
-        // es lo que deja marcar como «Nuevo» en el panel lo publicado desde la
-        // última vez que esta persona entró. Guardarlo en sesión evita una
-        // columna más y evita también que la marca se apague sola a mitad de
-        // la sesión. Null la primera vez que alguien entra: entonces todo lo
-        // que vea es nuevo para esa persona, que es literalmente cierto.
+        // El acceso ANTERIOR, leído justo antes de pisarlo con NOW() en
+        // intentarLogin(): es lo que deja marcar como «Nuevo» en el panel lo
+        // publicado desde la última vez que esta persona entró. Guardarlo en
+        // sesión evita una columna más y evita también que la marca se apague
+        // sola a mitad de la sesión. Null la primera vez que alguien entra:
+        // entonces todo lo que vea es nuevo para esa persona, que es
+        // literalmente cierto.
         Session::set('usuario_acceso_anterior', $usuario['ultimo_acceso']);
 
-        // Las pastorales asignadas se cachean aquí para no consultarlas en cada
-        // listado del panel. La tabla usuarios_pastorales llega en la etapa 6;
-        // hasta entonces el arreglo queda vacío y solo los roles con alcance
-        // global pueden escribir contenido.
-        Session::set('usuario_pastorales', self::cargarPastorales((int) $usuario['id']));
-        Session::set('usuario_centros',    self::cargarCentros((int) $usuario['id']));
+        if ($perfil) {
+            Session::set('usuario_pastorales', [(int) $perfil['pastoral_id']]);
+            Session::set('usuario_centros', $perfil['centro_id'] !== null ? [(int) $perfil['centro_id']] : []);
+            Session::set('usuario_perfil_id',     (int) $perfil['id']);
+            Session::set('usuario_perfil_nombre', $perfil['nombre']);
+        } else {
+            // Las pastorales asignadas se cachean aquí para no consultarlas en cada
+            // listado del panel. La tabla usuarios_pastorales llega en la etapa 6;
+            // hasta entonces el arreglo queda vacío y solo los roles con alcance
+            // global pueden escribir contenido.
+            Session::set('usuario_pastorales', self::cargarPastorales((int) $usuario['id']));
+            Session::set('usuario_centros',    self::cargarCentros((int) $usuario['id']));
+            Session::set('usuario_perfil_id',     null);
+            Session::set('usuario_perfil_nombre', null);
+        }
 
-        return true;
+        self::cancelarLoginPendiente();
+    }
+
+    /** ¿Hay un login con contraseña ya verificada, esperando que se elija un perfil? */
+    public static function tieneLoginPendiente(): bool
+    {
+        return self::loginPendienteId() !== null;
+    }
+
+    /**
+     * El id de la cuenta con contraseña ya verificada que espera elegir
+     * perfil, o null si no hay uno vigente —tampoco si ya pasaron los
+     * LOGIN_PENDIENTE_TTL segundos, por si alguien deja la pantalla abierta—.
+     */
+    public static function loginPendienteId(): ?int
+    {
+        $id    = Session::get('_login_pendiente_id');
+        $desde = Session::get('_login_pendiente_desde');
+        if ($id === null || $desde === null) {
+            return null;
+        }
+        if (time() - (int) $desde > self::LOGIN_PENDIENTE_TTL) {
+            self::cancelarLoginPendiente();
+            return null;
+        }
+        return (int) $id;
+    }
+
+    public static function cancelarLoginPendiente(): void
+    {
+        Session::delete('_login_pendiente_id');
+        Session::delete('_login_pendiente_desde');
+    }
+
+    /** Perfiles adicionales activos de esta cuenta, con nombre de pastoral/sede ya resueltos. */
+    private static function cargarPerfilesActivos(int $usuarioId): array
+    {
+        require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
+        return (new UsuarioPerfilModel())->activosDeUsuario($usuarioId);
     }
 
     public static function logout(): void
@@ -57,13 +179,17 @@ class Auth
     public static function usuario(): array
     {
         return [
-            'id'         => Session::get('usuario_id'),
-            'nombre'     => Session::get('usuario_nombre'),
-            'email'      => Session::get('usuario_email'),
-            'rol'        => Session::get('usuario_rol'),
-            'foto'       => Session::get('usuario_foto'),
-            'pastorales' => Session::get('usuario_pastorales', []),
-            'centros'    => Session::get('usuario_centros', []),
+            'id'            => Session::get('usuario_id'),
+            'nombre'        => Session::get('usuario_nombre'),
+            'email'         => Session::get('usuario_email'),
+            'rol'           => Session::get('usuario_rol'),
+            'foto'          => Session::get('usuario_foto'),
+            'pastorales'    => Session::get('usuario_pastorales', []),
+            'centros'       => Session::get('usuario_centros', []),
+            // Id y nombre del perfil adicional con el que entró, o null en
+            // ambos si es el principal de la cuenta. Ver completarLogin().
+            'perfil_id'     => Session::get('usuario_perfil_id'),
+            'perfil_nombre' => Session::get('usuario_perfil_nombre'),
         ];
     }
 
@@ -302,6 +428,11 @@ class Auth
         Session::set('usuario_foto',       $objetivo['foto'] ?? null);
         Session::set('usuario_pastorales', self::cargarPastorales((int) $objetivo['id']));
         Session::set('usuario_centros',    self::cargarCentros((int) $objetivo['id']));
+        // "Usar como…" entra siempre con el perfil PRINCIPAL de la cuenta
+        // objetivo, nunca con uno de sus perfiles adicionales: es deliberado,
+        // no una omisión — ver docs/ARQUITECTURA.md.
+        Session::set('usuario_perfil_id',     null);
+        Session::set('usuario_perfil_nombre', null);
         // Sin marcas de «Nuevo» mientras se usa otra cuenta: la del
         // administrador no dice nada de lo que esa persona ha visto, y la de
         // ella tampoco es asunto de quien la está suplantando.
@@ -318,6 +449,8 @@ class Auth
         Session::set('usuario_foto',       null);
         Session::set('usuario_pastorales', []);
         Session::set('usuario_centros',    []);
+        Session::set('usuario_perfil_id',     null);
+        Session::set('usuario_perfil_nombre', null);
         Session::set('usuario_acceso_anterior', null);
 
         Session::delete('_impersonando');

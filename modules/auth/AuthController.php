@@ -22,6 +22,13 @@ class AuthController extends Controller
             }
 
             if (Auth::intentarLogin($email, $password)) {
+                if (Auth::tieneLoginPendiente()) {
+                    // Con perfiles adicionales, la contraseña ya se verificó
+                    // pero falta elegir con cuál entrar: la auditoría del
+                    // login se registra recién ahí, cuando la sesión quede
+                    // completa.
+                    $this->redirect(url_admin('auth', 'elegir_perfil'));
+                }
                 $this->auditoria('login', 'usuarios', (int) Auth::usuario()['id']);
                 $this->redirect(url_admin('panel'));
             }
@@ -34,6 +41,133 @@ class AuthController extends Controller
         }
 
         $this->mostrarFormulario();
+    }
+
+    /**
+     * Pantalla intermedia para cuentas con perfiles adicionales: la
+     * contraseña ya se verificó en login() (Auth::intentarLogin()) pero la
+     * sesión no se completa hasta elegir con cuál entrar. Ver
+     * Auth::loginPendienteId().
+     */
+    public function elegirPerfil(): void
+    {
+        $usuarioId = Auth::loginPendienteId();
+        if ($usuarioId === null) {
+            $this->redirect(url_admin('auth', 'login'));
+            return;
+        }
+
+        require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+        require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
+        $usuario = (new UsuarioModel())->porId($usuarioId);
+        if (!$usuario || !$usuario['activo']) {
+            Auth::cancelarLoginPendiente();
+            $this->redirect(url_admin('auth', 'login'));
+            return;
+        }
+        $perfiles = (new UsuarioPerfilModel())->activosDeUsuario($usuarioId);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validarCsrf();
+
+            $perfilId = $this->postIntONull('perfil_id');
+            $perfil   = null;
+            if ($perfilId !== null) {
+                foreach ($perfiles as $candidato) {
+                    if ((int) $candidato['id'] === $perfilId) {
+                        $perfil = $candidato;
+                        break;
+                    }
+                }
+                if ($perfil === null) {
+                    // El id no pertenece a esta cuenta o ya no está activo: no
+                    // se confía en lo que venga del POST más allá de eso.
+                    Session::flash('error', 'Elige una de las opciones de la lista.');
+                    $this->redirect(url_admin('auth', 'elegir_perfil'));
+                    return;
+                }
+            }
+
+            Auth::completarLogin($usuario, $perfil);
+            $this->auditoria('login', 'usuarios', (int) $usuario['id']);
+            $this->redirect(url_admin('panel'));
+        }
+
+        $this->noCache();
+        $flash = Session::getFlash();
+        $csrf  = Session::getCsrfToken();
+        // Si el rol principal no tiene ninguna pastoral asignada, no se
+        // ofrece como opción: llegar aquí con eso y solo 1 perfil ya se
+        // resolvió antes, en Auth::intentarLogin() (entra directo, sin esta
+        // pantalla); aquí solo aplica cuando además hay 2+ perfiles entre
+        // los que sí hay algo que elegir.
+        $rolPrincipalUtil = Auth::rolPrincipalTieneAlcance($usuario);
+        require BASE_PATH . '/modules/auth/views/elegir_perfil.php';
+    }
+
+    /**
+     * Cambia el perfil activo de la MISMA cuenta ya autenticada, sin pedir
+     * contraseña de nuevo: la sesión ya demostró quién es, igual que "Usar
+     * como…" tampoco la vuelve a pedir. Distinto de elegirPerfil() (completa
+     * un login recién verificado) y de iniciarImpersonacion() (cambia a OTRA
+     * cuenta): aquí usuario_id no cambia, solo el rol y el alcance con el que
+     * opera. No aplica mientras se impersona, para no mezclar dos cambios de
+     * identidad a la vez —quien impersona entra siempre con el perfil
+     * principal del objetivo, ver docs/ARQUITECTURA.md—.
+     */
+    public function cambiarPerfil(): void
+    {
+        $this->requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+        $this->validarCsrf();
+
+        if (Auth::estaImpersonando()) {
+            Session::flash('error', 'No puedes cambiar de perfil mientras usas otra cuenta.');
+            $this->redirect(url_admin('panel'));
+            return;
+        }
+
+        require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+        require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
+        $usuarioId = (int) Auth::usuario()['id'];
+        $usuario   = (new UsuarioModel())->porId($usuarioId);
+        if (!$usuario || !$usuario['activo']) {
+            // La cuenta se desactivó a mitad de su propia sesión: no tiene
+            // sentido dejarla elegir un perfil de algo que ya no existe.
+            Auth::logout();
+            $this->redirect(url_admin('auth', 'login'));
+            return;
+        }
+
+        $perfilId = $this->postIntONull('perfil_id');
+        $perfil   = null;
+        if ($perfilId !== null) {
+            foreach ((new UsuarioPerfilModel())->activosDeUsuario($usuarioId) as $candidato) {
+                if ((int) $candidato['id'] === $perfilId) {
+                    $perfil = $candidato;
+                    break;
+                }
+            }
+            if ($perfil === null) {
+                Session::flash('error', 'Ese perfil ya no está disponible.');
+                $this->redirect(url_admin('panel'));
+                return;
+            }
+        }
+
+        Auth::completarLogin($usuario, $perfil);
+        $this->auditoria(
+            'cambiar_perfil',
+            'usuarios',
+            $usuarioId,
+            $perfil ? "Cambió a: {$perfil['nombre']}" : 'Cambió a: perfil principal'
+        );
+        Session::flash('success', $perfil ? "Ahora estás en el perfil {$perfil['nombre']}." : 'Volviste a tu perfil principal.');
+        $this->redirect(url_admin('panel'));
     }
 
     public function logout(): void

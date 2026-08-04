@@ -821,6 +821,67 @@ catequista o lector de a pie entre al panel a ver su propio calendario y sus doc
 poder cambiar nada; con `agenda.ver` ve además lo que hay programado en toda la parroquia,
 que es la pregunta que traía la mayoría de las veces.
 
+### Perfiles adicionales: un rol distinto sobre otra pastoral, sin segunda cuenta
+
+Retirar los roles con la pastoral en el nombre resolvió "la misma pastoral, varias
+coordinadoras" (arriba), pero dejó abierto el caso inverso: **la misma persona, dos
+responsabilidades de nivel distinto a la vez**. Zulema es Coordinadora de Catequesis
+(administra) y, en Ministro Extraordinario de la Sagrada Comunión, solo Ministro sin cargo
+—necesita, cuando mucho, Consulta ahí, nunca escritura—. `usuarios.rol` es un único ENUM
+por cuenta, aplicado igual a todas las pastorales que administra: no hay forma de decir
+"coordinador en Catequesis, consulta en MESC" con una sola fila de `usuarios.rol`.
+
+La primera idea —darle una segunda cuenta— choca con el esquema a propósito:
+`usuarios.email` y `usuarios.persona_id` son ambos `UNIQUE`. Con dos cuentas y el mismo
+correo se violaría `uq_usr_email`; con dos correos distintos, `Auth::intentarLogin()`
+resolvería cada uno a su cuenta sin ninguna ambigüedad que preguntar —serían dos logins
+independientes, como si fueran dos personas distintas del sistema—, perdiendo justo la
+idea de "un solo login que pregunta con cuál entrar".
+
+En vez de eso, `usuarios_perfiles`: perfiles adicionales de la MISMA cuenta (mismo correo,
+misma contraseña, misma ficha de Persona vinculada), cada uno con su propio `rol` y una
+sola pastoral (y opcionalmente una sede). Al iniciar sesión, `Auth::intentarLogin()`
+verifica la contraseña igual que siempre; si la cuenta no tiene perfiles adicionales
+activos —el caso de casi todas—, el login sigue siendo un único paso, sin cambios. Si
+tiene uno o más, en vez de completar el llenado de sesión de inmediato, queda un estado
+transitorio (`_login_pendiente_id`, expira a los 10 minutos) con `usuario_id` real **aún
+sin fijar** —`Auth::estaAutenticado()` sigue en `false`, así que nada del panel es
+alcanzable todavía— y se muestra una pantalla para elegir con cuál perfil entrar: el
+principal de la cuenta o uno de los adicionales. Al elegir, `Auth::completarLogin()`
+puebla la sesión (mismo bloque de `Session::set()` de siempre) con el rol y el alcance de
+ese perfil.
+
+No es un pivote como `usuarios_pastorales`/`usuarios_centros`: `pastoral_id` y `centro_id`
+son columnas directas en `usuarios_perfiles`, porque un perfil adicional es, por
+definición, "un rol distinto sobre una sola pastoral distinta" —si fuera el mismo nivel,
+esa pastoral simplemente se agrega al checklist normal de la cuenta—.
+
+**Efecto colateral que había que cerrar de raíz**: la herencia de pastoral/sede desde la
+ficha de Persona hacia la cuenta (ver "La cuenta hereda de su ficha, no de un checklist
+propio" más abajo) sincronizaba `usuarios_pastorales` para que fuera *exactamente* igual a
+`persona_pastorales`. Zulema pertenece a MESC en su ficha (es Ministro ahí) sin
+administrarlo; sin corrección, guardar su ficha por cualquier motivo —el teléfono, un
+typo— le habría dado de golpe escritura completa sobre MESC, incluidas las visitas con
+datos de salud. La sincronización ahora resta `UsuarioPerfilModel::pastoralesReservadas()`
+antes de heredar: una pastoral cubierta por un perfil adicional deja de heredarse del lado
+de la ficha con el rol principal.
+
+`Auth::iniciarImpersonacion()` ("Usar como…") no pasa por esta pantalla: entra siempre con
+el perfil principal de la cuenta objetivo. Es deliberado, no una omisión —impersonar ya es
+una operación de Administrador con su propio permiso; añadirle una segunda elección encima
+sería fricción sin necesidad real hasta hoy—.
+
+Además de elegir al iniciar sesión, quien ya tiene sesión abierta puede cambiar entre sus
+propios perfiles sin cerrar sesión: un botón "Cambiar de perfil" en el menú de la cuenta
+(visible solo si tiene 1+ perfiles adicionales activos), que lleva a
+`AuthController::cambiarPerfil()`. No pide contraseña de nuevo —la sesión ya demostró quién
+es, igual que "Usar como…" tampoco la vuelve a pedir— y reutiliza el mismo
+`Auth::completarLogin()` del login normal, solo que `usuario_id` no cambia: es la misma
+cuenta, otro rol y alcance. Deliberadamente no disponible mientras se impersona (para no
+mezclar dos cambios de identidad a la vez): el botón no se muestra si
+`Auth::estaImpersonando()`, y el controlador lo rechaza igual si alguien llega ahí por otra
+vía.
+
 ### Un botón sin permiso no se muestra, no se muestra deshabilitado
 
 Antes de los roles de Consulta, cualquiera que pudiera *ver* un módulo (coordinador,

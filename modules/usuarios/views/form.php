@@ -239,6 +239,17 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                 ? e(implode(' · ', $nombresCentrosFicha))
                                 : '<span class="text-muted">Toda la parroquia (ninguna marcada)</span>' ?>
                         </p>
+                        <?php
+                            // Color del badge según el nivel real de acceso —ver
+                            // UsuarioController::pastoralesFichaConNivel()—: verde para
+                            // control total (rol principal), azul para un perfil
+                            // adicional (con su propio rol), gris para ninguno.
+                            $claseNivel = [
+                                'principal'  => 'bg-success-subtle text-success-emphasis',
+                                'perfil'     => 'bg-info-subtle text-info-emphasis',
+                                'sin_acceso' => 'bg-secondary-subtle text-secondary-emphasis',
+                            ];
+                        ?>
                         <div>
                             <span class="fw-semibold small d-block mb-2">Pastorales</span>
                             <?php if (!$pastoralesFichaAgrupadas['comisiones'] && !$pastoralesFichaAgrupadas['sueltas']): ?>
@@ -248,23 +259,45 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                 <?php foreach ($pastoralesFichaAgrupadas['comisiones'] as $grupo): ?>
                                 <div class="col">
                                     <div class="border rounded-3 p-2 h-100">
-                                        <p class="text-uppercase text-muted small fw-semibold mb-1 pb-1 border-bottom">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-2 pb-1 border-bottom">
                                             <?= e($grupo['padre']['nombre']) ?>
                                         </p>
-                                        <p class="mb-0 small"><?= e(implode(' · ', array_column($grupo['hijas'], 'nombre'))) ?></p>
+                                        <?php foreach ($grupo['hijas'] as $hija): ?>
+                                        <div class="d-flex justify-content-between align-items-center gap-2 small mb-1">
+                                            <span><?= e($hija['nombre']) ?></span>
+                                            <span class="badge <?= e($claseNivel[$hija['nivel']] ?? '') ?>">
+                                                <?= e($hija['nivel_etiqueta']) ?>
+                                            </span>
+                                        </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
                                 <?php if ($pastoralesFichaAgrupadas['sueltas']): ?>
                                 <div class="col">
                                     <div class="border rounded-3 p-2 h-100">
-                                        <p class="text-uppercase text-muted small fw-semibold mb-1 pb-1 border-bottom">
+                                        <p class="text-uppercase text-muted small fw-semibold mb-2 pb-1 border-bottom">
                                             Otras pastorales
                                         </p>
-                                        <p class="mb-0 small"><?= e(implode(' · ', array_column($pastoralesFichaAgrupadas['sueltas'], 'nombre'))) ?></p>
+                                        <?php foreach ($pastoralesFichaAgrupadas['sueltas'] as $suelta): ?>
+                                        <div class="d-flex justify-content-between align-items-center gap-2 small mb-1">
+                                            <span><?= e($suelta['nombre']) ?></span>
+                                            <span class="badge <?= e($claseNivel[$suelta['nivel']] ?? '') ?>">
+                                                <?= e($suelta['nivel_etiqueta']) ?>
+                                            </span>
+                                        </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                                 <?php endif; ?>
+                            </div>
+                            <div class="form-text mt-2 mb-0">
+                                <span class="badge bg-success-subtle text-success-emphasis">Control total</span> crea,
+                                edita y publica ahí. <span class="badge bg-info-subtle text-info-emphasis">Un perfil</span>
+                                solo tiene el nivel de ese perfil (ver "Perfiles adicionales de acceso" abajo).
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Sin acceso</span>
+                                pertenece en la ficha, pero esta cuenta no la administra en absoluto —normal en una
+                                Comisión, que no tiene contenido propio.
                             </div>
                             <?php endif; ?>
                         </div>
@@ -348,6 +381,150 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
         </div>
     </div>
 </form>
+
+<?php if (!$esNuevo && Auth::tieneAlcanceGlobal()): ?>
+<?php /* Un rol distinto sobre otra pastoral, para la MISMA cuenta —ver
+         docs/ARQUITECTURA.md, "Perfiles adicionales"—. Fuera del <form>
+         principal a propósito: cada perfil se guarda con su propio POST,
+         independiente de los datos de la cuenta. */ ?>
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <p class="fw-bold mb-1">Perfiles adicionales de acceso</p>
+                <p class="text-muted small mb-0">
+                    Para cuando, además de su rol de siempre, necesita otro nivel de acceso
+                    sobre una pastoral distinta —coordina Catequesis y, aparte, solo consulta
+                    MESC—. Una pastoral cubierta aquí ya no se hereda con el rol principal
+                    aunque la ficha la tenga marcada.
+                </p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0"
+                    data-bs-toggle="modal" data-bs-target="#modalPerfil" data-modo="nuevo">
+                <i class="bi bi-plus-lg me-1"></i>Agregar
+            </button>
+        </div>
+
+        <?php if (!$perfiles): ?>
+        <p class="text-muted small mb-0">Todavía no tiene ningún perfil adicional.</p>
+        <?php else: ?>
+        <div class="list-group">
+            <?php foreach ($perfiles as $perfil): ?>
+            <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                <div>
+                    <span class="fw-semibold"><?= e($perfil['nombre']) ?></span>
+                    <?php if (!$perfil['activo']): ?>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactivo</span>
+                    <?php endif; ?>
+                    <div class="text-muted small">
+                        <?= e(ROLES_NOMBRES[$perfil['rol']] ?? $perfil['rol']) ?> de
+                        <?= e($perfil['pastoral_nombre']) ?><?= $perfil['centro_nombre'] ? ' · ' . e($perfil['centro_nombre']) : '' ?>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#modalPerfil" data-modo="editar"
+                            data-id="<?= (int) $perfil['id'] ?>"
+                            data-nombre="<?= e($perfil['nombre']) ?>"
+                            data-rol="<?= e($perfil['rol']) ?>"
+                            data-pastoral="<?= (int) $perfil['pastoral_id'] ?>"
+                            data-centro="<?= (int) ($perfil['centro_id'] ?? 0) ?>"
+                            data-activo="<?= (int) $perfil['activo'] ?>">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="POST" accept-charset="UTF-8"
+                          action="<?= e(url_post('admin', 'usuarios', 'perfil_eliminar')) ?>" class="m-0">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <input type="hidden" name="id" value="<?= (int) $perfil['id'] ?>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('¿Eliminar este perfil adicional?');">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPerfil" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'usuarios', 'perfil_guardar')) ?>" class="modal-content">
+            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+            <input type="hidden" name="usuario_id" value="<?= (int) $cuenta['id'] ?>">
+            <input type="hidden" name="id" id="perfilId" value="">
+
+            <div class="modal-header border-0 pb-0">
+                <h2 class="h6 modal-title fw-bold" id="tituloModalPerfil">Agregar perfil</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Nombre</label>
+                    <input type="text" name="nombre" id="perfilNombre" class="form-control form-control-sm"
+                           placeholder="Consulta de Ministros MESC" maxlength="80" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Rol</label>
+                    <select name="rol" id="perfilRol" class="form-select form-select-sm">
+                        <?php foreach (ROLES_CON_ALCANCE_PASTORAL as $valorRol): ?>
+                        <option value="<?= e($valorRol) ?>"><?= e(ROLES_NOMBRES[$valorRol] ?? $valorRol) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Pastoral</label>
+                    <select name="pastoral_id" id="perfilPastoral" class="form-select form-select-sm">
+                        <?php foreach ($pastorales as $unaPastoral): ?>
+                        <option value="<?= (int) $unaPastoral['id'] ?>"><?= e($unaPastoral['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Sede</label>
+                    <select name="centro_id" id="perfilCentro" class="form-select form-select-sm">
+                        <option value="">Todas las sedes</option>
+                        <?php foreach ($centros as $unCentro): ?>
+                        <option value="<?= (int) $unCentro['id'] ?>"><?= e($unCentro['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="activo" id="perfilActivo" value="1" checked>
+                    <label class="form-check-label small fw-semibold" for="perfilActivo">Activo</label>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    var modalPerfil = document.getElementById('modalPerfil');
+    if (!modalPerfil) { return; }
+
+    modalPerfil.addEventListener('show.bs.modal', function (evento) {
+        var boton = evento.relatedTarget;
+        var modo  = boton ? boton.dataset.modo : 'nuevo';
+
+        document.getElementById('tituloModalPerfil').textContent = modo === 'editar' ? 'Editar perfil' : 'Agregar perfil';
+        document.getElementById('perfilId').value = modo === 'editar' ? boton.dataset.id : '';
+        document.getElementById('perfilNombre').value = modo === 'editar' ? boton.dataset.nombre : '';
+        document.getElementById('perfilRol').value = modo === 'editar' ? boton.dataset.rol : document.getElementById('perfilRol').options[0].value;
+        document.getElementById('perfilPastoral').value = modo === 'editar' ? boton.dataset.pastoral : document.getElementById('perfilPastoral').options[0].value;
+        document.getElementById('perfilCentro').value = modo === 'editar' && boton.dataset.centro !== '0' ? boton.dataset.centro : '';
+        document.getElementById('perfilActivo').checked = modo !== 'editar' || boton.dataset.activo === '1';
+    });
+})();
+</script>
+<?php endif; ?>
 
 <script>
 (function () {
