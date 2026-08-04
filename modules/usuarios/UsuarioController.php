@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/core/Upload.php';
 require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
@@ -66,6 +67,7 @@ class UsuarioController extends Controller
             'centrosTodos'     => (new CentroModel())->activos(),
             'centrosAsignados' => [],
             'rolesDisponibles' => $this->rolesAsignables(),
+            'perfiles'         => [],
         ]);
     }
 
@@ -92,6 +94,7 @@ class UsuarioController extends Controller
         $asignadas = $fichaCuenta
             ? (new PersonaModel())->pastoralesDe((int) $fichaCuenta['id'])
             : $this->modelo->pastoralesDe((int) $cuenta['id']);
+        $perfiles  = (new UsuarioPerfilModel())->todosDeUsuario((int) $cuenta['id']);
 
         $this->render('usuarios/form', [
             'titulo'           => $cuenta['nombre'],
@@ -120,18 +123,77 @@ class UsuarioController extends Controller
             'pastoralesTodas'  => (new PastoralModel())->paraSelector(),
             'asignadas'        => $asignadas,
             // Las pastorales de la ficha (o de la cuenta, sin vínculo), pero
-            // agrupadas por Comisión padre para el resumen de solo lectura:
-            // agruparIds() ya resuelve bien el caso donde la propia Comisión
-            // está marcada (como Litúrgica/Profética en la ficha de Zulema),
-            // agrupándola con sus hijas también marcadas.
-            'pastoralesFichaAgrupadas' => (new PastoralModel())->agruparIds($asignadas),
+            // agrupadas por Comisión padre para el resumen de solo lectura, y
+            // cada hija anotada con el nivel real de acceso que tiene esta
+            // cuenta ahí —control total (rol principal), un perfil adicional
+            // con su propio rol, o ninguno—: ver pastoralesFichaConNivel().
+            'pastoralesFichaAgrupadas' => $this->pastoralesFichaConNivel($cuenta, $asignadas, $perfiles),
             'centros'          => $this->centrosDelFiltro(),
             'centrosTodos'     => (new CentroModel())->activos(),
             'centrosAsignados' => $fichaCuenta
                 ? (new PersonaModel())->centrosDe((int) $fichaCuenta['id'])
                 : $this->modelo->centrosDe((int) $cuenta['id']),
             'rolesDisponibles' => $this->rolesAsignables(),
+            'perfiles'         => $perfiles,
         ]);
+    }
+
+    /**
+     * agruparIds() ya junta cada Comisión con sus hijas marcadas en la
+     * ficha (ver docs/ARQUITECTURA.md, "Perfiles adicionales"); esto además
+     * anota cada una con el nivel REAL de acceso que la cuenta tiene ahí,
+     * cruzando las 3 fuentes que hoy pueden parecer independientes:
+     *
+     * - 'principal': la pastoral está en usuarios_pastorales del rol
+     *   principal —control total, con los permisos de ese rol—.
+     * - 'perfil': ningún control desde el rol principal, pero un perfil
+     *   adicional activo la cubre —el nivel es el de ESE perfil, no el de
+     *   la cuenta—.
+     * - 'sin_acceso': pertenece en la ficha, pero ni el rol principal ni
+     *   ningún perfil la administra —normal para las Comisiones en sí, que
+     *   no tienen contenido propio; llamativo si aparece en una hija—.
+     *
+     * Sin esto, entender "qué puede hacer esta cuenta en cada pastoral"
+     * exigía reconstruir mentalmente la relación entre la ficha, el rol
+     * principal y los perfiles por separado.
+     */
+    private function pastoralesFichaConNivel(array $cuenta, array $asignadas, array $perfiles): array
+    {
+        $agrupado = (new PastoralModel())->agruparIds($asignadas);
+        if (!$agrupado['comisiones'] && !$agrupado['sueltas']) {
+            return $agrupado;
+        }
+
+        $pastoralesRolPrincipal = $this->modelo->pastoralesDe((int) $cuenta['id']);
+        $perfilesActivos        = array_values(array_filter($perfiles, static fn (array $p): bool => (bool) $p['activo']));
+        $nombreRolPrincipal     = ROLES_NOMBRES[$cuenta['rol']] ?? $cuenta['rol'];
+
+        $anotar = static function (array $pastoral) use ($pastoralesRolPrincipal, $perfilesActivos, $nombreRolPrincipal): array {
+            $id = (int) $pastoral['id'];
+            if (in_array($id, $pastoralesRolPrincipal, true)) {
+                $pastoral['nivel']          = 'principal';
+                $pastoral['nivel_etiqueta'] = $nombreRolPrincipal;
+                return $pastoral;
+            }
+            foreach ($perfilesActivos as $perfil) {
+                if ((int) $perfil['pastoral_id'] === $id) {
+                    $pastoral['nivel']          = 'perfil';
+                    $pastoral['nivel_etiqueta'] = (ROLES_NOMBRES[$perfil['rol']] ?? $perfil['rol']) . ' · ' . $perfil['nombre'];
+                    return $pastoral;
+                }
+            }
+            $pastoral['nivel']          = 'sin_acceso';
+            $pastoral['nivel_etiqueta'] = 'Sin acceso';
+            return $pastoral;
+        };
+
+        foreach ($agrupado['comisiones'] as &$grupo) {
+            $grupo['hijas'] = array_map($anotar, $grupo['hijas']);
+        }
+        unset($grupo);
+        $agrupado['sueltas'] = array_map($anotar, $agrupado['sueltas']);
+
+        return $agrupado;
     }
 
     public function guardar(): void
@@ -186,6 +248,14 @@ class UsuarioController extends Controller
             if ($rolConAlcance) {
                 $pastorales = (new PersonaModel())->pastoralesDe((int) $persona['id']);
                 $centros    = (new PersonaModel())->centrosDe((int) $persona['id']);
+                if ($actual) {
+                    // Una pastoral cubierta por un perfil adicional ya tiene
+                    // su propio rol (ver docs/ARQUITECTURA.md): pertenecer a
+                    // ella en la ficha no debe pisar ese alcance con el rol
+                    // principal de esta cuenta.
+                    $reservadas = (new UsuarioPerfilModel())->pastoralesReservadas((int) $actual['id']);
+                    $pastorales = array_values(array_diff($pastorales, $reservadas));
+                }
             }
             $email = $email ?: strtolower((string) $persona['email']);
         }
@@ -329,6 +399,125 @@ class UsuarioController extends Controller
         }
 
         $this->redirect(url_admin('usuarios'));
+    }
+
+    // ── Perfiles adicionales de acceso ───────────────────────────────────
+    //
+    // Restringidos a quien tiene alcance global (Administrador/Editor), no a
+    // cualquiera con usuarios.editar (que también alcanza a Coordinador
+    // general): casi siempre cruzan a una pastoral fuera del alcance de quien
+    // edita. Ver docs/ARQUITECTURA.md, "Perfiles adicionales".
+
+    public function perfilGuardar(): void
+    {
+        $this->requirePermiso('usuarios.editar');
+        if (!Auth::tieneAlcanceGlobal()) {
+            Session::flash('error', 'Solo Administrador o Editor pueden gestionar perfiles adicionales.');
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $usuarioId = $this->postInt('usuario_id');
+        $cuenta    = $this->modelo->porId($usuarioId);
+        if (!$cuenta) {
+            Session::flash('error', 'No encontramos esa cuenta.');
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+
+        $nombre     = $this->postStr('nombre');
+        $rol        = $this->postStr('rol');
+        $pastoralId = $this->postInt('pastoral_id');
+        $centroId   = $this->postIntONull('centro_id');
+
+        $errores = [];
+        if ($nombre === '') {
+            $errores[] = 'Escribe un nombre para el perfil.';
+        }
+        if (!in_array($rol, ROLES_CON_ALCANCE_PASTORAL, true)) {
+            $errores[] = 'Elige un rol acotado por pastoral.';
+        }
+        if (!$pastoralId) {
+            $errores[] = 'Elige una pastoral.';
+        }
+        if ($errores) {
+            Session::flash('error', implode(' ', $errores));
+            $this->redirect(url_admin('usuarios', 'editar', ['id' => $usuarioId]));
+            return;
+        }
+
+        $datos = [
+            'usuario_id'  => $usuarioId,
+            'nombre'      => $nombre,
+            'rol'         => $rol,
+            'pastoral_id' => $pastoralId,
+            'centro_id'   => $centroId,
+            'activo'      => $this->postBool('activo'),
+        ];
+
+        $modeloPerfil = new UsuarioPerfilModel();
+        $id           = $this->postInt('id');
+        if ($id) {
+            $modeloPerfil->actualizar($id, $datos);
+            $this->auditoria('editar', 'usuarios_perfiles', $id, "Perfil: {$nombre}, cuenta: {$cuenta['email']}");
+            Session::flash('success', 'Perfil actualizado.');
+        } else {
+            $id = $modeloPerfil->crear($datos);
+            $this->auditoria('crear', 'usuarios_perfiles', $id, "Perfil: {$nombre}, cuenta: {$cuenta['email']}");
+            Session::flash('success', 'Perfil creado.');
+        }
+
+        // Un perfil nuevo reserva su pastoral y se la resta al rol principal;
+        // sin esto, el rol principal solo se habría actualizado si alguien
+        // volvía a guardar la ficha o la cuenta por separado.
+        if ($cuenta['persona_id'] !== null) {
+            (new PersonaModel())->resincronizarCuenta((int) $cuenta['persona_id']);
+        }
+
+        $this->redirect(url_admin('usuarios', 'editar', ['id' => $usuarioId]));
+    }
+
+    public function perfilEliminar(): void
+    {
+        $this->requirePermiso('usuarios.editar');
+        if (!Auth::tieneAlcanceGlobal()) {
+            Session::flash('error', 'Solo Administrador o Editor pueden gestionar perfiles adicionales.');
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id           = $this->postInt('id');
+        $modeloPerfil = new UsuarioPerfilModel();
+        $perfil       = $modeloPerfil->porId($id);
+        if (!$perfil) {
+            $this->redirect(url_admin('usuarios'));
+            return;
+        }
+
+        $modeloPerfil->eliminar($id);
+        $this->auditoria('eliminar', 'usuarios_perfiles', $id);
+        Session::flash('success', 'Perfil eliminado.');
+
+        // La pastoral que este perfil reservaba queda libre: si el rol
+        // principal la tiene en su ficha, debe recuperarla de inmediato, sin
+        // esperar a que alguien vuelva a guardar la ficha o la cuenta aparte
+        // (bug reportado: "quité el perfil y la pastoral no reaparece").
+        $cuenta = $this->modelo->porId((int) $perfil['usuario_id']);
+        if ($cuenta && $cuenta['persona_id'] !== null) {
+            (new PersonaModel())->resincronizarCuenta((int) $cuenta['persona_id']);
+        }
+
+        $this->redirect(url_admin('usuarios', 'editar', ['id' => (int) $perfil['usuario_id']]));
     }
 
     /**

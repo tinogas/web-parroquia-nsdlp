@@ -86,6 +86,36 @@ CREATE TABLE IF NOT EXISTS usuarios_centros (
     CONSTRAINT fk_uc_centro  FOREIGN KEY (centro_id)  REFERENCES centros(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Perfiles adicionales de acceso: una persona con dos responsabilidades de
+-- nivel distinto a la vez (coordina una pastoral, solo consulta otra) sin
+-- necesitar una segunda cuenta —usuarios.persona_id es UNIQUE a propósito,
+-- ver arriba—. Cada fila es "un rol distinto sobre UNA pastoral distinta"; no
+-- hay pivote propio (a diferencia de usuarios_pastorales/usuarios_centros)
+-- porque nadie necesita hoy que un solo perfil adicional cubra varias
+-- pastorales a la vez: si fuera el mismo nivel, esa pastoral se agrega al
+-- checklist normal de la cuenta. Ver Auth::intentarLogin() y
+-- docs/ARQUITECTURA.md.
+--
+-- rol se restringe en código a ROLES_CON_ALCANCE_PASTORAL (nunca
+-- admin/editor/secretaría: un perfil adicional con alcance global sería
+-- indistinguible de cambiar el rol principal de la cuenta).
+-- centro_id NULL = todas las sedes, misma semántica que usuarios_centros.
+CREATE TABLE IF NOT EXISTS usuarios_perfiles (
+    id          INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+    usuario_id  INT UNSIGNED      NOT NULL,
+    nombre      VARCHAR(80)       NOT NULL,
+    rol         ENUM('coordinador','coordinador_general','consulta') NOT NULL,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    centro_id   SMALLINT UNSIGNED NULL,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_uperf_usuario (usuario_id, activo),
+    CONSTRAINT fk_uperf_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_uperf_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_uperf_centro   FOREIGN KEY (centro_id)   REFERENCES centros(id)    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Bitácora de acciones. Registra escrituras y también CONSULTAS de datos
 -- personales, que es lo que permite responder a una solicitud de acceso.
 -- Ver docs/PRIVACIDAD.md

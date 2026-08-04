@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Model.php';
 require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
+require_once BASE_PATH . '/modules/usuarios/UsuarioPerfilModel.php';
 
 /**
  * PersonaModel — Sacerdote, diáconos, religiosos, laicos y personal.
@@ -221,7 +222,31 @@ class PersonaModel extends Model
         if (!$cuenta || !in_array($cuenta['rol'], ROLES_CON_ALCANCE_PASTORAL, true)) {
             return;
         }
+        // Una pastoral cubierta por un perfil adicional ya tiene su propio
+        // rol (ver docs/ARQUITECTURA.md, "Perfiles adicionales"): pertenecer
+        // a ella en la ficha no debe pisar ese alcance con el rol principal
+        // de la cuenta —el caso real es Zulema en MESC: pertenece ahí como
+        // ministro, pero solo debe administrarlo vía su perfil de Consulta,
+        // nunca con el rol de Coordinador de su cuenta principal—.
+        $reservadas  = (new UsuarioPerfilModel())->pastoralesReservadas((int) $cuenta['id']);
+        $pastoralIds = array_values(array_diff($pastoralIds, $reservadas));
         (new UsuarioModel())->sincronizarAlcance((int) $cuenta['id'], $pastoralIds, $centroIds);
+    }
+
+    /**
+     * Recalcula y sincroniza el alcance de la cuenta vinculada a esta
+     * persona, leyendo su ficha y sus perfiles adicionales activos de cero.
+     * A diferencia de sincronizarCuentaAlcance() —que reutiliza los datos
+     * recién guardados de un formulario de ficha—, esta consulta todo desde
+     * la base: para cuando el cambio se origina en los PERFILES mismos
+     * (crear, editar o eliminar uno), que no pasan por guardar la ficha ni
+     * la cuenta. Sin esto, quitar un perfil "libera" esa pastoral pero el
+     * rol principal no la recupera hasta que alguien vuelva a guardar algo
+     * aparte —justo el bug reportado con el perfil de Misión de Zulema—.
+     */
+    public function resincronizarCuenta(int $personaId): void
+    {
+        $this->sincronizarCuentaAlcance($personaId, $this->pastoralesDe($personaId), $this->centrosDe($personaId));
     }
 
     /**
