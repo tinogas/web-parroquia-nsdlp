@@ -340,16 +340,27 @@ class PersonaModel extends Model
     /**
      * Personas activas que cumplen años en el mes dado (el actual si no se
      * especifica), ordenadas por día — para "Cumpleaños del mes" en el panel
-     * de inicio. Solo mes y día importan: no se calcula ni se expone edad.
+     * de inicio. Solo mes y día importan: no se calcula ni se expone edad, y
+     * por eso el año 1900 de las fichas que solo tienen día y mes no molesta
+     * aquí (ver la convención en docs/BASE-DE-DATOS.md).
+     *
+     * `pastorales_nombres` viene de la misma subconsulta que usa todas(): en
+     * el panel se muestra debajo del nombre, porque media parroquia no se
+     * conoce entre sí y "Ana Laura" sin más no le dice a nadie de dónde es.
+     * Puede traer varias separadas por coma —hay quien está marcada en cinco,
+     * Comisiones incluidas—, y de recortarlas se encarga la vista.
      */
     public function cumpleanerosDelMes(?int $mes = null): array
     {
         $mes ??= (int) date('n');
         return $this->fetchAll(
-            'SELECT id, nombre, foto, DAY(fecha_nacimiento) AS dia
-               FROM personas
-              WHERE activo = 1 AND fecha_nacimiento IS NOT NULL AND MONTH(fecha_nacimiento) = :mes
-              ORDER BY DAY(fecha_nacimiento), nombre',
+            'SELECT p.id, p.nombre, p.foto, DAY(p.fecha_nacimiento) AS dia,
+                    (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ", ")
+                       FROM persona_pastorales pp JOIN pastorales pa ON pa.id = pp.pastoral_id
+                      WHERE pp.persona_id = p.id) AS pastorales_nombres
+               FROM personas p
+              WHERE p.activo = 1 AND p.fecha_nacimiento IS NOT NULL AND MONTH(p.fecha_nacimiento) = :mes
+              ORDER BY DAY(p.fecha_nacimiento), p.nombre',
             [':mes' => $mes]
         );
     }

@@ -76,10 +76,32 @@ $mesActual = $meses[(int) date('n') - 1];
         </h2>
         <div class="d-flex flex-wrap gap-3">
             <?php foreach ($cumpleanerosMes as $persona): ?>
+            <?php
+            /* La pastoral debajo del nombre: media parroquia no se conoce entre
+               sí, y "Ana Laura" a secas no dice de dónde es.
+
+               Se recortan a dos porque hay quien está marcada en cinco
+               —Comisiones incluidas— y una de las pastorales se llama "Ministro
+               Extraordinario de la Sagrada Comunión": puestas todas en línea,
+               una sola persona desborda la tarjeta y empuja a las demás. Las que
+               no caben se cuentan en el "+N", y el título del elemento lleva la
+               lista completa para quien pase el ratón. */
+            $pastorales = array_filter(array_map('trim', explode(',', (string) ($persona['pastorales_nombres'] ?? ''))));
+            $visibles   = array_slice($pastorales, 0, 2);
+            $ocultas    = count($pastorales) - count($visibles);
+            ?>
             <div class="d-flex align-items-center gap-2">
                 <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 32)) ?>"
                      class="rounded-circle" style="width:28px;height:28px;object-fit:cover" alt="">
-                <span class="small"><?= e($persona['nombre']) ?> <span class="text-muted">· día <?= (int) $persona['dia'] ?></span></span>
+                <div class="small">
+                    <div><?= e($persona['nombre']) ?> <span class="text-muted">· día <?= (int) $persona['dia'] ?></span></div>
+                    <?php if ($visibles): ?>
+                    <div class="small text-muted" title="<?= e(implode(', ', $pastorales)) ?>">
+                        <i class="bi bi-people me-1"></i><?= e(implode(', ', $visibles)) ?><?php
+                            echo $ocultas > 0 ? ' +' . $ocultas : ''; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
             </div>
             <?php endforeach; ?>
         </div>
