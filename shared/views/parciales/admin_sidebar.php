@@ -155,6 +155,17 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('mensajes.ver')): ?>
         <a href="<?= e(url_admin('mensajes')) ?>" class="sidebar-link <?= $activo('mensajes') ?>">
             <i class="bi bi-envelope"></i> Mensajes
+            <?php /* Mismo contador que la campana de la barra de arriba, que ya lo
+                     calculó: layout_admin.php deja $mensajesSinLeer antes de
+                     incluir este archivo, así que aquí no se vuelve a consultar.
+                     Con empty() y no isset() a propósito: si alguien incluye este
+                     menú desde otro sitio, sin la variable, la insignia
+                     simplemente no se dibuja. */ ?>
+            <?php if (!empty($mensajesSinLeer)): ?>
+            <span class="badge rounded-pill bg-danger ms-auto">
+                <?= $mensajesSinLeer > 99 ? '99+' : (int) $mensajesSinLeer ?>
+            </span>
+            <?php endif; ?>
         </a>
         <?php endif; ?>
 

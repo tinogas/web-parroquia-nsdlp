@@ -150,6 +150,21 @@ servidor real. En Apache y en cPanel no interviene.
 colapsable filtrado por permisos, zona de mensajes flash e inyección de la vista del
 módulo mediante `$vistaPath`.
 
+En la navbar hay además **una campana con los mensajes de contacto que nadie ha abierto
+todavía** (`mensajes_contacto.leido = 0`, que `MensajeController::ver()` ya marca solo al
+abrir uno). Cuando hay alguno, la campana se rellena y lleva un globo con la cantidad —hasta
+`99+`, que es donde deja de caber y de importar el número exacto—, y el enlace "Mensajes"
+del menú lateral muestra el mismo contador. Dos detalles que no son casuales:
+
+- **El conteo se hace una sola vez por página.** `layout_admin.php` deja `$mensajesSinLeer`
+  antes de incluir `admin_sidebar.php`, y el menú reusa la variable en vez de repetir la
+  consulta. El parcial usa `empty()` y no `isset()` para que, incluido desde otro sitio sin
+  esa variable, simplemente no dibuje el globo.
+- **Solo se cuenta y se avisa a quien puede abrirlos** (`mensajes.ver`, que llevan
+  administración y secretaría). Anunciarle a un coordinador que hay tres mensajes esperando
+  sería enseñarle un dato personal a medias y darle una campana que no lleva a ninguna
+  parte; sin el permiso no hay campana, ni globo, ni consulta.
+
 `layout_publico.php` es nuevo: navbar del sitio, hero opcional, y footer con dirección,
 teléfono, redes sociales y enlace al aviso de privacidad. Recibe `$config` —los datos
 globales de la parroquia— y las variables de SEO `$metaTitulo`, `$metaDescripcion`,
