@@ -101,6 +101,23 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   lista que levantó la propia pastoral —22 fichas nuevas; de las cuatro que ya estaban
   ahí, tres sirven también en MESC y la cuarta es la coordinadora—, con sus cumpleaños, que
   el panel de inicio ya avisa.
+- **El tipo de un aviso dejó de ser una etiqueta, y lo que está sin leer se avisa.** Un
+  **comunicado** es un aviso de una pastoral dirigido a toda la parroquia, así que lo leen
+  también las demás —la coordinadora de Coros ve el comunicado de MESC, con el nombre de
+  quien lo publica—, sin que eso se confunda con dejar la pastoral vacía, que sigue
+  significando un aviso de la parroquia, sin dueño. Los avisos publicados a cada quien
+  aparecen en la pantalla de inicio con el icono de su tipo y su resumen, y la campana de
+  la barra —que antes solo contaba los mensajes del formulario de contacto— suma ahora los
+  avisos sin leer y al pulsarla despliega la lista, con un enlace a cada uno; el menú
+  lateral repite la cuenta en las insignias de Mensajes y de Avisos. "Sin leer" es lectura
+  real de cada persona, no "publicado desde tu último ingreso": abrir el aviso baja el
+  contador y no vuelve a subir.
+- **El párroco ya publica el evangelio del día y su reflexión desde el panel**, como dos
+  campos de texto largo separados —la lectura es obligatoria, la reflexión no, porque un
+  día puede salir sin que le haya dado tiempo de escribirla—, con un solo estado de
+  borrador o publicado. Solo pueden hacerlo Administrador y Editor, así que el párroco
+  necesita una cuenta con alguno de esos dos roles para publicarlo él mismo. Por ahora vive
+  solo en la portada, justo después de su bienvenida, y solo mientras es el día de hoy.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

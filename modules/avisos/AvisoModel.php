@@ -19,6 +19,58 @@ class AvisoModel extends Model
     ];
 
     /**
+     * El tipo que va dirigido a TODA la parroquia, sea de la pastoral que sea.
+     *
+     * Hasta ahora los tres tipos eran una etiqueta y nada más: se mostraba en
+     * cuatro pantallas y lo único que cambiaba era que en `boletin` seguía
+     * apareciendo el campo del PDF al editar. `comunicado` es el primero que
+     * hace algo, y es esto: se salta el alcance por pastoral —el suyo dice
+     * quién lo escribe, no a quién va— y aparece en el panel de todo el mundo.
+     *
+     * No lo confundas con dejar la pastoral vacía, que sigue existiendo y
+     * significa otra cosa: aquello es un aviso de la parroquia, sin dueño;
+     * esto es un comunicado DE una pastoral PARA todos, y el panel lo muestra
+     * con su nombre.
+     *
+     * Solo cuenta ya publicado hacia dentro. Un comunicado en borrador es de
+     * quien lo escribe y de nadie más, como cualquier otro borrador.
+     */
+    public const TIPO_PARA_TODOS = 'comunicado';
+
+    /** Icono de cada tipo, para el panel y la campana de la barra. */
+    public const ICONOS = [
+        'noticia'    => 'bi-newspaper',
+        'boletin'    => 'bi-journal-text',
+        'comunicado' => 'bi-megaphone',
+    ];
+
+    /** El icono de un tipo, con el del aviso genérico como respaldo. */
+    public static function icono(?string $tipo): string
+    {
+        return self::ICONOS[$tipo] ?? 'bi-megaphone';
+    }
+
+    /**
+     * Añade los comunicados a una condición de alcance por pastoral.
+     *
+     * Se envuelve la condición en vez de tocar Model::condicionAlcance() ni
+     * condicionVisibilidadPanel(): esos dos los comparte con cursos, que no
+     * tiene tipos y donde un comunicado no significa nada.
+     *
+     * Con la condición vacía no hay nada que añadir —ya lo ve todo—. Y ojo con
+     * el otro extremo: `1 = 0` es una cuenta de alcance limitado sin ninguna
+     * pastoral asignada, y ahí el comunicado SÍ entra, porque va dirigido a
+     * toda la parroquia y esa cuenta también es de la parroquia.
+     */
+    private function conComunicados(string $condicion): string
+    {
+        if ($condicion === '') {
+            return '';
+        }
+        return '(' . $condicion . " OR (a.publicado_interno = 1 AND a.tipo = '" . self::TIPO_PARA_TODOS . "'))";
+    }
+
+    /**
      * Listado paginado para el panel. $filtro: 'todos' o una clave de ESTADOS.
      *
      * $audiencia y $propias van juntas y salen de Controller::audienciaInterna()
@@ -46,6 +98,10 @@ class AvisoModel extends Model
             'a.pastoral_id',
             'a.publicado_interno'
         );
+        // Los comunicados de otras pastorales también salen en este listado: si
+        // la campana anuncia dos avisos sin leer y al pulsar Avisos no
+        // aparecen, el contador miente. Ver conComunicados().
+        $condicionPastoral = $this->conComunicados($condicionPastoral);
         if ($condicionPastoral !== '') {
             $condiciones[] = $condicionPastoral;
             $params += $paramsPastoral;
@@ -176,6 +232,8 @@ class AvisoModel extends Model
         $where = 'a.publicado_interno = 1
                   AND a.publicado_interno_at >= :desde AND a.publicado_interno_at < :hasta
                   AND (a.vigente_hasta IS NULL OR a.vigente_hasta >= CURDATE())';
+        // Un comunicado entra aunque sea de otra pastoral — ver conComunicados().
+        $condicion = $this->conComunicados($condicion);
         if ($condicion !== '') {
             $where .= ' AND ' . $condicion;
         }
@@ -224,6 +282,88 @@ class AvisoModel extends Model
     public function eliminar(int $id): int
     {
         return $this->execute('DELETE FROM avisos WHERE id = :id', [':id' => $id]);
+    }
+
+    // ── Sin leer (aviso_lecturas) ────────────────────────────────────────
+    // Lectura de verdad, por persona, y no «publicado desde tu último
+    // ingreso»: el contador de la campana tiene que bajar al abrir el aviso y
+    // no volver a subir, que es como ya se comporta el de los mensajes. Ver
+    // docs/migraciones/2026-09-04-avisos-sin-leer.sql
+
+    /**
+     * Los avisos que esta persona tiene sin abrir, dentro de lo que le toca
+     * leer: publicados hacia dentro, todavía vigentes, y sin su marca de
+     * lectura. Los comunicados de otras pastorales entran igual.
+     *
+     * Sin recorte por mes, a diferencia de internosDelMes(): lo que se
+     * anuncia no deja de estar sin leer porque cambie el mes. Lo que sí lo
+     * cierra es `vigente_hasta`, que es la forma que ya tenía el sistema de
+     * decir «esto ya pasó».
+     *
+     * @param ?array $audiencia Formato de Controller::audienciaInterna(); null = alcance global
+     */
+    public function sinLeer(?array $audiencia, int $usuarioId, int $limite = 0): array
+    {
+        [$where, $params] = $this->condicionSinLeer($audiencia, $usuarioId);
+
+        // El límite se interpola porque LIMIT no admite parámetro con
+        // PDO::ATTR_EMULATE_PREPARES en false; va casteado a entero.
+        $limitSql = $limite > 0 ? ' LIMIT ' . (int) $limite : '';
+
+        return $this->fetchAll(
+            "SELECT a.id, a.titulo, a.resumen, a.tipo, a.publicado_interno_at,
+                    p.nombre AS pastoral_nombre
+               FROM avisos a
+               LEFT JOIN pastorales p ON p.id = a.pastoral_id
+              WHERE {$where}
+              ORDER BY a.publicado_interno_at DESC, a.id DESC{$limitSql}",
+            $params
+        );
+    }
+
+    /** Cuántos tiene sin abrir. La misma condición que sinLeer(), contada. */
+    public function contarSinLeer(?array $audiencia, int $usuarioId): int
+    {
+        [$where, $params] = $this->condicionSinLeer($audiencia, $usuarioId);
+
+        return (int) $this->fetchColumn("SELECT COUNT(*) FROM avisos a WHERE {$where}", $params);
+    }
+
+    /**
+     * La condición de «sin leer», en un solo sitio: la usan la lista de la
+     * campana y su contador, y si cada una llevara su copia acabarían
+     * diciendo números distintos — el globo con un número y la lista con
+     * otro es justo el error que nadie perdona en un contador.
+     *
+     * @return array{0: string, 1: array} [condición SQL, parámetros]
+     */
+    private function condicionSinLeer(?array $audiencia, int $usuarioId): array
+    {
+        [$condicion, $params] = $this->condicionAlcance($audiencia, 'a.pastoral_id');
+        $condicion = $this->conComunicados($condicion);
+
+        $where = 'a.publicado_interno = 1
+                  AND (a.vigente_hasta IS NULL OR a.vigente_hasta >= CURDATE())
+                  AND NOT EXISTS (SELECT 1 FROM aviso_lecturas l
+                                   WHERE l.aviso_id = a.id AND l.usuario_id = :usuario)';
+        if ($condicion !== '') {
+            $where .= ' AND ' . $condicion;
+        }
+        $params[':usuario'] = $usuarioId;
+
+        return [$where, $params];
+    }
+
+    /**
+     * Deja la marca de lectura. IGNORE porque la clave primaria compuesta ya
+     * impide el duplicado: así no hay que preguntar antes si ya estaba.
+     */
+    public function marcarLeido(int $avisoId, int $usuarioId): void
+    {
+        $this->execute(
+            'INSERT IGNORE INTO aviso_lecturas (aviso_id, usuario_id) VALUES (:aviso, :usuario)',
+            [':aviso' => $avisoId, ':usuario' => $usuarioId]
+        );
     }
 
     private function parametros(array $datos): array

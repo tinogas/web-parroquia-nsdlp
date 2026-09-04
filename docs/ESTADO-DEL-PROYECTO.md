@@ -35,7 +35,7 @@ no se ha empezado.
 
 | Sección | Qué encuentra |
 |---|---|
-| Inicio | Próximas misas, eventos y cursos, avisos recientes, lo último en Facebook |
+| Inicio | Evangelio del día (mientras es hoy), próximas misas, eventos y cursos, avisos recientes, lo último en Facebook |
 | Quiénes somos | Historia, misión y visión, equipo pastoral, organigrama |
 | Horarios | Misas, confesiones, adoración y oficina, agrupados por tipo y por sede |
 | Sacramentos | Requisitos y documentos por sacramento (informativo; el trámite es en oficina) |
@@ -65,7 +65,8 @@ pastoral y la sede se asignan por separado, en la cuenta.
 
 ## Los módulos del panel, por tema
 
-**Contenido del sitio** — `bloques` (textos editables), `paginas`, `carrusel`, `galeria`.
+**Contenido del sitio** — `bloques` (textos editables), `paginas`, `evangelio` (el evangelio
+del día y la reflexión del párroco, solo Admin y Editor), `carrusel`, `galeria`.
 
 **La parroquia** — `centros` (sedes), `personas` (equipo pastoral), `organigrama`,
 `horarios`, `pastorales` (con su jerarquía de Comisiones y su panel básico por pastoral).
@@ -76,8 +77,9 @@ toda la parroquia a propósito, para que nadie reserve el salón dos veces).
 **Trámites** — `sacramentos` (informativo), `cursos` e `inscripciones`.
 
 **Tres pastorales con módulo propio**, sobre el mismo patrón: `mesc` (ministros, visitas a
-enfermos, rutas y turnos), `catequesis` (catequistas, periodos) y `lector` (turnos y color
-litúrgico). Las tres tienen su pastoral fija por configuración, no por selector, y además
+enfermos, rutas y turnos), `catequesis` (catequistas, periodos) y `proclamadores` (se
+llamó `lector`; catálogo, turnos, tablero de actividades, documentos y colores
+litúrgicos). Las tres tienen su pastoral fija por configuración, no por selector, y además
 cuentan ya con el panel básico genérico de cualquier pastoral.
 
 **Administración** — `usuarios`, `configuracion`, `auditoria` (solo lectura),
@@ -87,7 +89,7 @@ cuentan ya con el panel básico genérico de cualquier pastoral.
 ## Los números
 
 - **28 módulos** en `modules/`, 12 con contraparte pública y 16 exclusivos del panel.
-- **42 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
+- **44 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
 - **6 roles**, sin ninguno atado al nombre de una pastoral.
 
 ## Lo que falta, y por qué se dejó fuera a propósito

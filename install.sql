@@ -225,6 +225,35 @@ CREATE TABLE IF NOT EXISTS paginas (
     KEY idx_pag_menu (en_menu, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- El evangelio del día y la reflexión del párroco, por separado. Una fila por
+-- fecha (UNIQUE), para que "el de hoy" sea un WHERE fecha = CURDATE() trivial
+-- y no puedan quedar dos capturados el mismo día por accidente.
+--
+-- `evangelio` es obligatorio —es lo que le da sentido a la fila—, `reflexion`
+-- no: un día puede publicarse solo la lectura, sin que el párroco haya tenido
+-- tiempo de escribir su reflexión, y agregarla después no obliga a despublicar
+-- nada mientras tanto.
+--
+-- Sin `slug` ni `orden`: se identifica por `fecha`, no por una URL de detalle
+-- con título libre —mismo caso que `bloques_contenido`/`configuracion` con
+-- `clave`—, y el orden ya lo da la propia fecha. Un solo `publicado`, no el
+-- escalón interno/público de avisos y cursos: esto no es contenido por
+-- pastoral, es de toda la parroquia o no es de nadie.
+CREATE TABLE IF NOT EXISTS evangelios_dia (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    fecha       DATE              NOT NULL,
+    evangelio   MEDIUMTEXT        NOT NULL,
+    reflexion   MEDIUMTEXT        NULL,
+    publicado   TINYINT(1)        NOT NULL DEFAULT 0,
+    usuario_id  INT UNSIGNED      NULL,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME          NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_evd_fecha (fecha),
+    KEY idx_evd_publicado (publicado, fecha),
+    CONSTRAINT fk_evd_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Diapositivas de la portada. No van a ser muchas: id pequeño a propósito.
 CREATE TABLE IF NOT EXISTS carrusel (
     id       TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -318,6 +347,26 @@ CREATE TABLE IF NOT EXISTS avisos (
     KEY idx_avi_pastoral (pastoral_id),
     CONSTRAINT fk_avi_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE SET NULL,
     CONSTRAINT chk_avi_escalon CHECK (publicado = 0 OR publicado_interno = 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Quién ha leído cada aviso, para el contador de la campana de la barra: baja
+-- al abrir uno y no vuelve a subir. Sin esta tabla lo único que había era la
+-- etiqueta «Nuevo» del panel, que se decide contra `usuario_acceso_anterior`
+-- —sirve para no volver a señalar lo de siempre, pero no es una lectura—, y un
+-- contador con ese criterio se quedaría encendido toda la sesión aunque la
+-- persona los hubiera abierto uno por uno.
+--
+-- Sin `id` propio: la fila ES el par (aviso, usuario). Con la clave primaria
+-- compuesta, marcar leído dos veces no duplica nada y no hay que consultar
+-- antes de escribir. Ver docs/migraciones/2026-09-04-avisos-sin-leer.sql
+CREATE TABLE IF NOT EXISTS aviso_lecturas (
+    aviso_id   INT UNSIGNED NOT NULL,
+    usuario_id INT UNSIGNED NOT NULL,
+    leido_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (aviso_id, usuario_id),
+    KEY idx_avl_usuario (usuario_id),
+    CONSTRAINT fk_avl_aviso   FOREIGN KEY (aviso_id)   REFERENCES avisos(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_avl_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Fecha concreta, no recurrencia: lo que se repite cada semana vive en

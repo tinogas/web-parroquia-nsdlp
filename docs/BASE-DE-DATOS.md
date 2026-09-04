@@ -1,11 +1,14 @@
 # Base de datos
 
-Diccionario de las **42 tablas** del sistema: las 24 de las diez etapas del plan original,
+Diccionario de las **44 tablas** del sistema: las 24 de las diez etapas del plan original,
 más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
 `respaldos_log`, las seis tablas de MESC, las tres de Catequesis, las tres de
-Proclamadores, el catálogo de colores litúrgicos que MESC y Proclamadores comparten y el
-tablero de actividades que puede usar cualquier pastoral,
-entre otras—, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
+Proclamadores, el catálogo de colores litúrgicos que MESC y Proclamadores comparten, el
+tablero de actividades que puede usar cualquier pastoral y la marca de quién ha leído cada
+aviso,
+entre otras—, más `evangelios_dia` —el evangelio del día y la reflexión del párroco, que no
+viene del issue #3 ni de la revisión de módulos sino de una petición posterior—, menos
+`sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
 (el issue #3 eliminó el formulario de solicitud en línea de sacramentos). El desglose exacto
 está en el resumen del final. El esquema real vive en `install.sql`; este documento explica
 el porqué de cada tabla y sus columnas relevantes.
@@ -33,17 +36,23 @@ Sigue sin haberlo, pero ya existen las **primeras migraciones puntuales**.
 `docs/migraciones/` —la carpeta que
 [`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores) prometía para cuando el
 esquema dejara de ser desechable— se estrenó con `2026-09-04-proclamadores.sql`, el
-renombre de las tablas de Lectores a Proclamadores, y el mismo día se le sumó su hermana
+renombre de las tablas de Lectores a Proclamadores; el mismo día se le sumó su hermana
 `2026-09-04-tablero-y-documentos-compartidos.sql`, que saca de Catequesis el tablero de
-actividades y los documentos para que sirvan a cualquier pastoral. Hicieron falta porque
-la base de desarrollo ya tenía turnos, colores y documentos capturados y reimportar
-`install.sql` los habría borrado. No cambia la regla de arriba: `install.sql` sigue siendo
-acumulativo y ya trae los nombres nuevos, así que una instalación nueva no aplica ninguna
-migración; los archivos de `docs/migraciones/` son para las bases que ya tienen datos. Las
-dos crean las tablas y copian las filas en vez de renombrar con `ALTER`, porque MariaDB
-10.4 no admite `ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el
-nombre viejo — una base migrada dejaría de ser idéntica a una recién instalada, que es
-justo lo que este documento describe.
+actividades y los documentos para que sirvan a cualquier pastoral, detrás la tercera,
+`2026-09-04-avisos-sin-leer.sql`, que crea `aviso_lecturas`, y detrás la cuarta,
+`2026-09-04-evangelio-del-dia.sql`, que crea `evangelios_dia` para el módulo nuevo del mismo
+nombre. Hicieron falta porque la base de desarrollo ya tenía turnos, colores, documentos y
+avisos capturados y reimportar `install.sql` los habría borrado. No cambia la regla de
+arriba: `install.sql` sigue siendo acumulativo y ya trae los nombres nuevos y las tablas
+nuevas, así que una instalación nueva no aplica ninguna migración; los archivos de
+`docs/migraciones/` son para las bases que ya tienen datos. Las dos primeras crean las
+tablas y copian las filas en vez de renombrar con `ALTER`, porque MariaDB 10.4 no admite
+`ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el nombre viejo —
+una base migrada dejaría de ser idéntica a una recién instalada, que es justo lo que este
+documento describe. La tercera y la cuarta, en cambio, son **inofensivas** sin matices:
+cada una solo agrega una tabla que no existía, sin tocar ninguna de las que ya están, así
+que nada de lo capturado puede quedar a medias si alguna falla; la costumbre de respaldar
+antes de aplicarlas no cambia por eso.
 
 Cuidado con una consecuencia que antes no existía: **la base local ya contiene contenido real
 que `install.sql` no siembra** (la agenda de 2026, los centros, las pastorales con sus
@@ -206,6 +215,31 @@ El slug `aviso-de-privacidad` está protegido en código (`PaginaModel::PROTEGID
 borra desde el panel y su slug no cambia aunque se envíe otro. Se instala con
 `publicada = 0`: es contenido de referencia con datos entre corchetes que la parroquia
 debe completar antes de publicarlo.
+
+### `evangelios_dia`
+
+El evangelio del día y la reflexión del párroco, capturados por separado: `fecha` DATE con
+`uq_evd_fecha`, `evangelio` MEDIUMTEXT NOT NULL, `reflexion` MEDIUMTEXT NULL, `publicado`,
+`usuario_id` (FK a `usuarios`, `ON DELETE SET NULL`, se graba desde el alta, no solo al
+actualizar), `created_at`, `updated_at`. Índice `idx_evd_publicado (publicado, fecha)`.
+
+`fecha` es única de verdad, no solo indexada: solo puede haber un evangelio por día, y el
+`UNIQUE KEY` es lo que permite que "el de hoy" (`EvangelioModel::deHoy()`) sea un
+`WHERE fecha = CURDATE() AND publicado = 1` sin ambigüedad posible. `evangelio` es
+obligatorio —es lo que le da sentido a la fila—; `reflexion` no, porque un día puede
+publicarse solo la lectura sin que el párroco haya tenido tiempo de escribir su reflexión.
+
+Sin `slug` ni `orden`, a diferencia de `paginas`: se identifica por `fecha`, no por una URL
+de detalle con título libre —mismo caso que `bloques_contenido`/`configuracion` con su
+`clave`—, y el orden ya lo da la propia fecha. Un solo `publicado`, no el escalón
+interno/público de `avisos`/`cursos`: esto no es contenido por pastoral, es de toda la
+parroquia o no es de nadie. `usuario_id` lleva FK real, a diferencia de
+`paginas.actualizado_por`, que no la lleva: sigue la convención más reciente del proyecto
+(`pastoral_tablero`, `proclamadores_turnos`). El porqué completo, y el criterio para
+resolver dos capturas que chocan en la misma fecha, está en
+[`ARQUITECTURA.md`](ARQUITECTURA.md#evangelio-del-día).
+
+Es la cuarta migración del día: `docs/migraciones/2026-09-04-evangelio-del-dia.sql`.
 
 ### `carrusel`
 
@@ -743,6 +777,26 @@ Boletín semanal y noticias. `slug` con `uq_avi_slug`, `titulo`, `resumen` VARCH
 parroquial global, que un coordinador nunca puede tocar. Índices
 `idx_avi_pub (publicado, fecha_publicacion)` e `idx_avi_pastoral`.
 
+**`tipo` dejó de ser decorativo.** Los tres valores del ENUM se mostraban en cuatro
+pantallas —el listado del panel, la ficha del aviso, el listado público y el detalle
+público— y lo único que dependía de verdad de ellos era que en `boletin` siguiera
+apareciendo el campo del PDF al editar un aviso ya creado; `noticia` y `comunicado` se
+comportaban idénticamente. **`comunicado` es el primer tipo que hace algo**: dice que el
+aviso va dirigido a toda la parroquia, sea de la pastoral que sea, así que atraviesa el
+alcance por pastoral en el panel y lo leen también las pastorales ajenas. En código es la
+constante `AvisoModel::TIPO_PARA_TODOS`, y lo que la aplica es
+`AvisoModel::conComunicados()`, que envuelve la condición de alcance de `listar()`,
+`internosDelMes()`, `sinLeer()` y `contarSinLeer()`.
+
+**No es lo mismo que dejar `pastoral_id` en NULL**, y las dos cosas conviven, así que la
+distinción importa: NULL es un aviso **de la parroquia**, sin dueño, que solo tocan los
+roles con alcance global; un comunicado es un aviso **de una pastoral para todos**,
+conserva su `pastoral_id` —lo edita quien administra esa pastoral— y el panel lo muestra
+con el nombre de quien lo publica, porque saber de dónde viene un comunicado es la mitad de
+lo que dice. Y solo cuenta sobre lo ya publicado hacia dentro: un comunicado en borrador es
+de quien lo escribe, como cualquier otro borrador. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#publicar-en-dos-escalones-interno-y-público).
+
 **Vigencia (issue #3).** `fecha_publicacion` es el "visible desde" (ya existía: una fecha
 futura no se muestra hasta llegar ese día); `vigente_hasta` DATE NULL es el "visible hasta"
 que agrega el issue #3. `AvisoModel::VIGENTE` combina ambas en una sola condición SQL
@@ -754,6 +808,40 @@ reeditar un aviso vencido, solo el público deja de verlo. Deliberadamente no se
 mismo mecanismo a `eventos`: un evento ya tiene su propio ciclo de vida natural
 (`fecha_inicio`/`fecha_fin`) y ocultar automáticamente los pasados eliminaría el registro
 histórico de lo que la parroquia ha organizado.
+
+### `aviso_lecturas`
+
+Quién ha leído cada aviso: `aviso_id` INT UNSIGNED, `usuario_id` INT UNSIGNED y `leido_at`
+DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, con clave primaria compuesta
+`(aviso_id, usuario_id)`, índice `idx_avl_usuario (usuario_id)` —la clave primaria ya
+resuelve la pregunta por un aviso concreto, pero deja `usuario_id` en segunda posición, y
+la foránea de esa columna necesita el suyo— y las dos foráneas `fk_avl_aviso` y
+`fk_avl_usuario`, ambas con `ON DELETE CASCADE`.
+
+Existe porque la campana de la barra cuenta ahora los avisos sin leer además de los
+mensajes de contacto, y ese contador tiene que bajar al abrir uno y no volver a subir,
+igual que ya se comportaba el de los mensajes. Lo único que había antes era la etiqueta
+«Nuevo» del panel de inicio, que se decide contra `usuario_acceso_anterior`: sirve para no
+volver a señalar lo que ya estaba ahí la última vez que entró, pero **no es una lectura**
+—con ese criterio el contador se quedaría encendido toda la sesión aunque la persona
+hubiera abierto los avisos uno por uno, y el globo rojo significaría una cosa en los
+mensajes y otra en los avisos—. La etiqueta «Nuevo» no se sustituyó: sigue funcionando como
+antes, con `usuario_acceso_anterior`, porque son dos preguntas distintas.
+
+**No lleva `id` propio**: la fila *es* el par (aviso, usuario) y no hay nada que la
+referencie. Con la clave primaria compuesta, `INSERT IGNORE` hace idempotente el marcado
+—`AvisoModel::marcarLeido()`— y no hay que consultar antes de escribir. `leido_at` no lo lee
+todavía ninguna pantalla; se guarda porque ese dato solo existe en el momento de leerlo y
+reconstruirlo después es imposible. Los dos CASCADE son a propósito: borrado el aviso o la
+cuenta, la marca de lectura no significa nada.
+
+La escribe `AvisoController::ver()` con dos condiciones —solo si el aviso ya está publicado
+hacia dentro, y solo fuera de una impersonación— y la leen `AvisoModel::sinLeer()` y
+`contarSinLeer()` con un `NOT EXISTS`. Esas dos consultas **no recortan por mes**, a
+diferencia de `internosDelMes()`, que alimenta el tablón del panel: lo que se anuncia no
+deja de estar sin leer porque cambie el mes; lo que sí lo cierra es `vigente_hasta`. El
+porqué completo está en [`ARQUITECTURA.md`](ARQUITECTURA.md#publicar-en-dos-escalones-interno-y-público)
+y en la cabecera de `docs/migraciones/2026-09-04-avisos-sin-leer.sql`.
 
 ### `eventos`
 
@@ -799,24 +887,29 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Grupo | Tablas |
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
-| Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
+| Contenido | `bloques_contenido`, `paginas`, `evangelios_dia`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
 | Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
-| Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
+| Comunicación | `avisos`, `aviso_lecturas`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 42 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 44 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
 `pastoral_tablero`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
 `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`,
 `colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
-`proclamadores`, `proclamadores_turnos` y `proclamadores_turno_proclamadores`,
+`proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`,
+`aviso_lecturas` y `evangelios_dia`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`). El renombre de Proclamadores no movió la cuenta: cambió nombres
-de tabla, no su número. La que sí la movió, de 43 a 42, es la migración del tablero y los
-documentos compartidos: se fueron `catequesis_actividades` y `catequesis_documentos`, y
-entró `pastoral_tablero`.
+de tabla, no su número. Las que sí la movieron son las otras tres migraciones del mismo
+día: la del tablero y los documentos compartidos la bajó de 43 a 42 —se fueron
+`catequesis_actividades` y `catequesis_documentos`, y entró `pastoral_tablero`—, la de los
+avisos sin leer la devolvió a 43 sumando `aviso_lecturas`, que no reemplaza a nada, y la del
+evangelio del día la subió de 43 a **44** sumando `evangelios_dia` —la única de las cuatro
+que no reorganiza nada de lo que ya existía, sino que trae completa la tabla de un módulo
+enteramente nuevo—.

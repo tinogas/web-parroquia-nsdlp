@@ -174,10 +174,20 @@ class AvisoController extends Controller
         }
 
         $pastoralId = $aviso['pastoral_id'] !== null ? (int) $aviso['pastoral_id'] : null;
-        if (!$this->puedeLeerInterno($pastoralId, (bool) $aviso['publicado_interno'])) {
+        $paraTodos  = $aviso['tipo'] === AvisoModel::TIPO_PARA_TODOS;
+        if (!$this->puedeLeerInterno($pastoralId, (bool) $aviso['publicado_interno'], $paraTodos)) {
             Session::flash('error', 'Ese aviso no está publicado para tus pastorales.');
             $this->redirect(url_admin('avisos'));
             return;
+        }
+
+        // Abrirlo ES leerlo: así baja el contador de la campana y no vuelve a
+        // subir. Solo cuenta lo ya publicado hacia dentro —el borrador que su
+        // autora abre veinte veces mientras lo escribe no es una lectura de
+        // nadie— y solo con sesión de verdad, no durante una impersonación:
+        // marcaría como leído lo que esa persona no ha visto.
+        if ($aviso['publicado_interno'] && !Auth::estaImpersonando()) {
+            $this->modelo->marcarLeido((int) $aviso['id'], (int) Auth::usuario()['id']);
         }
 
         $this->render('avisos/ver', [

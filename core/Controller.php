@@ -240,14 +240,27 @@ class Controller
      *
      * Un borrador es la excepción: no es de nadie más que de quien lo
      * administra, así que ahí sí vale el alcance de escritura.
+     *
+     * $paraTodaLaParroquia lo usan los comunicados: un aviso de ese tipo va
+     * dirigido a todo el mundo aunque lleve la pastoral de quien lo escribe
+     * (AvisoModel::TIPO_PARA_TODOS). Llega como bandera y no como tipo para
+     * que este guardia siga sirviendo igual a cursos, que no tiene tipos. Solo
+     * cuenta sobre lo ya publicado hacia dentro: un borrador no es de nadie
+     * más, sea del tipo que sea.
      */
-    protected function puedeLeerInterno(?int $pastoralId, bool $publicadoInterno): bool
-    {
+    protected function puedeLeerInterno(
+        ?int $pastoralId,
+        bool $publicadoInterno,
+        bool $paraTodaLaParroquia = false
+    ): bool {
         if (Auth::tieneAlcanceGlobal()) {
             return true;
         }
         if (!$publicadoInterno) {
             return Auth::puedeSobrePastoral($pastoralId);
+        }
+        if ($paraTodaLaParroquia) {
+            return true;
         }
         return $pastoralId === null || in_array($pastoralId, Auth::pastoralesAudiencia(), true);
     }

@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/ControllerPublico.php';
 require_once BASE_PATH . '/modules/bloques/BloqueModel.php';
+require_once BASE_PATH . '/modules/evangelio/EvangelioModel.php';
 require_once BASE_PATH . '/modules/horarios/HorarioModel.php';
 require_once BASE_PATH . '/modules/carrusel/CarruselModel.php';
 require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
@@ -20,6 +21,7 @@ class InicioController extends ControllerPublico
             'urlCanonica'    => url_publica('inicio'),
             'hero'           => $this->hero(),
             'bloques'        => (new BloqueModel())->porZona('inicio'),
+            'evangelioHoy'   => (new EvangelioModel())->deHoy(),
             'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
             'avisosRecientes' => (new AvisoModel())->recientes(3),
             'proximosEventos' => (new EventoModel())->proximos(3),
