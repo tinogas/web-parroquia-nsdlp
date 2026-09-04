@@ -225,6 +225,35 @@ CREATE TABLE IF NOT EXISTS paginas (
     KEY idx_pag_menu (en_menu, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- El evangelio del día y la reflexión del párroco, por separado. Una fila por
+-- fecha (UNIQUE), para que "el de hoy" sea un WHERE fecha = CURDATE() trivial
+-- y no puedan quedar dos capturados el mismo día por accidente.
+--
+-- `evangelio` es obligatorio —es lo que le da sentido a la fila—, `reflexion`
+-- no: un día puede publicarse solo la lectura, sin que el párroco haya tenido
+-- tiempo de escribir su reflexión, y agregarla después no obliga a despublicar
+-- nada mientras tanto.
+--
+-- Sin `slug` ni `orden`: se identifica por `fecha`, no por una URL de detalle
+-- con título libre —mismo caso que `bloques_contenido`/`configuracion` con
+-- `clave`—, y el orden ya lo da la propia fecha. Un solo `publicado`, no el
+-- escalón interno/público de avisos y cursos: esto no es contenido por
+-- pastoral, es de toda la parroquia o no es de nadie.
+CREATE TABLE IF NOT EXISTS evangelios_dia (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    fecha       DATE              NOT NULL,
+    evangelio   MEDIUMTEXT        NOT NULL,
+    reflexion   MEDIUMTEXT        NULL,
+    publicado   TINYINT(1)        NOT NULL DEFAULT 0,
+    usuario_id  INT UNSIGNED      NULL,
+    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME          NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_evd_fecha (fecha),
+    KEY idx_evd_publicado (publicado, fecha),
+    CONSTRAINT fk_evd_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Diapositivas de la portada. No van a ser muchas: id pequeño a propósito.
 CREATE TABLE IF NOT EXISTS carrusel (
     id       TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,

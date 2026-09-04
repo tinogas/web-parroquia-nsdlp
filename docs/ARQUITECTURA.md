@@ -70,7 +70,7 @@ whitelist de dos valores y `publico` por defecto.
 área pública   inicio · nosotros · horarios · sacramentos · pastorales · cursos
                avisos · eventos · galeria · contacto · pagina · sitemap
 
-área admin     auth · panel · agenda · configuracion · bloques · paginas
+área admin     auth · panel · agenda · configuracion · bloques · paginas · evangelio
                personas · centros · organigrama · horarios · sacramentos
                pastorales · mesc · catequesis · proclamadores
                cursos · inscripciones · avisos · eventos · galeria · carrusel
@@ -235,6 +235,11 @@ por la tarde. La solución son tres mecanismos con propósitos distintos.
 El resultado: portada, quiénes somos, horarios y contacto son estructuralmente
 inmutables —siempre se ven bien— con su texto e imágenes 100 % editables. Y `paginas`
 cubre lo imprevisto sin abrir la puerta a romper lo esencial.
+
+`evangelios_dia` (ver "Evangelio del día", más abajo) no es un cuarto mecanismo de esta
+tríada: los tres de arriba mantienen fija la estructura del sitio, mientras que
+`evangelios_dia` es un cuarto **tipo** de contenido fechado, de la misma familia que
+`avisos` o `eventos` —una fila por día, no una clave fija que alguien podría borrar—.
 
 Las semillas de `bloques_contenido` usan `INSERT IGNORE` en `install.sql`, igual que el
 resto de las tablas del proyecto — a diferencia del patrón `ensureTable()` de
@@ -1833,12 +1838,83 @@ administra `inscripciones.*` (ver, cambiar estado, exportar) pero no toca `curso
 punta a punta con los tres roles (`coordinador`, `editor`, `secretaria`) contra
 `/admin/cursos` y `/admin/inscripciones`.
 
+## Evangelio del día
+
+`modules/evangelio/` calca `paginas` casi al detalle —es el módulo más parecido del
+proyecto: contenido editorial de toda la parroquia, sin alcance por pastoral, un solo
+booleano de publicación que cualquiera con el permiso de editar cambia libremente, sin un
+permiso `.publicar` aparte—. El párroco, o cualquier cuenta Editor o Administrador, publica
+desde el panel el evangelio del día y su reflexión, cada uno en su propio campo de texto
+largo con el editor casero (`shared/views/parciales/editor_html.php`) y el mismo saneo con
+lista blanca (`SanitizadorHtml::limpiar()`) que ya usan `bloques`/`sacramentos`/`paginas`
+al guardar.
+
+**Una fila por fecha, con `UNIQUE KEY` de verdad.** A diferencia de `avisos` o `eventos`,
+donde repetir una fecha es normal (dos avisos el mismo día son dos avisos distintos), aquí
+"el evangelio de hoy" es un concepto singular: solo puede haber uno. `uq_evd_fecha` hace
+que `EvangelioModel::deHoy()` sea un `WHERE fecha = CURDATE() AND publicado = 1` trivial,
+sin un `ORDER BY … LIMIT 1` que además tendría que decidir cuál de dos evangelios del mismo
+día es el bueno, y sin que un descuido pueda dejar dos filas del mismo día capturadas por
+error.
+
+**Chocar con una fecha ya capturada no siempre es un error, y ahí está la única lógica
+propia del módulo.** `EvangelioController::guardar()` distingue dos casos:
+
+- **Alta (`id = 0`) que coincide con una fecha ya capturada**: se actualiza esa fila en vez
+  de fallar con un error de clave duplicada. No hay una segunda entidad real que se esté
+  perdiendo —es la misma intención de siempre, "publicar el evangelio de hoy", capturada
+  dos veces sin querer, por una pestaña vieja o un doble clic en "Nueva entrada"—, así que
+  corregir la intención sin drama vale más que un mensaje de error que nadie sabría
+  interpretar.
+- **Edición que reasigna la fecha a una que pertenece a OTRA fila ya existente**: aquí sí
+  se rechaza, sin tocar ninguna de las dos. Ahí sí hay dos textos capturados por separado en
+  momentos distintos, y fusionarlos en silencio perdería uno de los dos sin avisar.
+
+Verificado en la aplicación real, los tres caminos: crear con una fecha nueva; crear dos
+veces con la misma fecha (queda una sola fila, actualizada); y editar una fila
+reasignándole la fecha de otra ya existente (rechazado, las dos filas intactas).
+
+**Sin `slug`, sin `core/Slug.php`.** Se identifica por `fecha`, no por una URL de detalle
+con título libre —el mismo caso que `bloques_contenido`/`configuracion` con su `clave`—.
+Tampoco lleva columna `orden`: es el único contenido editable del proyecto sin ella, porque
+aquí el orden ya lo da la propia fecha.
+
+**El párroco necesita una cuenta con rol Editor o Administrador para publicar él mismo.**
+`evangelio.ver` y `evangelio.editar` —este último cubre crear, actualizar, publicar y
+eliminar, sin permisos separados para cada acción— los llevan únicamente esos dos roles
+(`ROL_ADMIN` por el comodín `'*'`, `ROL_EDITOR` de forma explícita en `config/app.php`);
+ningún coordinador, consulta o secretaría los tiene. No existe en el proyecto ninguna forma
+de dar un permiso a una sola cuenta sin dárselo a todo el rol —**"el rol dice qué puede
+hacer; la pastoral y la sede asignadas, sobre qué"** (ver "Roles y permisos")—, y no se
+construyó ningún mecanismo nuevo para este caso: sería una arquitectura paralela sin
+precedente para algo que el proyecto entero ya resuelve de otra forma. Ni siquiera
+`usuarios_perfiles` (perfiles adicionales) ayuda aquí, porque un perfil adicional es "un rol
+distinto sobre UNA pastoral", y `evangelio.*` no pertenece a ninguna: es de toda la
+parroquia, igual que `paginas.*` o `bloques.*`. Es exactamente la misma situación que ya
+existe hoy con el bloque "bienvenida del párroco" de la portada (`bloques_contenido`), que
+también edita cualquier cuenta con rol Editor.
+
+**En el sitio público, solo una sección en la portada.** `InicioController` consulta
+`EvangelioModel::deHoy()` directo, sin controlador público propio ni entrada en
+`$rutasPublicas` —mismo patrón que `BloqueModel`/`CarruselModel`—, y
+`modules/inicio/views/publico/index.php` la dibuja justo después de la bienvenida del
+párroco y antes de "Próximas misas": es el contenido que cambia más rápido de toda la
+portada, a diario contra semanal, y sigue temáticamente a las palabras del párroco.
+Desaparece por completo si no hay entrada publicada para hoy, la misma regla que ya sigue
+el resto de la portada (ver "La portada", abajo). Deliberadamente no tiene archivo
+navegable ni página de detalle propia: no hay forma de ver el evangelio de un día anterior
+desde el sitio público. Es una decisión tomada, no una limitación técnica —se puede añadir
+después sin tocar el modelo ni el controlador del panel, sumando un
+`EvangelioPublicoController` y una entrada en `$rutasPublicas`, calcando `avisos`/
+`sacramentos`—.
+
 ## La portada
 
-`InicioController::index()` es el controlador que consulta más modelos de todo el sitio —seis—
+`InicioController::index()` es el controlador que consulta más modelos de todo el sitio —siete—
 y todo lo que arma son listas cortas con enlace a la sección completa: el carrusel
 (`CarruselModel`, vía `hero()`), la bienvenida del párroco y las ligas de interés (dos bloques
-de `bloques_contenido`), `HorarioModel::proximasMisas(3)`, `EventoModel::proximos(3)`,
+de `bloques_contenido`), el evangelio de hoy (`EvangelioModel::deHoy()`, ver "Evangelio del
+día"), `HorarioModel::proximasMisas(3)`, `EventoModel::proximos(3)`,
 `CursoModel::proximos(3)` y `AvisoModel::recientes(3)`. Cada sección desaparece por completo
 si su consulta viene vacía, en vez de dejar un encabezado con un hueco debajo; es lo que
 permite desplegar el sitio con el contenido a medio cargar sin que se note como un error.

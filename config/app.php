@@ -188,6 +188,7 @@ define('PERMISOS', [
         'agenda.ver',
         'bloques.ver', 'bloques.editar',
         'paginas.ver', 'paginas.editar',
+        'evangelio.ver', 'evangelio.editar',
         'horarios.ver', 'horarios.editar',
         'centros.ver', 'centros.editar',
         'personas.ver', 'personas.editar',

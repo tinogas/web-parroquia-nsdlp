@@ -82,7 +82,7 @@ avisan con contadores en el panel.
 
 | Sección | Contenido |
 |---|---|
-| Inicio | Carrusel, bienvenida del párroco, próximas misas, próximos eventos y próximos cursos, últimos avisos, ligas de interés |
+| Inicio | Carrusel, bienvenida del párroco, evangelio del día, próximas misas, próximos eventos y próximos cursos, últimos avisos, ligas de interés |
 | Quiénes somos | Historia, misión, visión y valores; sacerdote, diáconos y equipo pastoral; organigrama |
 | Horarios | Misas dominicales y entre semana, confesiones, adoración eucarística, horario de oficina |
 | Sacramentos | Requisitos, documentos y aportación de bautizo, primera comunión, confirmación, matrimonio, confesión y unción. Puramente informativo: el trámite se hace en la oficina parroquial |
@@ -182,6 +182,7 @@ pedidos después, cada uno con su origen; todos están implementados y probados 
 | Calendario y agenda 2026 | Vistas de día, semana, mes y año; filtros de fecha en el listado del panel; y la carga de la agenda impresa completa con los scripts de `herramientas/` | Necesidad de publicar la agenda del año |
 | Jerarquía de pastorales y menú dinámico | Las pastorales se agrupan en Comisiones (Litúrgica, Profética...); cada pastoral gana un panel básico con acceso ya filtrado a avisos, eventos, cursos y documentos, sin necesitar un módulo dedicado; publicarla en el menú es un paso aparte, exclusivo del Administrador y con confirmación de contraseña | Uso real del panel |
 | Publicación en dos escalones | Avisos y cursos ganan un peldaño intermedio entre borrador y sitio público: publicado hacia dentro, visible a la pastoral (y a sus hijas si es una Comisión) desde el panel de inicio, marcado como nuevo hasta que se revisa | Uso real del panel |
+| Evangelio del día | El párroco publica la lectura del día y su reflexión, cada una por separado, con un único estado de publicación; se muestra en la portada solo mientras es el día de hoy | Petición del párroco |
 
 El detalle de cada decisión —y de los errores que estos bloques encontraron en el código de
 la fase 1— está en [`ARQUITECTURA.md`](ARQUITECTURA.md).

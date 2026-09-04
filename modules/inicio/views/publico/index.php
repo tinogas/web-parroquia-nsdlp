@@ -35,6 +35,28 @@
 </div>
 <?php endif; ?>
 
+<?php /* El evangelio de hoy, justo después de las palabras del párroco: es el
+         contenido que cambia más rápido de toda la portada —a diario, contra
+         semanal de las misas— y sigue temáticamente a la bienvenida. Sin
+         sección si no hay entrada publicada para hoy, igual que el resto de
+         la portada: ninguna deja un encabezado con un hueco debajo. */ ?>
+<?php if (!empty($evangelioHoy)): ?>
+<section class="mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="h6 text-uppercase text-muted mb-3 text-center">Evangelio de hoy</h2>
+            <p class="text-center text-muted small text-capitalize"><?= e(fecha_con_dia($evangelioHoy['fecha'])) ?></p>
+            <?php /* Contenido ya saneado con lista blanca al guardarse: se imprime sin escapar a propósito. */ ?>
+            <div class="contenido-editorial"><?= $evangelioHoy['evangelio'] ?></div>
+            <?php if (!empty($evangelioHoy['reflexion'])): ?>
+            <hr>
+            <div class="contenido-editorial"><?= $evangelioHoy['reflexion'] ?></div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <?php if (!empty($proximasMisas)): ?>
 <section class="mb-5">
     <div class="row justify-content-center">

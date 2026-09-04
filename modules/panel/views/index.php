@@ -12,6 +12,7 @@
 $secciones = [
     ['bloques',       'Textos del sitio',   'bi-file-richtext',       'bloques.ver'],
     ['paginas',       'Páginas',            'bi-file-earmark-text',  'paginas.ver'],
+    ['evangelio',     'Evangelio del día',  'bi-book-half',          'evangelio.ver'],
     ['horarios',      'Horarios',           'bi-clock',              'horarios.ver'],
     ['centros',       'Sede y centros',     'bi-buildings',          'centros.ver'],
     ['personas',      'Equipo pastoral',    'bi-person-badge',       'personas.ver'],

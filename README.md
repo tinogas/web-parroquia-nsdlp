@@ -112,6 +112,12 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   lateral repite la cuenta en las insignias de Mensajes y de Avisos. "Sin leer" es lectura
   real de cada persona, no "publicado desde tu último ingreso": abrir el aviso baja el
   contador y no vuelve a subir.
+- **El párroco ya publica el evangelio del día y su reflexión desde el panel**, como dos
+  campos de texto largo separados —la lectura es obligatoria, la reflexión no, porque un
+  día puede salir sin que le haya dado tiempo de escribirla—, con un solo estado de
+  borrador o publicado. Solo pueden hacerlo Administrador y Editor, así que el párroco
+  necesita una cuenta con alguno de esos dos roles para publicarlo él mismo. Por ahora vive
+  solo en la portada, justo después de su bienvenida, y solo mientras es el día de hoy.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

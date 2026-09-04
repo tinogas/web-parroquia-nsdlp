@@ -1,12 +1,14 @@
 # Base de datos
 
-Diccionario de las **43 tablas** del sistema: las 24 de las diez etapas del plan original,
+Diccionario de las **44 tablas** del sistema: las 24 de las diez etapas del plan original,
 más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
 `respaldos_log`, las seis tablas de MESC, las tres de Catequesis, las tres de
 Proclamadores, el catálogo de colores litúrgicos que MESC y Proclamadores comparten, el
 tablero de actividades que puede usar cualquier pastoral y la marca de quién ha leído cada
 aviso,
-entre otras—, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
+entre otras—, más `evangelios_dia` —el evangelio del día y la reflexión del párroco, que no
+viene del issue #3 ni de la revisión de módulos sino de una petición posterior—, menos
+`sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
 (el issue #3 eliminó el formulario de solicitud en línea de sacramentos). El desglose exacto
 está en el resumen del final. El esquema real vive en `install.sql`; este documento explica
 el porqué de cada tabla y sus columnas relevantes.
@@ -36,19 +38,21 @@ Sigue sin haberlo, pero ya existen las **primeras migraciones puntuales**.
 esquema dejara de ser desechable— se estrenó con `2026-09-04-proclamadores.sql`, el
 renombre de las tablas de Lectores a Proclamadores; el mismo día se le sumó su hermana
 `2026-09-04-tablero-y-documentos-compartidos.sql`, que saca de Catequesis el tablero de
-actividades y los documentos para que sirvan a cualquier pastoral, y detrás la tercera,
-`2026-09-04-avisos-sin-leer.sql`, que crea `aviso_lecturas`. Hicieron falta porque
-la base de desarrollo ya tenía turnos, colores y documentos capturados y reimportar
-`install.sql` los habría borrado. No cambia la regla de arriba: `install.sql` sigue siendo
-acumulativo y ya trae los nombres nuevos y la tabla nueva, así que una instalación nueva no
-aplica ninguna migración; los archivos de `docs/migraciones/` son para las bases que ya
-tienen datos. Las dos primeras crean las tablas y copian las filas en vez de renombrar con
-`ALTER`, porque MariaDB 10.4 no admite `ALTER TABLE … RENAME INDEX` y renombrando se
-quedarían los índices con el nombre viejo — una base migrada dejaría de ser idéntica a una
-recién instalada, que es justo lo que este documento describe. La tercera es la primera
-**inofensiva** de las tres: solo crea una tabla que no existía y no toca ninguna de las que
-ya están, así que nada de lo capturado puede quedar a medias si falla; la costumbre de
-respaldar antes de aplicarla no cambia por eso.
+actividades y los documentos para que sirvan a cualquier pastoral, detrás la tercera,
+`2026-09-04-avisos-sin-leer.sql`, que crea `aviso_lecturas`, y detrás la cuarta,
+`2026-09-04-evangelio-del-dia.sql`, que crea `evangelios_dia` para el módulo nuevo del mismo
+nombre. Hicieron falta porque la base de desarrollo ya tenía turnos, colores, documentos y
+avisos capturados y reimportar `install.sql` los habría borrado. No cambia la regla de
+arriba: `install.sql` sigue siendo acumulativo y ya trae los nombres nuevos y las tablas
+nuevas, así que una instalación nueva no aplica ninguna migración; los archivos de
+`docs/migraciones/` son para las bases que ya tienen datos. Las dos primeras crean las
+tablas y copian las filas en vez de renombrar con `ALTER`, porque MariaDB 10.4 no admite
+`ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el nombre viejo —
+una base migrada dejaría de ser idéntica a una recién instalada, que es justo lo que este
+documento describe. La tercera y la cuarta, en cambio, son **inofensivas** sin matices:
+cada una solo agrega una tabla que no existía, sin tocar ninguna de las que ya están, así
+que nada de lo capturado puede quedar a medias si alguna falla; la costumbre de respaldar
+antes de aplicarlas no cambia por eso.
 
 Cuidado con una consecuencia que antes no existía: **la base local ya contiene contenido real
 que `install.sql` no siembra** (la agenda de 2026, los centros, las pastorales con sus
@@ -211,6 +215,31 @@ El slug `aviso-de-privacidad` está protegido en código (`PaginaModel::PROTEGID
 borra desde el panel y su slug no cambia aunque se envíe otro. Se instala con
 `publicada = 0`: es contenido de referencia con datos entre corchetes que la parroquia
 debe completar antes de publicarlo.
+
+### `evangelios_dia`
+
+El evangelio del día y la reflexión del párroco, capturados por separado: `fecha` DATE con
+`uq_evd_fecha`, `evangelio` MEDIUMTEXT NOT NULL, `reflexion` MEDIUMTEXT NULL, `publicado`,
+`usuario_id` (FK a `usuarios`, `ON DELETE SET NULL`, se graba desde el alta, no solo al
+actualizar), `created_at`, `updated_at`. Índice `idx_evd_publicado (publicado, fecha)`.
+
+`fecha` es única de verdad, no solo indexada: solo puede haber un evangelio por día, y el
+`UNIQUE KEY` es lo que permite que "el de hoy" (`EvangelioModel::deHoy()`) sea un
+`WHERE fecha = CURDATE() AND publicado = 1` sin ambigüedad posible. `evangelio` es
+obligatorio —es lo que le da sentido a la fila—; `reflexion` no, porque un día puede
+publicarse solo la lectura sin que el párroco haya tenido tiempo de escribir su reflexión.
+
+Sin `slug` ni `orden`, a diferencia de `paginas`: se identifica por `fecha`, no por una URL
+de detalle con título libre —mismo caso que `bloques_contenido`/`configuracion` con su
+`clave`—, y el orden ya lo da la propia fecha. Un solo `publicado`, no el escalón
+interno/público de `avisos`/`cursos`: esto no es contenido por pastoral, es de toda la
+parroquia o no es de nadie. `usuario_id` lleva FK real, a diferencia de
+`paginas.actualizado_por`, que no la lleva: sigue la convención más reciente del proyecto
+(`pastoral_tablero`, `proclamadores_turnos`). El porqué completo, y el criterio para
+resolver dos capturas que chocan en la misma fecha, está en
+[`ARQUITECTURA.md`](ARQUITECTURA.md#evangelio-del-día).
+
+Es la cuarta migración del día: `docs/migraciones/2026-09-04-evangelio-del-dia.sql`.
 
 ### `carrusel`
 
@@ -858,7 +887,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Grupo | Tablas |
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
-| Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
+| Contenido | `bloques_contenido`, `paginas`, `evangelios_dia`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
@@ -867,17 +896,20 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `aviso_lecturas`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 43 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 44 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
 `pastoral_tablero`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
 `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`,
 `colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
-`proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores` y
-`aviso_lecturas`,
+`proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`,
+`aviso_lecturas` y `evangelios_dia`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`). El renombre de Proclamadores no movió la cuenta: cambió nombres
-de tabla, no su número. Las que sí la movieron son las otras dos migraciones del mismo día:
-la del tablero y los documentos compartidos la bajó de 43 a 42 —se fueron
-`catequesis_actividades` y `catequesis_documentos`, y entró `pastoral_tablero`—, y la de los
-avisos sin leer la devolvió a 43 sumando `aviso_lecturas`, que no reemplaza a nada.
+de tabla, no su número. Las que sí la movieron son las otras tres migraciones del mismo
+día: la del tablero y los documentos compartidos la bajó de 43 a 42 —se fueron
+`catequesis_actividades` y `catequesis_documentos`, y entró `pastoral_tablero`—, la de los
+avisos sin leer la devolvió a 43 sumando `aviso_lecturas`, que no reemplaza a nada, y la del
+evangelio del día la subió de 43 a **44** sumando `evangelios_dia` —la única de las cuatro
+que no reorganiza nada de lo que ya existía, sino que trae completa la tabla de un módulo
+enteramente nuevo—.
