@@ -24,6 +24,14 @@ backups/*.sql
 agenda-2026.json
 proclamadores.json
 
+# El rol de turnos que la coordinación de MESC venía armando a mano, del que
+# salió el diseño de la hoja imprimible (assets/css/turnos_imprimir.css lo cita
+# como referencia). Se queda fuera del repositorio por lo mismo que las hojas de
+# arriba y con más razón: este repositorio es público, y la imagen es un rol real
+# con los nombres de los ministros. Ningún código lo carga; solo lo mencionan
+# comentarios. Si hace falta enseñarlo, se comparte por fuera.
+rol_ministros.jpeg
+
 # Logs y caché
 *.log
 *.cache
@@ -34,6 +42,7 @@ proclamadores.json
 
 # Editores e IDEs
 .vscode/
+*.code-workspace
 .idea/
 *.swp
 *.swo
