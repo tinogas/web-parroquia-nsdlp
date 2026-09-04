@@ -30,6 +30,45 @@
         </a>
 
         <?php
+        /* Mensajes del formulario de contacto que nadie ha abierto todavía
+           (`mensajes_contacto.leido = 0`, que ya se marca solo al abrir uno en
+           MensajeController::ver()).
+           Se cuenta aquí, una vez por página, y admin_sidebar.php —que se
+           incluye más abajo, en este mismo archivo— reusa la variable para su
+           propia insignia en vez de repetir la consulta.
+           Solo se cuenta si la cuenta puede verlos: `mensajes.ver` lo llevan
+           administración y secretaría, y anunciarle a quien no puede abrirlos
+           que hay tres esperando sería enseñar un dato personal a medias y una
+           campana que no lleva a ninguna parte. */
+        $mensajesSinLeer = 0;
+        if (Auth::tienePermiso('mensajes.ver')) {
+            require_once BASE_PATH . '/modules/contacto/ContactoModel.php';
+            $mensajesSinLeer = (new ContactoModel())->noLeidos();
+        }
+        ?>
+        <?php if (Auth::tienePermiso('mensajes.ver')): ?>
+        <a href="<?= e(url_admin('mensajes')) ?>"
+           class="position-relative text-decoration-none <?= $mensajesSinLeer ? 'text-warning' : 'text-white-50' ?>"
+           title="<?= $mensajesSinLeer
+                ? e($mensajesSinLeer . ($mensajesSinLeer === 1 ? ' mensaje sin leer' : ' mensajes sin leer'))
+                : 'No hay mensajes sin leer' ?>">
+            <i class="bi bi-bell<?= $mensajesSinLeer ? '-fill' : '' ?> fs-5"></i>
+            <?php if ($mensajesSinLeer): ?>
+            <?php /* El globo cuenta hasta 99: con más, el número no cabe en la
+                     campana y el dato exacto tampoco aporta nada. */ ?>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                <?= $mensajesSinLeer > 99 ? '99+' : (int) $mensajesSinLeer ?>
+            </span>
+            <?php endif; ?>
+            <span class="visually-hidden">
+                <?= $mensajesSinLeer
+                    ? e($mensajesSinLeer . ($mensajesSinLeer === 1 ? ' mensaje sin leer' : ' mensajes sin leer'))
+                    : 'Mensajes, ninguno sin leer' ?>
+            </span>
+        </a>
+        <?php endif; ?>
+
+        <?php
         // Perfiles adicionales propios: no aplica mientras se impersona -eso
         // sigue entrando siempre con el principal, ver AuthController::
         // cambiarPerfil()-. cuentaBase trae el rol REAL de usuarios.rol, no

@@ -150,6 +150,21 @@ servidor real. En Apache y en cPanel no interviene.
 colapsable filtrado por permisos, zona de mensajes flash e inyección de la vista del
 módulo mediante `$vistaPath`.
 
+En la navbar hay además **una campana con los mensajes de contacto que nadie ha abierto
+todavía** (`mensajes_contacto.leido = 0`, que `MensajeController::ver()` ya marca solo al
+abrir uno). Cuando hay alguno, la campana se rellena y lleva un globo con la cantidad —hasta
+`99+`, que es donde deja de caber y de importar el número exacto—, y el enlace "Mensajes"
+del menú lateral muestra el mismo contador. Dos detalles que no son casuales:
+
+- **El conteo se hace una sola vez por página.** `layout_admin.php` deja `$mensajesSinLeer`
+  antes de incluir `admin_sidebar.php`, y el menú reusa la variable en vez de repetir la
+  consulta. El parcial usa `empty()` y no `isset()` para que, incluido desde otro sitio sin
+  esa variable, simplemente no dibuje el globo.
+- **Solo se cuenta y se avisa a quien puede abrirlos** (`mensajes.ver`, que llevan
+  administración y secretaría). Anunciarle a un coordinador que hay tres mensajes esperando
+  sería enseñarle un dato personal a medias y darle una campana que no lleva a ninguna
+  parte; sin el permiso no hay campana, ni globo, ni consulta.
+
 `layout_publico.php` es nuevo: navbar del sitio, hero opcional, y footer con dirección,
 teléfono, redes sociales y enlace al aviso de privacidad. Recibe `$config` —los datos
 globales de la parroquia— y las variables de SEO `$metaTitulo`, `$metaDescripcion`,
@@ -1097,6 +1112,25 @@ y Proclamadores, no una copia; Avisos, Eventos y Cursos solo se enlazan ya filtr
 Si la pastoral tiene módulo dedicado (MESC/Catequesis/Proclamadores, `MODULO_POR_PASTORAL` en
 `config/app.php`), el panel agrega un botón de salto a su módulo de turnos y catálogo, que
 sigue existiendo tal cual.
+
+**Al final del panel va quién pertenece a la pastoral** (`persona_pastorales`, resuelto con
+`PersonaModel::todas([$pastoralId])`), que era la pregunta que obligaba a salir a Equipo
+pastoral y filtrar por pastoral a mano. Tres decisiones ahí:
+
+- **La lista no exige `personas.ver`**, solo el alcance sobre la pastoral que
+  `requireAlcancePastoral()` ya comprobó: saber quién está en tu propia pastoral es parte de
+  coordinarla, y esos nombres y cargos ya salen en el directorio público. Lo que sí exige
+  permiso (`personas.editar`) es el botón que lleva a la ficha, donde están el teléfono, el
+  correo y la fecha de nacimiento — por eso `PERMISOS_COORDINACION` sigue sin incluir
+  `personas.*` y esta pantalla no lo contradice.
+- **La pertenencia no se edita aquí**: el botón lleva a la ficha, que es su única fuente (el
+  checklist de pastorales de `personas`). Dos sitios para marcar lo mismo es como se acaba
+  con alguien en dos pastorales por descuido, que es el problema que
+  `PersonaModel::sincronizarPastorales()` existe para no tener.
+- **Una Comisión vacía se explica en vez de parecer un error.** Su gente suele estar marcada
+  en las pastorales que agrupa, no en ella, así que cuando no hay nadie y
+  `PastoralModel::tieneHijos()` dice que agrupa a otras, el mensaje lo dice. Es la misma
+  confusión que hace que una Comisión sin hijas sea indistinguible de una pastoral suelta.
 
 **Aparecer en el menú del panel (`pastorales.visible_en_menu`) es un paso deliberado, no
 automático al crear la pastoral.** El bloque "Pastorales y comisiones" de

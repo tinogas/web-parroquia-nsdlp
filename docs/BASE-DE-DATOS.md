@@ -250,6 +250,13 @@ la tarjeta "Cumpleaños de [mes]" del panel de inicio (`PanelController::index()
 importan mes y día: no se muestra el año ni se calcula edad en ningún lado, aunque la
 columna lo guarde porque `DATE` no admite mes/día sin año.
 
+Cada cumpleañero lleva **su pastoral debajo del nombre**, en letra más pequeña: media
+parroquia no se conoce entre sí y un nombre a secas no dice de dónde es. Sale de la misma
+subconsulta de `persona_pastorales` que usa `todas()`, y la vista recorta a dos con un `+N`
+—hay quien está marcada en cinco, Comisiones incluidas, y una pastoral se llama "Ministro
+Extraordinario de la Sagrada Comunión": sin recortar, una sola persona desborda la tarjeta—.
+La lista completa va en el `title` del elemento.
+
 **El año `1900` es la marca convenida de "año desconocido"**, y sale de un caso real: la
 lista que levantó Proclamadores traía el año autocompletado por el formulario en el que se
 capturó —el año en curso— en 12 de sus 26 filas, más una fecha ilegible. Se guarda 1900

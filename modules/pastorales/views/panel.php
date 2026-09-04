@@ -119,6 +119,87 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
     </div>
 </div>
 
+<?php
+/* Quiénes están en la pastoral, al final: es la respuesta a "¿y quién es de
+   aquí?", que antes había que ir a buscar al Equipo pastoral filtrando por
+   pastoral. La pertenencia NO se edita aquí —vive en el checklist de cada
+   ficha, que es su única fuente— y por eso lo que hay es un botón a la ficha
+   y no un formulario: dos sitios para marcar lo mismo es como se acaba con
+   una persona en dos pastorales por descuido.
+
+   Se muestran también las inactivas, con su etiqueta, igual que en el módulo
+   de Equipo pastoral: quien dejó el cargo sigue contando para el historial y
+   esconderla haría pensar que se borró. */
+?>
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h6 fw-bold mb-0">
+                Quiénes están en esta pastoral
+                <?php if ($personas): ?>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal"><?= count($personas) ?></span>
+                <?php endif; ?>
+            </h2>
+            <?php if ($puedeEditarPersonas): ?>
+            <a href="<?= e(url_admin('personas', '', ['pastoral' => $pastoral['id']])) ?>"
+               class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-person-badge me-1"></i>Ver en Equipo pastoral
+            </a>
+            <?php endif; ?>
+        </div>
+
+        <?php if (!$personas): ?>
+        <p class="text-muted small mb-0">
+            <?php if ($agrupaOtras): ?>
+            Nadie está marcado en esta Comisión, y es lo normal: su gente suele estar marcada en las
+            pastorales que agrupa, no en ella misma.
+            <?php else: ?>
+            Todavía nadie está marcado en esta pastoral. Se marca desde la ficha de cada persona,
+            en <strong>Equipo pastoral</strong>.
+            <?php endif; ?>
+        </p>
+        <?php else: ?>
+        <ul class="list-group list-group-flush">
+            <?php foreach ($personas as $persona): ?>
+            <li class="list-group-item d-flex align-items-center justify-content-between gap-2 px-0">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 40)) ?>"
+                         class="rounded-circle" style="width:32px;height:32px;object-fit:cover" alt="">
+                    <div>
+                        <div class="fw-semibold <?= $persona['activo'] ? '' : 'text-muted' ?>">
+                            <?= e($persona['nombre']) ?>
+                            <?php if (!$persona['activo']): ?>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal">Inactivo</span>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($persona['cargo']): ?>
+                        <div class="text-muted small"><?= e($persona['cargo']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($persona['pastorales_coordina'])): ?>
+                        <div class="small text-dorado">
+                            <i class="bi bi-star-fill me-1"></i>Coordina <?= e($persona['pastorales_coordina']) ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if ($puedeEditarPersonas): ?>
+                <a href="<?= e(url_admin('personas', 'editar', ['id' => $persona['id']])) ?>"
+                   class="btn btn-sm btn-outline-primary" title="Editar su ficha">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php if ($puedeEditarPersonas): ?>
+        <p class="form-text mb-0 mt-3">
+            Quién pertenece a esta pastoral se marca en la ficha de cada persona, no aquí.
+        </p>
+        <?php endif; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="modal fade" id="documentoNuevo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" accept-charset="UTF-8" enctype="multipart/form-data"
