@@ -1,5 +1,7 @@
 /* ============================================================
-   Calendario de turnos MESC — vista de impresión/PDF
+   Calendario de turnos — vista de impresión/PDF
+   La usan los dos módulos que reparten turnos, MESC y Proclamadores: la hoja
+   es la misma, solo cambia quién cubre cada misa.
    Página independiente (sin el layout del panel): se abre en pestaña nueva y
    se imprime, se guarda como PDF o se captura como imagen con el propio
    navegador. Sin librería de PDF ni de imagen: ver docs/ARQUITECTURA.md.
@@ -159,7 +161,9 @@ body {
     line-height: 1.2;
 }
 
-.ti-ministros {
+/* Los nombres de quienes cubren el turno: ministros en MESC, proclamadores en
+   el otro módulo que imprime esta misma hoja — de ahí el nombre neutral. */
+.ti-nombres {
     display: block;
     font-size: .72rem;
     font-weight: 700;
@@ -168,7 +172,7 @@ body {
     overflow-wrap: anywhere;
 }
 
-.ti-sin-ministros {
+.ti-sin-nombres {
     display: block;
     font-size: .65rem;
     font-style: italic;

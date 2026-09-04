@@ -155,7 +155,7 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                 eventos, sus cursos y su contenido, acotado a la sede de arriba si marcaste
                                 alguna —quien coordina la catequesis de Jesús el Señor marca «Jesús el Señor»
                                 arriba y «Catecismo» aquí—. Solo se guarda con un rol acotado por pastoral
-                                (Coordinador, o Administrador/Consulta de MESC, Catequesis o Lector); con
+                                (Coordinador, o Administrador/Consulta de MESC, Catequesis o Proclamadores); con
                                 cualquier otro rol se ignora. Cada Comisión (Litúrgica, Profética...) aparece
                                 solo como encabezado para agrupar a sus pastorales: no tiene contenido propio
                                 que administrar, no se marca aquí, y el alcance no se hereda de una Comisión a

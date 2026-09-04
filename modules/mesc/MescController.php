@@ -11,7 +11,7 @@ require_once BASE_PATH . '/modules/personas/PersonaModel.php';
  * ella (revisión de módulos: antes ofrecía un selector con cualquier
  * pastoral que administrara el usuario —incluyendo pastorales genéricas sin
  * nada que ver con MESC—, igual que se corrigió antes en Catequesis y
- * Lector, que habían copiado ese mismo patrón).
+ * Proclamadores, que habían copiado ese mismo patrón).
  */
 class MescController extends Controller
 {
@@ -705,11 +705,11 @@ class MescController extends Controller
         $existente = $id ? $this->modelo->colorLiturgicoPorId($id) : null;
         if ($existente) {
             $this->modelo->actualizarColorLiturgico($id, $datos);
-            $this->auditoria('editar', 'mesc_colores_liturgicos', $id, $nombre);
+            $this->auditoria('editar', 'colores_liturgicos', $id, $nombre);
             Session::flash('success', 'Color actualizado.');
         } else {
             $id = $this->modelo->crearColorLiturgico($datos);
-            $this->auditoria('crear', 'mesc_colores_liturgicos', $id, $nombre);
+            $this->auditoria('crear', 'colores_liturgicos', $id, $nombre);
             Session::flash('success', 'Color agregado.');
         }
 
@@ -730,7 +730,7 @@ class MescController extends Controller
         $color = $this->modelo->colorLiturgicoPorId($id);
         if ($color) {
             $this->modelo->eliminarColorLiturgico($id);
-            $this->auditoria('eliminar', 'mesc_colores_liturgicos', $id, $color['nombre']);
+            $this->auditoria('eliminar', 'colores_liturgicos', $id, $color['nombre']);
             Session::flash('success', 'Color eliminado. Los turnos que lo usaban quedan sin color asignado.');
         }
 

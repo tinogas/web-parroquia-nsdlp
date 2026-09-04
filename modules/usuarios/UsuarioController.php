@@ -238,7 +238,7 @@ class UsuarioController extends Controller
             // alcance —sin `?:` de por medio—; ese operador solo caía al
             // fallback si el checklist llegaba COMPLETAMENTE vacío, así que un
             // subconjunto marcado a mano podía pisar en silencio lo que decía
-            // la ficha (así perdió Lectores la cuenta de Martha Aimée). Con un
+            // la ficha (así perdió Proclamadores la cuenta de Martha Aimée). Con un
             // rol sin alcance (Administrador, Editor, Secretaría) se deja
             // en [] igual que antes: esa cuenta ya tiene acceso global o
             // ninguno, y no necesita arrastrar filas de alcance sin uso solo

@@ -2,7 +2,7 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('mesc')) ?>" class="text-decoration-none">MESC</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('proclamadores')) ?>" class="text-decoration-none">Proclamadores</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Colores litúrgicos</li>
             </ol>
         </nav>
@@ -10,10 +10,10 @@
         <p class="text-muted mb-0 small">Referencia para etiquetar los turnos según el tiempo o fiesta del día.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="<?= e(url_admin('mesc', 'turnos')) ?>" class="btn btn-outline-secondary">
+        <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-outline-secondary">
             <i class="bi bi-calendar3 me-1"></i>Turnos
         </a>
-        <?php if (Auth::tienePermiso('mesc.crear')): ?>
+        <?php if (Auth::tienePermiso('proclamadores.crear')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#colorNuevo">
             <i class="bi bi-plus-lg me-1"></i>Nuevo color
         </button>
@@ -30,8 +30,8 @@
 
 <div class="alert alert-warning border-0 small mb-4">
     <i class="bi bi-people me-1"></i>
-    Este catálogo es <strong>uno solo para toda la parroquia</strong>: lo que cambies aquí lo verán también
-    los Proclamadores al etiquetar sus turnos.
+    Este catálogo es <strong>uno solo para toda la parroquia</strong>: lo que cambies aquí lo verá también MESC
+    al etiquetar sus turnos.
 </div>
 
 <?php if (!$colores): ?>
@@ -52,7 +52,7 @@
                         <span class="rounded-circle border" style="width:28px;height:28px;display:inline-block;background:<?= e($color['color_hex']) ?>"></span>
                         <h2 class="h6 fw-bold mb-0"><?= e($color['nombre']) ?></h2>
                     </div>
-                    <?php if (Auth::tienePermiso('mesc.editar')): ?>
+                    <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
                     <button type="button" class="btn btn-sm btn-outline-primary"
                             data-bs-toggle="modal" data-bs-target="#color<?= (int) $color['id'] ?>">
                         <i class="bi bi-pencil"></i>
@@ -73,7 +73,7 @@ $dibujarModalColor = static function (string $idModal, ?array $color, string $cs
     <div class="modal fade" id="<?= e($idModal) ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" accept-charset="UTF-8"
-                  action="<?= e(url_post('admin', 'mesc', 'color_guardar')) ?>" class="modal-content">
+                  action="<?= e(url_post('admin', 'proclamadores', 'color_guardar')) ?>" class="modal-content">
                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                 <input type="hidden" name="id" value="<?= $vacio ? 0 : (int) $color['id'] ?>">
 
@@ -106,10 +106,10 @@ $dibujarModalColor = static function (string $idModal, ?array $color, string $cs
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-between">
-                    <?php if (!$vacio && Auth::tienePermiso('mesc.eliminar')): ?>
-                    <button type="submit" formaction="<?= e(url_post('admin', 'mesc', 'color_eliminar')) ?>"
+                    <?php if (!$vacio && Auth::tienePermiso('proclamadores.eliminar')): ?>
+                    <button type="submit" formaction="<?= e(url_post('admin', 'proclamadores', 'color_eliminar')) ?>"
                             class="btn btn-outline-danger btn-sm"
-                            onclick="return confirm('¿Eliminar este color? Los turnos que lo usaban —también los de Proclamadores— quedan sin color asignado.');">
+                            onclick="return confirm('¿Eliminar este color? Los turnos que lo usaban —también los de MESC— quedan sin color asignado.');">
                         <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                     <?php else: ?>

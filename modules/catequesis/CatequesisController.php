@@ -4,7 +4,7 @@ require_once BASE_PATH . '/modules/catequesis/CatequesisModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 
 /**
- * CatequesisController — Igual que MESC y Lector, este módulo es exclusivo
+ * CatequesisController — Igual que MESC y Proclamadores, este módulo es exclusivo
  * de la pastoral de Catecismo: ninguna acción muestra ni acepta otra
  * pastoral. pastoralIdOFallar() resuelve esa única pastoral y corta el
  * flujo con un mensaje claro si todavía no existe (instalación nueva, antes

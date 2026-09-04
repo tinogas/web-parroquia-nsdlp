@@ -14,7 +14,7 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   ([issue #3](https://github.com/tinogas/web-parroquia-nsdlp/issues/3)): catálogo de centros,
   pastorales ligadas a su sede, contenido y documentos propios de
   cada pastoral, y tres módulos dedicados —MESC (visitas a enfermos, rutas y calendario de
-  turnos), Catequesis (catequistas, periodos y grado) y Lector (turnos)—. El formulario de
+  turnos), Catequesis (catequistas, periodos y grado) y Proclamadores (turnos)—. El formulario de
   solicitud de sacramentos en línea se retiró por decisión del administrador: esa sección
   queda como información de requisitos.
 - **Respaldos con restauración desde el panel** e **impersonación** ("Usar como…"), los dos a
@@ -55,19 +55,20 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   quien administraba un centro todas las pastorales ligadas a él: la administradora de
   MESC, marcada en las tres sedes, había acabado pudiendo editar los cursos de catequesis.
 - **El panel ya no muestra módulos ajenos**: las tarjetas de acceso rápido del dashboard
-  (`/admin/panel`) filtraban solo por permiso, y `mesc.ver`/`catequesis.ver`/`lector.ver`
+  (`/admin/panel`) filtraban solo por permiso, y
+  `mesc.ver`/`catequesis.ver`/`proclamadores.ver`
   los llevan todos los coordinadores a propósito —lo mismo que ya resolvía el menú
   lateral, pero le faltaba a esta pantalla—. La pastoral de Lectores, además, pasó a
   llamarse **Liturgia** en todo el panel (el slug ya lo decía el usuario real, el código
   seguía diciendo el nombre viejo).
-- **Ministro de MESC, catequista y lector también se eligen del equipo pastoral**, mismo
+- **Ministro de MESC, catequista y proclamador también se eligen del equipo pastoral**, mismo
   patrón que el responsable de pastoral y las cuentas: se encontró el mismo problema de
   fondo por tercera vez —una coordinadora estaba escrita como "Zulema" en un catálogo,
   "Zulema Alvarez" en otro y con su nombre completo en su ficha—. Con persona elegida,
   nombre y teléfono se toman de su ficha y se mantienen al día solos; sin persona, sigue
   funcionando el nombre libre de siempre.
 - **Las pastorales se organizan en Comisiones** (Litúrgica, Profética, Pastoral de la
-  Salud, De la Familia, De la Comunicación) que agrupan a las demás —MESC, Lectores y
+  Salud, De la Familia, De la Comunicación) que agrupan a las demás —MESC, Proclamadores y
   Coros bajo Litúrgica; Catequesis y Misión bajo Profética, etc.—, tanto en el listado del
   panel como en el sitio público. Dar de alta una pastoral nueva le da automáticamente,
   desde su propio panel básico (`Pastorales → Panel básico`), acceso a sus avisos, sus
@@ -80,6 +81,17 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   portada. El panel de inicio muestra lo publicado a cada quien ese mes, marcado como
   nuevo hasta que lo revisa. Con esto, Coordinador y Coordinador general ya publican
   también sus avisos, igual que ya publicaban sus eventos y sus cursos.
+- **La pastoral de Lectores se llama ahora Proclamadores**, que es como se nombra a sí
+  misma, y su módulo dejó de ser el hermano pobre de MESC: además del catálogo de quién
+  proclama —con lo que cada quien prefiere hacer, monitor, lectura o salmo cantado, que es
+  justo el dato con el que la coordinación arma un turno— y del calendario, ya tiene la
+  hoja imprimible del mes y su propia pantalla de colores litúrgicos. Le falta solo lo que
+  no le aplica: las visitas a enfermos y sus rutas. El nombre visible cambió en todo el
+  panel, pero la URL pública `/pastorales/liturgia` se conservó tal cual, porque ya está en
+  uso y renombrarla rompería enlaces. Y se cargaron al equipo pastoral las 26 personas de
+  la lista que levantó la propia pastoral —22 fichas nuevas; de las cuatro que ya estaban
+  ahí, tres sirven también en MESC y la cuarta es la coordinadora—, con sus cumpleaños, que
+  el panel de inicio ya avisa.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y
@@ -188,9 +200,12 @@ y sus vistas. Ver [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
 ## Herramientas de línea de órdenes
 
 `herramientas/` no forma parte del sitio: nada de lo que hay ahí se ejecuta durante una
-petición HTTP, y no se sube al servidor. Hoy contiene el par de scripts con los que se cargó
-la agenda parroquial de 2026 —467 eventos y 22 actividades semanales— desde el `.xlsx` en el
-que se transcribió la agenda impresa:
+petición HTTP, y no se sube al servidor. Hoy contiene dos pares de scripts con la misma
+forma —un `.py` que abre el `.xlsx` y un `.php` que escribe en la base—: el que cargó la
+agenda parroquial de 2026 —467 eventos y 22 actividades semanales— desde el `.xlsx` en el
+que se transcribió la agenda impresa, y el que metió al equipo pastoral la lista de
+Proclamadores (`extraer_proclamadores.py` e `importar_proclamadores.php`). El primero, paso
+a paso:
 
 ```
 python herramientas/extraer_agenda.py                        # saca la hoja revisable

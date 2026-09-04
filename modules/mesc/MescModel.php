@@ -9,7 +9,7 @@ require_once BASE_PATH . '/core/Model.php';
  * Exclusivo de la pastoral "Ministro Extraordinario de la Sagrada Comunión":
  * pastoralId() la resuelve por su slug (no por un id fijo en PHP: los id se
  * generan al crear la pastoral desde el panel, no se siembran en
- * install.sql), igual que CatequesisModel/LectorModel (revisión de módulos:
+ * install.sql), igual que CatequesisModel/ProclamadoresModel (revisión de módulos:
  * MESC era la excepción con selector multi-pastoral, y por eso dejaba
  * agregar ministros o visitas bajo cualquier otra pastoral que administrara
  * el usuario).
@@ -280,7 +280,7 @@ class MescModel extends Model
                        FROM mesc_turno_ministros tm JOIN mesc_ministros m ON m.id = tm.ministro_id
                       WHERE tm.turno_id = t.id) AS ministros_nombres
                FROM mesc_turnos t
-               LEFT JOIN mesc_colores_liturgicos c ON c.id = t.color_liturgico_id
+               LEFT JOIN colores_liturgicos c ON c.id = t.color_liturgico_id
               WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
               ORDER BY t.fecha, t.hora",
             [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
@@ -360,21 +360,25 @@ class MescModel extends Model
     }
 
     // ── Colores litúrgicos ───────────────────────────────────────────────
+    // La tabla `colores_liturgicos` no lleva prefijo de módulo a propósito:
+    // el catálogo es de la parroquia, y Proclamadores administra el mismo
+    // desde su propia pantalla. Estas cinco consultas están repetidas en
+    // ProclamadoresModel.
 
     public function coloresLiturgicos(): array
     {
-        return $this->fetchAll('SELECT * FROM mesc_colores_liturgicos ORDER BY orden, nombre');
+        return $this->fetchAll('SELECT * FROM colores_liturgicos ORDER BY orden, nombre');
     }
 
     public function colorLiturgicoPorId(int $id): ?array
     {
-        return $this->fetchOne('SELECT * FROM mesc_colores_liturgicos WHERE id = :id', [':id' => $id]);
+        return $this->fetchOne('SELECT * FROM colores_liturgicos WHERE id = :id', [':id' => $id]);
     }
 
     public function crearColorLiturgico(array $datos): int
     {
         $this->execute(
-            'INSERT INTO mesc_colores_liturgicos (nombre, color_hex, significado, orden)
+            'INSERT INTO colores_liturgicos (nombre, color_hex, significado, orden)
              VALUES (:nombre, :hex, :significado, :orden)',
             [
                 ':nombre'      => $datos['nombre'],
@@ -389,7 +393,7 @@ class MescModel extends Model
     public function actualizarColorLiturgico(int $id, array $datos): int
     {
         return $this->execute(
-            'UPDATE mesc_colores_liturgicos SET nombre = :nombre, color_hex = :hex, significado = :significado, orden = :orden
+            'UPDATE colores_liturgicos SET nombre = :nombre, color_hex = :hex, significado = :significado, orden = :orden
               WHERE id = :id',
             [
                 ':nombre'      => $datos['nombre'],
@@ -403,7 +407,7 @@ class MescModel extends Model
 
     public function eliminarColorLiturgico(int $id): int
     {
-        return $this->execute('DELETE FROM mesc_colores_liturgicos WHERE id = :id', [':id' => $id]);
+        return $this->execute('DELETE FROM colores_liturgicos WHERE id = :id', [':id' => $id]);
     }
 
     private function sincronizarMinistrosDeTurno(int $turnoId, array $ministroIds): void

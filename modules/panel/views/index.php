@@ -5,7 +5,7 @@
  * diferencia de la versión anterior, un texto "sitio en construcción" con
  * una lista de etapas hardcodeada desde la etapa 1, que nunca se actualizó).
  * Mismo cruce de permiso + pastoral que ya usa shared/views/parciales/admin_sidebar.php:
- * mesc.ver/catequesis.ver/lector.ver los llevan todos los coordinadores a
+ * mesc.ver/catequesis.ver/proclamadores.ver los llevan todos los coordinadores a
  * propósito (para que cada controlador decida el alcance real), así que la
  * tarjeta solo se ofrece si además se administra la pastoral de ese módulo.
  */
@@ -19,7 +19,7 @@ $secciones = [
     ['pastorales',    'Pastorales',         'bi-people',             'pastorales.ver'],
     ['mesc',          'MESC',               'bi-heart-pulse',        'mesc.ver'],
     ['catequesis',    'Catequesis',         'bi-book',               'catequesis.ver'],
-    ['lector',        'Lectores',           'bi-mic',                'lector.ver'],
+    ['proclamadores',  'Proclamadores',      'bi-mic',                'proclamadores.ver'],
     ['sacramentos',   'Sacramentos',        null,                    'sacramentos.ver'],
     ['cursos',        'Cursos',             'bi-mortarboard',        'cursos.ver'],
     ['inscripciones', 'Inscripciones',      'bi-pencil-square',      'inscripciones.ver'],
@@ -36,9 +36,9 @@ $secciones = [
 // Los tres módulos dedicados también exigen administrar la pastoral que les
 // corresponde, no solo llevar el permiso — ver el comentario de arriba.
 $pastoralPorModulo = [
-    'mesc'       => PASTORAL_MESC,
-    'catequesis' => PASTORAL_CATEQUESIS,
-    'lector'     => PASTORAL_LECTOR,
+    'mesc'          => PASTORAL_MESC,
+    'catequesis'    => PASTORAL_CATEQUESIS,
+    'proclamadores' => PASTORAL_PROCLAMADORES,
 ];
 $disponibles = array_values(array_filter(
     $secciones,

@@ -57,7 +57,18 @@
                             <label for="fecha_nacimiento" class="form-label fw-semibold">Fecha de nacimiento</label>
                             <input type="date" name="fecha_nacimiento" id="fecha_nacimiento" class="form-control"
                                    value="<?= e($esNueva || !$persona['fecha_nacimiento'] ? '' : $persona['fecha_nacimiento']) ?>">
-                            <div class="form-text">Para avisar su cumpleaños en el panel.</div>
+                            <div class="form-text">
+                                Para avisar su cumpleaños en el panel.
+                                <?php /* Varias fichas entraron desde la lista que levantó Proclamadores, donde el
+                                         formulario autocompletó el año: se guardó 1900 como marca de "año
+                                         desconocido" para no perder el día y el mes. Quien abra la ficha tiene que
+                                         entender que 1900 no es un dato, es un hueco. Ver
+                                         herramientas/importar_proclamadores.php. */ ?>
+                                <?php if (!$esNueva && substr((string) $persona['fecha_nacimiento'], 0, 4) === '1900'): ?>
+                                <span class="text-warning-emphasis">El año 1900 quiere decir que solo se sabe el día
+                                y el mes; corrígelo si conoces el año.</span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 

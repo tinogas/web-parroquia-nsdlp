@@ -72,12 +72,12 @@ whitelist de dos valores y `publico` por defecto.
 
 área admin     auth · panel · agenda · configuracion · bloques · paginas
                personas · centros · organigrama · horarios · sacramentos
-               pastorales · mesc · catequesis · lector
+               pastorales · mesc · catequesis · proclamadores
                cursos · inscripciones · avisos · eventos · galeria · carrusel
                mensajes · usuarios · auditoria · respaldos
 ```
 
-Los tres módulos de pastoral dedicada —`mesc`, `catequesis`, `lector`— aparecen **solo en
+Los tres módulos de pastoral dedicada —`mesc`, `catequesis`, `proclamadores`— aparecen **solo en
 la tabla de administración**: ninguno tiene controlador público, a diferencia de los demás
 módulos de contenido. La razón está en su propia sección, más abajo.
 
@@ -530,7 +530,7 @@ estaba. Tres decisiones lo definen:
 
 `agenda.ver` es un permiso propio, y lo tienen todos los roles del panel que administran o
 consultan contenido, **incluidos los seis de Consulta**: para un ministro, catequista o
-lector es la única pantalla que verán además de la de su pastoral, y es la que responde
+proclamador es la única pantalla que verán además de la de su pastoral, y es la que responde
 "¿qué hay programado esta semana?" sin darles con qué editar nada.
 
 ### Coordinarse y administrar son dos pantallas, no una
@@ -595,7 +595,7 @@ condicional más allá de `Auth::tienePermiso()`:
 
 - **Fechas —eventos y cursos— las publica la propia pastoral.** Además de `admin` y
   `editor`, tienen `eventos.publicar` y `cursos.publicar` el coordinador y los tres
-  administradores de pastoral (MESC, Catequesis, Lector). Una fecha en el calendario es
+  administradores de pastoral (MESC, Catequesis, Proclamadores). Una fecha en el calendario es
   algo que la pastoral ya decidió, y que las demás necesitan ver publicada para no pisarla;
   hacerla esperar a que un editor pase a revisarla convertía la moderación en un cuello de
   botella sobre información que de todos modos es cierta.
@@ -676,12 +676,12 @@ ninguna. Sin esa regla, un coordinador de sede al que se le olvidara marcarla ac
 mandando en las tres, que es justo el error que se quería evitar.
 
 **Los tres módulos dedicados se ofrecen por pastoral, no por permiso.** `mesc.*`,
-`catequesis.*` y `lector.*` los lleva cualquier coordinador, así que mostrarían los tres a
+`catequesis.*` y `proclamadores.*` los lleva cualquier coordinador, así que mostrarían los tres a
 todo el mundo si solo se mirara el permiso; `Auth::administraPastoral(PASTORAL_MESC)` y sus
 gemelas son las que deciden, y el controlador del módulo lo revalida con
 `puedeSobrePastoral()`. Los slugs de esas tres pastorales están en `config/app.php`
-(`PASTORAL_MESC`, `PASTORAL_CATEQUESIS`, `PASTORAL_LECTOR`) en vez de repetidos a mano en
-cada modelo.
+(`PASTORAL_MESC`, `PASTORAL_CATEQUESIS`, `PASTORAL_PROCLAMADORES`) en vez de repetidos a
+mano en cada modelo.
 
 Este cruce vive en **dos** sitios, no uno: el menú lateral
 (`shared/views/parciales/admin_sidebar.php`) y las tarjetas de acceso rápido del panel
@@ -802,7 +802,7 @@ Reglas sin excepción:
 
 ### Administrador y Consulta por pastoral (revisión de módulos), y su retirada
 
-Las pastorales con módulo propio —MESC, Catequesis, Lector— tuvieron durante un tiempo un
+Las pastorales con módulo propio —MESC, Catequesis, Proclamadores— tuvieron durante un tiempo un
 par de roles con nombre explícito cada una: `ROL_ADMIN_MESC`/`ROL_CONSULTA_MESC` y sus
 equivalentes. La idea era que crear la cuenta diera de una vez claridad sobre qué
 administraba, en vez de un rol abstracto más una asignación de pastoral aparte.
@@ -817,7 +817,7 @@ debajo del rol. `ROLES_CON_ALCANCE_PASTORAL` sigue agrupándolos para que el for
 guardado no repitan `=== ROL_COORDINADOR` en cada punto.
 
 Lo que sí se conservó es la idea de **Consulta**: solo lectura, para que un ministro,
-catequista o lector de a pie entre al panel a ver su propio calendario y sus documentos sin
+catequista o proclamador de a pie entre al panel a ver su propio calendario y sus documentos sin
 poder cambiar nada; con `agenda.ver` ve además lo que hay programado en toda la parroquia,
 que es la pregunta que traía la mayoría de las veces.
 
@@ -888,7 +888,7 @@ Antes de los roles de Consulta, cualquiera que pudiera *ver* un módulo (coordin
 editor, admin) también podía *editarlo* — nunca hizo falta que una vista distinguiera
 entre ambos. Consulta rompió ese supuesto (solo tiene `X.ver`) y expuso un hueco real en
 las vistas de MESC (construidas antes de que existiera ese rol) y, por copiarlas tal
-cual, también en Catequesis y Lector: botones de Nuevo/Editar/Eliminar sin ningún
+cual, también en Catequesis y Proclamadores: botones de Nuevo/Editar/Eliminar sin ningún
 `Auth::tienePermiso()`, y —el más importante— el calendario de turnos enlazaba cada
 evento directo a `turno_editar`, así que un usuario de Consulta que le diera clic caía
 en `requirePermiso('mesc.editar')`, era redirigido a `/admin/panel` con un error de
@@ -896,7 +896,7 @@ permisos, y no entendía por qué. `requirePermiso()` y `requireAlcancePastoral(
 comparten ese mismo destino (`Controller.php`), así que cualquier acción sin permiso —no
 solo un botón, un enlace directo como el del calendario— termina ahí.
 
-La regla, ya aplicada en MESC, Catequesis y Lector: si `Auth::tienePermiso()` es falso
+La regla, ya aplicada en MESC, Catequesis y Proclamadores: si `Auth::tienePermiso()` es falso
 para la acción, el botón o enlace **no se dibuja**, no se muestra gris ni deshabilitado.
 En el calendario de turnos, el evento sigue mostrándose (`<span>` en vez de `<a>`,
 mismo color y título) para que Consulta vea su turno, solo que no es clickeable. Esto
@@ -941,7 +941,7 @@ revalida contra sus sedes reales.
 las pastorales, porque su función es que nadie aparte el mismo salón dos veces. Lo único que
 respeta el alcance es el lápiz de editar.
 
-**Los tres módulos dedicados —MESC, Catequesis, Lector— siguen siendo por pastoral, sin
+**Los tres módulos dedicados —MESC, Catequesis, Proclamadores— siguen siendo por pastoral, sin
 sede.** Cada uno resuelve la suya por slug (`MescModel::pastoralId()`), así que los
 catequistas, los periodos y los turnos son de la pastoral entera y los comparten las tres
 coordinadoras. Separarlos por sede exigiría que el catálogo de pastorales se desdoblara —una
@@ -1043,12 +1043,24 @@ un flag.
 **Lectores se separó de Litúrgica al introducir esto, sin migrar ningún dato.** Antes de
 la jerarquía, la fila `slug='liturgia'` era a la vez "la pastoral Litúrgica" y, en la
 práctica, el contenido operativo completo de Lectores (sus eventos, su foto, su
-coordinadora con cuenta) — `PASTORAL_LECTOR` resolvía por ese slug. Al necesitar que
+coordinadora con cuenta) — la constante del módulo resolvía por ese slug. Al necesitar que
 Litúrgica agrupe también a MESC, Coros, Monaguillos, Piedad Popular y Social, esa misma
-fila se renombró a "Lectores" **conservando su slug** —`PASTORAL_LECTOR` sigue apuntando
+fila se renombró a "Lectores" **conservando su slug** —la constante siguió apuntando
 ahí sin cambiar una línea de código— y se creó una fila nueva y vacía para la Comisión
 "Litúrgica". Migrar en cambio el contenido a una fila "Lectores" nueva habría significado
 mover quince registros entre cuatro tablas para el mismo resultado, con mucho más riesgo.
+
+**Y esa misma fila se llama hoy "Proclamadores", que es como la pastoral se nombra a sí
+misma; el slug sigue siendo `liturgia`.** Es un nombre visible más sobre una fila cuyo slug
+no se ha vuelto a tocar desde entonces, y el criterio es el mismo: `/pastorales/liturgia`
+es una URL pública que ya está en uso, y renombrarla rompería los enlaces repartidos a
+cambio de nada que nadie note —el visitante lee el nombre, no el slug—. Lo que sí se
+renombró es todo lo que solo se lee desde el código: la constante pasó de `PASTORAL_LECTOR`
+a `PASTORAL_PROCLAMADORES` conservando su valor `'liturgia'`, de ahí que su nombre no se
+parezca a lo que vale. El comentario que la acompaña en `config/app.php` cuenta esta
+historia justamente para que nadie "corrija" uno sin el otro:
+`ProclamadoresModel::pastoralId()` busca por slug, no por nombre, así que tocar el slug sin
+tocar la constante deja el módulo sin pastoral. Sigue colgada de la Comisión "Litúrgica".
 
 ### Panel básico por pastoral y activación en el menú
 
@@ -1060,7 +1072,7 @@ módulo y elegirla a mano en un selector. `PastoralController::panel()` (ruta
 filtrados —Documentos se gestiona ahí mismo, reusando `documentoGuardar()`/
 `documentoEliminar()`; Avisos, Eventos y Cursos solo se enlazan ya filtrados
 (`?pastoral=`) y con "nuevo" ya preseleccionado (`?pastoral_id=`), no se duplica su CRUD—.
-Si la pastoral tiene módulo dedicado (MESC/Catequesis/Lector, `MODULO_POR_PASTORAL` en
+Si la pastoral tiene módulo dedicado (MESC/Catequesis/Proclamadores, `MODULO_POR_PASTORAL` en
 `config/app.php`), el panel agrega un botón de salto a su módulo de turnos y catálogo, que
 sigue existiendo tal cual.
 
@@ -1100,10 +1112,10 @@ fuerza los descensos: bajar a interno apaga `publicado`, y bajar a borrador apag
 
 **Leer no hereda igual que escribir.** El escalón interno de una Comisión alcanza a los
 miembros de sus pastorales hijas: un aviso puesto en Litúrgica lo leen los de MESC,
-Lectores o Coros. Eso lo resuelve `Auth::pastoralesAudiencia()`, que expande hacia arriba
+Proclamadores o Coros. Eso lo resuelve `Auth::pastoralesAudiencia()`, que expande hacia arriba
 las pastorales de la cuenta sumándoles sus padres. Va deliberadamente **aparte** de
 `Auth::pastoralesPermitidas()`, que gobierna la escritura y sigue sin heredar nada:
-estar en Lectores te deja leer lo de Litúrgica, no escribir en Litúrgica. Tampoco se
+estar en Proclamadores te deja leer lo de Litúrgica, no escribir en Litúrgica. Tampoco se
 cachea en sesión —a diferencia de las pastorales asignadas, que solo cambian con la
 cuenta—, porque depende de `pastoral_padre_id` y reasignar el padre de una pastoral no
 debería esperar a que todo el mundo vuelva a entrar.
@@ -1146,7 +1158,7 @@ sistema. `pastoral_id` en `mesc_visitas`/`mesc_rutas`/`mesc_ministros`/`mesc_tur
 **obligatorio y fijo**, a diferencia de avisos o eventos: esta actividad nunca es
 "contenido parroquial general", siempre pertenece a la única pastoral de MESC, resuelta
 por `MescModel::pastoralId()` y `MescController::pastoralIdOFallar()` — ver la sección
-de Catequesis y Lector más abajo para la historia completa de este patrón, que MESC
+de Catequesis y Proclamadores más abajo para la historia completa de este patrón, que MESC
 adoptó más tarde que ellos.
 
 **Mapa: Leaflet + OpenStreetMap, sin llave de API.** El formulario de una visita
@@ -1213,10 +1225,13 @@ copiaron de `assets/css/publico.css` a `assets/css/app.css` porque el panel carg
 hoja de estilos distinta a la del sitio público.
 
 **Colores litúrgicos, como catálogo de mantenimiento, no como constante en PHP.**
-`mesc_colores_liturgicos` (blanco, verde, morado, rojo, rosa, con su significado) es
+`colores_liturgicos` (blanco, verde, morado, rojo, rosa, con su significado) es
 editable desde el panel en `mesc/colores` en vez de vivir hardcodeado en el código: el
 propio equipo pastoral puede ajustar el texto o el tono exacto sin tocar una línea de PHP.
-Cada turno referencia opcionalmente un color (`color_liturgico_id`, `ON DELETE SET NULL`
+La tabla se llamó `mesc_colores_liturgicos` mientras MESC fue el único que la administraba,
+y perdió el prefijo cuando Proclamadores estrenó su propia pantalla sobre esas mismas filas
+—ver más abajo—: el catálogo nunca fue de un módulo, y el nombre acabó diciendo lo
+contrario. Cada turno referencia opcionalmente un color (`color_liturgico_id`, `ON DELETE SET NULL`
 — borrar un color no rompe los turnos que ya lo tenían, solo los deja sin etiqueta), y el
 calendario usa ese `color_hex` como fondo de la casilla. `mesc_texto_legible()` en
 `turnos.php` calcula la luminancia percibida del color (fórmula estándar
@@ -1229,9 +1244,9 @@ parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba
 cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
 los turnos, no de uno en particular.
 
-### MESC, Catequesis y Lector: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
+### MESC, Catequesis y Proclamadores: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
 
-Tres módulos, `modules/mesc/`, `modules/catequesis/` y `modules/lector/`, comparten el
+Tres módulos, `modules/mesc/`, `modules/catequesis/` y `modules/proclamadores/`, comparten el
 mismo patrón: módulo propio y separado para una pastoral específica, sin controlador
 público, en vez de ampliar el sistema genérico de "contenido propio por pastoral"
 (`pastoral_actividades`/`pastoral_documentos`). La razón es la misma en los tres: cada
@@ -1239,7 +1254,7 @@ uno necesita columnas y pantallas que ese sistema genérico no tiene y que no te
 sentido forzar sobre *todas* las pastorales.
 
 **Los tres son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
-`CatequesisModel::pastoralId()` y `LectorModel::pastoralId()` resuelven su pastoral por
+`CatequesisModel::pastoralId()` y `ProclamadoresModel::pastoralId()` resuelven su pastoral por
 `slug` (no por un id fijo en PHP: los id de pastorales se generan al crearlas desde el
 panel, no se siembran en `install.sql`), y `pastoralIdOFallar()` en su respectivo
 controlador corta el flujo con un mensaje claro si esa pastoral todavía no existe o el
@@ -1249,11 +1264,11 @@ muestra otra pastoral.
 Esto no fue el diseño original de MESC: al ser el primer módulo de este tipo (issue #3),
 `pastoralIdMescValidado()` solo exigía que `pastoral_id` no fuera nulo, pero aceptaba
 *cuál* de las pastorales que el usuario administrara, mostrando un selector con todas
-ellas. Catequesis y Lector copiaron ese mismo selector al construirse sobre MESC como
+ellas. Catequesis y Proclamadores copiaron ese mismo selector al construirse sobre MESC como
 plantilla, y en ambos casos resultó en el mismo bug: un administrador con acceso a más
 de una pastoral (algo habitual, no la excepción) veía —y podía usar— pastorales ajenas
-al módulo en pantallas como "agregar ministro/lector" o "nueva visita/turno". Se corrigió
-primero en Catequesis y Lector (fijando su pastoral por `slug` con `pastoralIdOFallar()`)
+al módulo en pantallas como "agregar ministro/proclamador" o "nueva visita/turno". Se corrigió
+primero en Catequesis y Proclamadores (fijando su pastoral por `slug` con `pastoralIdOFallar()`)
 y, al reportarse el mismo síntoma en MESC ("se agregan ministros en pastorales que no
 son MESC" y un selector de pastoral en el formulario de visita a enfermos), se le aplicó
 el mismo arreglo: MESC dejó de ser la plantilla con la excepción y pasó a seguir su
@@ -1276,16 +1291,43 @@ vez de duplicar la fila. `catequesis_actividades` es un tablero con vigencia y
 `pastoral_actividades`; `catequesis_documentos` es una copia directa de
 `pastoral_documentos` (mismo patrón de subida vía `Upload::documento()`).
 
-**Lector** (pastoral "Liturgia" —se llamaba "Lectores"; ver la nota de `PASTORAL_LECTOR`
-en `config/app.php`—): recorta MESC a sus dos piezas no sensibles y
-extrapolables —`lector_turnos`/`lector_turno_lectores` calcan
-`mesc_turnos`/`mesc_turno_ministros` entrada por entrada, y `lector_lectores` calca
-`mesc_ministros`—, y deja fuera lo que no aplica: nada de `mesc_rutas`/`mesc_visitas`, un
-lector proclama la Palabra en misa, no reparte comunión a domicilio. `lector_turnos.color_liturgico_id`
-apunta al catálogo `mesc_colores_liturgicos` en vez de duplicarlo: el significado de cada
-color litúrgico es el mismo calendario para toda la parroquia, no un dato propio de un
-módulo en particular — la primera vez que una tabla fuera de `mesc_*` referencia un
-catálogo de MESC directamente.
+**Proclamadores** (la pastoral de slug `liturgia` —se llamó "Lectores" y luego "Liturgia";
+ver la nota de `PASTORAL_PROCLAMADORES` en `config/app.php`—): recorta MESC a sus dos
+piezas no sensibles y extrapolables
+—`proclamadores_turnos`/`proclamadores_turno_proclamadores` calcan
+`mesc_turnos`/`mesc_turno_ministros` entrada por entrada, y `proclamadores` calca
+`mesc_ministros`—, y deja fuera lo que no aplica: nada de `mesc_rutas`/`mesc_visitas`,
+quien proclama la Palabra lo hace en misa y no reparte comunión a domicilio.
+`proclamadores_turnos.color_liturgico_id` apunta al catálogo compartido
+`colores_liturgicos` en vez de duplicarlo: el significado de cada color litúrgico es el
+mismo calendario para toda la parroquia, no un dato propio de un módulo en particular — y
+fue la primera vez que una tabla de fuera referenció ese catálogo, que entonces todavía
+se llamaba `mesc_colores_liturgicos`.
+
+**Lo único que no tiene equivalente en MESC es `proclamadores.preferencias`**, un
+`SET('monitor','lectura','salmo')` con lo que cada quien prefiere hacer al proclamar. Es el
+dato con el que la coordinación arma un turno —quién va de monitor, quién lee y quién canta
+el salmo—, así que se muestra donde se decide: en el catálogo y junto a cada nombre en el
+formulario de turno, no en una pantalla aparte. No restringe nada, es una preferencia y no
+un permiso; el porqué de la columna `SET` está en [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md).
+
+**Su paridad con MESC se completó después, y es paridad menos las visitas.** El módulo
+nació con catálogo y calendario y le faltaban las dos pantallas que MESC sí tenía:
+
+- **La hoja imprimible del mes** (`turnosImprimir()` + `turnos_imprimir.php`), que comparte
+  con MESC la hoja de estilos `assets/css/turnos_imprimir.css` en vez de duplicarla: la
+  cuadrícula que se reparte en papel es la misma, solo cambia quién va escrito en cada
+  casilla. De ahí que en ese CSS las clases `.ti-ministros`/`.ti-sin-ministros` pasaran a
+  `.ti-nombres`/`.ti-sin-nombres` — con dos módulos usando la misma hoja, el nombre de la
+  clase mentía en la mitad de los casos.
+- **Los colores litúrgicos, con alta, edición y borrado** (`colores()`, `colorGuardar()`,
+  `colorEliminar()`), sobre la misma tabla `colores_liturgicos` que administra MESC. La
+  pantalla se repite a propósito y no contradice el "no duplicar": quien coordina
+  Proclamadores no administra MESC, así que sin ella dependía de pedirle a alguien más un
+  color nuevo para poder etiquetar su turno. Las dos pantallas avisan en su cabecera de que
+  el catálogo es uno solo para toda la parroquia, porque editar aquí también cambia lo que
+  ve el otro módulo. Igual que en MESC, esta parte **no tiene alcance por pastoral** —un
+  color litúrgico no es de nadie—: solo exige el permiso del módulo.
 
 **El nombre de un ministro de MESC es su nombre corto, y es un dato propio.** En
 `mesc_ministros`, `nombre` no es una copia del de su ficha sino el nombre con el que se le
@@ -1301,12 +1343,13 @@ herramienta. Por eso:
   primer nombre de su ficha («Zulema Maria Alavrez Andrade» → «Zulema»), que es
   exactamente la forma en que están capturados los demás.
 
-Catequistas y lectores **no** siguen esta excepción: ahí el nombre sí viene de la ficha,
+Catequistas y proclamadores **no** siguen esta excepción: ahí el nombre sí viene de la ficha,
 porque sus pantallas son listados donde el nombre completo cabe sin problema.
 
 **El calendario de turnos se puede sacar en hoja aparte.**
 `MescController::turnosImprimir()` + `modules/mesc/views/turnos_imprimir.php` +
-`assets/css/turnos_imprimir.css` replican, para el calendario mensual de MESC, el mismo
+`assets/css/turnos_imprimir.css` (esa hoja la comparten hoy los dos módulos de turnos, ver
+arriba) replican, para el calendario mensual de MESC, el mismo
 patrón que la vista de impresión del organigrama: página independiente vía
 `renderSinLayout()`, hoja de estilos propia, y un botón que solo llama a `window.print()`
 —sin librería de PDF ni de imagen, que el proyecto no admite en el servidor—. Es el
@@ -1319,9 +1362,9 @@ casilla** en vez de en el `title`, y el CSS fuerza `print-color-adjust: exact` s
 etiquetas, porque su color es el código litúrgico del día, no un adorno que el navegador
 pueda descartar al imprimir.
 
-**El ministro/catequista/lector también se elige del equipo pastoral —tercera vez que
+**El ministro/catequista/proclamador también se elige del equipo pastoral —tercera vez que
 se construye este vínculo.** `mesc_ministros`, `catequesis_catequistas` y
-`lector_lectores` tenían el mismo problema que ya se había resuelto antes para
+`proclamadores` tenían el mismo problema que ya se había resuelto antes para
 `usuarios` y para el responsable de una pastoral: el nombre era texto libre, sin
 relación con `personas`, y eso permitía —de hecho, ya había pasado— que la misma
 persona real quedara escrita de formas distintas en cada tabla. Encontrado al revisar
@@ -1923,6 +1966,18 @@ el paso se podría quitar sin cambiar nada más.
    datos habría que revisarlos, o el evento acabaría colgado de la pastoral equivocada. Las
    casas de oración y Didec se reconocen como lugar pero no existen como centro, así que se
    guardan solo en el texto de `lugar`, con `centro_id` nulo.
+
+**El patrón se reutilizó tal cual para la lista de Proclamadores.**
+`extraer_proclamadores.py` + `importar_proclamadores.php` metieron al equipo pastoral las 26
+personas de la hoja que levantó la propia pastoral: mismo reparto de trabajo —Python abre el
+`.xlsx` porque este PHP sigue sin `zip`—, mismo `--dry-run`, misma idempotencia y misma
+escritura a través del modelo (`PersonaModel`), para que las fichas queden como si se
+hubieran creado desde el panel. Y la misma regla de marcar en vez de adivinar: los años de
+nacimiento que el formulario de la hoja autocompletó se guardan como 1900, la marca de "año
+desconocido" (ver [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md)), y el nombre repetido con dos
+fechas que se contradicen entró sin fecha para que alguien lo confirme. Entraron 22 fichas
+nuevas; las otras cuatro personas ya estaban en el equipo —tres sirviendo también en MESC, y
+la coordinadora— y solo se les completó lo que faltaba.
 
 **Pendiente conocido:** la lista de carpetas que el `.htaccess` bloquea por HTTP
 (`^(config|core|modules|shared|docs|cli|backups)/`) sigue nombrando `cli/`, que ya no existe,

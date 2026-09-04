@@ -16,11 +16,13 @@ uploads/*/**
 # Respaldos de base de datos
 backups/*.sql
 
-# Hojas de cálculo de trabajo: la agenda parroquial que se transcribe a mano y
-# lo que saca de ella herramientas/extraer_agenda.py. Los scripts sí se
-# versionan; los datos de origen y su extracción no.
+# Hojas de cálculo de trabajo: la agenda parroquial que se transcribe a mano, la
+# lista que levantó la pastoral de Proclamadores, y lo que sacan de ellas los
+# scripts de herramientas/. Los scripts sí se versionan; los datos de origen y
+# su extracción no —son datos personales, además: fechas de nacimiento—.
 *.xlsx
 agenda-2026.json
+proclamadores.json
 
 # Logs y caché
 *.log

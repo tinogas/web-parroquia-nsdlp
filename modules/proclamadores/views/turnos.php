@@ -1,7 +1,7 @@
 <?php
-if (!function_exists('lector_texto_legible')) {
+if (!function_exists('proclamadores_texto_legible')) {
     /** Blanco o negro según qué tan clara es la casilla, para que el texto del turno siempre se lea. */
-    function lector_texto_legible(string $hex): string
+    function proclamadores_texto_legible(string $hex): string
     {
         $hex = ltrim($hex, '#');
         if (strlen($hex) !== 6) { return '#fff'; }
@@ -13,15 +13,21 @@ if (!function_exists('lector_texto_legible')) {
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <h1 class="h4 fw-bold mb-1">Calendario de liturgia</h1>
+        <h1 class="h4 fw-bold mb-1">Calendario de proclamadores</h1>
         <p class="text-muted mb-0 small">Quién proclama la Palabra en cada misa.</p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="<?= e(url_admin('lector', 'lectores')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-people me-1"></i>Liturgia
+    <div class="d-flex flex-wrap gap-2">
+        <a href="<?= e($urlImprimir) ?>" target="_blank" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i>Imprimir
         </a>
-        <?php if (Auth::tienePermiso('lector.crear')): ?>
-        <a href="<?= e(url_admin('lector', 'turno_nuevo')) ?>" class="btn btn-primary">
+        <a href="<?= e(url_admin('proclamadores', 'colores')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-palette me-1"></i>Colores
+        </a>
+        <a href="<?= e(url_admin('proclamadores', 'catalogo')) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-people me-1"></i>Catálogo
+        </a>
+        <?php if (Auth::tienePermiso('proclamadores.crear')): ?>
+        <a href="<?= e(url_admin('proclamadores', 'turno_nuevo')) ?>" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i>Nuevo turno
         </a>
         <?php endif; ?>
@@ -61,15 +67,15 @@ if (!function_exists('lector_texto_legible')) {
                             $fondo   = $turno['color_hex'] ?: '#1e4d8b';
                             $titulo  = $turno['descripcion']
                                      . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                     . ($turno['lectores_nombres'] ? ' — ' . $turno['lectores_nombres'] : ' — sin lectores asignados');
+                                     . ($turno['proclamadores_nombres'] ? ' — ' . $turno['proclamadores_nombres'] : ' — sin proclamadores asignados');
                             $etiqueta = e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
                             ?>
-                            <?php if (Auth::tienePermiso('lector.editar')): ?>
-                            <a href="<?= e(url_admin('lector', 'turno_editar', ['id' => $turno['id']])) ?>"
-                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
+                            <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
+                            <a href="<?= e(url_admin('proclamadores', 'turno_editar', ['id' => $turno['id']])) ?>"
+                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
                                title="<?= e($titulo) ?>"><?= $etiqueta ?></a>
                             <?php else: ?>
-                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= lector_texto_legible($fondo) ?>"
+                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
                                   title="<?= e($titulo) ?>"><?= $etiqueta ?></span>
                             <?php endif; ?>
                             <?php endforeach; ?>

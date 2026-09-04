@@ -121,28 +121,29 @@ define('ROLES_CON_ALCANCE_PASTORAL', [
  * con esto si dibuja el enlace: tener el permiso `mesc.*` no basta —lo llevan
  * todos los coordinadores—, hay que administrar esa pastoral en concreto.
  *
- * PASTORAL_LECTOR: la pastoral se llamaba "Lectores" (slug 'lectores') y se
- * renombró a "Liturgia"; el slug se alineó al mismo tiempo que este valor
- * —cambiar uno sin el otro rompe el módulo entero, porque
- * LectorModel::pastoralId() busca por slug, no por nombre—. El nombre de
- * esta constante no cambió: identifica al módulo Lector, no es una copia
- * del nombre visible de la pastoral.
+ * PASTORAL_PROCLAMADORES: esta pastoral ya se llamó "Lectores" (slug
+ * 'lectores'), luego "Liturgia" —y con ese renombre el slug pasó a
+ * 'liturgia'—, y hoy se llama "Proclamadores". El slug se quedó en
+ * 'liturgia' a propósito: la URL pública /pastorales/liturgia ya está en
+ * uso, y cambiarla la rompería. De ahí que este valor no se parezca al
+ * nombre de la constante; lo que no se puede es cambiar uno sin el otro,
+ * porque ProclamadoresModel::pastoralId() busca por slug, no por nombre.
  */
-define('PASTORAL_MESC',       'ministro-extraordinario-de-la-sagrada-comunion');
-define('PASTORAL_CATEQUESIS', 'catecismo');
-define('PASTORAL_LECTOR',     'liturgia');
+define('PASTORAL_MESC',          'ministro-extraordinario-de-la-sagrada-comunion');
+define('PASTORAL_CATEQUESIS',    'catecismo');
+define('PASTORAL_PROCLAMADORES', 'liturgia');
 
 /**
  * El reverso del mapa de arriba: slug de pastoral → módulo dedicado.
  * PastoralController::panel() lo usa para ofrecer, desde el panel básico de
- * MESC/Catequesis/Lector, un salto directo a su módulo de turnos y catálogo
- * — esas tres pastorales siguen operando con su módulo propio, el panel
- * básico no lo reemplaza.
+ * MESC/Catequesis/Proclamadores, un salto directo a su módulo de turnos y
+ * catálogo — esas tres pastorales siguen operando con su módulo propio, el
+ * panel básico no lo reemplaza.
  */
 define('MODULO_POR_PASTORAL', [
-    PASTORAL_MESC       => 'mesc',
-    PASTORAL_CATEQUESIS => 'catequesis',
-    PASTORAL_LECTOR     => 'lector',
+    PASTORAL_MESC          => 'mesc',
+    PASTORAL_CATEQUESIS    => 'catequesis',
+    PASTORAL_PROCLAMADORES => 'proclamadores',
 ]);
 
 // ------------------------------------------------------------
@@ -167,7 +168,7 @@ define('PERMISOS_COORDINACION', [
     'documentos.ver', 'documentos.crear', 'documentos.eliminar',
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
     'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
-    'lector.ver', 'lector.crear', 'lector.editar', 'lector.eliminar',
+    'proclamadores.ver', 'proclamadores.crear', 'proclamadores.editar', 'proclamadores.eliminar',
     'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.publicar',
 ]);
 
@@ -204,7 +205,7 @@ define('PERMISOS', [
         'documentos.ver', 'documentos.crear', 'documentos.eliminar',
         'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
-        'lector.ver', 'lector.crear', 'lector.editar', 'lector.eliminar',
+        'proclamadores.ver', 'proclamadores.crear', 'proclamadores.editar', 'proclamadores.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -229,7 +230,7 @@ define('PERMISOS', [
     // gobierna el alcance no es este permiso sino la pastoral asignada.
     //
     // Los permisos de los tres módulos dedicados —mesc.*, catequesis.*,
-    // lector.*— los llevan todos los coordinadores, y quien entra de verdad a
+    // proclamadores.*— los llevan todos los coordinadores, y quien entra de verdad a
     // cada uno lo decide la pastoral asignada: el controlador comprueba
     // Auth::puedeSobrePastoral() con la pastoral del módulo, y el menú no
     // dibuja el enlace a quien no la administre (Auth::administraPastoral()).
@@ -247,7 +248,7 @@ define('PERMISOS', [
         'usuarios.ver', 'usuarios.crear', 'usuarios.editar',
     ]),
 
-    // Solo mira. Para el ministro, catequista o lector de a pie que entra a ver
+    // Solo mira. Para el ministro, catequista o proclamador de a pie que entra a ver
     // su propio calendario y el de la parroquia, sin nada que tocar. Su
     // pastoral y su sede acotan lo que ve, igual que a un coordinador.
     //
@@ -267,7 +268,7 @@ define('PERMISOS', [
         'cursos.ver',
         'mesc.ver',
         'catequesis.ver',
-        'lector.ver',
+        'proclamadores.ver',
     ],
 
     // Único rol, junto con el administrador, que ve datos personales.

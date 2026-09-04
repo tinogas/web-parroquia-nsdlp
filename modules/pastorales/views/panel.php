@@ -2,7 +2,7 @@
 /**
  * Panel básico de una pastoral: lo mínimo que necesita cualquier pastoral
  * para operar (avisos, calendario de eventos, cursos, documentos), sin
- * necesitar un módulo dedicado como MESC/Catequesis/Lector. Avisos, Eventos
+ * necesitar un módulo dedicado como MESC/Catequesis/Proclamadores. Avisos, Eventos
  * y Cursos son genéricos por pastoral_id —aquí solo se enlaza a ellos ya
  * filtrados, no se duplica su CRUD—; Documentos se gestiona en este mismo
  * Controller (PastoralController::documentoGuardar()/documentoEliminar()).

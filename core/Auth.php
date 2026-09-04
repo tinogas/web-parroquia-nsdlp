@@ -228,13 +228,13 @@ class Auth
     /**
      * Las pastorales cuyo contenido interno puede LEER: las suyas más las
      * Comisiones que las agrupan, porque un aviso publicado en Litúrgica va
-     * dirigido también a quien está en Lectores o en Coros.
+     * dirigido también a quien está en Proclamadores o en Coros.
      *
      * Deliberadamente aparte de pastoralesPermitidas(), no una ampliación
      * suya: aquella gobierna la ESCRITURA (puedeSobrePastoral(),
      * Controller::pastoralIdValidado()) y sigue sin heredar nada, que es la
      * decisión documentada en el comentario de cargarPastorales(). Estar en
-     * Lectores te deja leer lo de Litúrgica; no te deja escribir en Litúrgica.
+     * Proclamadores te deja leer lo de Litúrgica; no te deja escribir en Litúrgica.
      *
      * Tampoco se cachea en sesión, a diferencia de las pastorales asignadas:
      * ahí el dato solo cambia cuando cambia la cuenta, pero esto depende de
@@ -296,8 +296,8 @@ class Auth
 
     /**
      * ¿Administra la pastoral de este slug? Es la pregunta de los tres módulos
-     * dedicados —PASTORAL_MESC, PASTORAL_CATEQUESIS, PASTORAL_LECTOR—, que
-     * trabajan sobre una pastoral fija y no sobre la que se elija en pantalla.
+     * dedicados —PASTORAL_MESC, PASTORAL_CATEQUESIS, PASTORAL_PROCLAMADORES—,
+     * que trabajan sobre una pastoral fija y no sobre la que se elija en pantalla.
      *
      * Existe porque el permiso ya no distingue: `mesc.*` lo llevan todos los
      * coordinadores desde que se retiraron los roles con la pastoral en el

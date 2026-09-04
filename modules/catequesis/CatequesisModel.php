@@ -3,7 +3,7 @@ require_once BASE_PATH . '/core/Model.php';
 
 /**
  * CatequesisModel — Catequistas, periodos de catecismo, tablero de
- * actividades y documentos. Igual que MESC y Lector, este módulo es
+ * actividades y documentos. Igual que MESC y Proclamadores, este módulo es
  * exclusivo de la pastoral de Catecismo: no hay selector de pastoral en
  * ningún formulario, pastoralId() la resuelve sola por su slug. Sin
  * controlador público: vive enteramente en el panel.

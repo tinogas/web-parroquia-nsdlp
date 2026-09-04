@@ -46,13 +46,13 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
            no a quien lleva el permiso: `mesc.*` lo tienen todos los coordinadores
            desde que el rol dejó de nombrar la pastoral, y un enlace que acaba en
            «no administras la pastoral de MESC» es peor que no tener enlace. */
-        $verMesc       = Auth::tienePermiso('mesc.ver')       && Auth::administraPastoral(PASTORAL_MESC);
-        $verCatequesis = Auth::tienePermiso('catequesis.ver') && Auth::administraPastoral(PASTORAL_CATEQUESIS);
-        $verLector     = Auth::tienePermiso('lector.ver')     && Auth::administraPastoral(PASTORAL_LECTOR);
+        $verMesc          = Auth::tienePermiso('mesc.ver')          && Auth::administraPastoral(PASTORAL_MESC);
+        $verCatequesis    = Auth::tienePermiso('catequesis.ver')    && Auth::administraPastoral(PASTORAL_CATEQUESIS);
+        $verProclamadores = Auth::tienePermiso('proclamadores.ver') && Auth::administraPastoral(PASTORAL_PROCLAMADORES);
         ?>
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
                 || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')
-                || $verMesc || $verCatequesis || $verLector): ?>
+                || $verMesc || $verCatequesis || $verProclamadores): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -90,9 +90,9 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-book"></i> Catequesis
         </a>
         <?php endif; ?>
-        <?php if ($verLector): ?>
-        <a href="<?= e(url_admin('lector')) ?>" class="sidebar-link <?= $activo('lector') ?>">
-            <i class="bi bi-mic"></i> Liturgia
+        <?php if ($verProclamadores): ?>
+        <a href="<?= e(url_admin('proclamadores')) ?>" class="sidebar-link <?= $activo('proclamadores') ?>">
+            <i class="bi bi-mic"></i> Proclamadores
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>

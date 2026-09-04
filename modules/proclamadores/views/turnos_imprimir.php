@@ -1,28 +1,26 @@
 <?php
 /**
- * Calendario de turnos MESC en hoja aparte: página independiente (sin
- * layout_admin.php), pensada para abrirse en pestaña nueva e imprimirse,
+ * Calendario de turnos de Proclamadores en hoja aparte: página independiente
+ * (sin layout_admin.php), pensada para abrirse en pestaña nueva e imprimirse,
  * guardarse como PDF o capturarse como imagen con el propio navegador. Ver
- * MescController::turnosImprimir() y docs/ARQUITECTURA.md.
+ * ProclamadoresController::turnosImprimir() y docs/ARQUITECTURA.md.
  *
- * El diseño replica el calendario que la coordinación de MESC venía armando a
- * mano fuera del sistema (rol_ministros.jpeg): cabeceras DOM–SAB en negro,
- * banda gris con el número de día, un bloque por turno con el color litúrgico
- * de fondo, y los ministros en mayúsculas debajo de la hora. La columna del
- * domingo va más ancha porque es el día con más misas y más ministros.
+ * Comparte hoja de estilo con la de MESC (assets/css/turnos_imprimir.css): es
+ * el mismo formato de calendario, y lo único que cambia es a quién nombra cada
+ * casilla. Por eso las clases de los nombres son `.ti-nombres`/`.ti-sin-nombres`
+ * y no `.ti-ministros`.
  *
- * Los ministros van escritos en la casilla, no en el `title`: en papel no hay
- * dónde pasar el ratón. Por eso `mesc_ministros.nombre` es un nombre corto
- * —«Aimeé», «Tino»— y no el nombre completo de su ficha, que no cabría.
+ * Los nombres van escritos en la casilla, no en el `title`: en papel no hay
+ * dónde pasar el ratón.
  *
  * Variables esperadas:
- *   $nombreMes  string, "Agosto 2026"
- *   $semanas    array, cuadrícula de MescController::construirCalendarioTurnos()
+ *   $nombreMes  string, "Septiembre 2026"
+ *   $semanas    array, cuadrícula de ProclamadoresController::construirCalendarioTurnos()
  *   $urlVolver  string
  */
-if (!function_exists('mesc_imprimir_texto_legible')) {
+if (!function_exists('proclamadores_imprimir_texto_legible')) {
     /** Blanco o negro según qué tan oscuro sea el color litúrgico del turno. */
-    function mesc_imprimir_texto_legible(string $hex): string
+    function proclamadores_imprimir_texto_legible(string $hex): string
     {
         $hex = ltrim($hex, '#');
         if (strlen($hex) !== 6) { return '#000'; }
@@ -37,7 +35,7 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Calendario MESC, <?= e($nombreMes) ?> — <?= e(APP_CORTO) ?></title>
+<title>Calendario de proclamadores, <?= e($nombreMes) ?> — <?= e(APP_CORTO) ?></title>
 <link rel="stylesheet" href="<?= e(url_activo('assets/css/turnos_imprimir.css')) ?>?v=<?= e(APP_VERSION) ?>">
 </head>
 <body>
@@ -51,15 +49,15 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
 
     <p class="ti-parroquia"><?= e(APP_NAME) ?></p>
     <div class="ti-titulo">
-        <span class="ti-titulo-izq">Calendario MESC</span>
+        <span class="ti-titulo-izq">Calendario de proclamadores</span>
         <span class="ti-titulo-der"><?= e($nombreMes) ?></span>
     </div>
 
     <table class="ti-calendario">
         <colgroup>
-            <?php /* El domingo lleva cuatro misas con dos ministros cada una; los
-                     demás días, una. Sin esta diferencia de ancho el domingo se
-                     desborda y el resto de la hoja queda medio vacía. */ ?>
+            <?php /* El domingo concentra las misas, igual que en MESC: sin esta
+                     diferencia de ancho se desborda y el resto de la hoja queda
+                     medio vacía. */ ?>
             <col class="ti-col-domingo">
             <col span="6">
         </colgroup>
@@ -80,21 +78,20 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
                     <div class="ti-turnos">
                         <?php foreach ($celda['turnos'] as $turno): ?>
                         <?php
-                        $fondo = $turno['color_hex'] ?: '';
+                        $fondo  = $turno['color_hex'] ?: '';
                         $estilo = $fondo !== ''
-                            ? 'background:' . e($fondo) . ';color:' . mesc_imprimir_texto_legible($fondo)
+                            ? 'background:' . e($fondo) . ';color:' . proclamadores_imprimir_texto_legible($fondo)
                             : '';
                         ?>
                         <div class="ti-turno" style="<?= $estilo ?>">
                             <span class="ti-cabecera-turno">
                                 <?php /* Hora en 24h y no con hora_corta(): "19:00" cabe en una línea
-                                         donde "7:00 p. m." se parte en dos, y es como está escrito el
-                                         calendario que esta hoja reemplaza. */ ?>
+                                         donde "7:00 p. m." se parte en dos. */ ?>
                                 <?= e($turno['descripcion']) ?><?php if ($turno['hora']): ?>
                                 <?= e(substr((string) $turno['hora'], 0, 5)) ?><?php endif; ?>
                             </span>
-                            <?php if ($turno['ministros_nombres']): ?>
-                            <span class="ti-nombres"><?= e($turno['ministros_nombres']) ?></span>
+                            <?php if ($turno['proclamadores_nombres']): ?>
+                            <span class="ti-nombres"><?= e($turno['proclamadores_nombres']) ?></span>
                             <?php else: ?>
                             <span class="ti-sin-nombres">Sin asignar</span>
                             <?php endif; ?>

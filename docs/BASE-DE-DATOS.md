@@ -2,7 +2,8 @@
 
 Diccionario de las **42 tablas** del sistema: las 24 de las diez etapas del plan original,
 más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
-`respaldos_log`, las siete tablas de MESC, las cinco de Catequesis y las tres de Lector,
+`respaldos_log`, las seis tablas de MESC, las cinco de Catequesis, las tres de
+Proclamadores y el catálogo de colores litúrgicos que MESC y Proclamadores comparten,
 entre otras—, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
 (el issue #3 eliminó el formulario de solicitud en línea de sacramentos). El desglose exacto
 está en el resumen del final. El esquema real vive en `install.sql`; este documento explica
@@ -26,6 +27,19 @@ Las mismas del sistema de inventario, sin excepciones:
 
 No hay sistema de migraciones. `install.sql` es un archivo único acumulativo que se
 mantiene sincronizado etapa por etapa, hasta que el sitio salga a producción.
+
+Sigue sin haberlo, pero ya existe la **primera migración puntual**. `docs/migraciones/`
+—la carpeta que [`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores) prometía para
+cuando el esquema dejara de ser desechable— se estrenó con
+`2026-09-04-proclamadores.sql`, el renombre de las tablas de Lectores a Proclamadores.
+Hizo falta porque la base de desarrollo ya tenía turnos y colores capturados y reimportar
+`install.sql` los habría borrado. No cambia la regla de arriba: `install.sql` sigue siendo
+acumulativo y ya trae los nombres nuevos, así que una instalación nueva no aplica ninguna
+migración; el archivo de `docs/migraciones/` es para las bases que ya tienen datos. Crea
+las tablas y copia las filas en vez de renombrar con `ALTER`, porque MariaDB 10.4 no
+admite `ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el nombre
+viejo — una base migrada dejaría de ser idéntica a una recién instalada, que es justo lo
+que este documento describe.
 
 Cuidado con una consecuencia que antes no existía: **la base local ya contiene contenido real
 que `install.sql` no siembra** (la agenda de 2026, los centros, las pastorales con sus
@@ -232,6 +246,20 @@ la tarjeta "Cumpleaños de [mes]" del panel de inicio (`PanelController::index()
 importan mes y día: no se muestra el año ni se calcula edad en ningún lado, aunque la
 columna lo guarde porque `DATE` no admite mes/día sin año.
 
+**El año `1900` es la marca convenida de "año desconocido"**, y sale de un caso real: la
+lista que levantó Proclamadores traía el año autocompletado por el formulario en el que se
+capturó —el año en curso— en 12 de sus 26 filas, más una fecha ilegible. Se guarda 1900
+conservando el día y el mes, que son los que se celebran, en vez de dejar la columna en
+NULL y perderlos también. Encaja con `cumpleanerosDelMes()`, que solo usa `MONTH()` y
+`DAY()`, así que el año falso no se asoma a ninguna pantalla del sitio. Donde sí importa es
+al editar la ficha: `modules/personas/views/form.php` avisa cuando la fecha que muestra
+tiene ese año, para que quien la abra entienda que 1900 no es un dato sino un hueco por
+llenar. La fecha la construye así `herramientas/extraer_proclamadores.py`, y
+`herramientas/importar_proclamadores.php` repite el valor solo para avisar en pantalla
+cuántas fichas quedan con él: los dos scripts declaran la misma constante
+`ANIO_DESCONOCIDO`, y cambiar uno sin el otro descuadra ese aviso. Es la convención a
+seguir en cualquier carga posterior.
+
 ### `persona_pastorales`
 
 Pivote análogo a `usuarios_pastorales`: una persona del equipo suele llevar más de una
@@ -373,9 +401,10 @@ panel más allá de agregar o quitar: para cambiar un documento se sube uno nuev
 
 ## MESC — Ministros Extraordinarios de la Comunión
 
-> **Dato sensible.** De las siete tablas de este bloque, solo `mesc_visitas` (y su ruta,
+> **Dato sensible.** De las seis tablas de este bloque, solo `mesc_visitas` (y su ruta,
 > `mesc_rutas`/`mesc_ruta_visitas`) guarda el único dato de salud que trata el sistema.
-> `mesc_ministros`/`mesc_turnos`/`mesc_turno_ministros`/`mesc_colores_liturgicos` son un
+> `mesc_ministros`/`mesc_turnos`/`mesc_turno_ministros` —y `colores_liturgicos`, que se
+> describe aquí pero ya no es de este módulo— son un
 > catálogo operativo normal, sin esa protección reforzada. Ver
 > [`PRIVACIDAD.md`](PRIVACIDAD.md), sección "Dato
 > sensible: MESC".
@@ -424,23 +453,33 @@ cambia; sin persona (todavía no está de alta en el equipo), es texto libre com
 **`nombre` es la excepción: aquí es el nombre CORTO** —«Zulema», «Tino»—, el que cabe en
 una casilla del calendario de turnos y con el que se reconoce a cada ministro al capturar
 un calendario que venga de fuera. Se guarda siempre, aunque haya persona vinculada, y la
-sincronización desde la ficha no lo pisa. En `catequesis_catequistas` y `lector_lectores`,
+sincronización desde la ficha no lo pisa. En `catequesis_catequistas` y `proclamadores`,
 en cambio, `nombre` sí viene de la ficha (ver más abajo). Índice
 `idx_mmi_pastoral (pastoral_id, activo)`.
 
-### `mesc_colores_liturgicos`
+### `colores_liturgicos`
 
 Catálogo de referencia: los cinco colores litúrgicos de la Iglesia (blanco, verde,
-morado, rojo, rosa), cada uno con `nombre`, `color_hex` y `significado` (texto explicativo
-de cuándo se usa cada uno). `orden` controla en qué secuencia aparecen. Mantenimiento
-libre desde el panel — no está codificado en PHP — para que la parroquia pueda ajustar el
-texto o agregar alguno si hiciera falta.
+morado, rojo, rosa), cada uno con `nombre` (único, `uq_col_nombre`), `color_hex` y
+`significado` (texto explicativo de cuándo se usa cada uno). `orden` controla en qué
+secuencia aparecen. Mantenimiento libre desde el panel — no está codificado en PHP — para
+que la parroquia pueda ajustar el texto o agregar alguno si hiciera falta.
+
+**Es la única tabla de este bloque sin prefijo de módulo, y a propósito.** Se llamó
+`mesc_colores_liturgicos` mientras MESC era el único que la administraba, aunque los
+turnos de Proclamadores ya la referenciaran; cuando Proclamadores pasó a administrarla
+también, desde su propia pantalla, el prefijo afirmaba algo falso —el significado de cada
+color es el mismo para toda la parroquia, no un dato de un módulo— y se le quitó en
+`docs/migraciones/2026-09-04-proclamadores.sql`, que de paso rebautizó su índice único de
+`uq_mcl_nombre` a `uq_col_nombre`. Se sigue creando en este bloque de `install.sql`, antes
+que `mesc_turnos`, nada más porque esa tabla la necesita ya declarada para su clave
+foránea.
 
 ### `mesc_turnos` y `mesc_turno_ministros`
 
 Un turno cubre una misa o evento en una fecha concreta: `pastoral_id` (FK), `fecha`,
 `hora` NULL, `descripcion` VARCHAR(160) (qué se cubre: "Misa", "Santísimo", "Hora Santa",
-"Misa de Niños"…), `color_liturgico_id` (FK a `mesc_colores_liturgicos`,
+"Misa de Niños"…), `color_liturgico_id` (FK a `colores_liturgicos`,
 `ON DELETE SET NULL`, opcional), `usuario_id`, `created_at`. Sin FK a `horarios` ni a
 `eventos` (ver [`ARQUITECTURA.md`](ARQUITECTURA.md)): un turno es una ocurrencia concreta,
 no la recurrencia semanal de `horarios` ni un evento formal. `mesc_turno_ministros` es el
@@ -453,7 +492,8 @@ colarse en un turno nuevo aunque se manipule el formulario.
 
 ## Catequesis — catequistas, periodos, tablero de actividades y documentos
 
-Módulo dedicado **exclusivamente** a la pastoral de Catecismo, igual que MESC y Lector:
+Módulo dedicado **exclusivamente** a la pastoral de Catecismo, igual que MESC y
+Proclamadores:
 no hay selector de pastoral en ningún formulario — `CatequesisModel::pastoralId()`
 resuelve la única pastoral por su `slug = 'catecismo'`, no por un id fijo (los id de
 pastorales no se siembran en `install.sql`, se crean desde el panel)—. Sin controlador
@@ -507,28 +547,50 @@ Documentos descargables, mismo patrón que `pastoral_documentos`: `pastoral_id`,
 
 ---
 
-## Lector — turnos y catálogo de lectores
+## Proclamadores — turnos y catálogo de quién proclama
 
-Módulo dedicado para la pastoral de Liturgia (se llamaba "Lectores"; el nombre del
-módulo y de sus tablas no cambió, ver la nota de `PASTORAL_LECTOR` en
-`config/app.php`), calcado de
-`mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: un
-lector proclama la Palabra en misa, no reparte comunión a domicilio.
+Módulo dedicado para la pastoral de Proclamadores (se llamó "Lectores" y luego
+"Liturgia"; el slug de esa fila sigue siendo `liturgia` porque la URL pública ya está en
+uso — ver la nota de `PASTORAL_PROCLAMADORES` en `config/app.php`), calcado de
+`mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: quien
+proclama la Palabra lo hace en misa, no reparte comunión a domicilio.
 
-### `lector_lectores`
+Sus tres tablas se llamaron `lector_lectores`, `lector_turnos` y `lector_turno_lectores`
+hasta el renombre, y con ellas sus índices y restricciones: `idx_lec_*`/`fk_lec_*`,
+`idx_ltu_*`/`fk_ltu_*` y `fk_ltl_*` pasaron a `idx_pro_*`/`fk_pro_*`,
+`idx_ptu_*`/`fk_ptu_*` y `fk_ptp_*`. Los nombres viejos solo aparecen ya en
+`docs/migraciones/2026-09-04-proclamadores.sql`, que es también el motivo de que la
+migración recree las tablas en vez de renombrarlas: los índices no se rebautizan con un
+`ALTER` en MariaDB 10.4.
 
-Catálogo de lectores. `pastoral_id` (FK, `ON DELETE CASCADE`), `persona_id` (FK a
-`personas`, `ON DELETE SET NULL`, `UNIQUE` — `uq_lec_persona`, mismo patrón que
-`mesc_ministros.persona_id`), `nombre`, `telefono`, `email`, `orden`, `activo`.
+### `proclamadores`
 
-### `lector_turnos` y `lector_turno_lectores`
+Catálogo de quién proclama. `pastoral_id` (FK, `ON DELETE CASCADE`, índice
+`idx_pro_pastoral`), `persona_id` (FK a `personas`, `ON DELETE SET NULL`, `UNIQUE` —
+`uq_pro_persona`, mismo patrón que `mesc_ministros.persona_id`), `nombre`, `telefono`,
+`email`, `preferencias`, `orden`, `activo`.
+
+**`preferencias`** es `SET('monitor', 'lectura', 'salmo')`, NULL por omisión: lo que cada
+quien prefiere hacer al proclamar, y el dato con el que la coordinación arma un turno
+—quién va de monitor, quién lee y quién canta el salmo—. Es una columna `SET` y no una
+tabla aparte porque son tres valores cerrados, conocidos de antemano y sin nada propio que
+colgar de cada uno; un pivote habría costado una tabla y un JOIN para guardar exactamente
+lo mismo. **NULL no es lo mismo que vacío**: NULL es "no se le ha preguntado" y la cadena
+vacía es "no prefiere ninguna", que es una respuesta legítima y conviene distinguir de un
+hueco. Y no limita nada —es una preferencia, no un permiso—: cualquiera puede asignarse a
+cualquier turno. Se muestra en el catálogo y junto a cada nombre en el formulario de
+turno, que es donde de verdad se consulta.
+
+### `proclamadores_turnos` y `proclamadores_turno_proclamadores`
 
 Calendario de turnos, misma forma que `mesc_turnos`: `pastoral_id`, `fecha`, `hora`,
-`descripcion`, `color_liturgico_id`, `usuario_id`, `created_at`. `color_liturgico_id`
-reutiliza el catálogo **de MESC** (`mesc_colores_liturgicos`) en vez de duplicarlo: el
-significado litúrgico de cada color es el mismo para toda la parroquia, no un dato propio
-de este módulo. `lector_turno_lectores` es el pivote `(turno_id, lector_id)`, de 1 a N
-lectores por turno (una lectura puede repartirse entre dos personas).
+`descripcion`, `color_liturgico_id`, `usuario_id`, `created_at`. Índices
+`idx_ptu_pastoral` e `idx_ptu_fecha`. `color_liturgico_id` reutiliza el catálogo
+compartido `colores_liturgicos` en vez de duplicarlo: el significado litúrgico de cada
+color es el mismo para toda la parroquia, no un dato propio de este módulo — y desde el
+renombre este módulo también lo administra, con su propia pantalla sobre esas mismas
+filas. `proclamadores_turno_proclamadores` es el pivote `(turno_id, proclamador_id)`, de 1
+a N por turno (una lectura puede repartirse entre dos personas).
 
 ---
 
@@ -676,9 +738,9 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
 | Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
-| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos` |
+| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, `catequesis_actividades`, `catequesis_documentos` |
-| Lector | `lector_lectores`, `lector_turnos`, `lector_turno_lectores` |
+| Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y esa misma `colores_liturgicos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
@@ -686,9 +748,10 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 **Total: 43 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
 `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
-`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_colores_liturgicos`,
+`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
 `catequesis_actividades`, `catequesis_documentos`,
-`lector_lectores`, `lector_turnos` y `lector_turno_lectores`,
+`proclamadores`, `proclamadores_turnos` y `proclamadores_turno_proclamadores`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
-`solicitudes_bitacora`).
+`solicitudes_bitacora`). El renombre de Proclamadores no movió la cuenta: cambió nombres
+de tabla, no su número.

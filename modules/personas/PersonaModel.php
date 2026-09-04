@@ -266,7 +266,7 @@ class PersonaModel extends Model
 
     /**
      * Si esta persona está registrada como ministro de MESC, catequista o
-     * lector —`mesc_ministros`/`catequesis_catequistas`/`lector_lectores`,
+     * proclamador —`mesc_ministros`/`catequesis_catequistas`/`proclamadores`,
      * cualquiera de las tres, incluso más de una a la vez—, sus datos de
      * contacto van detrás, igual que en `sincronizarCuenta()`. Corrige de raíz
      * el mismo problema que ya se vio con los responsables de pastoral: antes
@@ -275,7 +275,7 @@ class PersonaModel extends Model
      * nombre completo aquí en `personas` — tres grafías de la misma persona,
      * sin nada que las mantuviera iguales.
      *
-     * El `nombre` sí se sincroniza en catequistas y lectores, pero NO en
+     * El `nombre` sí se sincroniza en catequistas y proclamadores, pero NO en
      * ministros de MESC: ahí es el nombre corto del calendario de turnos, un
      * dato propio (ver abajo).
      */
@@ -294,7 +294,7 @@ class PersonaModel extends Model
             [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
         );
         $this->execute(
-            'UPDATE lector_lectores SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
+            'UPDATE proclamadores SET nombre = :nombre, telefono = :telefono, email = :email WHERE persona_id = :persona',
             [':nombre' => $datos['nombre'], ':telefono' => $datos['telefono'], ':email' => $datos['email'], ':persona' => $personaId]
         );
     }

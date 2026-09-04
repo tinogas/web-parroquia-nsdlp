@@ -679,7 +679,7 @@ CREATE TABLE IF NOT EXISTS mesc_ruta_visitas (
 -- el que cabe en una casilla del calendario de turnos y con el que se le
 -- reconoce al capturar un calendario hecho fuera del sistema. Es un dato
 -- propio: se guarda aunque haya persona vinculada y la ficha no lo pisa, a
--- diferencia de catequesis_catequistas y lector_lectores.
+-- diferencia de catequesis_catequistas y proclamadores.
 CREATE TABLE IF NOT EXISTS mesc_ministros (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED NOT NULL,
@@ -707,17 +707,24 @@ CREATE TABLE IF NOT EXISTS mesc_ministros (
 -- tradición reconoce estos cinco, pero nada impide que la parroquia ajuste el
 -- texto o el tono exacto. significado se muestra tal cual como referencia en
 -- el propio módulo, no solo como ayuda del formulario.
-CREATE TABLE IF NOT EXISTS mesc_colores_liturgicos (
+--
+-- SIN prefijo de módulo, y creada aquí solo porque mesc_turnos la necesita
+-- antes: el catálogo es de la parroquia, no de MESC. Lo administran por igual
+-- MESC y Proclamadores, cada uno desde su propia pantalla y con sus permisos,
+-- y los turnos de los dos módulos apuntan a estas mismas filas. Se llamó
+-- `mesc_colores_liturgicos` hasta que Proclamadores pasó a administrarlo —ver
+-- docs/migraciones/2026-09-04-proclamadores.sql—.
+CREATE TABLE IF NOT EXISTS colores_liturgicos (
     id          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre      VARCHAR(30)  NOT NULL,
     color_hex   VARCHAR(7)   NOT NULL,
     significado VARCHAR(400) NOT NULL,
     orden       TINYINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_mcl_nombre (nombre)
+    UNIQUE KEY uq_col_nombre (nombre)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO mesc_colores_liturgicos (nombre, color_hex, significado, orden) VALUES
+INSERT IGNORE INTO colores_liturgicos (nombre, color_hex, significado, orden) VALUES
 ('Blanco', '#f4f1ea', 'Significa pureza, alegría y luz. Se usa en fiestas grandes como la Navidad, la Pascua y en las celebraciones de la Virgen y de los santos que no fueron mártires.', 10),
 ('Verde',  '#2e7d46', 'Representa la esperanza y la vida de cada día. Se usa durante el Tiempo Ordinario, que son las semanas largas del año donde no se celebra una fiesta especial.', 20),
 ('Morado', '#6a4c93', 'Es el signo de la penitencia, la espera y la humildad. Se viste en la Cuaresma y en el Adviento, que son los tiempos de preparación antes de la Pascua y la Navidad.', 30),
@@ -737,7 +744,7 @@ CREATE TABLE IF NOT EXISTS mesc_turnos (
     KEY idx_mtu_pastoral_fecha (pastoral_id, fecha),
     CONSTRAINT fk_mtu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)             ON DELETE CASCADE,
     CONSTRAINT fk_mtu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)               ON DELETE SET NULL,
-    CONSTRAINT fk_mtu_color    FOREIGN KEY (color_liturgico_id) REFERENCES mesc_colores_liturgicos(id) ON DELETE SET NULL
+    CONSTRAINT fk_mtu_color    FOREIGN KEY (color_liturgico_id) REFERENCES colores_liturgicos(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- De 1 a N ministros por turno (issue #3).
@@ -847,56 +854,68 @@ CREATE TABLE IF NOT EXISTS catequesis_documentos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- LECTOR — TURNOS Y CATÁLOGO DE LECTORES
+-- PROCLAMADORES — TURNOS Y CATÁLOGO
 -- ------------------------------------------------------------
--- Módulo dedicado para la pastoral de Liturgia (se llamaba "Lectores"; el
--- nombre del módulo, de sus tablas y su ruta /admin/lector no cambiaron, ver
--- la nota de PASTORAL_LECTOR en config/app.php), calcado de
--- mesc_turnos/mesc_ministros/mesc_turno_ministros pero sin rutas ni
--- visitas: un lector proclama la Palabra en misa, no reparte comunión a
--- domicilio. color_liturgico_id reutiliza el catálogo de MESC
--- (mesc_colores_liturgicos): el significado litúrgico de cada color no es
--- propio de ese módulo, es el mismo calendario para toda la parroquia.
+-- Módulo dedicado para la pastoral de Proclamadores (se llamó "Lectores" y
+-- luego "Liturgia"; el slug sigue siendo 'liturgia' porque la URL pública ya
+-- está en uso, ver la nota de PASTORAL_PROCLAMADORES en config/app.php).
+-- Calcado de mesc_turnos/mesc_ministros/mesc_turno_ministros pero sin rutas
+-- ni visitas: quien proclama la Palabra lo hace en misa, no reparte comunión
+-- a domicilio. color_liturgico_id apunta al catálogo compartido
+-- `colores_liturgicos`, que este módulo también administra.
+-- Las tablas se llamaron lector_* hasta el renombre, ver
+-- docs/migraciones/2026-09-04-proclamadores.sql.
 
-CREATE TABLE IF NOT EXISTS lector_lectores (
-    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pastoral_id TINYINT UNSIGNED  NOT NULL,
-    persona_id  SMALLINT UNSIGNED NULL,
-    nombre      VARCHAR(140)      NOT NULL,
-    telefono    VARCHAR(20)       NULL,
-    email       VARCHAR(150)      NULL,
-    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+-- `preferencias` es lo que cada quien prefiere hacer al proclamar, y es el
+-- dato con el que la coordinación arma un turno: quién va de monitor, quién
+-- lee y quién canta el salmo. Columna SET y no tabla aparte porque son tres
+-- valores cerrados y sin datos propios. NULL distingue "no se le ha
+-- preguntado" de "no prefiere ninguna" (cadena vacía). No limita nada: es una
+-- preferencia, no un permiso.
+CREATE TABLE IF NOT EXISTS proclamadores (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    persona_id   SMALLINT UNSIGNED NULL,
+    nombre       VARCHAR(140)      NOT NULL,
+    telefono     VARCHAR(20)       NULL,
+    email        VARCHAR(150)      NULL,
+    preferencias SET('monitor', 'lectura', 'salmo') NULL,
+    orden        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo       TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    KEY idx_lec_pastoral (pastoral_id),
-    UNIQUE KEY uq_lec_persona (persona_id),
-    CONSTRAINT fk_lec_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
-    CONSTRAINT fk_lec_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
+    KEY idx_pro_pastoral (pastoral_id),
+    UNIQUE KEY uq_pro_persona (persona_id),
+    CONSTRAINT fk_pro_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pro_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS lector_turnos (
+-- `hora` admite vacío, igual que en mesc_turnos: el formulario la ofrece como
+-- opcional («Hora (opcional)») porque no todo turno cuelga de una misa con
+-- hora fija. Era NOT NULL mientras las tablas se llamaban lector_*, y guardar
+-- un turno sin hora reventaba con un error de integridad en vez de guardarse.
+CREATE TABLE IF NOT EXISTS proclamadores_turnos (
     id                 INT UNSIGNED     NOT NULL AUTO_INCREMENT,
     pastoral_id        TINYINT UNSIGNED NOT NULL,
     fecha              DATE             NOT NULL,
-    hora               TIME             NOT NULL,
+    hora               TIME             NULL,
     descripcion        VARCHAR(160)     NULL,
     color_liturgico_id TINYINT UNSIGNED NULL,
     usuario_id         INT UNSIGNED     NULL,
     created_at         DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_ltu_pastoral (pastoral_id),
-    KEY idx_ltu_fecha (fecha),
-    CONSTRAINT fk_ltu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)             ON DELETE CASCADE,
-    CONSTRAINT fk_ltu_color    FOREIGN KEY (color_liturgico_id) REFERENCES mesc_colores_liturgicos(id) ON DELETE SET NULL,
-    CONSTRAINT fk_ltu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)                ON DELETE SET NULL
+    KEY idx_ptu_pastoral (pastoral_id),
+    KEY idx_ptu_fecha (fecha),
+    CONSTRAINT fk_ptu_pastoral FOREIGN KEY (pastoral_id)        REFERENCES pastorales(id)         ON DELETE CASCADE,
+    CONSTRAINT fk_ptu_color    FOREIGN KEY (color_liturgico_id) REFERENCES colores_liturgicos(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ptu_usuario  FOREIGN KEY (usuario_id)         REFERENCES usuarios(id)           ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS lector_turno_lectores (
-    turno_id  INT UNSIGNED      NOT NULL,
-    lector_id SMALLINT UNSIGNED NOT NULL,
-    PRIMARY KEY (turno_id, lector_id),
-    CONSTRAINT fk_ltl_turno  FOREIGN KEY (turno_id)  REFERENCES lector_turnos(id)   ON DELETE CASCADE,
-    CONSTRAINT fk_ltl_lector FOREIGN KEY (lector_id) REFERENCES lector_lectores(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS proclamadores_turno_proclamadores (
+    turno_id       INT UNSIGNED      NOT NULL,
+    proclamador_id SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (turno_id, proclamador_id),
+    CONSTRAINT fk_ptp_turno       FOREIGN KEY (turno_id)       REFERENCES proclamadores_turnos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ptp_proclamador FOREIGN KEY (proclamador_id) REFERENCES proclamadores(id)        ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

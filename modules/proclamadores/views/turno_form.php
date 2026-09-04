@@ -4,18 +4,18 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('lector')) ?>" class="text-decoration-none">Liturgia</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('proclamadores')) ?>" class="text-decoration-none">Proclamadores</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?= $esNuevo ? 'Nuevo' : 'Editar' ?></li>
             </ol>
         </nav>
         <h1 class="h4 fw-bold mb-0"><?= $esNuevo ? 'Nuevo turno' : e($titulo) ?></h1>
     </div>
-    <a href="<?= e(url_admin('lector')) ?>" class="btn btn-sm btn-outline-secondary">
+    <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver
     </a>
 </div>
 
-<form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'lector', 'turno_guardar')) ?>">
+<form method="POST" accept-charset="UTF-8" action="<?= e(url_post('admin', 'proclamadores', 'turno_guardar')) ?>">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
     <input type="hidden" name="id" value="<?= $esNuevo ? 0 : (int) $turno['id'] ?>">
 
@@ -55,25 +55,37 @@
                     <?php endforeach; ?>
                 </select>
                 <div class="form-text">
-                    <a href="<?= e(url_admin('mesc', 'colores')) ?>" target="_blank">Ver el significado de cada color</a>.
+                    <a href="<?= e(url_admin('proclamadores', 'colores')) ?>" target="_blank">Ver el significado de cada color</a>.
                 </div>
             </div>
 
-            <label class="form-label fw-semibold">Lectores asignados</label>
-            <?php if (!$lectores): ?>
-            <p class="text-muted small">Todavía no hay lectores activos registrados.
-                <a href="<?= e(url_admin('lector', 'lectores')) ?>">Agregar uno</a>.
+            <label class="form-label fw-semibold">Proclamadores asignados</label>
+            <?php if (!$proclamadores): ?>
+            <p class="text-muted small">Todavía no hay proclamadores activos registrados.
+                <a href="<?= e(url_admin('proclamadores', 'catalogo')) ?>">Agregar uno</a>.
             </p>
             <?php else: ?>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1 mb-2">
-                <?php foreach ($lectores as $lector): ?>
+                <?php foreach ($proclamadores as $proclamador): ?>
+                <?php
+                // Lo que prefiere hacer, junto a su nombre: es el dato con el que
+                // se decide a quién poner de monitor y a quién en el salmo, y
+                // tenerlo aquí evita ir y volver al catálogo para consultarlo.
+                $prefiere = array_filter(array_map(
+                    static fn (string $clave): string => ProclamadoresModel::PREFERENCIAS[$clave] ?? '',
+                    array_filter(explode(',', (string) ($proclamador['preferencias'] ?? '')))
+                ));
+                ?>
                 <div class="col">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="lectores[]"
-                               value="<?= (int) $lector['id'] ?>" id="lec<?= (int) $lector['id'] ?>"
-                               <?= in_array((int) $lector['id'], $asignados, true) ? 'checked' : '' ?>>
-                        <label class="form-check-label small" for="lec<?= (int) $lector['id'] ?>">
-                            <?= e($lector['nombre']) ?>
+                        <input class="form-check-input" type="checkbox" name="proclamadores[]"
+                               value="<?= (int) $proclamador['id'] ?>" id="pro<?= (int) $proclamador['id'] ?>"
+                               <?= in_array((int) $proclamador['id'], $asignados, true) ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="pro<?= (int) $proclamador['id'] ?>">
+                            <?= e($proclamador['nombre']) ?>
+                            <?php if ($prefiere): ?>
+                            <span class="text-muted">· <?= e(implode(', ', $prefiere)) ?></span>
+                            <?php endif; ?>
                         </label>
                     </div>
                 </div>
@@ -88,6 +100,6 @@
         <button type="submit" class="btn btn-primary flex-grow-1">
             <i class="bi bi-check-lg me-1"></i>Guardar
         </button>
-        <a href="<?= e(url_admin('lector')) ?>" class="btn btn-outline-secondary">Cancelar</a>
+        <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>

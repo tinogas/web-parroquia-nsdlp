@@ -110,7 +110,7 @@ class PastoralModel extends Model
     /**
      * Esos ids más las Comisiones que los agrupan, sin repetidos. Es la
      * audiencia de lectura de Auth::pastoralesAudiencia(): quien está en
-     * Lectores tiene que poder leer lo que se publique en Litúrgica.
+     * Proclamadores tiene que poder leer lo que se publique en Litúrgica.
      *
      * Una sola consulta y no un recorrido recursivo porque la jerarquía es de
      * dos niveles exactos y así está garantizado (ver candidatosPadre()): el

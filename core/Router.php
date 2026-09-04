@@ -49,7 +49,7 @@ class Router
         'pastorales'    => ['clase' => 'PastoralController',      'archivo' => 'modules/pastorales/PastoralController.php'],
         'mesc'          => ['clase' => 'MescController',          'archivo' => 'modules/mesc/MescController.php'],
         'catequesis'    => ['clase' => 'CatequesisController',    'archivo' => 'modules/catequesis/CatequesisController.php'],
-        'lector'        => ['clase' => 'LectorController',        'archivo' => 'modules/lector/LectorController.php'],
+        'proclamadores' => ['clase' => 'ProclamadoresController', 'archivo' => 'modules/proclamadores/ProclamadoresController.php'],
         'sacramentos'   => ['clase' => 'SacramentoController',    'archivo' => 'modules/sacramentos/SacramentoController.php'],
         'cursos'        => ['clase' => 'CursoController',         'archivo' => 'modules/cursos/CursoController.php'],
         'inscripciones' => ['clase' => 'InscripcionCursoController', 'archivo' => 'modules/cursos/InscripcionCursoController.php'],
