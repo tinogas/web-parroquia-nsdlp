@@ -4,13 +4,13 @@
     <div>
         <nav aria-label="Ubicación">
             <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('proclamadores')) ?>" class="text-decoration-none">Proclamadores</a></li>
+                <li class="breadcrumb-item"><a href="<?= e(url_admin('proclamadores', 'turnos')) ?>" class="text-decoration-none">Turnos</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?= $esNuevo ? 'Nuevo' : 'Editar' ?></li>
             </ol>
         </nav>
         <h1 class="h4 fw-bold mb-0"><?= $esNuevo ? 'Nuevo turno' : e($titulo) ?></h1>
     </div>
-    <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-sm btn-outline-secondary">
+    <a href="<?= e(url_admin('proclamadores', 'turnos')) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver
     </a>
 </div>
@@ -62,7 +62,7 @@
             <label class="form-label fw-semibold">Proclamadores asignados</label>
             <?php if (!$proclamadores): ?>
             <p class="text-muted small">Todavía no hay proclamadores activos registrados.
-                <a href="<?= e(url_admin('proclamadores', 'catalogo')) ?>">Agregar uno</a>.
+                <a href="<?= e(url_admin('proclamadores')) ?>">Agregar uno</a>.
             </p>
             <?php else: ?>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1 mb-2">
@@ -100,6 +100,6 @@
         <button type="submit" class="btn btn-primary flex-grow-1">
             <i class="bi bi-check-lg me-1"></i>Guardar
         </button>
-        <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-outline-secondary">Cancelar</a>
+        <a href="<?= e(url_admin('proclamadores', 'turnos')) ?>" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>

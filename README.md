@@ -82,14 +82,23 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   nuevo hasta que lo revisa. Con esto, Coordinador y Coordinador general ya publican
   también sus avisos, igual que ya publicaban sus eventos y sus cursos.
 - **La pastoral de Lectores se llama ahora Proclamadores**, que es como se nombra a sí
-  misma, y su módulo dejó de ser el hermano pobre de MESC: además del catálogo de quién
-  proclama —con lo que cada quien prefiere hacer, monitor, lectura o salmo cantado, que es
-  justo el dato con el que la coordinación arma un turno— y del calendario, ya tiene la
-  hoja imprimible del mes y su propia pantalla de colores litúrgicos. Le falta solo lo que
-  no le aplica: las visitas a enfermos y sus rutas. El nombre visible cambió en todo el
-  panel, pero la URL pública `/pastorales/liturgia` se conservó tal cual, porque ya está en
-  uso y renombrarla rompería enlaces. Y se cargaron al equipo pastoral las 26 personas de
-  la lista que levantó la propia pastoral —22 fichas nuevas; de las cuatro que ya estaban
+  misma, y su módulo dejó de ser el hermano pobre de MESC: son ya cinco pantallas, y la
+  primera —la que abre el módulo— es el catálogo de quién proclama, con lo que cada quien
+  prefiere hacer, monitor, lectura o salmo cantado, porque es el dato con el que la
+  coordinación arma un turno y por tanto lo que se consulta antes que nada; el calendario,
+  que era la portada, pasó a ser la segunda. Detrás vienen su tablero de actividades, sus
+  documentos descargables y sus colores litúrgicos, más la hoja imprimible del mes. Le
+  falta solo lo que no le aplica: las visitas a enfermos y sus rutas. Las dos pantallas
+  nuevas, actividades y documentos, **no trajeron tablas propias**: escriben en las que
+  puede usar cualquier pastoral, así que un documento se captura una sola vez y se ve
+  igual desde el módulo que desde el panel básico de la pastoral —Catequesis, que sí las
+  tenía propias, dejó con eso de llevar dos listas de documentos ciegas la una a la otra—.
+  Y MESC, Catequesis y Proclamadores salieron de la sección "Parroquia" del menú del panel
+  a una propia, **"Pastorales"**, porque no administran la parroquia entera sino una
+  pastoral concreta y van a ser varios. El nombre visible cambió en todo el panel, pero la
+  URL pública `/pastorales/liturgia` se conservó tal cual, porque ya está en uso y
+  renombrarla rompería enlaces. Y se cargaron al equipo pastoral las 26 personas de la
+  lista que levantó la propia pastoral —22 fichas nuevas; de las cuatro que ya estaban
   ahí, tres sirven también en MESC y la cuarta es la coordinadora—, con sus cumpleaños, que
   el panel de inicio ya avisa.
 

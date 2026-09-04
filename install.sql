@@ -576,9 +576,41 @@ CREATE TABLE IF NOT EXISTS pastoral_actividades (
     CONSTRAINT fk_pta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tablero de actividades CON fecha, que no es lo mismo que la tabla de arriba:
+-- `pastoral_actividades` es la lista fija de qué hace la pastoral (con `tipo`,
+-- sin fechas, la que se lee en su página pública) y esto tiene vigencia y se
+-- publica o no, como un mini-evento — mismas columnas que eventos.*.
+--
+-- Las dos se llamaban "actividades" y esta vivía dentro de Catequesis
+-- (`catequesis_actividades`). Al necesitarla Proclamadores se quedó sin
+-- prefijo de módulo: la pantalla es la misma para cualquier pastoral, y así un
+-- módulo nuevo no trae otra tabla igual detrás. La administra PastoralModel
+-- —métodos tablero*()— y entran por ahí los dos módulos. Ver
+-- docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql
+CREATE TABLE IF NOT EXISTS pastoral_tablero (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    titulo       VARCHAR(160)      NOT NULL,
+    descripcion  TEXT              NULL,
+    fecha_inicio DATE              NOT NULL,
+    fecha_fin    DATE              NULL,
+    publicado    TINYINT(1)        NOT NULL DEFAULT 0,
+    orden        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    usuario_id   INT UNSIGNED      NULL,
+    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ptb_pastoral (pastoral_id),
+    KEY idx_ptb_publicado (publicado, fecha_inicio),
+    CONSTRAINT fk_ptb_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ptb_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Documentación descargable de cada pastoral (issue #3): reglamentos, guías,
 -- formatos. archivo guarda la ruta bajo uploads/, igual convención que
 -- avisos.archivo_pdf.
+--
+-- Tabla compartida, igual que el tablero de arriba: la escriben el panel
+-- básico de la pastoral y los módulos dedicados, y todos leen la misma lista.
 CREATE TABLE IF NOT EXISTS pastoral_documentos (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED NOT NULL,
@@ -816,42 +848,13 @@ CREATE TABLE IF NOT EXISTS catequesis_periodo_catequistas (
     CONSTRAINT fk_cpc_catequista FOREIGN KEY (catequista_id) REFERENCES catequesis_catequistas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tablero/calendario de actividades: a diferencia de pastoral_actividades
--- (lista fija de "qué hace la pastoral", sin fechas), esto tiene vigencia y
--- se publica o no, como un mini-evento — mismas columnas que eventos.*.
-CREATE TABLE IF NOT EXISTS catequesis_actividades (
-    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pastoral_id  TINYINT UNSIGNED  NOT NULL,
-    titulo       VARCHAR(160)      NOT NULL,
-    descripcion  TEXT              NULL,
-    fecha_inicio DATE              NOT NULL,
-    fecha_fin    DATE              NULL,
-    publicado    TINYINT(1)        NOT NULL DEFAULT 0,
-    orden        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    usuario_id   INT UNSIGNED      NULL,
-    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_cta_pastoral (pastoral_id),
-    KEY idx_cta_publicado (publicado, fecha_inicio),
-    CONSTRAINT fk_cta_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
-    CONSTRAINT fk_cta_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Documentos descargables, mismo patrón que pastoral_documentos.
-CREATE TABLE IF NOT EXISTS catequesis_documentos (
-    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pastoral_id TINYINT UNSIGNED  NOT NULL,
-    titulo      VARCHAR(160)      NOT NULL,
-    archivo     VARCHAR(255)      NOT NULL,
-    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    activo      TINYINT(1)        NOT NULL DEFAULT 1,
-    usuario_id  INT UNSIGNED      NULL,
-    created_at  DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_ctd_pastoral (pastoral_id),
-    CONSTRAINT fk_ctd_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
-    CONSTRAINT fk_ctd_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- El tablero de actividades y los documentos de esta pastoral NO viven aquí:
+-- están en `pastoral_tablero` y `pastoral_documentos`, más arriba, porque son
+-- pantallas de cualquier pastoral y no de este módulo. Fueron
+-- `catequesis_actividades` y `catequesis_documentos` hasta
+-- docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql; la segunda
+-- era además una copia exacta de la genérica, y las dos listas de documentos
+-- no se veían entre sí.
 
 -- ------------------------------------------------------------
 -- PROCLAMADORES — TURNOS Y CATÁLOGO

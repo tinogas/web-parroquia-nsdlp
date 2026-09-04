@@ -2,8 +2,9 @@
 
 Diccionario de las **42 tablas** del sistema: las 24 de las diez etapas del plan original,
 más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
-`respaldos_log`, las seis tablas de MESC, las cinco de Catequesis, las tres de
-Proclamadores y el catálogo de colores litúrgicos que MESC y Proclamadores comparten,
+`respaldos_log`, las seis tablas de MESC, las tres de Catequesis, las tres de
+Proclamadores, el catálogo de colores litúrgicos que MESC y Proclamadores comparten y el
+tablero de actividades que puede usar cualquier pastoral,
 entre otras—, menos `sacramento_campos`, `solicitudes_sacramento` y `solicitudes_bitacora`
 (el issue #3 eliminó el formulario de solicitud en línea de sacramentos). El desglose exacto
 está en el resumen del final. El esquema real vive en `install.sql`; este documento explica
@@ -28,18 +29,21 @@ Las mismas del sistema de inventario, sin excepciones:
 No hay sistema de migraciones. `install.sql` es un archivo único acumulativo que se
 mantiene sincronizado etapa por etapa, hasta que el sitio salga a producción.
 
-Sigue sin haberlo, pero ya existe la **primera migración puntual**. `docs/migraciones/`
-—la carpeta que [`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores) prometía para
-cuando el esquema dejara de ser desechable— se estrenó con
-`2026-09-04-proclamadores.sql`, el renombre de las tablas de Lectores a Proclamadores.
-Hizo falta porque la base de desarrollo ya tenía turnos y colores capturados y reimportar
+Sigue sin haberlo, pero ya existen las **primeras migraciones puntuales**.
+`docs/migraciones/` —la carpeta que
+[`DESPLIEGUE.md`](DESPLIEGUE.md#actualizaciones-posteriores) prometía para cuando el
+esquema dejara de ser desechable— se estrenó con `2026-09-04-proclamadores.sql`, el
+renombre de las tablas de Lectores a Proclamadores, y el mismo día se le sumó su hermana
+`2026-09-04-tablero-y-documentos-compartidos.sql`, que saca de Catequesis el tablero de
+actividades y los documentos para que sirvan a cualquier pastoral. Hicieron falta porque
+la base de desarrollo ya tenía turnos, colores y documentos capturados y reimportar
 `install.sql` los habría borrado. No cambia la regla de arriba: `install.sql` sigue siendo
 acumulativo y ya trae los nombres nuevos, así que una instalación nueva no aplica ninguna
-migración; el archivo de `docs/migraciones/` es para las bases que ya tienen datos. Crea
-las tablas y copia las filas en vez de renombrar con `ALTER`, porque MariaDB 10.4 no
-admite `ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el nombre
-viejo — una base migrada dejaría de ser idéntica a una recién instalada, que es justo lo
-que este documento describe.
+migración; los archivos de `docs/migraciones/` son para las bases que ya tienen datos. Las
+dos crean las tablas y copian las filas en vez de renombrar con `ALTER`, porque MariaDB
+10.4 no admite `ALTER TABLE … RENAME INDEX` y renombrando se quedarían los índices con el
+nombre viejo — una base migrada dejaría de ser idéntica a una recién instalada, que es
+justo lo que este documento describe.
 
 Cuidado con una consecuencia que antes no existía: **la base local ya contiene contenido real
 que `install.sql` no siembra** (la agenda de 2026, los centros, las pastorales con sus
@@ -389,6 +393,39 @@ Actividades comunitarias y de apoyo social de cada pastoral. `pastoral_id`, `tit
 `descripcion`, `tipo` ENUM(`comunitaria`, `apoyo_social`, `formacion`, `liturgica`),
 `orden`, `activa`. Foránea con `ON DELETE CASCADE`.
 
+**No confundir con `pastoral_tablero`, la ficha de abajo, y de ahí que aquella cambiara de
+nombre.** Esta tabla es la lista fija de *qué hace* la pastoral —tiene `tipo`, no tiene
+fechas, y es la que se lee en su página pública—; la otra son actividades con vigencia. Las
+dos se llamaron "actividades" durante un tiempo, con una escondida detrás de un prefijo de
+módulo, y eso no ayudaba a nadie.
+
+### `pastoral_tablero`
+
+El "tablero o calendario" de una pastoral: actividades con vigencia que se publican o no,
+como un mini-`eventos` —de hecho, mismas columnas—. `pastoral_id`
+(FK, `ON DELETE CASCADE`), `titulo`, `descripcion`, `fecha_inicio` (NOT NULL), `fecha_fin`
+(NULL = sin fecha de término), `publicado`, `orden`, `usuario_id`
+(FK a `usuarios`, `ON DELETE SET NULL`), `created_at`. Índices `idx_ptb_pastoral` e
+`idx_ptb_publicado (publicado, fecha_inicio)`.
+
+**Se llamó `catequesis_actividades` y perdió el prefijo de módulo**, igual que
+`colores_liturgicos` y por el mismo motivo: nació dentro de Catequesis, que fue quien
+primero necesitó la pantalla, pero la pantalla no tiene nada de catequético. Cuando
+Proclamadores pidió la misma, copiarla habría significado copiar también la tabla, y con la
+plantilla de módulos que viene después cada módulo nuevo habría arrastrado otra igual.
+La mudanza es `docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql`, que
+rebautizó de paso sus índices y restricciones —`idx_cta_*`/`fk_cta_*` pasaron a
+`idx_ptb_pastoral`, `idx_ptb_publicado`, `fk_ptb_pastoral` y `fk_ptb_usuario`—; ninguna
+columna cambió.
+
+La administra `PastoralModel`, con `tablero()`, `entradaTablero()`,
+`crearEntradaTablero()`, `actualizarEntradaTablero()` y `eliminarEntradaTablero()` —no
+`actividad*()`, que en ese mismo modelo ya significa la lista fija de arriba—, y por ahí
+entran los dos módulos que hoy la usan, Catequesis y Proclamadores. Es tabla de cualquier
+pastoral, pero el panel básico (`PastoralController::panel()`) todavía no ofrece esta
+pantalla: hoy solo se llega desde un módulo dedicado. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md).
+
 ### `pastoral_documentos`
 
 Documentación descargable de cada pastoral (issue #3): reglamentos, guías, formatos.
@@ -396,6 +433,20 @@ Documentación descargable de cada pastoral (issue #3): reglamentos, guías, for
 convención que `avisos.archivo_pdf`; solo PDF por ahora), `orden`, `activo`, `usuario_id`
 (FK a `usuarios`, `ON DELETE SET NULL`, quién lo subió), `created_at`. Sin edición desde el
 panel más allá de agregar o quitar: para cambiar un documento se sube uno nuevo.
+
+**Es una sola lista, escrita desde varios sitios.** La comparten el panel básico de
+cualquier pastoral (`PastoralController::panel()`, que sube a
+`uploads/pastorales/AAAA/MM/`) y los módulos dedicados de Catequesis y Proclamadores
+(`uploads/catequesis/…`, `uploads/proclamadores/…`), los tres a través de los mismos
+métodos de `PastoralModel`, y los tres leen las mismas filas. Hasta la migración
+`2026-09-04-tablero-y-documentos-compartidos.sql` existía además una
+`catequesis_documentos` idéntica columna por columna a esta, y eran dos listas ciegas la
+una a la otra: un documento subido desde el panel básico de Catequesis no aparecía en su
+módulo, y al revés. Sus filas se mudaron aquí —sin sus id, que habrían chocado con los que
+esta tabla ya tenía; nadie los referenciaba con una foránea, y `archivo` viajó igual, así
+que los PDF ya subidos siguen descargándose de donde están— y la tabla se eliminó. La
+pantalla de Documentos de Proclamadores lo avisa en su cabecera, para que nadie capture el
+mismo documento dos veces.
 
 ---
 
@@ -490,7 +541,7 @@ colarse en un turno nuevo aunque se manipule el formulario.
 
 ---
 
-## Catequesis — catequistas, periodos, tablero de actividades y documentos
+## Catequesis — catequistas y periodos
 
 Módulo dedicado **exclusivamente** a la pastoral de Catecismo, igual que MESC y
 Proclamadores:
@@ -498,6 +549,10 @@ no hay selector de pastoral en ningún formulario — `CatequesisModel::pastoral
 resuelve la única pastoral por su `slug = 'catecismo'`, no por un id fijo (los id de
 pastorales no se siembran en `install.sql`, se crean desde el panel)—. Sin controlador
 público ni datos sensibles.
+
+Son tres tablas, no cinco: sus pantallas de Actividades y Documentos siguen ahí, pero ya
+no escriben en tablas propias sino en `pastoral_tablero` y `pastoral_documentos`, las
+genéricas de cualquier pastoral. Ver esas dos fichas, más arriba.
 
 ### `catequesis_catequistas`
 
@@ -512,7 +567,7 @@ persona.
 
 Un ciclo de catecismo (ej. "2026-2027", de agosto a junio): `pastoral_id`, `nombre`,
 `fecha_inicio`, `fecha_fin` (ambas NOT NULL: un periodo siempre tiene principio y fin,
-a diferencia de `catequesis_actividades.fecha_fin` que sí puede quedar abierta),
+a diferencia de `pastoral_tablero.fecha_fin` que sí puede quedar abierta),
 `activo` (marca cuál es el periodo vigente).
 
 ### `catequesis_periodo_catequistas`
@@ -529,21 +584,16 @@ mismo periodo —, y `CatequesisModel::asignarCatequista()` usa
 `INSERT ... ON DUPLICATE KEY UPDATE grado = VALUES(grado)` para que reasignar a alguien
 ya presente en el periodo simplemente le cambie el grado, sin duplicar la fila.
 
-### `catequesis_actividades`
+### Las que este módulo dejó de tener: `catequesis_actividades` y `catequesis_documentos`
 
-El "tablero o calendario" (issue de revisión de módulos): a diferencia de
-`pastoral_actividades` (lista fija de qué hace la pastoral, sin fechas),
-`catequesis_actividades` tiene vigencia y se publica o no, como un mini-evento —mismas
-columnas que `eventos`—: `pastoral_id`, `titulo`, `descripcion`, `fecha_inicio` (NOT
-NULL), `fecha_fin` (NULL = sin fecha de término), `publicado`, `orden`, `usuario_id`,
-`created_at`. Índice `idx_cta_publicado (publicado, fecha_inicio)`.
-
-### `catequesis_documentos`
-
-Documentos descargables, mismo patrón que `pastoral_documentos`: `pastoral_id`, `titulo`,
-`archivo` (ruta bajo `uploads/catequesis/AAAA/MM/`, solo PDF vía `Upload::documento()`),
-`orden`, `activo`, `usuario_id`, `created_at`. Sin columna de edición: como en
-`pastoral_documentos`, un documento se sube o se borra, no se reemplaza in situ.
+Hasta `docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql`, el tablero de
+actividades y los documentos de esta pastoral vivían en dos tablas propias. Ya no existen:
+la primera es hoy `pastoral_tablero` —mismas columnas, sin prefijo— y las filas de la
+segunda se mudaron a `pastoral_documentos`, que era idéntica a ella y que el panel básico
+de la pastoral ya mostraba. Las dos fichas están en el bloque de Parroquia, con el porqué
+completo. Las pantallas del módulo no se movieron de sitio; lo que cambió es en qué tabla
+escriben y a través de qué modelo (`PastoralModel`, no `CatequesisModel`, que perdió sus
+métodos `actividad*` y `documento*`).
 
 ---
 
@@ -554,6 +604,12 @@ Módulo dedicado para la pastoral de Proclamadores (se llamó "Lectores" y luego
 uso — ver la nota de `PASTORAL_PROCLAMADORES` en `config/app.php`), calcado de
 `mesc_turnos`/`mesc_ministros`/`mesc_turno_ministros`, pero sin rutas ni visitas: quien
 proclama la Palabra lo hace en misa, no reparte comunión a domicilio.
+
+**Siguen siendo tres tablas aunque el módulo tenga cinco pantallas.** Las de Actividades y
+Documentos, copiadas de Catequesis, escriben en `pastoral_tablero` y
+`pastoral_documentos`, y los colores litúrgicos en `colores_liturgicos`: tres tablas que no
+son de ningún módulo. Que este módulo las estrenara sin agregar ni una tabla propia es
+precisamente lo que se buscaba al quitarles el prefijo.
 
 Sus tres tablas se llamaron `lector_lectores`, `lector_turnos` y `lector_turno_lectores`
 hasta el renombre, y con ellas sus índices y restricciones: `idx_lec_*`/`fk_lec_*`,
@@ -737,21 +793,23 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_documentos` |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
-| Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, `catequesis_actividades`, `catequesis_documentos` |
-| Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y esa misma `colores_liturgicos` |
+| Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
+| Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 43 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 42 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
-`pastoral_documentos`, `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`,
-`mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `colores_liturgicos`,
+`pastoral_tablero`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
+`mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`,
+`colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
-`catequesis_actividades`, `catequesis_documentos`,
 `proclamadores`, `proclamadores_turnos` y `proclamadores_turno_proclamadores`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`). El renombre de Proclamadores no movió la cuenta: cambió nombres
-de tabla, no su número.
+de tabla, no su número. La que sí la movió, de 43 a 42, es la migración del tablero y los
+documentos compartidos: se fueron `catequesis_actividades` y `catequesis_documentos`, y
+entró `pastoral_tablero`.

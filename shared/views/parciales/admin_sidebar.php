@@ -42,17 +42,22 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
 
         <?php
-        /* Los tres módulos dedicados se ofrecen a quien administra ESA pastoral,
-           no a quien lleva el permiso: `mesc.*` lo tienen todos los coordinadores
-           desde que el rol dejó de nombrar la pastoral, y un enlace que acaba en
-           «no administras la pastoral de MESC» es peor que no tener enlace. */
-        $verMesc          = Auth::tienePermiso('mesc.ver')          && Auth::administraPastoral(PASTORAL_MESC);
-        $verCatequesis    = Auth::tienePermiso('catequesis.ver')    && Auth::administraPastoral(PASTORAL_CATEQUESIS);
-        $verProclamadores = Auth::tienePermiso('proclamadores.ver') && Auth::administraPastoral(PASTORAL_PROCLAMADORES);
+        /* Las pastorales con módulo propio, en su propia sección más abajo. La
+           lista crece por aquí y por ningún otro lado: agregar una entrada es
+           todo lo que hace falta para que el módulo nuevo aparezca en el menú.
+
+           Cada una se ofrece a quien administra ESA pastoral, no a quien lleva
+           el permiso: `mesc.*` lo tienen todos los coordinadores desde que el
+           rol dejó de nombrar la pastoral, y un enlace que acaba en «no
+           administras la pastoral de MESC» es peor que no tener enlace. */
+        $modulosDePastoral = array_values(array_filter([
+            ['mesc',          'MESC',          'bi-heart-pulse', 'mesc.ver',          PASTORAL_MESC],
+            ['catequesis',    'Catequesis',    'bi-book',        'catequesis.ver',    PASTORAL_CATEQUESIS],
+            ['proclamadores', 'Proclamadores', 'bi-mic',         'proclamadores.ver', PASTORAL_PROCLAMADORES],
+        ], static fn (array $m): bool => Auth::tienePermiso($m[3]) && Auth::administraPastoral($m[4])));
         ?>
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')
-                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')
-                || $verMesc || $verCatequesis || $verProclamadores): ?>
+                || Auth::tienePermiso('organigrama.ver') || Auth::tienePermiso('pastorales.ver')): ?>
         <div class="sidebar-section mt-2">Parroquia</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('horarios.ver')): ?>
@@ -80,30 +85,26 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             <i class="bi bi-people"></i> Pastorales
         </a>
         <?php endif; ?>
-        <?php if ($verMesc): ?>
-        <a href="<?= e(url_admin('mesc')) ?>" class="sidebar-link <?= $activo('mesc') ?>">
-            <i class="bi bi-heart-pulse"></i> MESC
-        </a>
-        <?php endif; ?>
-        <?php if ($verCatequesis): ?>
-        <a href="<?= e(url_admin('catequesis')) ?>" class="sidebar-link <?= $activo('catequesis') ?>">
-            <i class="bi bi-book"></i> Catequesis
-        </a>
-        <?php endif; ?>
-        <?php if ($verProclamadores): ?>
-        <a href="<?= e(url_admin('proclamadores')) ?>" class="sidebar-link <?= $activo('proclamadores') ?>">
-            <i class="bi bi-mic"></i> Proclamadores
-        </a>
-        <?php endif; ?>
         <?php if (Auth::tienePermiso('sacramentos.ver')): ?>
         <a href="<?= e(url_admin('sacramentos')) ?>" class="sidebar-link <?= $activo('sacramentos') ?>">
             <i><?= icono_cruz() ?></i> Sacramentos
         </a>
         <?php endif; ?>
-        <?php if (Auth::tienePermiso('cursos.ver')): ?>
-        <a href="<?= e(url_admin('cursos')) ?>" class="sidebar-link <?= $activo('cursos') ?>">
-            <i class="bi bi-mortarboard"></i> Cursos
+
+        <?php /* Sección aparte y no mezcladas con el resto de "Parroquia": estos
+                 módulos no administran la parroquia entera sino una pastoral
+                 concreta, y van a ser varios. Quien no administre ninguna de
+                 esas pastorales no ve ni la sección. El enlace general a
+                 "Pastorales" —el catálogo de todas— se queda arriba, con
+                 Equipo pastoral y Organigrama, porque eso sí es de la
+                 parroquia entera. */ ?>
+        <?php if ($modulosDePastoral): ?>
+        <div class="sidebar-section mt-2">Pastorales</div>
+        <?php foreach ($modulosDePastoral as [$modulo, $etiqueta, $icono]): ?>
+        <a href="<?= e(url_admin($modulo)) ?>" class="sidebar-link <?= $activo($modulo) ?>">
+            <i class="bi <?= e($icono) ?>"></i> <?= e($etiqueta) ?>
         </a>
+        <?php endforeach; ?>
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('inscripciones.ver')): ?>
@@ -116,8 +117,8 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php endif; ?>
 
         <?php if (Auth::tienePermiso('avisos.ver') || Auth::tienePermiso('eventos.ver')
-                || Auth::tienePermiso('galeria.ver') || Auth::tienePermiso('carrusel.ver')
-                || Auth::tienePermiso('mensajes.ver')): ?>
+                || Auth::tienePermiso('cursos.ver') || Auth::tienePermiso('galeria.ver')
+                || Auth::tienePermiso('carrusel.ver') || Auth::tienePermiso('mensajes.ver')): ?>
         <div class="sidebar-section mt-2">Comunicación</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('avisos.ver')): ?>
@@ -128,6 +129,17 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('eventos.ver')): ?>
         <a href="<?= e(url_admin('eventos')) ?>" class="sidebar-link <?= $activo('eventos') ?>">
             <i class="bi bi-calendar-event"></i> Eventos
+        </a>
+        <?php endif; ?>
+        <?php /* Cursos va aquí y no en "Parroquia": es contenido que se publica y
+                 se anuncia, del mismo grupo que los avisos y los eventos —los tres
+                 se administran por pastoral y se publican en dos escalones—, y no
+                 un catálogo de la parroquia como los horarios o las sedes. Las
+                 inscripciones que llegan a un curso sí son un trámite y siguen en
+                 su propia sección. */ ?>
+        <?php if (Auth::tienePermiso('cursos.ver')): ?>
+        <a href="<?= e(url_admin('cursos')) ?>" class="sidebar-link <?= $activo('cursos') ?>">
+            <i class="bi bi-mortarboard"></i> Cursos
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('galeria.ver')): ?>

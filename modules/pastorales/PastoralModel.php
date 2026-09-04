@@ -318,6 +318,11 @@ class PastoralModel extends Model
     }
 
     // ── Actividades ─────────────────────────────────────────────────────
+    // OJO, no confundir con el tablero de más abajo: esto es la lista fija de
+    // "qué hace la pastoral" —con `tipo`, sin fechas, la que se lee en su
+    // página pública—, y el tablero son actividades con fecha y publicación.
+    // Las dos se llamaban "actividades" hasta que la segunda pasó a
+    // `pastoral_tablero`; ver docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql
 
     public const TIPOS_ACTIVIDAD = [
         'comunitaria'  => 'Comunitaria',
@@ -387,7 +392,74 @@ class PastoralModel extends Model
         return $this->execute('DELETE FROM pastoral_actividades WHERE id = :id', [':id' => $id]);
     }
 
+    // ── Tablero de actividades con fecha ────────────────────────────────
+    // Actividades con vigencia y publicación, como un mini-`eventos`, a
+    // diferencia de la lista fija de arriba. Vive en `pastoral_tablero`, sin
+    // prefijo de módulo: nació dentro de Catequesis y lo estrenó
+    // Proclamadores, pero la pantalla es la misma para cualquier pastoral que
+    // la necesite, así que los dos módulos entran por aquí en vez de repetir
+    // estas cinco consultas en su propio modelo. Lo mismo vale para los
+    // documentos de abajo.
+
+    public function tablero(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM pastoral_tablero WHERE pastoral_id = :id ORDER BY fecha_inicio DESC, orden',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function entradaTablero(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM pastoral_tablero WHERE id = :id', [':id' => $id]);
+    }
+
+    public function crearEntradaTablero(array $datos, int $usuarioId): int
+    {
+        $this->execute(
+            'INSERT INTO pastoral_tablero
+                (pastoral_id, titulo, descripcion, fecha_inicio, fecha_fin, publicado, orden, usuario_id)
+             VALUES (:pastoral, :titulo, :descripcion, :inicio, :fin, :publicado, :orden, :usuario)',
+            $this->parametrosTablero($datos) + [':pastoral' => $datos['pastoral_id'], ':usuario' => $usuarioId]
+        );
+        return $this->lastInsertId();
+    }
+
+    public function actualizarEntradaTablero(int $id, array $datos): int
+    {
+        return $this->execute(
+            'UPDATE pastoral_tablero
+                SET titulo = :titulo, descripcion = :descripcion, fecha_inicio = :inicio,
+                    fecha_fin = :fin, publicado = :publicado, orden = :orden
+              WHERE id = :id',
+            $this->parametrosTablero($datos) + [':id' => $id]
+        );
+    }
+
+    public function eliminarEntradaTablero(int $id): int
+    {
+        return $this->execute('DELETE FROM pastoral_tablero WHERE id = :id', [':id' => $id]);
+    }
+
+    /** Sin :pastoral ni :usuario: la entrada no cambia de pastoral ni de autor al editarse. */
+    private function parametrosTablero(array $datos): array
+    {
+        return [
+            ':titulo'      => $datos['titulo'],
+            ':descripcion' => $datos['descripcion'],
+            ':inicio'      => $datos['fecha_inicio'],
+            ':fin'         => $datos['fecha_fin'],
+            ':publicado'   => $datos['publicado'],
+            ':orden'       => $datos['orden'],
+        ];
+    }
+
     // ── Documentos descargables (issue #3) ──────────────────────────────
+    // Tabla compartida, igual que el tablero: el panel básico de cualquier
+    // pastoral y los módulos dedicados escriben en la misma lista, así que un
+    // documento subido desde un sitio se ve desde el otro. Hubo un
+    // `catequesis_documentos` idéntico a esta tabla hasta la migración citada
+    // arriba, y eran dos listas ciegas la una a la otra.
 
     public function documentos(int $pastoralId): array
     {

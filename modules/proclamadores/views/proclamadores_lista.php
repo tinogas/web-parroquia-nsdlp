@@ -1,17 +1,11 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <nav aria-label="Ubicación">
-            <ol class="breadcrumb small mb-1">
-                <li class="breadcrumb-item"><a href="<?= e(url_admin('proclamadores')) ?>" class="text-decoration-none">Proclamadores</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Catálogo</li>
-            </ol>
-        </nav>
-        <h1 class="h4 fw-bold mb-0">Catálogo de proclamadores</h1>
+        <h1 class="h4 fw-bold mb-1">Proclamadores</h1>
         <p class="text-muted mb-0 small">Quiénes proclaman, y qué prefiere hacer cada quien.</p>
     </div>
-    <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Volver al calendario
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <?php $navActiva = ''; require __DIR__ . '/_nav.php'; ?>
+    </div>
 </div>
 
 <div class="card border-0 shadow-sm mb-4">

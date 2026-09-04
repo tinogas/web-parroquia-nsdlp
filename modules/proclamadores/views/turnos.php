@@ -13,18 +13,13 @@ if (!function_exists('proclamadores_texto_legible')) {
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <h1 class="h4 fw-bold mb-1">Calendario de proclamadores</h1>
+        <h1 class="h4 fw-bold mb-1">Calendario de turnos</h1>
         <p class="text-muted mb-0 small">Quién proclama la Palabra en cada misa.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <?php $navActiva = 'turnos'; require __DIR__ . '/_nav.php'; ?>
         <a href="<?= e($urlImprimir) ?>" target="_blank" class="btn btn-outline-secondary">
             <i class="bi bi-printer me-1"></i>Imprimir
-        </a>
-        <a href="<?= e(url_admin('proclamadores', 'colores')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-palette me-1"></i>Colores
-        </a>
-        <a href="<?= e(url_admin('proclamadores', 'catalogo')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-people me-1"></i>Catálogo
         </a>
         <?php if (Auth::tienePermiso('proclamadores.crear')): ?>
         <a href="<?= e(url_admin('proclamadores', 'turno_nuevo')) ?>" class="btn btn-primary">

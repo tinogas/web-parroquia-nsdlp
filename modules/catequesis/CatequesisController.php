@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/catequesis/CatequesisModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 /**
  * CatequesisController — Igual que MESC y Proclamadores, este módulo es exclusivo
@@ -14,9 +15,21 @@ class CatequesisController extends Controller
 {
     private CatequesisModel $modelo;
 
+    /**
+     * El tablero de actividades y los documentos no son propios de este
+     * módulo: viven en `pastoral_tablero` y `pastoral_documentos`, tablas de
+     * cualquier pastoral, y las administra PastoralModel. Antes eran dos
+     * tablas `catequesis_*` con las mismas columnas, y en el caso de los
+     * documentos eran además una segunda lista ciega a la que ya mostraba el
+     * panel básico de la pastoral. Ver
+     * docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql
+     */
+    private PastoralModel $pastorales;
+
     public function __construct()
     {
-        $this->modelo = new CatequesisModel();
+        $this->modelo     = new CatequesisModel();
+        $this->pastorales = new PastoralModel();
     }
 
     // ── Catequistas (pantalla principal del módulo) ─────────────────────
@@ -316,7 +329,7 @@ class CatequesisController extends Controller
         $this->render('catequesis/actividades_lista', [
             'titulo'      => 'Catequesis — Actividades',
             'pastoralId'  => $pastoralId,
-            'actividades' => $this->modelo->actividades($pastoralId),
+            'actividades' => $this->pastorales->tablero($pastoralId),
         ]);
     }
 
@@ -329,7 +342,7 @@ class CatequesisController extends Controller
         $this->validarCsrf();
 
         $id        = $this->postInt('id');
-        $existente = $id ? $this->modelo->actividadPorId($id) : null;
+        $existente = $id ? $this->pastorales->entradaTablero($id) : null;
         $this->requirePermiso($existente ? 'catequesis.editar' : 'catequesis.crear');
 
         $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
@@ -364,12 +377,12 @@ class CatequesisController extends Controller
         ];
 
         if ($existente) {
-            $this->modelo->actualizarActividad($id, $datos);
-            $this->auditoria('editar', 'catequesis_actividades', $id, $titulo);
+            $this->pastorales->actualizarEntradaTablero($id, $datos);
+            $this->auditoria('editar', 'pastoral_tablero', $id, $titulo);
             Session::flash('success', 'Actividad actualizada.');
         } else {
-            $id = $this->modelo->crearActividad($datos, (int) Auth::usuario()['id']);
-            $this->auditoria('crear', 'catequesis_actividades', $id, $titulo);
+            $id = $this->pastorales->crearEntradaTablero($datos, (int) Auth::usuario()['id']);
+            $this->auditoria('crear', 'pastoral_tablero', $id, $titulo);
             Session::flash('success', 'Actividad agregada.');
         }
 
@@ -387,11 +400,11 @@ class CatequesisController extends Controller
         $this->validarCsrf();
 
         $id        = $this->postInt('id');
-        $actividad = $this->modelo->actividadPorId($id);
+        $actividad = $this->pastorales->entradaTablero($id);
         if ($actividad) {
             $this->requireAlcancePastoral((int) $actividad['pastoral_id']);
-            $this->modelo->eliminarActividad($id);
-            $this->auditoria('eliminar', 'catequesis_actividades', $id, $actividad['titulo']);
+            $this->pastorales->eliminarEntradaTablero($id);
+            $this->auditoria('eliminar', 'pastoral_tablero', $id, $actividad['titulo']);
             Session::flash('success', 'Actividad eliminada.');
         }
 
@@ -412,7 +425,7 @@ class CatequesisController extends Controller
         $this->render('catequesis/documentos_lista', [
             'titulo'     => 'Catequesis — Documentos',
             'pastoralId' => $pastoralId,
-            'documentos' => $this->modelo->documentos($pastoralId),
+            'documentos' => $this->pastorales->documentos($pastoralId),
         ]);
     }
 
@@ -452,14 +465,14 @@ class CatequesisController extends Controller
             return;
         }
 
-        $id = $this->modelo->crearDocumento([
+        $id = $this->pastorales->crearDocumento([
             'pastoral_id' => $pastoralId,
             'titulo'      => $titulo,
             'archivo'     => $archivo,
             'orden'       => $this->postInt('orden'),
             'activo'      => 1,
         ], (int) Auth::usuario()['id']);
-        $this->auditoria('crear', 'catequesis_documentos', $id, $titulo);
+        $this->auditoria('crear', 'pastoral_documentos', $id, $titulo);
         Session::flash('success', 'Documento agregado.');
 
         $this->redirect(url_admin('catequesis', 'documentos'));
@@ -476,12 +489,12 @@ class CatequesisController extends Controller
         $this->validarCsrf();
 
         $id        = $this->postInt('id');
-        $documento = $this->modelo->documentoPorId($id);
+        $documento = $this->pastorales->documentoPorId($id);
         if ($documento) {
             $this->requireAlcancePastoral((int) $documento['pastoral_id']);
             Upload::borrar($documento['archivo']);
-            $this->modelo->eliminarDocumento($id);
-            $this->auditoria('eliminar', 'catequesis_documentos', $id, $documento['titulo']);
+            $this->pastorales->eliminarDocumento($id);
+            $this->auditoria('eliminar', 'pastoral_documentos', $id, $documento['titulo']);
             Session::flash('success', 'Documento eliminado.');
         }
 

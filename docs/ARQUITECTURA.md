@@ -691,6 +691,27 @@ se agrega un cuarto módulo dedicado: un permiso nuevo sin este cruce en cualqui
 dos vuelve a abrir el mismo hueco que dejaba ver la tarjeta de un módulo ajeno aunque el
 clic ya estuviera bien protegido.
 
+**En el menú lateral son ya una sección propia, "Pastorales".** Estaban sueltos dentro de
+"Parroquia", entre el catálogo de pastorales y Sacramentos, y ahí no es su sitio: estos
+módulos no administran la parroquia entera sino una pastoral concreta, y van a ser varios.
+La sección nueva va después de "Parroquia" y antes de "Trámites", y quien no administre
+ninguna de esas pastorales no ve ni su encabezado. De paso, la lista dejó de ser tres
+variables `$verMesc`/`$verCatequesis`/`$verProclamadores` con sus tres bloques `if`
+repetidos y pasó a ser un array, `$modulosDePastoral`, con una entrada por módulo —módulo,
+etiqueta, icono, permiso y slug de pastoral— filtrada por el mismo `Auth::tienePermiso()`
+**y** `Auth::administraPastoral()` que ya se aplicaba: agregar un módulo al menú es hoy una
+línea ahí, no un bloque más que copiar. El enlace general "Pastorales" —el catálogo de
+todas— se queda en la sección "Parroquia", junto a Equipo pastoral y Organigrama, porque
+eso sí es de la parroquia entera.
+
+**Cursos se movió al mismo tiempo, de "Parroquia" a "Comunicación"**, detrás de Avisos y
+Eventos. Es el grupo al que pertenece: los tres se administran por pastoral, los tres se
+publican en dos escalones y los tres son contenido que se anuncia, a diferencia de los
+horarios o las sedes, que son catálogos de la parroquia. Las inscripciones que llegan a un
+curso sí son un trámite y siguen en su propia sección, que es la distinción que este menú
+venía sin hacer. Las tarjetas del panel de inicio (`/admin/panel`) no tienen secciones, así
+que ahí el orden no cambió.
+
 ### La cuenta es de alguien del equipo pastoral
 
 `personas` es el registro principal de quién es quién: de ahí sale el organigrama
@@ -1070,7 +1091,8 @@ dinámicamente, pero nadie sabía que existían para esa pastoral sin entrar mó
 módulo y elegirla a mano en un selector. `PastoralController::panel()` (ruta
 `pastorales/panel?id=`) es la respuesta: una ficha con tarjetas a esos cuatro genéricos ya
 filtrados —Documentos se gestiona ahí mismo, reusando `documentoGuardar()`/
-`documentoEliminar()`; Avisos, Eventos y Cursos solo se enlazan ya filtrados
+`documentoEliminar()`, y es la misma lista que muestran los módulos dedicados de Catequesis
+y Proclamadores, no una copia; Avisos, Eventos y Cursos solo se enlazan ya filtrados
 (`?pastoral=`) y con "nuevo" ya preseleccionado (`?pastoral_id=`), no se duplica su CRUD—.
 Si la pastoral tiene módulo dedicado (MESC/Catequesis/Proclamadores, `MODULO_POR_PASTORAL` en
 `config/app.php`), el panel agrega un botón de salto a su módulo de turnos y catálogo, que
@@ -1253,6 +1275,27 @@ público, en vez de ampliar el sistema genérico de "contenido propio por pastor
 uno necesita columnas y pantallas que ese sistema genérico no tiene y que no tendría
 sentido forzar sobre *todas* las pastorales.
 
+**Pero no todo lo que hay dentro de un módulo dedicado es propio de él.** Dos de sus
+pantallas —el tablero de actividades con fechas y los documentos descargables— no piden ni
+una columna que el sistema genérico no tenga, así que viven en `pastoral_tablero` y
+`pastoral_documentos`, las administra `PastoralModel`, y Catequesis y Proclamadores entran
+por ahí con una propiedad `private PastoralModel $pastorales` cada uno. Catequesis las tuvo
+un tiempo como tablas propias, `catequesis_actividades` y `catequesis_documentos`; cuando
+Proclamadores pidió esas mismas dos pantallas, copiarlas significaba copiar también las dos
+tablas, y con la plantilla de módulos que viene después cada módulo nuevo habría arrastrado
+otras dos iguales. Ver [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md) y
+`docs/migraciones/2026-09-04-tablero-y-documentos-compartidos.sql`.
+
+**Los métodos del tablero se llaman `tablero*` y no `actividad*` a propósito.**
+`PastoralModel::actividades()` ya significaba otra cosa —la lista fija de qué hace la
+pastoral, la de `pastoral_actividades`, sin fechas, la que se lee en su página pública—, así
+que `tablero()`, `entradaTablero()`, `crearEntradaTablero()`, `actualizarEntradaTablero()` y
+`eliminarEntradaTablero()` conviven con ella sin que haya que abrir el SQL para saber cuál
+es cuál; es el mismo desambiguar que motivó el nombre de la tabla. Los de documentos ya
+estaban en ese modelo desde el issue #3 (`documentos()`, `documentosActivos()`,
+`documentoPorId()`, `crearDocumento()`, `eliminarDocumento()`) y no hizo falta escribir
+ninguno.
+
 **Los tres son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
 `CatequesisModel::pastoralId()` y `ProclamadoresModel::pastoralId()` resuelven su pastoral por
 `slug` (no por un id fijo en PHP: los id de pastorales se generan al crearlas desde el
@@ -1286,10 +1329,15 @@ qué grado cada uno" queda respondido con una sola consulta y sin perder nada de
 pasado. `CatequesisModel::asignarCatequista()` usa
 `INSERT ... ON DUPLICATE KEY UPDATE` sobre la llave compuesta `(periodo_id,
 catequista_id)`: reasignar a alguien ya presente en el periodo le cambia el grado en
-vez de duplicar la fila. `catequesis_actividades` es un tablero con vigencia y
-`publicado` propios, como un mini-`eventos`, distinto de la lista fija sin fechas de
-`pastoral_actividades`; `catequesis_documentos` es una copia directa de
-`pastoral_documentos` (mismo patrón de subida vía `Upload::documento()`).
+vez de duplicar la fila.
+
+Sus otras dos pantallas, Actividades y Documentos, siguen donde estaban pero ya no son
+suyas: escriben en `pastoral_tablero` y `pastoral_documentos` a través de `PastoralModel`
+—ver los dos párrafos de arriba—, y `CatequesisModel` perdió con eso sus métodos
+`actividad*` y `documento*`, unas noventa líneas que se habían quedado sin tabla debajo. La
+auditoría de esas acciones registra ahora `pastoral_tablero` y `pastoral_documentos` como
+tabla afectada, que es donde de verdad se escribe. La de Documentos, además, dejó de ser una
+segunda lista ciega a la del panel básico de la pastoral: eran dos y hoy es una.
 
 **Proclamadores** (la pastoral de slug `liturgia` —se llamó "Lectores" y luego "Liturgia";
 ver la nota de `PASTORAL_PROCLAMADORES` en `config/app.php`—): recorta MESC a sus dos
@@ -1328,6 +1376,36 @@ nació con catálogo y calendario y le faltaban las dos pantallas que MESC sí t
   el catálogo es uno solo para toda la parroquia, porque editar aquí también cambia lo que
   ve el otro módulo. Igual que en MESC, esta parte **no tiene alcance por pastoral** —un
   color litúrgico no es de nadie—: solo exige el permiso del módulo.
+
+**Con la paridad completa, la portada del módulo cambió: es el catálogo, no el calendario.**
+`/admin/proclamadores` abría en la cuadrícula de turnos, que es lo que había heredado de
+MESC; hoy abre en el catálogo de quién proclama y el calendario se mudó a
+`/admin/proclamadores/turnos`. Lo primero que se consulta es quién está y qué prefiere hacer
+—monitor, lectura o salmo cantado—, porque el turno se arma a partir de ahí; abrir en la
+cuadrícula era empezar por el resultado. La acción `catalogo`, que existió unas horas
+mientras esto se movía, ya no está: el catálogo es `index()`.
+
+**Dos pantallas más, calcadas de Catequesis.** Actividades (`actividades`,
+`actividad_guardar`, `actividad_eliminar`, vista `actividades_lista.php`) sobre
+`pastoral_tablero`, y Documentos (`documentos`, `documento_guardar`, `documento_eliminar`,
+vista `documentos_lista.php`) sobre `pastoral_documentos`, con subida de PDF por
+`Upload::documento()` bajo `uploads/proclamadores/`. Son las dos que motivaron sacar esas
+tablas de Catequesis —ver el arranque de esta sección—: copiar la pantalla estaba bien,
+copiar la tabla no.
+
+La de Documentos **avisa en su cabecera de que la lista es la misma que la del panel básico
+de la pastoral**, porque lo es, y sin decirlo alguien acabaría capturando el mismo documento
+dos veces. La de Actividades no lleva ese aviso, y la asimetría es deliberada:
+`pastoral_tablero` también es compartida, pero el panel básico todavía no ofrece esa
+pantalla, así que anunciarlo hoy sería falso.
+
+**Con cinco pantallas, la barra de botones para saltar entre ellas se sacó a un parcial**,
+`modules/proclamadores/views/_nav.php`, en vez de repetirla en cada vista como sigue estando
+en Catequesis, que tiene tres. Con cinco copias, agregar una sexta pantalla obliga a
+acordarse de editar cinco archivos, y la que se olvide queda con una barra distinta de las
+demás. El parcial declara las pantallas en un array y omite la de la pantalla actual —ya la
+nombra el título de la página, y un botón que lleva a donde ya estás no sirve de nada—, que
+es el criterio que las vistas de Catequesis ya seguían a mano.
 
 **El nombre de un ministro de MESC es su nombre corto, y es un dato propio.** En
 `mesc_ministros`, `nombre` no es una copia del de su ficha sino el nombre con el que se le
@@ -1548,7 +1626,8 @@ sino el caso sin ninguna: un coordinador sin pastoral asignada debe ver listados
 
 **Borrar una pastoral no borra su contenido.** Las cuatro FK usan `ON DELETE SET NULL`:
 al eliminar una pastoral, sus avisos, eventos, fotos y nodos del organigrama sobreviven
-como contenido parroquial general (`pastoral_id NULL`). Solo `pastoral_actividades` y
+como contenido parroquial general (`pastoral_id NULL`). Las tres tablas que solo existen
+por su pastoral —`pastoral_actividades`, `pastoral_tablero` y `pastoral_documentos`— y
 `usuarios_pastorales` tienen `ON DELETE CASCADE`, porque una actividad sin su pastoral no
 significa nada y la asignación de un coordinador tampoco. Comprobado borrando una pastoral
 con un aviso asociado: el aviso siguió existiendo, con `pastoral_id` en `NULL`.

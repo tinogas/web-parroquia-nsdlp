@@ -9,10 +9,8 @@
         <h1 class="h4 fw-bold mb-0">Colores litúrgicos</h1>
         <p class="text-muted mb-0 small">Referencia para etiquetar los turnos según el tiempo o fiesta del día.</p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="<?= e(url_admin('proclamadores')) ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-calendar3 me-1"></i>Turnos
-        </a>
+    <div class="d-flex flex-wrap gap-2">
+        <?php $navActiva = 'colores'; require __DIR__ . '/_nav.php'; ?>
         <?php if (Auth::tienePermiso('proclamadores.crear')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#colorNuevo">
             <i class="bi bi-plus-lg me-1"></i>Nuevo color
