@@ -124,6 +124,17 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('avisos.ver')): ?>
         <a href="<?= e(url_admin('avisos')) ?>" class="sidebar-link <?= $activo('avisos') ?>">
             <i class="bi bi-megaphone"></i> Avisos
+            <?php /* Mismo contador que la campana de la barra, que ya lo calculó
+                     —layout_admin.php deja $avisosSinLeer antes de incluir este
+                     archivo—. Y el listado de Avisos muestra de verdad esos
+                     avisos, comunicados de otras pastorales incluidos: si la
+                     insignia dijera dos y ahí no apareciera ninguno, el contador
+                     mentiría. Ver AvisoModel::conComunicados(). */ ?>
+            <?php if (!empty($avisosSinLeer)): ?>
+            <span class="badge rounded-pill bg-danger ms-auto">
+                <?= $avisosSinLeer > 99 ? '99+' : (int) $avisosSinLeer ?>
+            </span>
+            <?php endif; ?>
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('eventos.ver')): ?>

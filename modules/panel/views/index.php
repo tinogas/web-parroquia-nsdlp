@@ -129,7 +129,14 @@ $mesActual = $meses[(int) date('n') - 1];
  */
 $novedades = [];
 foreach ($avisosInternos as $fila) {
-    $novedades[] = $fila + ['_modulo' => 'avisos', '_icono' => 'bi-megaphone', '_texto' => $fila['resumen']];
+    // Icono por tipo, no el megáfono para los tres: un comunicado es lo que
+    // hay que leer hoy y una noticia puede esperar, y el icono lo dice antes
+    // que el texto. Ver AvisoModel::ICONOS.
+    $novedades[] = $fila + [
+        '_modulo' => 'avisos',
+        '_icono'  => AvisoModel::icono($fila['tipo'] ?? null),
+        '_texto'  => $fila['resumen'],
+    ];
 }
 foreach ($cursosInternos as $fila) {
     $novedades[] = $fila + ['_modulo' => 'cursos', '_icono' => 'bi-mortarboard', '_texto' => $fila['dirigido_a']];

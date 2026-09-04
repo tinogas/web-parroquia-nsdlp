@@ -30,42 +30,137 @@
         </a>
 
         <?php
-        /* Mensajes del formulario de contacto que nadie ha abierto todavía
-           (`mensajes_contacto.leido = 0`, que ya se marca solo al abrir uno en
-           MensajeController::ver()).
+        /* La campana: lo que esta persona tiene sin abrir, de las dos cosas que
+           llegan solas al panel —los mensajes del formulario del sitio y los
+           avisos publicados hacia dentro—.
+
+           Una sola campana y no un icono por cosa: lo que se quiere saber al
+           entrar es «¿hay algo?», y son dos números pequeños. La lista que
+           despliega es la que resuelve el problema de una campana que suma dos
+           orígenes: cada línea lleva a lo suyo, así que no hay que elegir un
+           único destino para el clic.
+
            Se cuenta aquí, una vez por página, y admin_sidebar.php —que se
-           incluye más abajo, en este mismo archivo— reusa la variable para su
-           propia insignia en vez de repetir la consulta.
-           Solo se cuenta si la cuenta puede verlos: `mensajes.ver` lo llevan
-           administración y secretaría, y anunciarle a quien no puede abrirlos
-           que hay tres esperando sería enseñar un dato personal a medias y una
-           campana que no lleva a ninguna parte. */
+           incluye más abajo, en este mismo archivo— reusa las variables para
+           sus insignias en vez de repetir las consultas.
+
+           Cada mitad se cuenta solo si la cuenta puede abrirla: anunciarle a un
+           coordinador que hay tres mensajes de contacto esperando sería
+           enseñarle un dato personal a medias y darle una campana que no lleva
+           a ninguna parte. */
         $mensajesSinLeer = 0;
+        $mensajesUltimos = [];
         if (Auth::tienePermiso('mensajes.ver')) {
             require_once BASE_PATH . '/modules/contacto/ContactoModel.php';
-            $mensajesSinLeer = (new ContactoModel())->noLeidos();
+            $contactoModel   = new ContactoModel();
+            $mensajesSinLeer = $contactoModel->noLeidos();
+            $mensajesUltimos = $mensajesSinLeer ? $contactoModel->ultimosNoLeidos(5) : [];
         }
+
+        $avisosSinLeer = 0;
+        $avisosUltimos = [];
+        if (Auth::tienePermiso('avisos.ver') && Auth::estaAutenticado()) {
+            require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
+            $avisoModel      = new AvisoModel();
+            $audienciaAvisos = Auth::tieneAlcanceGlobal()
+                ? null
+                : array_merge([null], Auth::pastoralesAudiencia());
+            $avisosSinLeer = $avisoModel->contarSinLeer($audienciaAvisos, (int) $usuario['id']);
+            $avisosUltimos = $avisosSinLeer
+                ? $avisoModel->sinLeer($audienciaAvisos, (int) $usuario['id'], 5)
+                : [];
+        }
+
+        $sinLeerTotal = $mensajesSinLeer + $avisosSinLeer;
+        $puedeVerCampana = Auth::tienePermiso('mensajes.ver') || Auth::tienePermiso('avisos.ver');
         ?>
-        <?php if (Auth::tienePermiso('mensajes.ver')): ?>
-        <a href="<?= e(url_admin('mensajes')) ?>"
-           class="position-relative text-decoration-none <?= $mensajesSinLeer ? 'text-warning' : 'text-white-50' ?>"
-           title="<?= $mensajesSinLeer
-                ? e($mensajesSinLeer . ($mensajesSinLeer === 1 ? ' mensaje sin leer' : ' mensajes sin leer'))
-                : 'No hay mensajes sin leer' ?>">
-            <i class="bi bi-bell<?= $mensajesSinLeer ? '-fill' : '' ?> fs-5"></i>
-            <?php if ($mensajesSinLeer): ?>
-            <?php /* El globo cuenta hasta 99: con más, el número no cabe en la
-                     campana y el dato exacto tampoco aporta nada. */ ?>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                <?= $mensajesSinLeer > 99 ? '99+' : (int) $mensajesSinLeer ?>
-            </span>
-            <?php endif; ?>
-            <span class="visually-hidden">
-                <?= $mensajesSinLeer
-                    ? e($mensajesSinLeer . ($mensajesSinLeer === 1 ? ' mensaje sin leer' : ' mensajes sin leer'))
-                    : 'Mensajes, ninguno sin leer' ?>
-            </span>
-        </a>
+        <?php if ($puedeVerCampana): ?>
+        <div class="dropdown">
+            <button type="button"
+                    class="btn btn-sm border-0 position-relative p-1 <?= $sinLeerTotal ? 'text-warning' : 'text-white-50' ?>"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                    title="<?= $sinLeerTotal
+                        ? e($sinLeerTotal === 1 ? '1 cosa sin leer' : $sinLeerTotal . ' cosas sin leer')
+                        : 'No hay nada sin leer' ?>">
+                <i class="bi bi-bell<?= $sinLeerTotal ? '-fill' : '' ?> fs-5"></i>
+                <?php if ($sinLeerTotal): ?>
+                <?php /* El globo cuenta hasta 99: con más, el número no cabe en
+                         la campana y el dato exacto tampoco aporta nada. */ ?>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    <?= $sinLeerTotal > 99 ? '99+' : (int) $sinLeerTotal ?>
+                </span>
+                <?php endif; ?>
+                <span class="visually-hidden">
+                    <?= $sinLeerTotal
+                        ? e($sinLeerTotal . ' sin leer')
+                        : 'Avisos y mensajes, nada sin leer' ?>
+                </span>
+            </button>
+
+            <div class="dropdown-menu dropdown-menu-end shadow" style="min-width:20rem;max-width:24rem">
+                <?php if (!$sinLeerTotal): ?>
+                <span class="dropdown-item-text text-muted small mb-0">
+                    <i class="bi bi-check2-circle me-1"></i>Nada sin leer.
+                </span>
+                <?php endif; ?>
+
+                <?php if ($avisosUltimos): ?>
+                <h6 class="dropdown-header">
+                    Avisos sin leer
+                    <span class="badge rounded-pill bg-danger"><?= (int) $avisosSinLeer ?></span>
+                </h6>
+                <?php foreach ($avisosUltimos as $av): ?>
+                <a class="dropdown-item d-flex gap-2 align-items-start py-2"
+                   href="<?= e(url_admin('avisos', 'ver', ['id' => $av['id']])) ?>">
+                    <i class="bi <?= e(AvisoModel::icono($av['tipo'])) ?> text-dorado mt-1"></i>
+                    <span class="flex-grow-1" style="white-space:normal">
+                        <span class="d-block small fw-semibold"><?= e($av['titulo']) ?></span>
+                        <?php if (!empty($av['resumen'])): ?>
+                        <span class="d-block small text-muted"><?= e(resumen($av['resumen'], 90)) ?></span>
+                        <?php endif; ?>
+                        <span class="d-block text-muted" style="font-size:.75rem">
+                            <?= e(AvisoModel::TIPOS[$av['tipo']] ?? $av['tipo']) ?>
+                            · <?= e($av['pastoral_nombre'] ?? 'Toda la parroquia') ?>
+                        </span>
+                    </span>
+                </a>
+                <?php endforeach; ?>
+                <?php if ($avisosSinLeer > count($avisosUltimos)): ?>
+                <a class="dropdown-item small text-muted" href="<?= e(url_admin('avisos')) ?>">
+                    y <?= (int) ($avisosSinLeer - count($avisosUltimos)) ?> más…
+                </a>
+                <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($avisosUltimos && $mensajesUltimos): ?>
+                <hr class="dropdown-divider">
+                <?php endif; ?>
+
+                <?php if ($mensajesUltimos): ?>
+                <h6 class="dropdown-header">
+                    Mensajes sin leer
+                    <span class="badge rounded-pill bg-danger"><?= (int) $mensajesSinLeer ?></span>
+                </h6>
+                <?php foreach ($mensajesUltimos as $ms): ?>
+                <a class="dropdown-item d-flex gap-2 align-items-start py-2"
+                   href="<?= e(url_admin('mensajes', 'ver', ['id' => $ms['id']])) ?>">
+                    <i class="bi bi-envelope text-dorado mt-1"></i>
+                    <span class="flex-grow-1" style="white-space:normal">
+                        <span class="d-block small fw-semibold"><?= e($ms['nombre']) ?></span>
+                        <?php if (!empty($ms['asunto'])): ?>
+                        <span class="d-block small text-muted"><?= e(resumen($ms['asunto'], 90)) ?></span>
+                        <?php endif; ?>
+                    </span>
+                </a>
+                <?php endforeach; ?>
+                <?php if ($mensajesSinLeer > count($mensajesUltimos)): ?>
+                <a class="dropdown-item small text-muted" href="<?= e(url_admin('mensajes')) ?>">
+                    y <?= (int) ($mensajesSinLeer - count($mensajesUltimos)) ?> más…
+                </a>
+                <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
         <?php endif; ?>
 
         <?php

@@ -150,20 +150,42 @@ servidor real. En Apache y en cPanel no interviene.
 colapsable filtrado por permisos, zona de mensajes flash e inyección de la vista del
 módulo mediante `$vistaPath`.
 
-En la navbar hay además **una campana con los mensajes de contacto que nadie ha abierto
-todavía** (`mensajes_contacto.leido = 0`, que `MensajeController::ver()` ya marca solo al
-abrir uno). Cuando hay alguno, la campana se rellena y lleva un globo con la cantidad —hasta
-`99+`, que es donde deja de caber y de importar el número exacto—, y el enlace "Mensajes"
-del menú lateral muestra el mismo contador. Dos detalles que no son casuales:
+En la navbar hay además **una campana con lo que esta persona tiene sin abrir**, de las dos
+cosas que llegan solas al panel sin que nadie las haya ido a buscar: los mensajes del
+formulario de contacto (`mensajes_contacto.leido = 0`, que `MensajeController::ver()` ya
+marca solo al abrir uno) y los avisos publicados hacia dentro que todavía no ha leído
+(`aviso_lecturas`, ver "Publicar en dos escalones"). Empezó siendo solo un enlace a los
+mensajes; hoy el globo lleva la **suma de las dos** —hasta `99+`, que es donde deja de caber
+y de importar el número exacto— y al pulsarla se despliega la lista, con una sección por
+origen, su encabezado y su propia cuenta. Cada aviso sale con el icono de su tipo
+(`AvisoModel::icono()`), su título, su resumen recortado y una línea con el tipo y la
+pastoral que lo publica —o «Toda la parroquia» cuando no tiene—; cada mensaje, con quién
+escribe y su asunto. Cinco de cada uno como máximo, y un "y N más…" al listado completo
+cuando hay más. Sin nada pendiente, la campana queda vacía y el desplegable dice «Nada sin
+leer». Cuatro detalles que no son casuales:
 
+- **Una sola campana, y no un icono por cosa.** Lo que se quiere saber al entrar es «¿hay
+  algo?», y son dos números pequeños: dos campanas obligarían a mirar en dos sitios para
+  responder a eso. La lista es justamente lo que resuelve el problema de una campana que
+  suma dos orígenes distintos: si el clic tuviera que llevar a un solo destino habría que
+  elegir entre los mensajes y los avisos, y para la mitad de las cuentas sería el
+  equivocado.
 - **El conteo se hace una sola vez por página.** `layout_admin.php` deja `$mensajesSinLeer`
-  antes de incluir `admin_sidebar.php`, y el menú reusa la variable en vez de repetir la
-  consulta. El parcial usa `empty()` y no `isset()` para que, incluido desde otro sitio sin
-  esa variable, simplemente no dibuje el globo.
-- **Solo se cuenta y se avisa a quien puede abrirlos** (`mensajes.ver`, que llevan
-  administración y secretaría). Anunciarle a un coordinador que hay tres mensajes esperando
-  sería enseñarle un dato personal a medias y darle una campana que no lleva a ninguna
-  parte; sin el permiso no hay campana, ni globo, ni consulta.
+  y `$avisosSinLeer` antes de incluir `admin_sidebar.php`, y el menú reusa las variables
+  para sus insignias —hoy hay una en "Mensajes" y otra en "Avisos"— en vez de repetir las
+  consultas. El parcial usa `empty()` y no `isset()` para que, incluido desde otro sitio sin
+  esas variables, simplemente no dibuje el globo.
+- **Cada mitad se cuenta y se anuncia solo a quien puede abrirla** (`mensajes.ver`, que
+  llevan administración y secretaría; `avisos.ver`, que llega hasta el rol de consulta,
+  porque es el de los miembros de a pie). Anunciarle a un coordinador que hay tres mensajes
+  esperando sería enseñarle un dato personal a medias y darle una campana que no lleva a
+  ninguna parte; sin ninguno de los dos permisos no hay campana, ni globo, ni consulta. En
+  la práctica, una cuenta de administrador ve las dos secciones del desplegable y una
+  coordinadora solo la de avisos.
+- **La lista trae solo lo que se pinta en ella.** `ContactoModel::ultimosNoLeidos()`
+  selecciona id, nombre, asunto y fecha, y nada más: el mensaje completo y el teléfono son
+  datos personales, y su sitio es la ficha, que además deja constancia de la lectura en la
+  auditoría (ver [`PRIVACIDAD.md`](PRIVACIDAD.md)).
 
 `layout_publico.php` es nuevo: navbar del sitio, hero opcional, y footer con dirección,
 teléfono, redes sociales y enlace al aviso de privacidad. Recibe `$config` —los datos
@@ -636,6 +658,11 @@ NULL OR vigente_hasta >= CURDATE())`. `fecha_publicacion` ya era el "visible des
 deliberadamente **no** usa esta condición: un aviso vencido sigue editable — el panel le
 agrega el badge "Vencido" para que quede claro por qué ya no se ve en el sitio, sin que eso
 le impida a un editor reabrirlo extendiendo la fecha.
+
+Desde que la campana de la barra cuenta avisos sin leer, `vigente_hasta` gobierna también
+una consulta que no es pública: `AvisoModel::sinLeer()` y `contarSinLeer()` no miran
+`publicado` ni recortan por mes, pero sí descartan lo vencido, porque es lo único que apaga
+un aviso que nadie llegó a abrir. Ver "Publicar en dos escalones".
 
 No se replicó el mismo campo en `eventos`: un evento ya tiene su propio ciclo de vida
 (`fecha_inicio`/`fecha_fin`), y ocultar automáticamente los que ya pasaron trabajaría contra
@@ -1176,6 +1203,42 @@ cachea en sesión —a diferencia de las pastorales asignadas, que solo cambian 
 cuenta—, porque depende de `pastoral_padre_id` y reasignar el padre de una pastoral no
 debería esperar a que todo el mundo vuelva a entrar.
 
+**El comunicado atraviesa el alcance, y es el primer tipo de aviso que hace algo.**
+`avisos.tipo` —`noticia`, `boletin`, `comunicado`— era hasta ahora una etiqueta: se mostraba
+en cuatro pantallas y lo único que de verdad dependía de ella era que el campo del PDF
+siguiera apareciendo al editar un `boletin` ya creado. Ahora
+`AvisoModel::TIPO_PARA_TODOS` (`comunicado`) quiere decir que el aviso va dirigido a **toda
+la parroquia**, sea de la pastoral que sea: un comunicado publicado por MESC lo lee la
+coordinadora de Coros, que no tiene nada que ver con MESC. No sustituye a dejar la pastoral
+vacía, que sigue significando otra cosa —un aviso de la parroquia, sin dueño, que solo
+tocan los roles de alcance global—: un comunicado es de una pastoral **para** todos,
+conserva su `pastoral_id` y el panel lo muestra con el nombre de quien lo publica. Y solo
+cuenta sobre lo ya publicado hacia dentro; un comunicado en borrador es de quien lo
+escribe, como cualquier otro borrador.
+
+**Se envuelve la condición, no se cambian los helpers compartidos.**
+`AvisoModel::conComunicados()` recibe una condición de alcance y le añade
+`OR (a.publicado_interno = 1 AND a.tipo = 'comunicado')`; por ahí pasan `listar()`,
+`internosDelMes()`, `sinLeer()` y `contarSinLeer()`. Deliberadamente **no** se tocaron
+`Model::condicionAlcance()` ni `Model::condicionVisibilidadPanel()`: esos dos los comparte
+con cursos, que no tiene tipos y donde un comunicado no significa nada, así que meter la
+excepción ahí la habría metido en una consulta a la que no le corresponde. El método trata
+los dos extremos a propósito distinto: con la condición vacía no añade nada —quien lo ve
+todo ya lo ve—, y con `1 = 0` —una cuenta de alcance limitado a la que no se le marcó
+ninguna pastoral— el comunicado **sí** entra, porque va dirigido a toda la parroquia y esa
+cuenta también es de la parroquia.
+
+Se aplica además al **listado del panel** y no solo al tablón de inicio, y la razón importa:
+la insignia del menú anuncia avisos sin leer, así que si al pulsar "Avisos" el comunicado no
+apareciera en la lista, el contador estaría mintiendo.
+
+**El guardia de la ficha aprende lo mismo, como bandera.**
+`Controller::puedeLeerInterno()` gana un tercer parámetro opcional,
+`bool $paraTodaLaParroquia = false`, que `AvisoController::ver()` rellena con
+`$aviso['tipo'] === AvisoModel::TIPO_PARA_TODOS`. Llega como bandera y no como tipo para
+que ese mismo guardia siga sirviendo igual a cursos; y se consulta después de la rama del
+borrador, no antes, porque también aquí solo cuenta lo publicado hacia dentro.
+
 **De paso se cerró una fuga anterior.** `Controller::pastoralesVisibles()` añade el `null`
 del contenido parroquial general al alcance sin mirar el estado, así que cualquier
 coordinador venía leyendo los borradores que admin y editor tuvieran a medias. La regla
@@ -1194,9 +1257,42 @@ de lectura (`AvisoController::ver()`, `CursoController::ver()`): hasta ahora el 
 sabía llevar al formulario de edición, y lo que aún no es público no tiene página que
 enseñar. Y las miniaturas del panel de inicio, con lo último publicado a sus pastorales;
 se marcan «Nuevo» comparando `publicado_interno_at` contra el ingreso anterior de esa
-persona, que `Auth::intentarLogin()` guarda en sesión antes de pisar `ultimo_acceso`. No
-hay tabla de lecturas: no hace falta saber si abrió cada cosa, basta con no volver a
-señalarle lo que ya estaba la última vez que entró.
+persona, que `Auth::intentarLogin()` guarda en sesión antes de pisar `ultimo_acceso`. Las
+tarjetas de aviso llevan el **icono de su tipo** (`AvisoModel::ICONOS` e `icono()`, un
+icono de Bootstrap por valor del ENUM) y no el megáfono para los tres: un comunicado es lo
+que hay que leer hoy y una noticia puede esperar, y el icono lo dice antes que el texto. Lo
+demás de la tarjeta —imagen, pastoral, título, resumen y la propia etiqueta «Nuevo»— ya
+estaba.
+
+**«Sin leer» y «Nuevo» son dos preguntas distintas, y conviven.** «Nuevo» se decide contra
+`usuario_acceso_anterior` y responde «¿esto ya estaba la última vez que entré?»: sirve para
+no volver a señalar lo de siempre, pero no es una lectura. En cuanto la campana de la barra
+empezó a contar avisos —ver "Los dos layouts"— hizo falta la otra pregunta, «¿abrió esta
+persona este aviso?», porque un contador tiene que bajar al abrir uno y no volver a subir:
+con el criterio de «Nuevo» el globo rojo se quedaría encendido toda la sesión aunque los
+hubiera abierto uno por uno, y significaría una cosa en los mensajes y otra en los avisos.
+Esa segunda pregunta es la tabla `aviso_lecturas` —una fila por par aviso-usuario, sin `id`
+propio; ver [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md)—, que escribe
+`AvisoModel::marcarLeido()` con `INSERT IGNORE` y leen `sinLeer()` y `contarSinLeer()` con
+un `NOT EXISTS`. Esas dos comparten la condición en un solo sitio
+(`AvisoModel::condicionSinLeer()`) a propósito: la lista de la campana y su globo salen de
+ahí, y con una copia por consulta acabarían diciendo números distintos. Ninguna de las dos
+preguntas sustituyó a la otra: la etiqueta del tablón sigue funcionando exactamente como
+antes.
+
+Marcar leído tiene **dos condiciones**, y las dos son por lo mismo, que la marca diga la
+verdad: solo si el aviso ya está publicado hacia dentro —el borrador que su autora abre
+veinte veces mientras lo escribe no es la lectura de nadie— y solo fuera de una
+impersonación, donde marcaría como leído lo que esa persona no ha visto.
+
+**La campana no recorta por mes y el tablón sí**, también a propósito.
+`internosDelMes()` se queda en el mes en curso porque es un tablón de novedades;
+`sinLeer()`/`contarSinLeer()` no llevan ese recorte, porque lo que se anuncia no deja de
+estar sin leer porque cambie el mes —lo que sí lo cierra es `vigente_hasta`, que es la
+forma que ya tenía el sistema de decir «esto ya pasó»—. La consecuencia conviene tenerla
+presente: puede haber un aviso sin leer que la campana cuenta y el tablón del panel no
+muestra, y de ahí que la campana lleve su propia lista con enlace a cada uno en vez de un
+enlace único al listado.
 
 **La agenda interna es la excepción conocida.** Sigue enseñando borradores a cualquiera
 con `agenda.ver`, sin recortar por pastoral, porque para eso existe: que nadie reserve el

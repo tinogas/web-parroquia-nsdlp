@@ -87,7 +87,7 @@ cuentan ya con el panel básico genérico de cualquier pastoral.
 ## Los números
 
 - **28 módulos** en `modules/`, 12 con contraparte pública y 16 exclusivos del panel.
-- **42 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
+- **43 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
 - **6 roles**, sin ninguno atado al nombre de una pastoral.
 
 ## Lo que falta, y por qué se dejó fuera a propósito

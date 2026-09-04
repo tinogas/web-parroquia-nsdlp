@@ -320,6 +320,26 @@ CREATE TABLE IF NOT EXISTS avisos (
     CONSTRAINT chk_avi_escalon CHECK (publicado = 0 OR publicado_interno = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Quién ha leído cada aviso, para el contador de la campana de la barra: baja
+-- al abrir uno y no vuelve a subir. Sin esta tabla lo único que había era la
+-- etiqueta «Nuevo» del panel, que se decide contra `usuario_acceso_anterior`
+-- —sirve para no volver a señalar lo de siempre, pero no es una lectura—, y un
+-- contador con ese criterio se quedaría encendido toda la sesión aunque la
+-- persona los hubiera abierto uno por uno.
+--
+-- Sin `id` propio: la fila ES el par (aviso, usuario). Con la clave primaria
+-- compuesta, marcar leído dos veces no duplica nada y no hay que consultar
+-- antes de escribir. Ver docs/migraciones/2026-09-04-avisos-sin-leer.sql
+CREATE TABLE IF NOT EXISTS aviso_lecturas (
+    aviso_id   INT UNSIGNED NOT NULL,
+    usuario_id INT UNSIGNED NOT NULL,
+    leido_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (aviso_id, usuario_id),
+    KEY idx_avl_usuario (usuario_id),
+    CONSTRAINT fk_avl_aviso   FOREIGN KEY (aviso_id)   REFERENCES avisos(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_avl_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Fecha concreta, no recurrencia: lo que se repite cada semana vive en
 -- horarios, no aquí. color alimenta el calendario del sitio público.
 --

@@ -82,4 +82,23 @@ class ContactoModel extends Model
     {
         return (int) $this->fetchColumn('SELECT COUNT(*) FROM mensajes_contacto WHERE leido = 0');
     }
+
+    /**
+     * Los últimos sin abrir, para la lista que despliega la campana de la
+     * barra. Solo lo que se pinta ahí: ni el mensaje completo ni el teléfono,
+     * que son datos personales y su sitio es la ficha, con su registro en la
+     * auditoría (ver PRIVACIDAD.md).
+     */
+    public function ultimosNoLeidos(int $limite = 5): array
+    {
+        // El límite se interpola porque LIMIT no admite parámetro con
+        // PDO::ATTR_EMULATE_PREPARES en false; va casteado a entero.
+        return $this->fetchAll(
+            'SELECT id, nombre, asunto, created_at
+               FROM mensajes_contacto
+              WHERE leido = 0
+              ORDER BY created_at DESC, id DESC
+              LIMIT ' . max(1, (int) $limite)
+        );
+    }
 }
