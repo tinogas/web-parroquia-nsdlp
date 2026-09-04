@@ -94,13 +94,29 @@ class PastoralController extends Controller
             ? $this->modelo->porId((int) $pastoral['pastoral_padre_id'])
             : null;
 
+        // Quiénes están marcados en esta pastoral (persona_pastorales). Se
+        // muestra a quien ya administra la pastoral —requireAlcancePastoral()
+        // acaba de comprobarlo—, y no se le exige `personas.ver`: saber quién
+        // está en tu propia pastoral es parte de coordinarla, y esos nombres y
+        // cargos ya salen en el directorio público. Lo que sí exige permiso es
+        // el botón que lleva a la ficha, donde están el teléfono, el correo y
+        // la fecha de nacimiento. Ver el comentario de PERMISOS_COORDINACION
+        // en config/app.php, que a propósito no incluye personas.*.
+        $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
+
         $this->render('pastorales/panel', [
             'titulo'        => $pastoral['nombre'],
             'pastoral'      => $pastoral,
             'comisionPadre' => $comisionPadre,
             'moduloDedicado' => MODULO_POR_PASTORAL[$pastoral['slug']] ?? null,
             'documentos'    => $this->modelo->documentos((int) $pastoral['id']),
+            'personas'      => $personas,
+            // Una Comisión suele tener a su gente marcada en las pastorales que
+            // agrupa, no en ella misma: sin esto, su lista vacía parecería un
+            // error en vez de lo normal.
+            'agrupaOtras'   => $this->modelo->tieneHijos((int) $pastoral['id']),
             'puedeEditar'   => Auth::tienePermiso('pastorales.editar'),
+            'puedeEditarPersonas' => Auth::tienePermiso('personas.editar'),
         ]);
     }
 

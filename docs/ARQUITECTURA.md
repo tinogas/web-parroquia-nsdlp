@@ -1098,6 +1098,25 @@ Si la pastoral tiene módulo dedicado (MESC/Catequesis/Proclamadores, `MODULO_PO
 `config/app.php`), el panel agrega un botón de salto a su módulo de turnos y catálogo, que
 sigue existiendo tal cual.
 
+**Al final del panel va quién pertenece a la pastoral** (`persona_pastorales`, resuelto con
+`PersonaModel::todas([$pastoralId])`), que era la pregunta que obligaba a salir a Equipo
+pastoral y filtrar por pastoral a mano. Tres decisiones ahí:
+
+- **La lista no exige `personas.ver`**, solo el alcance sobre la pastoral que
+  `requireAlcancePastoral()` ya comprobó: saber quién está en tu propia pastoral es parte de
+  coordinarla, y esos nombres y cargos ya salen en el directorio público. Lo que sí exige
+  permiso (`personas.editar`) es el botón que lleva a la ficha, donde están el teléfono, el
+  correo y la fecha de nacimiento — por eso `PERMISOS_COORDINACION` sigue sin incluir
+  `personas.*` y esta pantalla no lo contradice.
+- **La pertenencia no se edita aquí**: el botón lleva a la ficha, que es su única fuente (el
+  checklist de pastorales de `personas`). Dos sitios para marcar lo mismo es como se acaba
+  con alguien en dos pastorales por descuido, que es el problema que
+  `PersonaModel::sincronizarPastorales()` existe para no tener.
+- **Una Comisión vacía se explica en vez de parecer un error.** Su gente suele estar marcada
+  en las pastorales que agrupa, no en ella, así que cuando no hay nadie y
+  `PastoralModel::tieneHijos()` dice que agrupa a otras, el mensaje lo dice. Es la misma
+  confusión que hace que una Comisión sin hijas sea indistinguible de una pastoral suelta.
+
 **Aparecer en el menú del panel (`pastorales.visible_en_menu`) es un paso deliberado, no
 automático al crear la pastoral.** El bloque "Pastorales y comisiones" de
 `modules/panel/views/index.php` (agrupado por Comisión, igual criterio de alcance y de
