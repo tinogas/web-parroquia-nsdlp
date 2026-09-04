@@ -691,6 +691,71 @@ a N por turno (una lectura puede repartirse entre dos personas).
 
 ---
 
+## Coros — un coro por misa dominical
+
+El cuarto módulo de pastoral dedicada, y el más pequeño: tres tablas, sin calendario de
+turnos. La asignación aquí no es un rol mensual sino permanente —el coro de las 12:00
+canta todos los domingos—, así que no hay nada que capturar semana a semana, y por lo
+mismo tampoco colores litúrgicos ni hoja imprimible. Actividades y documentos se
+administran desde el panel básico de la pastoral, no se duplican aquí.
+
+**Aquí sí hay una FK a `horarios`, y en los turnos no.** `mesc_turnos` y
+`proclamadores_turnos` la evitan a propósito porque cubren una *ocurrencia* concreta ("el
+domingo 3 de agosto") mientras `horarios` es *recurrencia semanal*, así que atarlos ahí no
+resolvería la fecha. Un coro es justamente la recurrencia: "los domingos a las 12:00" es
+exactamente la fila de `horarios` que ya existe. La FK es correcta aquí por el mismo motivo
+por el que allí no lo era.
+
+### `coros`
+
+`pastoral_id` (FK, `ON DELETE CASCADE`, `idx_cor_pastoral`), `horario_id`, `encargado_id`,
+`nota`, `activo`, `created_at`.
+
+**`horario_id` es `NOT NULL`, `UNIQUE` (`uq_cor_horario`) y `ON DELETE CASCADE`**, las tres
+cosas por la misma razón: el horario no es un atributo del coro sino su identidad entera.
+Un coro no guarda nombre —se llama con su misa, y `CoroController::etiquetaDeCoro()` lo
+compone a partir de la hora, el centro y la nota del horario («10:30 a. m. · Jesús el Señor
+(Misa para Niños)»)—, así que si esa misa cambia
+de hora el coro cambia de nombre solo, y si la misa se borra el coro deja de significar
+nada. `UNIQUE` impide que dos coros se disputen el mismo horario; el controlador comprueba
+además que sea una misa (`tipo = 'misa'`) de domingo (`dia_semana = 0`) y activa, que es lo
+que la restricción no puede mirar. Borrar la misa se lleva el coro y sus asignaciones,
+nunca a los coristas.
+
+**`encargado_id`** (FK a `coristas`, `ON DELETE SET NULL`) es una columna y no un
+`es_encargado` en el pivote porque el encargado es **uno**: una columna no puede tener dos
+valores, un flag repetido sí. Lo que la FK no puede exigir —que ese corista además cante
+en *este* coro— lo valida `CoroController::coroGuardar()` cruzándolo contra la lista que se
+está guardando, y `CoroModel::limpiarEncargadosHuerfanos()` lo devuelve a NULL si al
+integrante se le quita del coro que encabezaba: `ON DELETE SET NULL` solo cubre borrarlo
+del catálogo, no desasignarlo.
+
+### `coristas`
+
+Catálogo de quién canta, calcado de `proclamadores` menos las preferencias: `pastoral_id`
+(FK, `ON DELETE CASCADE`, `idx_cri_pastoral`), `persona_id` (FK a `personas`, `ON DELETE
+SET NULL`, `UNIQUE` — `uq_cri_persona`), `nombre`, `telefono`, `email`, `orden`, `activo`.
+Con persona elegida, nombre y contacto vienen de la ficha y `PersonaModel::
+sincronizarPersonal()` los mantiene al día —es la cuarta tabla que entra en ese método—;
+sin ella, los campos libres siguen funcionando para quien todavía no está en el equipo
+pastoral. La unicidad de `persona_id` es solo dentro de esta tabla, nunca cruzada con los
+otros catálogos: la misma persona puede ser corista y ministra de MESC a la vez.
+
+No se le añadió una columna de voz o instrumento. Nadie la ha pedido, y lo que hoy cumple
+esa función —"guitarra", en el `cargo` de la ficha del equipo pastoral— ya está escrito en
+un sitio; el precedente de `proclamadores.preferencias` está ahí si algún día hace falta.
+
+### `coro_coristas`
+
+Pivote `(coro_id, corista_id)`, con `idx_cco_corista` para la consulta inversa. Es N-M y no
+una columna `coro_id` en `coristas` porque quien canta en la de 9 suele cantar también en
+la de 12. Las dos direcciones se sincronizan borrando y reinsertando dentro de una
+transacción (`sincronizarCorosDeCorista()` y `sincronizarCoristasDeCoro()`), igual que
+`proclamadores_turno_proclamadores`, y las dos terminan pasando por
+`limpiarEncargadosHuerfanos()`.
+
+---
+
 ## Sacramentos
 
 ### `sacramentos`
@@ -892,6 +957,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
 | Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
+| Coros | `coros`, `coristas`, `coro_coristas`, más `horarios`, que no es suya sino de la parroquia: de ahí sale la identidad de cada coro |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `aviso_lecturas`, `eventos`, `mensajes_contacto`, `intentos_formulario` |

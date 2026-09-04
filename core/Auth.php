@@ -295,13 +295,14 @@ class Auth
     }
 
     /**
-     * ¿Administra la pastoral de este slug? Es la pregunta de los tres módulos
-     * dedicados —PASTORAL_MESC, PASTORAL_CATEQUESIS, PASTORAL_PROCLAMADORES—,
-     * que trabajan sobre una pastoral fija y no sobre la que se elija en pantalla.
+     * ¿Administra la pastoral de este slug? Es la pregunta de los módulos
+     * dedicados —PASTORAL_MESC, PASTORAL_CATEQUESIS, PASTORAL_PROCLAMADORES,
+     * PASTORAL_COROS—, que trabajan sobre una pastoral fija y no sobre la que
+     * se elija en pantalla.
      *
      * Existe porque el permiso ya no distingue: `mesc.*` lo llevan todos los
      * coordinadores desde que se retiraron los roles con la pastoral en el
-     * nombre, así que el menú dibujaría los tres módulos a cualquiera. El id se
+     * nombre, así que el menú los dibujaría todos a cualquiera. El id se
      * resuelve una vez por petición; no se cachea en sesión a propósito, porque
      * una pastoral renombrada o dada de alta debe surtir efecto sin volver a
      * entrar.

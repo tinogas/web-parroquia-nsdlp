@@ -21,6 +21,7 @@ $secciones = [
     ['mesc',          'MESC',               'bi-heart-pulse',        'mesc.ver'],
     ['catequesis',    'Catequesis',         'bi-book',               'catequesis.ver'],
     ['proclamadores',  'Proclamadores',      'bi-mic',                'proclamadores.ver'],
+    ['coros',         'Coros',              'bi-music-note-list',    'coros.ver'],
     ['sacramentos',   'Sacramentos',        null,                    'sacramentos.ver'],
     ['cursos',        'Cursos',             'bi-mortarboard',        'cursos.ver'],
     ['inscripciones', 'Inscripciones',      'bi-pencil-square',      'inscripciones.ver'],
@@ -34,12 +35,13 @@ $secciones = [
     ['auditoria',     'Auditoría',          'bi-journal-text',       'auditoria.ver'],
     ['respaldos',     'Respaldos',          'bi-database-fill-gear', 'respaldos.ver'],
 ];
-// Los tres módulos dedicados también exigen administrar la pastoral que les
+// Los cuatro módulos dedicados también exigen administrar la pastoral que les
 // corresponde, no solo llevar el permiso — ver el comentario de arriba.
 $pastoralPorModulo = [
     'mesc'          => PASTORAL_MESC,
     'catequesis'    => PASTORAL_CATEQUESIS,
     'proclamadores' => PASTORAL_PROCLAMADORES,
+    'coros'         => PASTORAL_COROS,
 ];
 $disponibles = array_values(array_filter(
     $secciones,

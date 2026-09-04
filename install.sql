@@ -971,6 +971,80 @@ CREATE TABLE IF NOT EXISTS proclamadores_turno_proclamadores (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- COROS — UN CORO POR MISA DOMINICAL
+-- ------------------------------------------------------------
+-- Cuarto módulo de pastoral dedicada, para la pastoral "Coros" (slug 'coros',
+-- hija de la Comisión Litúrgica). Es el más pequeño de los cuatro: no tiene
+-- calendario de turnos, porque aquí la asignación no es un rol mensual sino
+-- permanente —el coro de las 12:00 canta todos los domingos—, y por lo mismo
+-- tampoco colores litúrgicos ni hoja imprimible. Actividades y documentos se
+-- gestionan desde el panel básico de la pastoral, no se duplican aquí.
+--
+-- Por qué este módulo SÍ referencia `horarios` y los turnos no: `mesc_turnos`
+-- y `proclamadores_turnos` cubren una OCURRENCIA concreta ("el domingo 3 de
+-- agosto") y `horarios` es RECURRENCIA semanal, así que atarlos ahí no
+-- resolvería la fecha. Un coro es justamente la recurrencia: "la misa de las
+-- 12:00 del domingo" es exactamente la fila de `horarios` que ya existe. De
+-- ahí que el coro no tenga nombre propio —se nombra con su misa— y que
+-- uq_cor_horario impida que dos coros se disputen el mismo horario.
+-- Ver docs/migraciones/2026-09-04-coros.sql.
+
+-- Calca `proclamadores`: se elige del equipo pastoral, y los campos de texto
+-- libre son el respaldo para quien todavía no tiene ficha. `persona_id` es
+-- UNIQUE dentro de esta tabla y solo dentro de ella — la misma persona puede
+-- ser a la vez corista y ministra de MESC, como ya ocurre entre los otros
+-- catálogos.
+CREATE TABLE IF NOT EXISTS coristas (
+    id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED  NOT NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
+    nombre      VARCHAR(140)      NOT NULL,
+    telefono    VARCHAR(20)       NULL,
+    email       VARCHAR(150)      NULL,
+    orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    activo      TINYINT(1)        NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_cri_pastoral (pastoral_id),
+    UNIQUE KEY uq_cri_persona (persona_id),
+    CONSTRAINT fk_cri_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cri_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- `horario_id` es NOT NULL y CASCADE, no NULL con SET NULL: el horario no es un
+-- atributo del coro sino su identidad entera, y un coro sin misa no significa
+-- nada. Borrar la misa de las 12:00 se lleva su coro y las asignaciones, nunca
+-- a los coristas, que siguen cantando en las otras.
+--
+-- `encargado_id` es SET NULL: dar de baja a quien encabezaba el coro deja al
+-- coro sin encargado, no lo borra.
+CREATE TABLE IF NOT EXISTS coros (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    horario_id   TINYINT UNSIGNED  NOT NULL,
+    encargado_id SMALLINT UNSIGNED NULL,
+    nota         VARCHAR(160)      NULL,
+    activo       TINYINT(1)        NOT NULL DEFAULT 1,
+    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_cor_horario (horario_id),
+    KEY idx_cor_pastoral (pastoral_id),
+    CONSTRAINT fk_cor_pastoral  FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cor_horario   FOREIGN KEY (horario_id)   REFERENCES horarios(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_cor_encargado FOREIGN KEY (encargado_id) REFERENCES coristas(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Calca `proclamadores_turno_proclamadores`: llave compuesta y nada más, sin id
+-- propio ni columnas de la relación.
+CREATE TABLE IF NOT EXISTS coro_coristas (
+    coro_id    SMALLINT UNSIGNED NOT NULL,
+    corista_id SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (coro_id, corista_id),
+    KEY idx_cco_corista (corista_id),
+    CONSTRAINT fk_cco_coro    FOREIGN KEY (coro_id)    REFERENCES coros(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_cco_corista FOREIGN KEY (corista_id) REFERENCES coristas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SACRAMENTOS
 -- ------------------------------------------------------------
 
