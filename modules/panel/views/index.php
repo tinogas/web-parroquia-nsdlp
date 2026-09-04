@@ -91,10 +91,15 @@ $mesActual = $meses[(int) date('n') - 1];
             $ocultas    = count($pastorales) - count($visibles);
             ?>
             <div class="d-flex align-items-center gap-2">
+                <?php /* El día en una hoja de calendario en vez de "· día 18" al
+                         final del nombre: puesto delante, la columna de fechas se
+                         lee de un vistazo sin tener que rastrear cada línea hasta
+                         el final. La clase la dibuja assets/css/app.css. */ ?>
+                <span class="hoja-calendario"><span class="visually-hidden">día </span><?= (int) $persona['dia'] ?></span>
                 <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 32)) ?>"
                      class="rounded-circle" style="width:28px;height:28px;object-fit:cover" alt="">
                 <div class="small">
-                    <div><?= e($persona['nombre']) ?> <span class="text-muted">· día <?= (int) $persona['dia'] ?></span></div>
+                    <div><?= e($persona['nombre']) ?></div>
                     <?php if ($visibles): ?>
                     <div class="small text-muted" title="<?= e(implode(', ', $pastorales)) ?>">
                         <i class="bi bi-people me-1"></i><?= e(implode(', ', $visibles)) ?><?php

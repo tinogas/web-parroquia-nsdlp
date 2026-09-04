@@ -788,3 +788,65 @@ a.evento-linea:hover {
         font-size: 1rem;
     }
 }
+
+/* ---- Acento dorado ---- */
+/* `.text-dorado` se usaba en dos vistas del panel —el globo de "Cumpleaños del
+   mes" y el icono de cada pastoral en su panel— pero solo estaba definida en
+   publico.css, que el panel no carga: la clase no pintaba nada. Aquí queda,
+   sobre la variable que app.css ya declaraba. */
+.text-dorado {
+    color: var(--color-dorado) !important;
+}
+
+/* ---- Hoja de calendario ---- */
+/* El día de un cumpleaños dentro de una hoja de calendario arrancada, con la
+   banda encolada arriba, sus dos anillas y el número dentro.
+   Se dibuja con CSS y no con un icono de Bootstrap porque el número cambia en
+   cada fila: los iconos son una tipografía y no admiten texto dentro
+   —`bi-calendar-day` dibuja una hoja, pero vacía—. Tampoco se usa una imagen
+   por día: son 31 archivos para lo que aquí son doce líneas. */
+.hoja-calendario {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2.15rem;
+    padding-bottom: .18rem;
+    border: 1px solid #d7dbe0;
+    border-radius: .3rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(22, 35, 58, .08);
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-oscuro);
+    /* Cifras de ancho fijo: así el 1 y el 11 quedan igual de centrados. */
+    font-variant-numeric: tabular-nums;
+}
+
+.hoja-calendario::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: .52rem;
+    border-radius: .25rem .25rem 0 0;
+    background: var(--color-dorado);
+}
+
+/* Las dos anillas sobre la banda. */
+.hoja-calendario::after {
+    content: "";
+    position: absolute;
+    top: .15rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: .95rem;
+    height: .22rem;
+    background:
+        radial-gradient(circle, #fff 45%, transparent 47%) left  center / .22rem .22rem no-repeat,
+        radial-gradient(circle, #fff 45%, transparent 47%) right center / .22rem .22rem no-repeat;
+}
