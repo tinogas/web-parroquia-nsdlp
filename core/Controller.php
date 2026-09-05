@@ -483,13 +483,30 @@ class Controller
         return in_array($id, Auth::pastoralesPermitidas(), true) ? $id : null;
     }
 
+    /**
+     * El token vale mientras dure la sesión y NO se renueva en cada envío.
+     *
+     * Lo hacía, y era la causa de un «Token de seguridad inválido» que la
+     * parroquia se encontraba a diario: rotando por petición, cualquier página
+     * cargada antes del último POST se queda con un token muerto, así que se
+     * rompen las pestañas abiertas, el botón atrás y —lo peor— recargar la
+     * propia pantalla de error, porque el navegador reenvía el mismo POST con
+     * el mismo token gastado y vuelve a fallar por más veces que se recargue.
+     *
+     * Rotar por petición no añade protección real contra CSRF: lo que la da es
+     * que el atacante no pueda leer el token, y eso ya lo garantizan el mismo
+     * origen y la cookie `samesite=Strict`. Un token por sesión es la línea
+     * base que recomienda OWASP. Lo que sí importa es que el token cambie
+     * cuando cambia quién eres, y de eso se encarga Session::regenerar() —que
+     * ya se llama al iniciar sesión y al elegir perfil—, más Session::destruir()
+     * al salir, que se lleva la sesión entera.
+     */
     protected function validarCsrf(): void
     {
         if (!Session::validarCsrf($_POST['_csrf'] ?? '')) {
             http_response_code(403);
             exit('Token de seguridad inválido. Recarga la página e inténtalo de nuevo.');
         }
-        Session::renovarCsrf();
     }
 
     // ── Salida ──────────────────────────────────────────────────────────

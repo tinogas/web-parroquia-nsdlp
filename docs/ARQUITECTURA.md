@@ -14,7 +14,8 @@ De ahí vienen, sin cambios de fondo:
   `ATTR_EMULATE_PREPARES` desactivado.
 - Clase `Model` base con paginación y transacciones anidadas por contador.
 - Sesiones con cookie `httponly` y `samesite=Strict`, regeneración de identificador al
-  entrar, mensajes flash y token CSRF.
+  entrar, mensajes flash y token CSRF —que aquí dura lo que la sesión y no rota en cada
+  envío; ver "Seguridad"—.
 - Permisos por rol con notación `modulo.accion` y comodín `*`.
 - Subida de imágenes con validación de MIME real mediante `finfo`.
 - Bootstrap 5.3.3 por CDN, sin jQuery y sin DataTables.
@@ -2413,6 +2414,29 @@ El detalle de evento (`EventoPublicoController::datosEstructurados()`) arma tipo
 
 Además de lo heredado —CSRF en todo POST, sentencias preparadas, contraseñas con bcrypt de
 coste 12, escapado en cada eco— el proyecto añade:
+
+### El token CSRF dura lo que dura la sesión, y no rota en cada envío
+
+`Controller::validarCsrf()` llamaba a `Session::renovarCsrf()` después de cada POST válido.
+Parecía lo más estricto y resultó ser solo lo más frágil: con el token rotando por
+petición, **cualquier página cargada antes del último envío se queda con un token muerto**.
+Eso rompe tres cosas normales —dos pestañas abiertas del panel, el botón atrás, y volver a
+enviar un formulario tras un error— y una que es peor que las tres: **recargar la propia
+pantalla de «Token de seguridad inválido»**, porque el navegador reenvía el mismo POST con
+el mismo token ya gastado y vuelve a fallar por muchas veces que se recargue. Quien lo
+sufre no tiene forma de salir del bucle salvo volver a escribir la URL a mano, y desde
+fuera parece que el sitio está roto.
+
+Rotar por petición **no añade protección real contra CSRF**: lo que la da es que un tercero
+no pueda leer el token, y de eso se encargan el mismo origen y la cookie `samesite=Strict`.
+Un token por sesión es la línea base que recomienda OWASP, y es lo que hay ahora.
+
+Lo que sí importa es que el token cambie **cuando cambia quién eres**, para que uno obtenido
+antes de autenticarse no siga valiendo después. De eso se encarga `Session::regenerar()`,
+que ahora renueva el token además del identificador de sesión y que ya se llamaba en los
+dos momentos en que la identidad cambia —iniciar sesión y elegir perfil adicional—; al
+salir, `Session::destruir()` se lleva la sesión entera. Un token inventado o ausente se
+sigue rechazando con 403, comprobado.
 
 - **`uploads/.htaccess`** con `php_flag engine off` y denegación de `.php`, `.phtml` y
   `.phar`. Es la mitigación crítica: en el sistema de inventario los archivos los sube

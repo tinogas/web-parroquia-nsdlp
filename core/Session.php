@@ -81,10 +81,18 @@ class Session
         session_destroy();
     }
 
+    /**
+     * Identificador nuevo al cambiar de identidad, contra la fijación de
+     * sesión. Renueva también el token CSRF, y este es su único momento: desde
+     * que dejó de rotar en cada envío (ver Controller::validarCsrf()), el token
+     * vive lo que dure la sesión, así que uno obtenido antes de autenticarse
+     * seguiría valiendo después si no se cambiara aquí.
+     */
     public static function regenerar(): void
     {
         self::iniciar();
         session_regenerate_id(true);
+        self::renovarCsrf();
     }
 
     // ── Mensajes flash: se guardan y se recuperan una sola vez ──────────
