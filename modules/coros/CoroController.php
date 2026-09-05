@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/coros/CoroModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 /**
  * CoroController — Exclusivo de la pastoral "Coros": ninguna acción muestra ni
@@ -25,9 +26,21 @@ class CoroController extends Controller
 {
     private CoroModel $modelo;
 
+    /**
+     * El tablero de actividades y los documentos no son propios de este
+     * módulo: viven en `pastoral_tablero` y `pastoral_documentos`, tablas de
+     * cualquier pastoral que administra PastoralModel, y son las mismas filas
+     * que muestra el panel básico de la pastoral. Catequesis y Proclamadores
+     * entran por aquí igual que este módulo: la pantalla se repite en cada uno
+     * porque quien coordina Coros no administra Catequesis, pero la tabla es
+     * una sola.
+     */
+    private PastoralModel $pastorales;
+
     public function __construct()
     {
-        $this->modelo = new CoroModel();
+        $this->modelo     = new CoroModel();
+        $this->pastorales = new PastoralModel();
     }
 
     // ── Coros (portada del módulo) ───────────────────────────────────────
@@ -250,6 +263,196 @@ class CoroController extends Controller
         }
 
         $this->redirect(url_admin('coros', 'coristas'));
+    }
+
+    // ── Actividades (tablero con fechas) ─────────────────────────────────
+    // Sobre `pastoral_tablero`, compartida: son las mismas actividades que ve
+    // el panel básico de la pastoral, no una segunda lista.
+
+    public function actividades(): void
+    {
+        $this->requirePermiso('coros.ver');
+
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
+        $this->render('coros/actividades_lista', [
+            'titulo'      => 'Actividades',
+            'pastoralId'  => $pastoralId,
+            'actividades' => $this->pastorales->tablero($pastoralId),
+        ]);
+    }
+
+    public function actividadGuardar(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('coros', 'actividades'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $existente = $id ? $this->pastorales->entradaTablero($id) : null;
+        $this->requirePermiso($existente ? 'coros.editar' : 'coros.crear');
+
+        $pastoralId = $existente ? (int) $existente['pastoral_id'] : $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+        $this->requireAlcancePastoral($pastoralId);
+
+        $titulo      = $this->postStr('titulo');
+        $fechaInicio = $this->postStr('fecha_inicio');
+        $fechaFin    = $this->postStr('fecha_fin') ?: null;
+
+        if ($titulo === '' || $fechaInicio === '') {
+            Session::flash('error', 'La actividad necesita título y fecha de inicio.');
+            $this->redirect(url_admin('coros', 'actividades'));
+            return;
+        }
+        if ($fechaFin !== null && $fechaFin < $fechaInicio) {
+            Session::flash('error', 'La fecha de término no puede ser anterior a la de inicio.');
+            $this->redirect(url_admin('coros', 'actividades'));
+            return;
+        }
+
+        $datos = [
+            'pastoral_id'  => $pastoralId,
+            'titulo'       => $titulo,
+            'descripcion'  => trim(strip_tags((string) ($_POST['descripcion'] ?? ''))) ?: null,
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'publicado'    => $this->postBool('publicado'),
+            'orden'        => $this->postInt('orden'),
+        ];
+
+        if ($existente) {
+            $this->pastorales->actualizarEntradaTablero($id, $datos);
+            $this->auditoria('editar', 'pastoral_tablero', $id, $titulo);
+            Session::flash('success', 'Actividad actualizada.');
+        } else {
+            $id = $this->pastorales->crearEntradaTablero($datos, (int) Auth::usuario()['id']);
+            $this->auditoria('crear', 'pastoral_tablero', $id, $titulo);
+            Session::flash('success', 'Actividad agregada.');
+        }
+
+        $this->redirect(url_admin('coros', 'actividades'));
+    }
+
+    public function actividadEliminar(): void
+    {
+        $this->requirePermiso('coros.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('coros', 'actividades'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $actividad = $this->pastorales->entradaTablero($id);
+        if ($actividad) {
+            $this->requireAlcancePastoral((int) $actividad['pastoral_id']);
+            $this->pastorales->eliminarEntradaTablero($id);
+            $this->auditoria('eliminar', 'pastoral_tablero', $id, $actividad['titulo']);
+            Session::flash('success', 'Actividad eliminada.');
+        }
+
+        $this->redirect(url_admin('coros', 'actividades'));
+    }
+
+    // ── Documentos ───────────────────────────────────────────────────────
+    // Sobre `pastoral_documentos`, compartida — ver el comentario de
+    // $pastorales arriba. Solo alta y baja: para cambiar uno se sube otro.
+
+    public function documentos(): void
+    {
+        $this->requirePermiso('coros.ver');
+
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+
+        $this->render('coros/documentos_lista', [
+            'titulo'     => 'Documentos',
+            'pastoralId' => $pastoralId,
+            'documentos' => $this->pastorales->documentos($pastoralId),
+        ]);
+    }
+
+    public function documentoGuardar(): void
+    {
+        $this->requirePermiso('coros.crear');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('coros', 'documentos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $pastoralId = $this->pastoralIdOFallar();
+        if ($pastoralId === null) {
+            return;
+        }
+        $this->requireAlcancePastoral($pastoralId);
+
+        $titulo = $this->postStr('titulo');
+        if ($titulo === '') {
+            Session::flash('error', 'El documento necesita un título.');
+            $this->redirect(url_admin('coros', 'documentos'));
+            return;
+        }
+
+        try {
+            $archivo = Upload::documento('archivo', 'coros', 'documento');
+        } catch (RuntimeException $e) {
+            Session::flash('error', 'No se pudo subir el documento: ' . $e->getMessage());
+            $this->redirect(url_admin('coros', 'documentos'));
+            return;
+        }
+        if (!$archivo) {
+            Session::flash('error', 'Elige un archivo PDF para subir.');
+            $this->redirect(url_admin('coros', 'documentos'));
+            return;
+        }
+
+        $id = $this->pastorales->crearDocumento([
+            'pastoral_id' => $pastoralId,
+            'titulo'      => $titulo,
+            'archivo'     => $archivo,
+            'orden'       => $this->postInt('orden'),
+            'activo'      => 1,
+        ], (int) Auth::usuario()['id']);
+        $this->auditoria('crear', 'pastoral_documentos', $id, $titulo);
+        Session::flash('success', 'Documento agregado.');
+
+        $this->redirect(url_admin('coros', 'documentos'));
+    }
+
+    public function documentoEliminar(): void
+    {
+        $this->requirePermiso('coros.eliminar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('coros', 'documentos'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $id        = $this->postInt('id');
+        $documento = $this->pastorales->documentoPorId($id);
+        if ($documento) {
+            $this->requireAlcancePastoral((int) $documento['pastoral_id']);
+            Upload::borrar($documento['archivo']);
+            $this->pastorales->eliminarDocumento($id);
+            $this->auditoria('eliminar', 'pastoral_documentos', $id, $documento['titulo']);
+            Session::flash('success', 'Documento eliminado.');
+        }
+
+        $this->redirect(url_admin('coros', 'documentos'));
     }
 
     // ── Privados ─────────────────────────────────────────────────────────

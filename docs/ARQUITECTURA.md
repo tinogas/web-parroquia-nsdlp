@@ -1416,8 +1416,11 @@ sentido forzar sobre *todas* las pastorales.
 **Pero no todo lo que hay dentro de un módulo dedicado es propio de él.** Dos de sus
 pantallas —el tablero de actividades con fechas y los documentos descargables— no piden ni
 una columna que el sistema genérico no tenga, así que viven en `pastoral_tablero` y
-`pastoral_documentos`, las administra `PastoralModel`, y Catequesis y Proclamadores entran
-por ahí con una propiedad `private PastoralModel $pastorales` cada uno. Catequesis las tuvo
+`pastoral_documentos`, las administra `PastoralModel`, y Catequesis, Proclamadores y Coros
+entran por ahí con una propiedad `private PastoralModel $pastorales` cada uno. Repetir la
+pantalla en cada módulo es deliberado —quien coordina una pastoral trabaja dentro del suyo,
+y no tiene por qué saber que hay dos caminos al mismo sitio—; lo que no se repite es la
+tabla. Catequesis las tuvo
 un tiempo como tablas propias, `catequesis_actividades` y `catequesis_documentos`; cuando
 Proclamadores pidió esas mismas dos pantallas, copiarlas significaba copiar también las dos
 tablas, y con la plantilla de módulos que viene después cada módulo nuevo habría arrastrado
@@ -1610,7 +1613,7 @@ vinculen a mano desde el panel.
 ### Coros: el módulo dedicado más pequeño, y el único atado a `horarios`
 
 `modules/coros/` es el cuarto de esta familia y la prueba de que el patrón admite tamaños
-muy distintos: dos pantallas, tres tablas y ni una línea de calendario. Lo que la pastoral
+muy distintos: tres tablas propias y ni una línea de calendario. Lo que la pastoral
 necesitaba registrar era **quién canta en qué misa dominical y quién encabeza cada coro**,
 y eso no cabía en el sistema genérico —ni el panel básico de la pastoral ni el checklist
 de la ficha de `personas` tienen dónde guardar ninguna de las dos cosas—, que es
@@ -1678,12 +1681,23 @@ fila del mismo pivote vista desde sus dos extremos.
 
 **Lo que deliberadamente no tiene**, y no por falta de tiempo: calendario de turnos (la
 asignación es permanente, no hay nada que capturar cada semana), colores litúrgicos (son
-del turno de un día, y no hay turnos), hoja imprimible (ídem), y actividades y documentos
-—esas ya viven en `pastoral_tablero` y `pastoral_documentos`, y el panel básico de la
-pastoral las administra; copiar la pantalla otra vez es justo lo que se corrigió al sacar
-esas tablas de Catequesis—. Con dos pantallas, la barra para saltar entre ellas ya se sacó
-a `modules/coros/views/_nav.php` desde el primer día: Proclamadores llegó a cinco copias
-antes de hacerlo, y esa es la lección, no el número.
+del turno de un día, y no hay turnos) y hoja imprimible (ídem).
+
+**Actividades y documentos sí los tiene, y esa es una corrección.** El módulo nació sin
+ellos con el argumento de que `pastoral_tablero` y `pastoral_documentos` ya se administran
+desde el panel básico de la pastoral, así que repetir la pantalla sería duplicar. El
+argumento confundía dos cosas distintas: **duplicar la tabla** —que es lo que se corrigió al
+sacar esas dos de Catequesis— y **repetir la pantalla**, que es justamente lo que ya hacen
+Catequesis y Proclamadores sobre esas mismas filas, y por una razón: quien coordina una
+pastoral trabaja dentro de su módulo, y mandarla a otra sección a subir su cancionero es
+pedirle que sepa que existen dos caminos al mismo sitio. La tabla sigue siendo una sola —la
+pantalla de Documentos lo dice en su cabecera, igual que en Proclamadores—; lo que se repite
+son seis acciones que delegan en `PastoralModel`, sin una línea de SQL propia.
+
+Con cuatro pantallas, la barra para saltar entre ellas ya estaba en
+`modules/coros/views/_nav.php` desde el primer día, cuando eran dos: Proclamadores llegó a
+cinco copias del mismo bloque antes de sacarlo a un parcial, y esa es la lección, no el
+número. Aquí se notó el mismo día: pasar de dos pantallas a cuatro fue una línea.
 
 **Cuarto módulo, y por tanto la primera vez que se recorre entera la lista de puntos de
 registro** que la sección de Roles y permisos advierte: el menú lateral y las tarjetas del

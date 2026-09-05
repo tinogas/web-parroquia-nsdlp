@@ -696,8 +696,10 @@ a N por turno (una lectura puede repartirse entre dos personas).
 El cuarto módulo de pastoral dedicada, y el más pequeño: tres tablas, sin calendario de
 turnos. La asignación aquí no es un rol mensual sino permanente —el coro de las 12:00
 canta todos los domingos—, así que no hay nada que capturar semana a semana, y por lo
-mismo tampoco colores litúrgicos ni hoja imprimible. Actividades y documentos se
-administran desde el panel básico de la pastoral, no se duplican aquí.
+mismo tampoco colores litúrgicos ni hoja imprimible. Sí tiene las pantallas de
+actividades y documentos, pero sin tabla propia: escriben en `pastoral_tablero` y
+`pastoral_documentos` a través de `PastoralModel`, las mismas filas que ve el panel básico
+de la pastoral —igual que en Catequesis y Proclamadores—.
 
 **Aquí sí hay una FK a `horarios`, y en los turnos no.** `mesc_turnos` y
 `proclamadores_turnos` la evitan a propósito porque cubren una *ocurrencia* concreta ("el
@@ -978,7 +980,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
 | Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
-| Coros | `coros`, `coristas`, `coro_coristas`, más `horarios`, que no es suya sino de la parroquia: de ahí sale la identidad de cada coro |
+| Coros | `coros`, `coristas`, `coro_coristas`; más `horarios`, que no es suya sino de la parroquia —de ahí sale la identidad de cada coro—, y las compartidas `pastoral_tablero` y `pastoral_documentos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `aviso_lecturas`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
