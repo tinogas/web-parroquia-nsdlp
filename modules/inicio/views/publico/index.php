@@ -44,12 +44,20 @@
 <section class="mb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h2 class="h6 text-uppercase text-muted mb-3 text-center">Evangelio de hoy</h2>
+            <?php /* Las dos partes llevan su propia etiqueta, y son la misma
+                     etiqueta con el mismo aspecto: así el párroco escribe solo
+                     el texto y no tiene que abrir cada entrada poniendo
+                     "REFLEXIÓN" a mano dentro del contenido —que es como
+                     estaba, y dependía de que se acordara y lo formateara
+                     igual todos los días—. La fecha va debajo de la primera,
+                     que es la que encabeza la sección entera. */ ?>
+            <h2 class="h6 text-uppercase fw-bold text-muted mb-2 text-center">Evangelio</h2>
             <p class="text-center text-muted small text-capitalize"><?= e(fecha_con_dia($evangelioHoy['fecha'])) ?></p>
             <?php /* Contenido ya saneado con lista blanca al guardarse: se imprime sin escapar a propósito. */ ?>
             <div class="contenido-editorial"><?= $evangelioHoy['evangelio'] ?></div>
             <?php if (!empty($evangelioHoy['reflexion'])): ?>
             <hr>
+            <h3 class="h6 text-uppercase fw-bold text-muted mb-3 text-center">Reflexión</h3>
             <div class="contenido-editorial"><?= $evangelioHoy['reflexion'] ?></div>
             <?php endif; ?>
         </div>

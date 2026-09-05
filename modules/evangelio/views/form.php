@@ -38,7 +38,7 @@
                     $eh_nombre   = 'evangelio';
                     $eh_etiqueta = 'Evangelio';
                     $eh_valor    = $esNueva ? '' : (string) $entrada['evangelio'];
-                    $eh_ayuda    = 'Cita y texto del evangelio de hoy.';
+                    $eh_ayuda    = 'Cita y texto del evangelio de hoy. No hace falta encabezarlo: la portada pone la etiqueta «EVANGELIO» sola.';
                     require BASE_PATH . '/shared/views/parciales/editor_html.php';
                     ?>
 
@@ -46,7 +46,7 @@
                     $eh_nombre   = 'reflexion';
                     $eh_etiqueta = 'Reflexión';
                     $eh_valor    = $esNueva ? '' : (string) $entrada['reflexion'];
-                    $eh_ayuda    = 'Palabras del párroco sobre la lectura de hoy (opcional).';
+                    $eh_ayuda    = 'Palabras del párroco sobre la lectura de hoy (opcional). Tampoco hace falta escribir «REFLEXIÓN» arriba: la portada la pone sola, con el mismo aspecto que la del evangelio.';
                     require BASE_PATH . '/shared/views/parciales/editor_html.php';
                     ?>
 
