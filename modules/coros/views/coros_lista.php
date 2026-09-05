@@ -143,10 +143,19 @@ foreach ($horarios as $horario):
                                <?= in_array((int) $corista['id'], $suyos, true) ? 'checked' : '' ?>>
                         <label class="form-check-label small" for="cc<?= $coroId ?>_<?= (int) $corista['id'] ?>">
                             <?= e($corista['nombre']) ?>
+                            <?php $hace = trim((string) $corista['voz']
+                                . ($corista['voz'] && $corista['instrumento'] ? ' · ' : '')
+                                . (string) $corista['instrumento']); ?>
+                            <?php if ($hace !== ''): ?>
+                            <span class="text-muted">— <?= e($hace) ?></span>
+                            <?php endif; ?>
                         </label>
                     </div>
                     <?php endforeach; ?>
-                    <div class="form-text">Solo aparece quien está activo en el catálogo.</div>
+                    <div class="form-text">
+                        Solo aparece quien está activo en el catálogo; tras el guión, su voz y su
+                        instrumento, que es con lo que se reparte lo que se canta.
+                    </div>
                     <?php endif; ?>
                 </div>
 

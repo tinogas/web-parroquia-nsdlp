@@ -732,18 +732,39 @@ del catálogo, no desasignarlo.
 
 ### `coristas`
 
-Catálogo de quién canta, calcado de `proclamadores` menos las preferencias: `pastoral_id`
-(FK, `ON DELETE CASCADE`, `idx_cri_pastoral`), `persona_id` (FK a `personas`, `ON DELETE
-SET NULL`, `UNIQUE` — `uq_cri_persona`), `nombre`, `telefono`, `email`, `orden`, `activo`.
+Catálogo de quién canta, calcado de `proclamadores`: `pastoral_id` (FK, `ON DELETE
+CASCADE`, `idx_cri_pastoral`), `persona_id` (FK a `personas`, `ON DELETE SET NULL`,
+`UNIQUE` — `uq_cri_persona`), `nombre`, `telefono`, `email`, `voz`, `instrumento`, `orden`,
+`activo`.
 Con persona elegida, nombre y contacto vienen de la ficha y `PersonaModel::
 sincronizarPersonal()` los mantiene al día —es la cuarta tabla que entra en ese método—;
 sin ella, los campos libres siguen funcionando para quien todavía no está en el equipo
 pastoral. La unicidad de `persona_id` es solo dentro de esta tabla, nunca cruzada con los
 otros catálogos: la misma persona puede ser corista y ministra de MESC a la vez.
 
-No se le añadió una columna de voz o instrumento. Nadie la ha pedido, y lo que hoy cumple
-esa función —"guitarra", en el `cargo` de la ficha del equipo pastoral— ya está escrito en
-un sitio; el precedente de `proclamadores.preferencias` está ahí si algún día hace falta.
+**`voz` e `instrumento` son texto libre, al revés que
+`proclamadores.preferencias`, y a propósito.** Aquella es el precedente cercano y ahí una
+columna `SET` es lo correcto: monitor, lectura y salmo es un catálogo de tres valores
+cerrado, conocido de antemano y que no va a crecer. Ni la voz ni el instrumento son así. Un
+coro parroquial no siempre canta a cuatro voces —cerrar la columna en SATB deja fuera
+«barítono», «mezzo» y «segunda voz», que es como la gente se nombra a sí misma, y cerrarla
+en las seis deja fuera la siguiente—, y los instrumentos directamente no tienen lista:
+guitarra, teclado, bajo, cajón, violín, acordeón… y el que traiga el próximo que llegue.
+Cada uno nuevo sería una migración de la columna para guardar una palabra.
+
+El costo aceptado es que no se filtra ni se cuenta de forma fiable —«tenor», «Tenor» y
+«tenor 1» son tres cadenas distintas—, y nadie ha pedido filtrar por voz. Ninguna de las dos
+es obligatoria: hay quien canta sin tocar y quien toca sin cantar, y de la mayoría todavía
+no se ha preguntado. La cadena vacía se guarda como NULL: aquí «no se le ha preguntado» y
+«no hace ninguna» no se distinguen, y fingir que sí con dos valores distintos sería
+inventarse un matiz que nadie captura —justo lo contrario de lo que sí hace
+`proclamadores.preferencias`, donde la distinción existe—.
+
+**Y las dos son del módulo, no de la ficha.** `PersonaModel::sincronizarPersonal()` no las
+toca aunque haya `persona_id`: a diferencia del nombre, el teléfono y el correo, esto no
+está en el equipo pastoral ni tiene por qué estarlo. Es la segunda excepción de esa clase,
+junto al nombre corto de un ministro de MESC. Ver
+`docs/migraciones/2026-09-04-coros-voz-e-instrumento.sql`.
 
 ### `coro_coristas`
 

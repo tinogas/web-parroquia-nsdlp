@@ -994,6 +994,18 @@ CREATE TABLE IF NOT EXISTS proclamadores_turno_proclamadores (
 -- UNIQUE dentro de esta tabla y solo dentro de ella — la misma persona puede
 -- ser a la vez corista y ministra de MESC, como ya ocurre entre los otros
 -- catálogos.
+--
+-- `voz` e `instrumento` son texto libre y no una columna SET como
+-- `proclamadores.preferencias`, al revés que aquella y a propósito: las
+-- preferencias del proclamador son un catálogo de tres valores cerrado y que
+-- no va a crecer, mientras que un coro parroquial no siempre canta a cuatro
+-- voces —«barítono», «mezzo», «segunda voz»— y los instrumentos no tienen
+-- lista: cada uno nuevo sería una migración para guardar una palabra. El
+-- costo aceptado es que no se filtra ni se cuenta de forma fiable, y nadie lo
+-- ha pedido. Ninguna es obligatoria: hay quien canta sin tocar y quien toca
+-- sin cantar. No entran en PersonaModel::sincronizarPersonal(): esto no está
+-- en la ficha del equipo pastoral ni tiene por qué estarlo, es un dato propio
+-- del módulo. Ver docs/migraciones/2026-09-04-coros-voz-e-instrumento.sql.
 CREATE TABLE IF NOT EXISTS coristas (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     pastoral_id TINYINT UNSIGNED  NOT NULL,
@@ -1001,6 +1013,8 @@ CREATE TABLE IF NOT EXISTS coristas (
     nombre      VARCHAR(140)      NOT NULL,
     telefono    VARCHAR(20)       NULL,
     email       VARCHAR(150)      NULL,
+    voz         VARCHAR(60)       NULL,
+    instrumento VARCHAR(60)       NULL,
     orden       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo      TINYINT(1)        NOT NULL DEFAULT 1,
     PRIMARY KEY (id),

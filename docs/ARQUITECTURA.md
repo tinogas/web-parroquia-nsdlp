@@ -1652,6 +1652,23 @@ de 12?», cuya respuesta puede ser «nadie»— y sin sitio donde ofrecer el alt
 tampoco se sembró ningún coro en la migración: la pantalla los pide donde se echan
 en falta, que se explica solo.
 
+**La voz y el instrumento son texto libre, al revés que las preferencias de un
+proclamador.** `proclamadores.preferencias` es una columna `SET` porque monitor, lectura y
+salmo es un catálogo cerrado que no va a crecer; aquí se decidió lo contrario por el mismo
+razonamiento aplicado a un caso que no lo cumple. Un coro parroquial no siempre canta a
+cuatro voces —«barítono», «mezzo», «segunda voz»— y los instrumentos no tienen lista: cada
+uno nuevo sería una migración para guardar una palabra. Se pierde poder filtrar por voz,
+que nadie ha pedido, y se gana que la pastoral escriba lo que de verdad hace cada quien
+sin pedirle a nadie que toque el esquema. Es además lo que ya estaba escrito a mano en el
+`cargo` de la ficha de Horacio: «guitarra».
+
+Las dos se muestran **donde se decide**, no en una pantalla aparte: en el catálogo, y
+junto a cada nombre en el checklist con el que se arma un coro. Es el mismo criterio por
+el que las preferencias de un proclamador salen en el formulario de turno. Y ninguna de
+las dos entra en `PersonaModel::sincronizarPersonal()` aunque haya persona vinculada: son
+datos del módulo, no de la ficha del equipo pastoral —la segunda excepción de esa clase,
+junto al nombre corto de un ministro de MESC—.
+
 **Un integrante puede cantar en varias misas**, así que `coro_coristas` es un pivote N-M y
 no una columna en `coristas`. Se marca desde las dos pantallas —quiénes cantan en un coro,
 o en qué coros canta alguien— a propósito, a diferencia de la pertenencia a una pastoral,

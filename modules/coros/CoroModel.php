@@ -175,8 +175,8 @@ class CoroModel extends Model
     public function crearCorista(array $datos): int
     {
         $this->execute(
-            'INSERT INTO coristas (pastoral_id, persona_id, nombre, telefono, email, orden, activo)
-             VALUES (:pastoral, :persona, :nombre, :telefono, :email, :orden, :activo)',
+            'INSERT INTO coristas (pastoral_id, persona_id, nombre, telefono, email, voz, instrumento, orden, activo)
+             VALUES (:pastoral, :persona, :nombre, :telefono, :email, :voz, :instrumento, :orden, :activo)',
             $this->parametrosCorista($datos) + [':pastoral' => $datos['pastoral_id']]
         );
         return $this->lastInsertId();
@@ -187,7 +187,8 @@ class CoroModel extends Model
         return $this->execute(
             'UPDATE coristas
                 SET persona_id = :persona, nombre = :nombre, telefono = :telefono,
-                    email = :email, orden = :orden, activo = :activo
+                    email = :email, voz = :voz, instrumento = :instrumento,
+                    orden = :orden, activo = :activo
               WHERE id = :id',
             $this->parametrosCorista($datos) + [':id' => $id]
         );
@@ -198,16 +199,28 @@ class CoroModel extends Model
         return $this->execute('DELETE FROM coristas WHERE id = :id', [':id' => $id]);
     }
 
-    /** Sin :pastoral, por el mismo motivo que en actualizarCoro(). */
+    /**
+     * Sin :pastoral, por el mismo motivo que en actualizarCoro().
+     *
+     * `voz` e `instrumento` son texto libre —ver el comentario de la tabla en
+     * install.sql— y viajan tal cual, con la cadena vacía guardada como NULL:
+     * «no se le ha preguntado» y «no hace ninguna» no se distinguen aquí, y
+     * fingir que sí con dos valores distintos sería inventarse un matiz que
+     * nadie captura. A diferencia del nombre y el contacto, estas dos no las
+     * pisa PersonaModel::sincronizarPersonal(): no están en la ficha del
+     * equipo pastoral.
+     */
     private function parametrosCorista(array $datos): array
     {
         return [
-            ':persona'  => $datos['persona_id'],
-            ':nombre'   => $datos['nombre'],
-            ':telefono' => $datos['telefono'],
-            ':email'    => $datos['email'],
-            ':orden'    => $datos['orden'],
-            ':activo'   => $datos['activo'],
+            ':persona'     => $datos['persona_id'],
+            ':nombre'      => $datos['nombre'],
+            ':telefono'    => $datos['telefono'],
+            ':email'       => $datos['email'],
+            ':voz'         => $datos['voz'],
+            ':instrumento' => $datos['instrumento'],
+            ':orden'       => $datos['orden'],
+            ':activo'      => $datos['activo'],
         ];
     }
 

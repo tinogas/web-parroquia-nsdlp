@@ -199,12 +199,18 @@ class CoroController extends Controller
             return;
         }
 
+        // La voz y el instrumento sí son del módulo, no de la ficha: se leen del
+        // formulario incluso con persona vinculada, y sincronizarPersonal() no
+        // los toca. Texto libre —ver install.sql—, con la cadena vacía
+        // guardada como NULL.
         $datos = [
             'pastoral_id' => $pastoralId,
             'persona_id'  => $personaId,
             'nombre'      => $nombre,
             'telefono'    => $telefono,
             'email'       => $email,
+            'voz'         => $this->postStr('voz') ?: null,
+            'instrumento' => $this->postStr('instrumento') ?: null,
             'orden'       => $this->postInt('orden'),
             'activo'      => $this->postBool('activo'),
         ];

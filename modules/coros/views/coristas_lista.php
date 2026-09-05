@@ -18,8 +18,9 @@
                 <thead class="table-light">
                     <tr>
                         <th>Nombre</th>
+                        <th>Voz e instrumento</th>
                         <th>Canta en</th>
-                        <th class="d-none d-md-table-cell">Contacto</th>
+                        <th class="d-none d-lg-table-cell">Contacto</th>
                         <th>&nbsp;</th>
                     </tr>
                 </thead>
@@ -28,6 +29,22 @@
                 <?php $sus = $susCoros[(int) $corista['id']] ?? []; ?>
                     <tr class="<?= $corista['activo'] ? '' : 'text-muted' ?>">
                         <td><?= e($corista['nombre']) ?><?= $corista['activo'] ? '' : ' (inactivo)' ?></td>
+                        <td class="small">
+                            <?php if (!$corista['voz'] && !$corista['instrumento']): ?>
+                            <span class="text-muted">—</span>
+                            <?php else: ?>
+                            <?php if ($corista['voz']): ?>
+                            <span class="badge bg-light text-dark border fw-normal">
+                                <i class="bi bi-music-note me-1"></i><?= e($corista['voz']) ?>
+                            </span>
+                            <?php endif; ?>
+                            <?php if ($corista['instrumento']): ?>
+                            <span class="badge bg-light text-dark border fw-normal">
+                                <i class="bi bi-music-player me-1"></i><?= e($corista['instrumento']) ?>
+                            </span>
+                            <?php endif; ?>
+                            <?php endif; ?>
+                        </td>
                         <td class="small">
                             <?php if (!$sus): ?>
                             <span class="text-muted">—</span>
@@ -40,7 +57,7 @@
                             <?php endforeach; ?>
                             <?php endif; ?>
                         </td>
-                        <td class="d-none d-md-table-cell small">
+                        <td class="d-none d-lg-table-cell small">
                             <?= e(trim(($corista['telefono'] ?? '')
                                 . ($corista['telefono'] && $corista['email'] ? ' · ' : '')
                                 . ($corista['email'] ?? ''))) ?>
@@ -146,6 +163,30 @@ $dibujarModalCorista = static function (
                                value="<?= e($vacio ? '' : (string) $corista['email']) ?>" maxlength="150">
                     </div>
                     <?php endif; ?>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="voz<?= e($idModal) ?>">Voz</label>
+                            <input type="text" name="voz" id="voz<?= e($idModal) ?>"
+                                   class="form-control form-control-sm" maxlength="60"
+                                   value="<?= e($vacio ? '' : (string) $corista['voz']) ?>"
+                                   placeholder="Ej. soprano, tenor, segunda voz">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="ins<?= e($idModal) ?>">Instrumento</label>
+                            <input type="text" name="instrumento" id="ins<?= e($idModal) ?>"
+                                   class="form-control form-control-sm" maxlength="60"
+                                   value="<?= e($vacio ? '' : (string) $corista['instrumento']) ?>"
+                                   placeholder="Ej. guitarra, teclado">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text">
+                                Las dos son opcionales y de texto libre: hay quien canta sin tocar y quien
+                                toca sin cantar. A diferencia del nombre y el contacto, estas no vienen de
+                                la ficha del equipo pastoral.
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Canta en</label>
