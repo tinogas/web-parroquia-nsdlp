@@ -116,7 +116,7 @@ define('ROLES_CON_ALCANCE_PASTORAL', [
 ]);
 
 /**
- * Las tres pastorales que tienen módulo propio, por slug. El módulo resuelve
+ * Las cuatro pastorales que tienen módulo propio, por slug. El módulo resuelve
  * así cuál es la suya (MescModel::pastoralId() y sus gemelos) y el menú decide
  * con esto si dibuja el enlace: tener el permiso `mesc.*` no basta —lo llevan
  * todos los coordinadores—, hay que administrar esa pastoral en concreto.
@@ -132,6 +132,7 @@ define('ROLES_CON_ALCANCE_PASTORAL', [
 define('PASTORAL_MESC',          'ministro-extraordinario-de-la-sagrada-comunion');
 define('PASTORAL_CATEQUESIS',    'catecismo');
 define('PASTORAL_PROCLAMADORES', 'liturgia');
+define('PASTORAL_COROS',         'coros');
 
 /**
  * El reverso del mapa de arriba: slug de pastoral → módulo dedicado.
@@ -144,6 +145,7 @@ define('MODULO_POR_PASTORAL', [
     PASTORAL_MESC          => 'mesc',
     PASTORAL_CATEQUESIS    => 'catequesis',
     PASTORAL_PROCLAMADORES => 'proclamadores',
+    PASTORAL_COROS         => 'coros',
 ]);
 
 // ------------------------------------------------------------
@@ -169,6 +171,7 @@ define('PERMISOS_COORDINACION', [
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
     'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
     'proclamadores.ver', 'proclamadores.crear', 'proclamadores.editar', 'proclamadores.eliminar',
+    'coros.ver', 'coros.crear', 'coros.editar', 'coros.eliminar',
     'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.publicar',
 ]);
 
@@ -207,6 +210,7 @@ define('PERMISOS', [
         'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
         'catequesis.ver', 'catequesis.crear', 'catequesis.editar', 'catequesis.eliminar',
         'proclamadores.ver', 'proclamadores.crear', 'proclamadores.editar', 'proclamadores.eliminar',
+        'coros.ver', 'coros.crear', 'coros.editar', 'coros.eliminar',
         'sacramentos.ver', 'sacramentos.editar',
         'cursos.ver', 'cursos.crear', 'cursos.editar', 'cursos.eliminar', 'cursos.publicar',
     ],
@@ -230,8 +234,8 @@ define('PERMISOS', [
     // quien responde de lo que su pastoral comunica es ella misma; lo que
     // gobierna el alcance no es este permiso sino la pastoral asignada.
     //
-    // Los permisos de los tres módulos dedicados —mesc.*, catequesis.*,
-    // proclamadores.*— los llevan todos los coordinadores, y quien entra de verdad a
+    // Los permisos de los cuatro módulos dedicados —mesc.*, catequesis.*,
+    // proclamadores.*, coros.*— los llevan todos los coordinadores, y quien entra de verdad a
     // cada uno lo decide la pastoral asignada: el controlador comprueba
     // Auth::puedeSobrePastoral() con la pastoral del módulo, y el menú no
     // dibuja el enlace a quien no la administre (Auth::administraPastoral()).
@@ -270,6 +274,7 @@ define('PERMISOS', [
         'mesc.ver',
         'catequesis.ver',
         'proclamadores.ver',
+        'coros.ver',
     ],
 
     // Único rol, junto con el administrador, que ve datos personales.

@@ -13,8 +13,9 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
 - **Sedes, centros y pastorales con módulo propio**
   ([issue #3](https://github.com/tinogas/web-parroquia-nsdlp/issues/3)): catálogo de centros,
   pastorales ligadas a su sede, contenido y documentos propios de
-  cada pastoral, y tres módulos dedicados —MESC (visitas a enfermos, rutas y calendario de
-  turnos), Catequesis (catequistas, periodos y grado) y Proclamadores (turnos)—. El formulario de
+  cada pastoral, y cuatro módulos dedicados —MESC (visitas a enfermos, rutas y calendario de
+  turnos), Catequesis (catequistas, periodos y grado), Proclamadores (turnos) y Coros (un coro
+  por misa dominical, con su encargado y sus integrantes)—. El formulario de
   solicitud de sacramentos en línea se retiró por decisión del administrador: esa sección
   queda como información de requisitos.
 - **Respaldos con restauración desde el panel** e **impersonación** ("Usar como…"), los dos a

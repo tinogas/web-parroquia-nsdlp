@@ -59,6 +59,7 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
             ['mesc',          'MESC',          'bi-heart-pulse', 'mesc.ver',          PASTORAL_MESC],
             ['catequesis',    'Catequesis',    'bi-book',        'catequesis.ver',    PASTORAL_CATEQUESIS],
             ['proclamadores', 'Proclamadores', 'bi-mic',         'proclamadores.ver', PASTORAL_PROCLAMADORES],
+            ['coros',         'Coros',         'bi-music-note-list', 'coros.ver',     PASTORAL_COROS],
         ], static fn (array $m): bool => Auth::tienePermiso($m[3]) && Auth::administraPastoral($m[4])));
         ?>
         <?php if (Auth::tienePermiso('horarios.ver') || Auth::tienePermiso('centros.ver') || Auth::tienePermiso('personas.ver')

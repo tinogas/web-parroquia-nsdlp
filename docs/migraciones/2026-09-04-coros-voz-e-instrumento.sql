@@ -1,0 +1,46 @@
+-- ============================================================
+-- 2026-09-04 — Qué voz hace y qué toca cada quien en el coro
+-- ============================================================
+-- Continuación de docs/migraciones/2026-09-04-coros.sql, que creó el módulo.
+-- `coristas` nació con nombre y contacto y nada más; estas dos columnas son el
+-- dato con el que la coordinación arma un coro y reparte lo que se canta.
+--
+-- ── Texto libre, y no una columna SET como `proclamadores.preferencias` ────
+--
+-- El precedente cercano es esa columna, y aquí se decidió lo contrario a
+-- propósito. Aquel es un catálogo de tres valores cerrado, conocido de
+-- antemano y que no va a crecer: monitor, lectura y salmo es todo lo que hay
+-- que hacer al proclamar. Ni la voz ni el instrumento son así:
+--
+-- - Un coro parroquial no siempre canta a cuatro voces. Cerrar la columna en
+--   soprano/contralto/tenor/bajo deja fuera «barítono», «mezzo» y «segunda
+--   voz», que es como la gente se nombra a sí misma; y cerrarla en las seis
+--   deja fuera la siguiente.
+-- - Los instrumentos no tienen lista: guitarra, teclado, bajo, cajón, violín,
+--   flauta, acordeón… y el que traiga el próximo que llegue. Cada uno nuevo
+--   sería una migración de la columna para guardar una palabra.
+--
+-- El costo aceptado es que no se puede filtrar ni contar de forma fiable
+-- —«tenor», «Tenor» y «tenor 1» son tres cadenas distintas—, y nadie ha pedido
+-- filtrar por voz. Lo que sí se gana es que la pastoral escriba lo que de
+-- verdad hace cada quien sin pedirle a nadie que toque el esquema. Es además
+-- lo que hoy ya está escrito a mano en el `cargo` de la ficha de Horacio:
+-- «guitarra».
+--
+-- Las dos son NULL por omisión y ninguna es obligatoria: hay quien canta sin
+-- tocar y quien toca sin cantar, y de la mayoría todavía no se ha preguntado.
+--
+-- No entran en `PersonaModel::sincronizarPersonal()`: a diferencia del nombre,
+-- el teléfono y el correo, esto no está en la ficha del equipo pastoral ni
+-- tiene por qué estarlo. Es un dato propio del módulo, como el nombre corto de
+-- un ministro de MESC.
+--
+-- Aplicar con:
+--     C:\xampp\mysql\bin\mysql.exe -uroot parroquia_nsdlp < docs/migraciones/2026-09-04-coros-voz-e-instrumento.sql
+--
+-- Solo agrega dos columnas NULL a una tabla; no toca ni una fila existente.
+-- Aun así, respaldar antes.
+
+ALTER TABLE coristas
+    ADD COLUMN voz         VARCHAR(60) NULL AFTER email,
+    ADD COLUMN instrumento VARCHAR(60) NULL AFTER voz;

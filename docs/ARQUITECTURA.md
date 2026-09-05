@@ -14,7 +14,8 @@ De ahí vienen, sin cambios de fondo:
   `ATTR_EMULATE_PREPARES` desactivado.
 - Clase `Model` base con paginación y transacciones anidadas por contador.
 - Sesiones con cookie `httponly` y `samesite=Strict`, regeneración de identificador al
-  entrar, mensajes flash y token CSRF.
+  entrar, mensajes flash y token CSRF —que aquí dura lo que la sesión y no rota en cada
+  envío; ver "Seguridad"—.
 - Permisos por rol con notación `modulo.accion` y comodín `*`.
 - Subida de imágenes con validación de MIME real mediante `finfo`.
 - Bootstrap 5.3.3 por CDN, sin jQuery y sin DataTables.
@@ -72,13 +73,13 @@ whitelist de dos valores y `publico` por defecto.
 
 área admin     auth · panel · agenda · configuracion · bloques · paginas · evangelio
                personas · centros · organigrama · horarios · sacramentos
-               pastorales · mesc · catequesis · proclamadores
+               pastorales · mesc · catequesis · proclamadores · coros
                cursos · inscripciones · avisos · eventos · galeria · carrusel
                mensajes · usuarios · auditoria · respaldos
 ```
 
-Los tres módulos de pastoral dedicada —`mesc`, `catequesis`, `proclamadores`— aparecen **solo en
-la tabla de administración**: ninguno tiene controlador público, a diferencia de los demás
+Los cuatro módulos de pastoral dedicada —`mesc`, `catequesis`, `proclamadores`, `coros`—
+aparecen **solo en la tabla de administración**: ninguno tiene controlador público, a diferencia de los demás
 módulos de contenido. La razón está en su propia sección, más abajo.
 
 Flujo de `dispatch()`:
@@ -722,27 +723,29 @@ usuarios: el primero necesita **exactamente una** sede marcada y el segundo admi
 ninguna. Sin esa regla, un coordinador de sede al que se le olvidara marcarla acabaría
 mandando en las tres, que es justo el error que se quería evitar.
 
-**Los tres módulos dedicados se ofrecen por pastoral, no por permiso.** `mesc.*`,
-`catequesis.*` y `proclamadores.*` los lleva cualquier coordinador, así que mostrarían los tres a
-todo el mundo si solo se mirara el permiso; `Auth::administraPastoral(PASTORAL_MESC)` y sus
+**Los cuatro módulos dedicados se ofrecen por pastoral, no por permiso.** `mesc.*`,
+`catequesis.*`, `proclamadores.*` y `coros.*` los lleva cualquier coordinador, así que
+mostrarían los cuatro a todo el mundo si solo se mirara el permiso; `Auth::administraPastoral(PASTORAL_MESC)` y sus
 gemelas son las que deciden, y el controlador del módulo lo revalida con
-`puedeSobrePastoral()`. Los slugs de esas tres pastorales están en `config/app.php`
-(`PASTORAL_MESC`, `PASTORAL_CATEQUESIS`, `PASTORAL_PROCLAMADORES`) en vez de repetidos a
-mano en cada modelo.
+`puedeSobrePastoral()`. Los slugs de esas cuatro pastorales están en `config/app.php`
+(`PASTORAL_MESC`, `PASTORAL_CATEQUESIS`, `PASTORAL_PROCLAMADORES`, `PASTORAL_COROS`) en vez
+de repetidos a mano en cada modelo.
 
 Este cruce vive en **dos** sitios, no uno: el menú lateral
 (`shared/views/parciales/admin_sidebar.php`) y las tarjetas de acceso rápido del panel
 (`modules/panel/views/index.php`) —cada uno arma su propia lista de secciones y aplica el
-mismo `Auth::administraPastoral()` por su cuenta—. Los dos hay que revisarlos si algún día
-se agrega un cuarto módulo dedicado: un permiso nuevo sin este cruce en cualquiera de los
-dos vuelve a abrir el mismo hueco que dejaba ver la tarjeta de un módulo ajeno aunque el
-clic ya estuviera bien protegido.
+mismo `Auth::administraPastoral()` por su cuenta—. Los dos hay que revisarlos cada vez que
+se agrega un módulo dedicado: un permiso nuevo sin este cruce en cualquiera de los dos
+vuelve a abrir el mismo hueco que dejaba ver la tarjeta de un módulo ajeno aunque el clic
+ya estuviera bien protegido. Coros, el cuarto, fue la primera vez que se recorrió esta
+lista entera, y la advertencia resultó exacta: son dos sitios, no uno.
 
 **En el menú lateral son ya una sección propia, "Pastorales".** Estaban sueltos dentro de
 "Parroquia", entre el catálogo de pastorales y Sacramentos, y ahí no es su sitio: estos
 módulos no administran la parroquia entera sino una pastoral concreta, y van a ser varios.
 La sección nueva va después de "Parroquia" y antes de "Trámites", y quien no administre
-ninguna de esas pastorales no ve ni su encabezado. De paso, la lista dejó de ser tres
+ninguna de esas pastorales no ve ni su encabezado. Coros entró ahí añadiendo una línea al
+array, que era exactamente lo que este cambio perseguía. De paso, la lista dejó de ser tres
 variables `$verMesc`/`$verCatequesis`/`$verProclamadores` con sus tres bloques `if`
 repetidos y pasó a ser un array, `$modulosDePastoral`, con una entrada por módulo —módulo,
 etiqueta, icono, permiso y slug de pastoral— filtrada por el mismo `Auth::tienePermiso()`
@@ -1009,8 +1012,8 @@ revalida contra sus sedes reales.
 las pastorales, porque su función es que nadie aparte el mismo salón dos veces. Lo único que
 respeta el alcance es el lápiz de editar.
 
-**Los tres módulos dedicados —MESC, Catequesis, Proclamadores— siguen siendo por pastoral, sin
-sede.** Cada uno resuelve la suya por slug (`MescModel::pastoralId()`), así que los
+**Los módulos dedicados —MESC, Catequesis, Proclamadores, Coros— siguen siendo por pastoral,
+sin sede.** Cada uno resuelve la suya por slug (`MescModel::pastoralId()`), así que los
 catequistas, los periodos y los turnos son de la pastoral entera y los comparten las tres
 coordinadoras. Separarlos por sede exigiría que el catálogo de pastorales se desdoblara —una
 «Catequesis» por comunidad— y que esos módulos supieran elegir entre las hermanas; es un
@@ -1401,10 +1404,10 @@ parroquia ya distribuía en papel/imagen; se muestra como una alerta fija arriba
 cuadrícula en vez de guardarse como dato de turno, porque es una instrucción para todos
 los turnos, no de uno en particular.
 
-### MESC, Catequesis y Proclamadores: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
+### MESC, Catequesis, Proclamadores y Coros: un módulo por pastoral dedicada, siempre de una sola (revisión de módulos)
 
-Tres módulos, `modules/mesc/`, `modules/catequesis/` y `modules/proclamadores/`, comparten el
-mismo patrón: módulo propio y separado para una pastoral específica, sin controlador
+Cuatro módulos, `modules/mesc/`, `modules/catequesis/`, `modules/proclamadores/` y
+`modules/coros/`, comparten el mismo patrón: módulo propio y separado para una pastoral específica, sin controlador
 público, en vez de ampliar el sistema genérico de "contenido propio por pastoral"
 (`pastoral_actividades`/`pastoral_documentos`). La razón es la misma en los tres: cada
 uno necesita columnas y pantallas que ese sistema genérico no tiene y que no tendría
@@ -1413,8 +1416,11 @@ sentido forzar sobre *todas* las pastorales.
 **Pero no todo lo que hay dentro de un módulo dedicado es propio de él.** Dos de sus
 pantallas —el tablero de actividades con fechas y los documentos descargables— no piden ni
 una columna que el sistema genérico no tenga, así que viven en `pastoral_tablero` y
-`pastoral_documentos`, las administra `PastoralModel`, y Catequesis y Proclamadores entran
-por ahí con una propiedad `private PastoralModel $pastorales` cada uno. Catequesis las tuvo
+`pastoral_documentos`, las administra `PastoralModel`, y Catequesis, Proclamadores y Coros
+entran por ahí con una propiedad `private PastoralModel $pastorales` cada uno. Repetir la
+pantalla en cada módulo es deliberado —quien coordina una pastoral trabaja dentro del suyo,
+y no tiene por qué saber que hay dos caminos al mismo sitio—; lo que no se repite es la
+tabla. Catequesis las tuvo
 un tiempo como tablas propias, `catequesis_actividades` y `catequesis_documentos`; cuando
 Proclamadores pidió esas mismas dos pantallas, copiarlas significaba copiar también las dos
 tablas, y con la plantilla de módulos que viene después cada módulo nuevo habría arrastrado
@@ -1431,12 +1437,13 @@ estaban en ese modelo desde el issue #3 (`documentos()`, `documentosActivos()`,
 `documentoPorId()`, `crearDocumento()`, `eliminarDocumento()`) y no hizo falta escribir
 ninguno.
 
-**Los tres son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
-`CatequesisModel::pastoralId()` y `ProclamadoresModel::pastoralId()` resuelven su pastoral por
+**Los cuatro son de una sola pastoral, fija, sin selector.** `MescModel::pastoralId()`,
+`CatequesisModel::pastoralId()`, `ProclamadoresModel::pastoralId()` y
+`CoroModel::pastoralId()` resuelven su pastoral por
 `slug` (no por un id fijo en PHP: los id de pastorales se generan al crearlas desde el
 panel, no se siembran en `install.sql`), y `pastoralIdOFallar()` en su respectivo
 controlador corta el flujo con un mensaje claro si esa pastoral todavía no existe o el
-usuario no tiene alcance sobre ella. Ningún formulario de estos tres módulos acepta ni
+usuario no tiene alcance sobre ella. Ningún formulario de estos cuatro módulos acepta ni
 muestra otra pastoral.
 
 Esto no fue el diseño original de MESC: al ser el primer módulo de este tipo (issue #3),
@@ -1602,6 +1609,108 @@ eran inequívocas, aquí ninguna fila coincide por texto exacto contra `personas
 caso de Zulema se encontró por teléfono, no por nombre—, evidencia insuficiente para
 vincular sin que alguien lo confirme. Quedan con `persona_id NULL` hasta que se
 vinculen a mano desde el panel.
+
+### Coros: el módulo dedicado más pequeño, y el único atado a `horarios`
+
+`modules/coros/` es el cuarto de esta familia y la prueba de que el patrón admite tamaños
+muy distintos: tres tablas propias y ni una línea de calendario. Lo que la pastoral
+necesitaba registrar era **quién canta en qué misa dominical y quién encabeza cada coro**,
+y eso no cabía en el sistema genérico —ni el panel básico de la pastoral ni el checklist
+de la ficha de `personas` tienen dónde guardar ninguna de las dos cosas—, que es
+exactamente el criterio con el que se justifican MESC, Catequesis y Proclamadores.
+
+**Un coro no tiene nombre: es el de su misa.** `coros.horario_id` es `NOT NULL`, `UNIQUE`
+y `ON DELETE CASCADE` —las tres por lo mismo—, y el nombre visible lo compone
+`CoroController::etiquetaDeCoro()` con la hora, el centro y la nota del horario:
+«12:00 p. m. · Parroquia Nuestra Señora de la Paz», «10:30 a. m. · Jesús el Señor (Misa
+para Niños)» —sin la palabra «domingo», que en este módulo se sobreentiende en todas las
+filas—. Si esa misa
+cambia de hora, el coro cambia de nombre solo; si se borra, el coro deja de significar algo
+y se va con ella. La nota entra en la etiqueta porque es lo único que distingue dos misas
+del mismo lugar en la misma mañana.
+
+**Y aquí sí hay FK a `horarios`, justo lo que los turnos evitan.** `mesc_turnos` y
+`proclamadores_turnos` no la tienen a propósito —ver arriba— porque cubren una
+*ocurrencia* concreta y `horarios` es *recurrencia semanal*, así que atarlos ahí no
+resolvería la fecha. Un coro es justamente la recurrencia. La regla, entonces, no es
+«nunca referenciar `horarios`» sino «referenciarla cuando lo que se modela se repite cada
+semana», y este es el primer caso del sistema que cumple eso.
+
+**El encargado es uno de los suyos, y esa regla no la puede guardar el esquema.**
+`coros.encargado_id` es columna y no un `es_encargado` en el pivote porque el encargado es
+uno solo, y una columna no puede tener dos valores. Lo que la FK no alcanza a exigir —que
+esa persona además cante en *ese* coro— se comprueba en dos sitios que se complementan:
+`CoroController::coroGuardar()` la cruza contra la lista de integrantes que se está
+guardando y, si no está, guarda el coro sin encargado y lo dice; y
+`CoroModel::limpiarEncargadosHuerfanos()` corre después de **cada** sincronización —en las
+dos direcciones— y devuelve a NULL cualquier encargado que haya dejado de pertenecer. Sin
+lo segundo, quitar a alguien de un coro desde su propia ficha lo dejaría encabezando un
+coro en el que ya no canta: `ON DELETE SET NULL` cubre borrarlo del catálogo, no
+desasignarlo. Es una sola sentencia SQL en vez de calcular a mano qué coros quedaron
+afectados, para que ninguna ruta de código pueda olvidarse de un caso.
+
+**La portada se recorre por misa, no por coro.** `/admin/coros` lista las misas dominicales
+de `horarios` —hoy son seis— y, en cada una, o su coro o un botón de «Crear coro». Listar los coros
+existentes habría dejado invisible la pregunta que de verdad se hace —«¿quién canta en la
+de 12?», cuya respuesta puede ser «nadie»— y sin sitio donde ofrecer el alta. Por eso
+tampoco se sembró ningún coro en la migración: la pantalla los pide donde se echan
+en falta, que se explica solo.
+
+**La voz y el instrumento son texto libre, al revés que las preferencias de un
+proclamador.** `proclamadores.preferencias` es una columna `SET` porque monitor, lectura y
+salmo es un catálogo cerrado que no va a crecer; aquí se decidió lo contrario por el mismo
+razonamiento aplicado a un caso que no lo cumple. Un coro parroquial no siempre canta a
+cuatro voces —«barítono», «mezzo», «segunda voz»— y los instrumentos no tienen lista: cada
+uno nuevo sería una migración para guardar una palabra. Se pierde poder filtrar por voz,
+que nadie ha pedido, y se gana que la pastoral escriba lo que de verdad hace cada quien
+sin pedirle a nadie que toque el esquema. Es además lo que ya estaba escrito a mano en el
+`cargo` de la ficha de Horacio: «guitarra».
+
+Las dos se muestran **donde se decide**, no en una pantalla aparte: en el catálogo, y
+junto a cada nombre en el checklist con el que se arma un coro. Es el mismo criterio por
+el que las preferencias de un proclamador salen en el formulario de turno. Y ninguna de
+las dos entra en `PersonaModel::sincronizarPersonal()` aunque haya persona vinculada: son
+datos del módulo, no de la ficha del equipo pastoral —la segunda excepción de esa clase,
+junto al nombre corto de un ministro de MESC—.
+
+**Un integrante puede cantar en varias misas**, así que `coro_coristas` es un pivote N-M y
+no una columna en `coristas`. Se marca desde las dos pantallas —quiénes cantan en un coro,
+o en qué coros canta alguien— a propósito, a diferencia de la pertenencia a una pastoral,
+que tiene una sola fuente: aquí no hay dos tablas que puedan desincronizarse, es la misma
+fila del mismo pivote vista desde sus dos extremos.
+
+**Lo que deliberadamente no tiene**, y no por falta de tiempo: calendario de turnos (la
+asignación es permanente, no hay nada que capturar cada semana), colores litúrgicos (son
+del turno de un día, y no hay turnos) y hoja imprimible (ídem).
+
+**Actividades y documentos sí los tiene, y esa es una corrección.** El módulo nació sin
+ellos con el argumento de que `pastoral_tablero` y `pastoral_documentos` ya se administran
+desde el panel básico de la pastoral, así que repetir la pantalla sería duplicar. El
+argumento confundía dos cosas distintas: **duplicar la tabla** —que es lo que se corrigió al
+sacar esas dos de Catequesis— y **repetir la pantalla**, que es justamente lo que ya hacen
+Catequesis y Proclamadores sobre esas mismas filas, y por una razón: quien coordina una
+pastoral trabaja dentro de su módulo, y mandarla a otra sección a subir su cancionero es
+pedirle que sepa que existen dos caminos al mismo sitio. La tabla sigue siendo una sola —la
+pantalla de Documentos lo dice en su cabecera, igual que en Proclamadores—; lo que se repite
+son seis acciones que delegan en `PastoralModel`, sin una línea de SQL propia.
+
+Con cuatro pantallas, la barra para saltar entre ellas ya estaba en
+`modules/coros/views/_nav.php` desde el primer día, cuando eran dos: Proclamadores llegó a
+cinco copias del mismo bloque antes de sacarlo a un parcial, y esa es la lección, no el
+número. Aquí se notó el mismo día: pasar de dos pantallas a cuatro fue una línea.
+
+**Cuarto módulo, y por tanto la primera vez que se recorre entera la lista de puntos de
+registro** que la sección de Roles y permisos advierte: el menú lateral y las tarjetas del
+panel, **los dos**, con su cruce de `Auth::tienePermiso()` y `Auth::administraPastoral()`
+cada uno por su cuenta; `PASTORAL_COROS` y `MODULO_POR_PASTORAL` en `config/app.php`;
+`coros.*` en `PERMISOS_COORDINACION`, en `ROL_EDITOR` y solo `coros.ver` en `ROL_CONSULTA`;
+la ruta en `Router::$rutasAdmin`; y `PersonaModel::sincronizarPersonal()`, que pasó de tres
+tablas a cuatro. La advertencia resultó exacta: el mapa `$pastoralPorModulo` del panel es
+independiente del array del menú y hay que tocar los dos.
+
+Hoy nadie tiene la pastoral de Coros asignada en `usuarios_pastorales`, así que el módulo
+solo lo ven las cuentas de alcance global. Darle acceso a la pastoral es añadir esa fila
+desde Usuarios, no tocar código.
 
 ### Moderación
 
@@ -2319,6 +2428,29 @@ El detalle de evento (`EventoPublicoController::datosEstructurados()`) arma tipo
 
 Además de lo heredado —CSRF en todo POST, sentencias preparadas, contraseñas con bcrypt de
 coste 12, escapado en cada eco— el proyecto añade:
+
+### El token CSRF dura lo que dura la sesión, y no rota en cada envío
+
+`Controller::validarCsrf()` llamaba a `Session::renovarCsrf()` después de cada POST válido.
+Parecía lo más estricto y resultó ser solo lo más frágil: con el token rotando por
+petición, **cualquier página cargada antes del último envío se queda con un token muerto**.
+Eso rompe tres cosas normales —dos pestañas abiertas del panel, el botón atrás, y volver a
+enviar un formulario tras un error— y una que es peor que las tres: **recargar la propia
+pantalla de «Token de seguridad inválido»**, porque el navegador reenvía el mismo POST con
+el mismo token ya gastado y vuelve a fallar por muchas veces que se recargue. Quien lo
+sufre no tiene forma de salir del bucle salvo volver a escribir la URL a mano, y desde
+fuera parece que el sitio está roto.
+
+Rotar por petición **no añade protección real contra CSRF**: lo que la da es que un tercero
+no pueda leer el token, y de eso se encargan el mismo origen y la cookie `samesite=Strict`.
+Un token por sesión es la línea base que recomienda OWASP, y es lo que hay ahora.
+
+Lo que sí importa es que el token cambie **cuando cambia quién eres**, para que uno obtenido
+antes de autenticarse no siga valiendo después. De eso se encarga `Session::regenerar()`,
+que ahora renueva el token además del identificador de sesión y que ya se llamaba en los
+dos momentos en que la identidad cambia —iniciar sesión y elegir perfil adicional—; al
+salir, `Session::destruir()` se lleva la sesión entera. Un token inventado o ausente se
+sigue rechazando con 403, comprobado.
 
 - **`uploads/.htaccess`** con `php_flag engine off` y denegación de `.php`, `.phtml` y
   `.phar`. Es la mitigación crítica: en el sistema de inventario los archivos los sube

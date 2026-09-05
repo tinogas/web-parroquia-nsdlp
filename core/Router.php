@@ -51,6 +51,7 @@ class Router
         'mesc'          => ['clase' => 'MescController',          'archivo' => 'modules/mesc/MescController.php'],
         'catequesis'    => ['clase' => 'CatequesisController',    'archivo' => 'modules/catequesis/CatequesisController.php'],
         'proclamadores' => ['clase' => 'ProclamadoresController', 'archivo' => 'modules/proclamadores/ProclamadoresController.php'],
+        'coros'         => ['clase' => 'CoroController',          'archivo' => 'modules/coros/CoroController.php'],
         'sacramentos'   => ['clase' => 'SacramentoController',    'archivo' => 'modules/sacramentos/SacramentoController.php'],
         'cursos'        => ['clase' => 'CursoController',         'archivo' => 'modules/cursos/CursoController.php'],
         'inscripciones' => ['clase' => 'InscripcionCursoController', 'archivo' => 'modules/cursos/InscripcionCursoController.php'],
