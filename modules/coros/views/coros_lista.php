@@ -105,11 +105,17 @@
                         <td colspan="5" class="p-0 border-0">
                             <div class="collapse" id="integrantes<?= (int) $coro['id'] ?>">
                                 <div class="px-3 pb-3 pt-1">
+                                    <?php $encargadoId = (int) ($coro['encargado_id'] ?? 0); ?>
                                     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-1">
                                         <?php foreach ($misIntegrantes as $integrante): ?>
                                         <div class="col small">
-                                            <i class="bi bi-music-note text-muted me-1"></i>
+                                            <?php $esEncargado = $encargadoId === (int) $integrante['id']; ?>
+                                            <i class="bi <?= $esEncargado ? 'bi-star-fill text-dorado' : 'bi-music-note text-muted' ?> me-1"
+                                               title="<?= $esEncargado ? 'Encargado del coro' : 'Integrante' ?>"></i>
                                             <span class="<?= $integrante['activo'] ? '' : 'text-muted' ?>"><?= e($integrante['nombre']) ?></span>
+                                            <?php if ($esEncargado): ?>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis fw-normal">Encargado</span>
+                                            <?php endif; ?>
                                             <?php if (!$integrante['activo']): ?>
                                             <span class="badge bg-light text-dark border fw-normal">Inactivo</span>
                                             <?php endif; ?>
@@ -122,12 +128,6 @@
                                         </div>
                                         <?php endforeach; ?>
                                     </div>
-                                    <?php if ($coro['encargado_nombre']): ?>
-                                    <p class="small text-muted mb-0 mt-2">
-                                        <i class="bi bi-star-fill text-dorado me-1"></i>Encargado:
-                                        <?= e($coro['encargado_nombre']) ?>
-                                    </p>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>
