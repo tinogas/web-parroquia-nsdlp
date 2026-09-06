@@ -701,13 +701,26 @@ dentro del propio `<iframe>`, bajo el origen y la CSP de Facebook, no la del sit
 ROL_ADMIN               Todo, incluidos usuarios, configuración y auditoría.
 ROL_EDITOR              Todo el contenido del sitio; publica y modera.
                         Sin acceso a usuarios ni configuración.
-ROL_COORDINADOR         Su pastoral en UNA sede. Publica sus eventos y sus
-                        cursos; sus avisos y su galería quedan en borrador.
-ROL_COORDINADOR_GENERAL Lo mismo, en varias sedes o en todas. Además administra
-                        las cuentas Coordinador y Consulta de su propia pastoral.
+ROL_COORDINADOR         Su pastoral en UNA sede. Publica sus eventos, sus
+                        cursos y sus avisos (los dos escalones); su galería
+                        la sube, pero publicarla no le toca. NO edita la ficha
+                        de la pastoral.
+ROL_COORDINADOR_GENERAL Lo mismo, en varias sedes o en todas. Además edita la
+                        ficha de su pastoral y administra las cuentas
+                        Coordinador y Consulta de la misma.
 ROL_CONSULTA            Solo mira lo de su pastoral y su sede.
 ROL_SECRETARIA          Inscripciones y mensajes. No edita el sitio.
 ```
+
+**Lo mismo, dicho en el panel.** `ROLES_DESCRIPCION` (en `config/app.php`, junto a
+`ROLES_NOMBRES` y a un paso de la matriz) explica cada rol en una frase, y esa frase sale
+donde hace falta: debajo del selector de rol al dar de alta o editar una cuenta —cambia al
+cambiar de opción—, en el modal de perfiles adicionales, y al pasar el ratón sobre el rol en
+el listado de cuentas. Es texto para quien reparte accesos, no para quien lee código: dice qué
+puede hacer el rol, nunca sobre qué pastoral. Vive en el mismo archivo que la matriz a
+propósito, para que quien cambie lo que un rol puede hacer tenga delante la frase que lo
+explica; y viaja hasta la vista en el `data-descripcion` de cada `<option>`, de modo que
+agregar un rol no obligue a acordarse de una segunda lista en JavaScript.
 
 **El rol dice qué puede hacer; la pastoral y la sede asignadas, sobre qué.** Hubo seis roles
 con la pastoral en el nombre —`admin_mesc`, `consulta_catequesis`, `admin_lector`…— pensados
@@ -717,11 +730,21 @@ lo que las separa es la sede, no la función. Hoy «coordinadora de catequesis e
 Señor» es el rol Coordinador con Catecismo y esa sede, y el nombre bonito —su cargo real—
 vive en su ficha del equipo pastoral, que es donde ya estaba.
 
-Coordinador y Coordinador general **comparten la lista de permisos**, `PERMISOS_COORDINACION`,
-para que no puedan divergir por descuido; lo que los separa lo exige el formulario de
-usuarios: el primero necesita **exactamente una** sede marcada y el segundo admite varias o
-ninguna. Sin esa regla, un coordinador de sede al que se le olvidara marcarla acabaría
-mandando en las tres, que es justo el error que se quería evitar.
+Coordinador y Coordinador general **parten de la misma lista**, `PERMISOS_COORDINACION`, para
+que no puedan divergir por descuido: el general le suma lo suyo con un `array_merge` y ahí
+está, en una línea, todo lo que los separa —hoy, editar la ficha de su pastoral y administrar
+las cuentas de la misma—. Lo demás lo exige el formulario de usuarios: el primero necesita
+**exactamente una** sede marcada y el segundo admite varias o ninguna. Sin esa regla, un
+coordinador de sede al que se le olvidara marcarla acabaría mandando en las tres, que es justo
+el error que se quería evitar.
+
+**La ficha de la pastoral no la edita quien coordina una sola sede.** `pastorales.editar` salió
+de `PERMISOS_COORDINACION` a petición de la parroquia: esa ficha —el responsable, el correo, el
+horario de reunión, la descripción que se publica en el sitio— es de la pastoral entera, y
+quien coordina una comunidad no tiene por qué poder cambiar lo que se dice de todas. Sigue
+viendo el panel de su pastoral y trabajando en él (avisos, eventos, cursos, documentos,
+actividades y su módulo dedicado); lo único que desaparece para ese rol es el botón "Editar
+pastoral", que no se dibuja sin el permiso.
 
 **Los cuatro módulos dedicados se ofrecen por pastoral, no por permiso.** `mesc.*`,
 `catequesis.*`, `proclamadores.*` y `coros.*` los lleva cualquier coordinador, así que

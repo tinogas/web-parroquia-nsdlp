@@ -65,17 +65,32 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                         <?php endif; ?>
                         <div class="col-md-5">
                             <label for="rol" class="form-label fw-semibold">Rol</label>
+                            <?php /* Cada opción lleva encima lo que ese rol puede hacer
+                                     (ROLES_DESCRIPCION, en config/app.php, al lado de la matriz de
+                                     permisos que lo decide). Va en el propio <option> y no en un
+                                     bloque de JavaScript aparte para que el texto salga escapado
+                                     por el mismo camino que el resto de la página, y para que
+                                     agregar un rol no obligue a acordarse de un segundo sitio. */ ?>
                             <select name="rol" id="rol" class="form-select">
                                 <?php foreach ($rolesDisponibles as $valor => $etiqueta): ?>
                                 <option value="<?= e($valor) ?>"
+                                    data-descripcion="<?= e(ROLES_DESCRIPCION[$valor] ?? '') ?>"
                                     <?= (!$esNuevo && $cuenta['rol'] === $valor) ? 'selected' : '' ?>>
                                     <?= e($etiqueta) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
+                            <div class="form-text" id="descripcionRol">
+                                <?php
+                                $rolMostrado = $esNuevo
+                                    ? (string) array_key_first($rolesDisponibles)
+                                    : (string) $cuenta['rol'];
+                                ?>
+                                <?= e(ROLES_DESCRIPCION[$rolMostrado] ?? '') ?>
+                            </div>
                             <div class="form-text">
-                                Coordinador administra su pastoral en <strong>una</strong> sede; Coordinador
-                                general, en varias o en todas; Consulta solo mira.
+                                El rol dice <strong>qué</strong> puede hacer; la pastoral y la sede de abajo,
+                                <strong>sobre qué</strong>.
                             </div>
                         </div>
                     </div>
@@ -470,9 +485,13 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                     <label class="form-label small fw-semibold">Rol</label>
                     <select name="rol" id="perfilRol" class="form-select form-select-sm">
                         <?php foreach (ROLES_CON_ALCANCE_PASTORAL as $valorRol): ?>
-                        <option value="<?= e($valorRol) ?>"><?= e(ROLES_NOMBRES[$valorRol] ?? $valorRol) ?></option>
+                        <option value="<?= e($valorRol) ?>"
+                                data-descripcion="<?= e(ROLES_DESCRIPCION[$valorRol] ?? '') ?>">
+                            <?= e(ROLES_NOMBRES[$valorRol] ?? $valorRol) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
+                    <div class="form-text" id="descripcionPerfilRol"></div>
                 </div>
                 <div class="mb-2">
                     <label class="form-label small fw-semibold">Pastoral</label>
@@ -525,6 +544,30 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
 })();
 </script>
 <?php endif; ?>
+
+<script>
+/* Debajo de cada selector de rol, lo que ese rol puede hacer. El texto viaja en
+   el data-descripcion de cada opción, así que aquí no hay ninguna copia de la
+   lista de roles que pueda quedarse vieja. */
+(function () {
+    function enlazar(idSelect, idTexto) {
+        var select = document.getElementById(idSelect);
+        var texto  = document.getElementById(idTexto);
+        if (!select || !texto) { return; }
+
+        function pintar() {
+            var opcion = select.options[select.selectedIndex];
+            texto.textContent = opcion ? (opcion.dataset.descripcion || '') : '';
+        }
+
+        select.addEventListener('change', pintar);
+        pintar();
+    }
+
+    enlazar('rol', 'descripcionRol');
+    enlazar('perfilRol', 'descripcionPerfilRol');
+})();
+</script>
 
 <script>
 (function () {

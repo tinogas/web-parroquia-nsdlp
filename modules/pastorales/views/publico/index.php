@@ -20,6 +20,11 @@ $dibujarTarjeta = static function (array $pastoral): void {
                 <div class="card-body p-4">
                     <div class="fs-2 text-dorado mb-2"><i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?>"></i></div>
                     <h3 class="h6 fw-bold mb-2 text-body"><?= e($pastoral['nombre']) ?></h3>
+                    <?php if ($pastoral['responsable_nombre']): ?>
+                    <p class="small text-secondary mb-1">
+                        <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-people' : 'bi-person' ?> me-1"></i><?= e($pastoral['responsable_nombre']) ?>
+                    </p>
+                    <?php endif; ?>
                     <?php if ($pastoral['descripcion_corta']): ?>
                     <p class="small text-muted mb-0"><?= e($pastoral['descripcion_corta']) ?></p>
                     <?php endif; ?>
@@ -39,6 +44,15 @@ $dibujarTarjeta = static function (array $pastoral): void {
             <?= e($grupo['padre']['nombre']) ?>
         </a>
     </h2>
+    <?php /* Quién coordina la Comisión, debajo de su nombre. Nombre y nada más: el
+             correo y el teléfono siguen en la ficha de cada pastoral, que es donde
+             tiene sentido escribirle a alguien. Dos siluetas si la coordina un
+             matrimonio —JECSA, Raíces, Matrimonios y AMA—, una si es una persona. */ ?>
+    <?php if ($grupo['padre']['responsable_nombre']): ?>
+    <p class="text-secondary small mb-2">
+        <i class="bi <?= $grupo['padre']['responsable_pareja_id'] ? 'bi-people' : 'bi-person' ?> me-1"></i><?= e($grupo['padre']['responsable_nombre']) ?>
+    </p>
+    <?php endif; ?>
     <?php if ($grupo['padre']['descripcion_corta']): ?>
     <p class="text-muted small mb-3"><?= e($grupo['padre']['descripcion_corta']) ?></p>
     <?php endif; ?>
