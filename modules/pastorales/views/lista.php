@@ -90,9 +90,21 @@ $dibujarTarjeta = static function (array $pastoral): void {
 <?php foreach ($comisiones as $grupo): ?>
 <div class="mb-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
+        <?php /* La Comisión también tiene quien la coordina, y hasta ahora solo se veía
+                 abriendo su ficha: en el encabezado se lee de corrido "Litúrgica ·
+                 Martha Aimeé", que es como se nombra en la parroquia. Corazón si son una
+                 pareja y silueta si es una persona, los mismos iconos que las tarjetas de
+                 abajo. Sin responsable no se escribe nada. */ ?>
         <h2 class="h6 fw-bold text-uppercase text-muted mb-0">
             <i class="bi <?= e($grupo['padre']['icono'] ?: 'bi-people') ?> me-1"></i>
             <?= e($grupo['padre']['nombre']) ?>
+            <?php if ($grupo['padre']['responsable_nombre']): ?>
+            <span class="fw-normal text-body-tertiary text-capitalize ms-1">
+                ·
+                <i class="bi <?= $grupo['padre']['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?>"></i>
+                <?= e($grupo['padre']['responsable_nombre']) ?>
+            </span>
+            <?php endif; ?>
         </h2>
         <a href="<?= e(url_admin('pastorales', 'editar', ['id' => $grupo['padre']['id']])) ?>"
            class="btn btn-sm btn-outline-secondary">
