@@ -183,6 +183,7 @@ pedidos después, cada uno con su origen; todos están implementados y probados 
 | Jerarquía de pastorales y menú dinámico | Las pastorales se agrupan en Comisiones (Litúrgica, Profética...); cada pastoral gana un panel básico con acceso ya filtrado a avisos, eventos, cursos y documentos, sin necesitar un módulo dedicado; publicarla en el menú es un paso aparte, exclusivo del Administrador y con confirmación de contraseña | Uso real del panel |
 | Publicación en dos escalones | Avisos y cursos ganan un peldaño intermedio entre borrador y sitio público: publicado hacia dentro, visible a la pastoral (y a sus hijas si es una Comisión) desde el panel de inicio, marcado como nuevo hasta que se revisa | Uso real del panel |
 | Evangelio del día | El párroco publica la lectura del día y su reflexión, cada una por separado, con un único estado de publicación; se muestra en la portada solo mientras es el día de hoy | Petición del párroco |
+| Parejas dentro de una pastoral | Matrimonios y AMA ligan de dos en dos a sus integrantes, desde el panel de la pastoral. Emparejar es opcional: quien participa solo se queda como está. Qué pastoral se organiza así es una casilla de su formulario, no una lista en el código | Petición de la parroquia |
 
 El detalle de cada decisión —y de los errores que estos bloques encontraron en el código de
 la fase 1— está en [`ARQUITECTURA.md`](ARQUITECTURA.md).

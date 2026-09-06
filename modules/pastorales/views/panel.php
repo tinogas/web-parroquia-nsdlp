@@ -180,6 +180,11 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                             <i class="bi bi-star-fill me-1"></i>Coordina <?= e($persona['pastorales_coordina']) ?>
                         </div>
                         <?php endif; ?>
+                        <?php if (!empty($parejaDe[(int) $persona['id']])): ?>
+                        <div class="small text-muted">
+                            <i class="bi bi-heart-fill text-danger me-1"></i>Con <?= e($parejaDe[(int) $persona['id']]) ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php if ($puedeEditarPersonas): ?>
@@ -199,6 +204,120 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
         <?php endif; ?>
     </div>
 </div>
+
+<?php
+/* Parejas, solo si la pastoral se organiza así (la casilla de su formulario).
+   Matrimonios y AMA trabajan con parejas y hasta ahora el sistema sabía que
+   los dos estaban en la pastoral, no que estaban el uno con el otro.
+
+   Emparejar no es obligatorio ni el estado "normal": quien participa solo
+   aparece abajo sin advertencia ni marca de registro incompleto. Y ligar no da
+   de alta a nadie —los dos tienen que estar ya en la pastoral, marcados desde
+   su ficha—, por eso el selector solo ofrece a quienes pertenecen y todavía no
+   tienen pareja aquí. */
+?>
+<?php if ($organizaParejas): ?>
+<?php
+$sinPareja = array_values(array_filter(
+    $personas,
+    static fn (array $p): bool => !isset($parejaDe[(int) $p['id']])
+));
+?>
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body p-4">
+        <h2 class="h6 fw-bold mb-3">
+            Parejas
+            <?php if ($parejas): ?>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal"><?= count($parejas) ?></span>
+            <?php endif; ?>
+        </h2>
+
+        <?php if (!$personas): ?>
+        <p class="text-muted small mb-0">
+            Primero hay que marcar quién pertenece a esta pastoral, desde la ficha de cada persona
+            en <strong>Equipo pastoral</strong>. Después se pueden formar las parejas.
+        </p>
+        <?php else: ?>
+
+        <?php if (!$parejas): ?>
+        <p class="text-muted small mb-3">Todavía no hay ninguna pareja formada.</p>
+        <?php else: ?>
+        <ul class="list-group list-group-flush mb-3">
+            <?php foreach ($parejas as $pareja): ?>
+            <li class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2 px-0">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="<?= e(foto_o_avatar($pareja['foto_a'], $pareja['nombre_a'], 40)) ?>"
+                         class="rounded-circle" style="width:32px;height:32px;object-fit:cover" alt="">
+                    <span class="fw-semibold <?= $pareja['activo_a'] ? '' : 'text-muted' ?>"><?= e($pareja['nombre_a']) ?></span>
+                    <i class="bi bi-heart-fill text-danger small"></i>
+                    <img src="<?= e(foto_o_avatar($pareja['foto_b'], $pareja['nombre_b'], 40)) ?>"
+                         class="rounded-circle" style="width:32px;height:32px;object-fit:cover" alt="">
+                    <span class="fw-semibold <?= $pareja['activo_b'] ? '' : 'text-muted' ?>"><?= e($pareja['nombre_b']) ?></span>
+                </div>
+                <?php if ($puedeEditar): ?>
+                <form method="POST" accept-charset="UTF-8"
+                      action="<?= e(url_post('admin', 'pastorales', 'parejaEliminar')) ?>" class="m-0"
+                      onsubmit="return confirm('¿Deshacer esta pareja? Los dos siguen en la pastoral, por separado.');">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="id" value="<?= (int) $pareja['id'] ?>">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Deshacer la pareja">
+                        <i class="bi bi-heartbreak"></i>
+                    </button>
+                </form>
+                <?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
+
+        <?php if ($puedeEditar && count($sinPareja) >= 2): ?>
+        <form method="POST" accept-charset="UTF-8"
+              action="<?= e(url_post('admin', 'pastorales', 'parejaGuardar')) ?>"
+              class="row g-2 align-items-end">
+            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+            <input type="hidden" name="pastoral_id" value="<?= (int) $pastoral['id'] ?>">
+            <div class="col-md-5">
+                <label for="persona_a_id" class="form-label fw-semibold small mb-1">Quién</label>
+                <select name="persona_a_id" id="persona_a_id" class="form-select form-select-sm" required>
+                    <option value="">Elegir…</option>
+                    <?php foreach ($sinPareja as $persona): ?>
+                    <option value="<?= (int) $persona['id'] ?>">
+                        <?= e($persona['nombre']) ?><?= $persona['activo'] ? '' : ' (inactivo)' ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="persona_b_id" class="form-label fw-semibold small mb-1">Con quién</label>
+                <select name="persona_b_id" id="persona_b_id" class="form-select form-select-sm" required>
+                    <option value="">Elegir…</option>
+                    <?php foreach ($sinPareja as $persona): ?>
+                    <option value="<?= (int) $persona['id'] ?>">
+                        <?= e($persona['nombre']) ?><?= $persona['activo'] ? '' : ' (inactivo)' ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-link-45deg me-1"></i>Ligar
+                </button>
+            </div>
+        </form>
+        <?php elseif ($puedeEditar && count($sinPareja) === 1): ?>
+        <p class="form-text mb-0">
+            Queda una sola persona sin pareja (<?= e($sinPareja[0]['nombre']) ?>): hacen falta dos para formar una.
+        </p>
+        <?php endif; ?>
+
+        <p class="form-text mb-0 mt-3">
+            Nadie tiene que estar en pareja: quien participa por su cuenta se queda como está.
+        </p>
+
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="modal fade" id="documentoNuevo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

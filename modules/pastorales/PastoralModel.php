@@ -64,12 +64,12 @@ class PastoralModel extends Model
                 (centro_id, pastoral_padre_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
                  responsable_nombre, responsable_persona_id,
                  contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
-                 acepta_voluntarios, orden, activa)
+                 acepta_voluntarios, organiza_parejas, orden, activa)
              VALUES
                 (:centro, :padre, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
                  :responsable, :responsablePersona,
                  :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
-                 :voluntarios, :orden, :activa)',
+                 :voluntarios, :parejas, :orden, :activa)',
             $this->parametros($datos)
         );
         return $this->lastInsertId();
@@ -86,7 +86,8 @@ class PastoralModel extends Model
                     contacto_email = :email,
                     contacto_telefono = :telefono, dia_reunion = :diaReunion,
                     hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
-                    acepta_voluntarios = :voluntarios, orden = :orden, activa = :activa
+                    acepta_voluntarios = :voluntarios, organiza_parejas = :parejas,
+                    orden = :orden, activa = :activa
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -504,6 +505,75 @@ class PastoralModel extends Model
         return $this->execute('DELETE FROM pastoral_documentos WHERE id = :id', [':id' => $id]);
     }
 
+    // ── Parejas dentro de la pastoral ───────────────────────────────────
+    // Solo para las que se organizan así (pastorales.organiza_parejas):
+    // Matrimonios y AMA trabajan con parejas, no con personas sueltas. La
+    // pertenencia sigue viniendo de persona_pastorales —esto no da de alta a
+    // nadie, solo liga a dos que ya están—, y nadie está obligado a tener
+    // pareja. El porqué de la tabla, en
+    // docs/migraciones/2026-09-05-parejas-por-pastoral.sql
+
+    /** Las parejas de la pastoral, cada una con el nombre y la foto de los dos. */
+    public function parejas(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            'SELECT pj.id, pj.persona_a_id, pj.persona_b_id,
+                    a.nombre AS nombre_a, a.foto AS foto_a, a.activo AS activo_a,
+                    b.nombre AS nombre_b, b.foto AS foto_b, b.activo AS activo_b
+               FROM pastoral_parejas pj
+               JOIN personas a ON a.id = pj.persona_a_id
+               JOIN personas b ON b.id = pj.persona_b_id
+              WHERE pj.pastoral_id = :id
+              ORDER BY a.nombre, b.nombre',
+            [':id' => $pastoralId]
+        );
+    }
+
+    public function parejaPorId(int $id): ?array
+    {
+        return $this->fetchOne('SELECT * FROM pastoral_parejas WHERE id = :id', [':id' => $id]);
+    }
+
+    /**
+     * La pareja en la que esa persona ya está dentro de la pastoral, si la hay.
+     * Mira las dos columnas porque el orden lo decide el id, no quién se eligió
+     * primero en el formulario: es la comprobación que ninguna clave de la
+     * tabla puede hacer, y sin ella alguien acabaría emparejado dos veces.
+     */
+    public function personaEmparejada(int $pastoralId, int $personaId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT * FROM pastoral_parejas
+              WHERE pastoral_id = :pastoral
+                AND (persona_a_id = :personaA OR persona_b_id = :personaB)',
+            // Dos marcadores para la misma persona, y no uno repetido: la
+            // conexión va con PDO::ATTR_EMULATE_PREPARES en false (ver
+            // config/database.php) y ahí un :nombre solo puede aparecer una vez.
+            [':pastoral' => $pastoralId, ':personaA' => $personaId, ':personaB' => $personaId]
+        );
+    }
+
+    public function crearPareja(int $pastoralId, int $personaA, int $personaB): int
+    {
+        // Siempre el id menor primero, para que "él con ella" y "ella con él"
+        // no puedan ser dos filas distintas.
+        $this->execute(
+            'INSERT INTO pastoral_parejas (pastoral_id, persona_a_id, persona_b_id)
+             VALUES (:pastoral, :a, :b)',
+            [
+                ':pastoral' => $pastoralId,
+                ':a'        => min($personaA, $personaB),
+                ':b'        => max($personaA, $personaB),
+            ]
+        );
+        return $this->lastInsertId();
+    }
+
+    public function eliminarPareja(int $id): int
+    {
+        return $this->execute('DELETE FROM pastoral_parejas WHERE id = :id', [':id' => $id]);
+    }
+
     private function parametros(array $datos): array
     {
         return [
@@ -523,6 +593,7 @@ class PastoralModel extends Model
             ':horaReunion' => $datos['hora_reunion'],
             ':lugarReunion'=> $datos['lugar_reunion'],
             ':voluntarios' => $datos['acepta_voluntarios'],
+            ':parejas'     => $datos['organiza_parejas'],
             ':orden'       => $datos['orden'],
             ':activa'      => $datos['activa'],
         ];

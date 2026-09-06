@@ -1181,6 +1181,45 @@ desactivado): confirmar con contraseña es la única fricción entre un clic y p
 pastoral y sus documentos/actividades para siempre (avisos, eventos y cursos sobreviven
 como contenido general, por `ON DELETE SET NULL`).
 
+### Parejas dentro de una pastoral: Matrimonios y AMA
+
+Matrimonios y AMA no trabajan con personas sueltas: trabajan con parejas. El sistema sabía
+que él y ella estaban los dos en la pastoral, pero no que estaban el uno con el otro, y eso
+es justo lo que esas dos pastorales necesitan para convocar, repartir y llevar cuenta de su
+gente. `pastoral_parejas` guarda esa liga —solo la liga: ni fecha de matrimonio ni notas, se
+pidió el vínculo y nada más, y añadirle columnas después no obliga a rehacer nada de esto—.
+
+**Una fila es una pareja.** La alternativa era una columna `pareja_persona_id` en
+`persona_pastorales`, y se descartó porque obliga a escribir el mismo hecho dos veces —la
+fila de cada uno apuntando al otro— y basta con que una quede sin actualizar para que la
+base diga que él está con ella y ella con nadie. Con una fila, la pareja existe o no
+existe. El id menor va siempre en `persona_a_id`, así que "él con ella" y "ella con él"
+tampoco pueden ser dos filas distintas.
+
+**La liga es de la pastoral, no de la ficha.** El mismo matrimonio puede estar en
+Matrimonios y no en AMA, y a la Pastoral de la Salud ir solo uno de los dos; por eso cuelga
+de `pastoral_id`, igual que la pertenencia en `persona_pastorales`, y `personas` no cambió.
+Quien deja la pastoral pierde ahí su pareja y conserva su ficha intacta.
+
+**Emparejar no es obligatorio, y no emparejar no es un registro a medias.** En las dos
+pastorales hay quien participa sin su cónyuge, así que quien no tiene pareja aparece en la
+lista de integrantes como cualquier otro, sin advertencia ni marca. Y ligar no da de alta a
+nadie: las dos personas tienen que estar ya en la pastoral —el selector solo ofrece a
+quienes pertenecen y todavía no están emparejados—, porque la pertenencia sigue teniendo
+una sola fuente, el checklist de la ficha en Equipo pastoral. Es la misma regla que ya
+explica por qué el panel de la pastoral muestra a su gente pero no la edita.
+
+**Qué pastoral se organiza así se marca, no se programa.** `pastorales.organiza_parejas` es
+una casilla del formulario de la pastoral, junto a "Acepta voluntarios", y no una lista de
+slugs en `config/app.php` como `MODULO_POR_PASTORAL`. La diferencia es que aquel mapa
+apunta a módulos que hay que escribir —no se puede "activar" un módulo de MESC para otra
+pastoral—, mientras que esto no necesita código detrás: el día que la Pastoral Familiar
+quiera organizarse igual, lo enciende quien la coordina.
+
+Formar y deshacer parejas pide `pastorales.editar`, el permiso que ya tiene quien coordina,
+y no `personas.editar`: esto no toca ninguna ficha. Deshacer tampoco borra a nadie —los dos
+siguen en la pastoral, por separado—, y así lo dice el propio botón antes de confirmar.
+
 ### Publicar en dos escalones: interno y público
 
 Publicar un aviso o un curso era un interruptor de dos posiciones —borrador o en el sitio

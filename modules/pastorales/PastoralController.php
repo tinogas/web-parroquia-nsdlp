@@ -104,6 +104,21 @@ class PastoralController extends Controller
         // en config/app.php, que a propósito no incluye personas.*.
         $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
 
+        // Matrimonios y AMA se organizan por parejas: la casilla de la propia
+        // pastoral decide si esta pantalla las muestra. `parejaDe` es el mapa
+        // persona => con quién está, para poder decirlo en la lista de
+        // integrantes sin volver a consultar por cada renglón; quien no
+        // aparezca en el mapa participa solo, que es igual de válido.
+        $parejas  = [];
+        $parejaDe = [];
+        if ($pastoral['organiza_parejas']) {
+            $parejas = $this->modelo->parejas((int) $pastoral['id']);
+            foreach ($parejas as $pareja) {
+                $parejaDe[(int) $pareja['persona_a_id']] = $pareja['nombre_b'];
+                $parejaDe[(int) $pareja['persona_b_id']] = $pareja['nombre_a'];
+            }
+        }
+
         $this->render('pastorales/panel', [
             'titulo'        => $pastoral['nombre'],
             'pastoral'      => $pastoral,
@@ -111,6 +126,9 @@ class PastoralController extends Controller
             'moduloDedicado' => MODULO_POR_PASTORAL[$pastoral['slug']] ?? null,
             'documentos'    => $this->modelo->documentos((int) $pastoral['id']),
             'personas'      => $personas,
+            'organizaParejas' => (bool) $pastoral['organiza_parejas'],
+            'parejas'         => $parejas,
+            'parejaDe'        => $parejaDe,
             // Una Comisión suele tener a su gente marcada en las pastorales que
             // agrupa, no en ella misma: sin esto, su lista vacía parecería un
             // error en vez de lo normal.
@@ -253,6 +271,7 @@ class PastoralController extends Controller
             'hora_reunion'       => $this->postStr('hora_reunion') ?: null,
             'lugar_reunion'      => $this->postStr('lugar_reunion') ?: null,
             'acepta_voluntarios' => $this->postBool('acepta_voluntarios'),
+            'organiza_parejas'   => $this->postBool('organiza_parejas'),
             'orden'              => $this->postInt('orden'),
             // Un coordinador puede tener alcance global de facto si un admin se
             // lo concede, pero de entrada solo admin/editor deciden si una
@@ -457,6 +476,106 @@ class PastoralController extends Controller
         Session::flash('success', 'Documento eliminado.');
 
         $this->redirect(url_admin('pastorales', 'editar', ['id' => $documento['pastoral_id']]));
+    }
+
+    /**
+     * Liga a dos integrantes de la pastoral como pareja. Pide
+     * `pastorales.editar` —el permiso que ya tiene quien coordina— y no
+     * `personas.editar`: esto no toca ninguna ficha, solo dice quién está con
+     * quién dentro de esta pastoral.
+     */
+    public function parejaGuardar(): void
+    {
+        $this->requirePermiso('pastorales.editar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $pastoralId = $this->postInt('pastoral_id');
+        $pastoral   = $this->modelo->porId($pastoralId);
+        if (!$pastoral) {
+            Session::flash('error', 'No encontramos esa pastoral.');
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral($pastoralId);
+
+        $destino = url_admin('pastorales', 'panel', ['id' => $pastoralId]);
+
+        if (!$pastoral['organiza_parejas']) {
+            Session::flash('error', 'Esta pastoral no se organiza por parejas.');
+            $this->redirect($destino);
+            return;
+        }
+
+        $a = $this->postInt('persona_a_id');
+        $b = $this->postInt('persona_b_id');
+        if (!$a || !$b || $a === $b) {
+            Session::flash('error', 'Elige a dos personas distintas.');
+            $this->redirect($destino);
+            return;
+        }
+
+        // Las dos tienen que pertenecer ya a la pastoral: la pareja liga a
+        // quienes están, no da de alta a nadie —eso se sigue haciendo en la
+        // ficha de cada persona, en Equipo pastoral—.
+        $miembros = [];
+        foreach ((new PersonaModel())->todas([$pastoralId]) as $persona) {
+            $miembros[(int) $persona['id']] = $persona['nombre'];
+        }
+        if (!isset($miembros[$a], $miembros[$b])) {
+            Session::flash('error', 'Las dos personas tienen que estar en esta pastoral.');
+            $this->redirect($destino);
+            return;
+        }
+
+        foreach ([$a, $b] as $personaId) {
+            if ($this->modelo->personaEmparejada($pastoralId, $personaId)) {
+                Session::flash('error', $miembros[$personaId] . ' ya está en una pareja aquí. Deshaz esa primero.');
+                $this->redirect($destino);
+                return;
+            }
+        }
+
+        $etiqueta = $miembros[$a] . ' y ' . $miembros[$b];
+        $id = $this->modelo->crearPareja($pastoralId, $a, $b);
+        $this->auditoria('crear', 'pastoral_parejas', $id, $etiqueta);
+        Session::flash('success', 'Pareja formada: ' . $etiqueta . '.');
+
+        $this->redirect($destino);
+    }
+
+    /** Deshace la liga. No borra a nadie: los dos siguen en la pastoral, por separado. */
+    public function parejaEliminar(): void
+    {
+        $this->requirePermiso('pastorales.editar');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $pareja = $this->modelo->parejaPorId($this->postInt('id'));
+        if (!$pareja) {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $pareja['pastoral_id']);
+
+        $personaModel = new PersonaModel();
+        $a = $personaModel->porId((int) $pareja['persona_a_id']);
+        $b = $personaModel->porId((int) $pareja['persona_b_id']);
+        $etiqueta = trim(($a['nombre'] ?? '') . ' y ' . ($b['nombre'] ?? ''));
+
+        $this->modelo->eliminarPareja((int) $pareja['id']);
+        $this->auditoria('eliminar', 'pastoral_parejas', (int) $pareja['id'], $etiqueta);
+        Session::flash('success', 'Pareja deshecha. Los dos siguen en la pastoral.');
+
+        $this->redirect(url_admin('pastorales', 'panel', ['id' => $pareja['pastoral_id']]));
     }
 
     private function scriptEditor(): string

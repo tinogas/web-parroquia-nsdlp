@@ -1,6 +1,6 @@
 # Base de datos
 
-Diccionario de las **44 tablas** del sistema: las 24 de las diez etapas del plan original,
+Diccionario de las **48 tablas** del sistema: las 24 de las diez etapas del plan original,
 más las que trajeron el issue #3 y la revisión de módulos —`centros`, `usuarios_centros`,
 `respaldos_log`, las seis tablas de MESC, las tres de Catequesis, las tres de
 Proclamadores, el catálogo de colores litúrgicos que MESC y Proclamadores comparten, el
@@ -368,8 +368,8 @@ muestra de cada fila.
 antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
 `responsable_nombre`, `responsable_persona_id`, `contacto_email`, `contacto_telefono`,
-`dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`,
-`visible_en_menu`.
+`dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`,
+`organiza_parejas`, `orden`, `activa`, `visible_en_menu`.
 
 `responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
 es el select del formulario: el responsable se elige del equipo pastoral. Con persona
@@ -387,6 +387,14 @@ reglas es un CHECK de SQL (no puede mirar otras filas), las valida
 `PastoralController::guardar()`. No hay columna `tipo`/`es_comision`: "es Comisión" se
 deriva de "tiene alguna hija" (`PastoralModel::tieneHijos()`), calculado en cada lectura
 en vez de guardado aparte, para que nunca pueda desincronizarse de la realidad.
+
+`organiza_parejas` (`TINYINT(1)`, default 0) dice que esa pastoral trabaja con parejas y
+no con personas sueltas —Matrimonios y AMA—, y es lo único que hace aparecer la sección
+"Parejas" en su panel básico. Es una casilla del formulario de la pastoral, junto a
+"Acepta voluntarios", y no una lista de slugs en `config/app.php` como
+`MODULO_POR_PASTORAL`: activarla no necesita código detrás, así que el día que otra
+pastoral quiera organizarse igual la enciende quien la coordina. Las parejas en sí viven
+en [`pastoral_parejas`](#pastoral_parejas).
 
 `visible_en_menu` (`TINYINT(1)`, default 0) decide si la pastoral aparece en el bloque
 "Pastorales y comisiones" del menú del panel, con acceso a su panel básico (avisos,
@@ -488,6 +496,43 @@ esta tabla ya tenía; nadie los referenciaba con una foránea, y `archivo` viaj�
 que los PDF ya subidos siguen descargándose de donde están— y la tabla se eliminó. La
 pantalla de Documentos de Proclamadores lo avisa en su cabecera, para que nadie capture el
 mismo documento dos veces.
+
+### `pastoral_parejas`
+
+Quién con quién dentro de una pastoral que se organiza por parejas
+(`pastorales.organiza_parejas`). `id`, `pastoral_id` (FK, `ON DELETE CASCADE`),
+`persona_a_id` y `persona_b_id` (las dos FK a `personas`, `ON DELETE CASCADE`),
+`created_at`. Nada más: ni fecha de matrimonio ni notas — se pidió el vínculo y solo el
+vínculo, y agregarle columnas después no obliga a rehacer nada.
+
+**Una fila es una pareja**, y no dos filas que se apuntan la una a la otra. La alternativa
+descartada era una columna `pareja_persona_id` en `persona_pastorales`: obligaba a escribir
+el mismo hecho dos veces —la fila de él apuntando a ella y la de ella apuntando a él— y
+bastaba con que una quedara sin actualizar para que la base dijera que él está con ella y
+ella con nadie.
+
+**Cuelga de la pastoral, no de la ficha.** El mismo matrimonio puede estar en Matrimonios y
+no en AMA, y a la Pastoral de la Salud ir solo uno de los dos; la liga es de la pastoral,
+igual que la pertenencia en `persona_pastorales`. Por eso `personas` no cambió: quien deja
+la pastoral pierde ahí su pareja y conserva su ficha intacta.
+
+**Emparejar no es obligatorio ni es el estado "normal".** Quien participa solo aparece en la
+lista de integrantes como cualquier otro, sin advertencia ni marca de registro a medias: en
+las dos pastorales hay gente que va sin su cónyuge. Y ligar no da de alta a nadie: las dos
+personas tienen que estar ya en la pastoral, marcadas desde su ficha en Equipo pastoral,
+que sigue siendo la única fuente de la pertenencia.
+
+**Una persona, una sola pareja por pastoral.** Se guarda siempre el id menor en
+`persona_a_id`, así que "él con ella" y "ella con él" no pueden ser dos filas distintas, y
+`uq_ppj_a`/`uq_ppj_b` impiden repetir a alguien dentro de la misma columna. Lo que ninguna
+clave puede expresar —que además no esté en la otra columna de otra fila— lo comprueba
+`PastoralModel::personaEmparejada()` antes de insertar, y `PastoralController::parejaGuardar()`
+rechaza el intento con un mensaje que dice a quién hay que desligar primero.
+
+Se forma y se deshace desde el panel básico de la pastoral, con `pastorales.editar` —el
+permiso que ya tiene quien coordina—; deshacerla no toca a nadie más: los dos siguen en la
+pastoral, por separado. Ver
+[`docs/migraciones/2026-09-05-parejas-por-pastoral.sql`](migraciones/2026-09-05-parejas-por-pastoral.sql).
 
 ---
 
@@ -976,7 +1021,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `evangelios_dia`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos` |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos`, `pastoral_parejas` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
 | Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
@@ -985,14 +1030,15 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
 | Comunicación | `avisos`, `aviso_lecturas`, `eventos`, `mensajes_contacto`, `intentos_formulario` |
 
-**Total: 44 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
+**Total: 48 tablas** (24 de las diez etapas del plan original, más `respaldos_log`,
 `centros`, `usuarios_centros`, `usuarios_perfiles`, `persona_pastorales`, `persona_centros`,
 `pastoral_tablero`, `pastoral_documentos`, `mesc_visitas`, `mesc_rutas`,
 `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`,
 `colores_liturgicos`,
 `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`,
 `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`,
-`aviso_lecturas` y `evangelios_dia`,
+`aviso_lecturas`, `evangelios_dia`, `coros`, `coristas`, `coro_coristas` y
+`pastoral_parejas`,
 menos `sacramento_campos`, `solicitudes_sacramento` y
 `solicitudes_bitacora`). El renombre de Proclamadores no movió la cuenta: cambió nombres
 de tabla, no su número. Las que sí la movieron son las otras tres migraciones del mismo
@@ -1001,4 +1047,7 @@ día: la del tablero y los documentos compartidos la bajó de 43 a 42 —se fuer
 avisos sin leer la devolvió a 43 sumando `aviso_lecturas`, que no reemplaza a nada, y la del
 evangelio del día la subió de 43 a **44** sumando `evangelios_dia` —la única de las cuatro
 que no reorganiza nada de lo que ya existía, sino que trae completa la tabla de un módulo
-enteramente nuevo—.
+enteramente nuevo—. Después la subieron a **47** las tres tablas de Coros
+—`coros`, `coristas` y `coro_coristas`, otro módulo entero— y a **48**
+`pastoral_parejas`, que no reemplaza a ninguna: guarda un dato que hasta entonces no se
+guardaba en ninguna parte, quién está con quién dentro de una pastoral.

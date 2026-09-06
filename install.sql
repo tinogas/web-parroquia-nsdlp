@@ -593,6 +593,11 @@ CREATE TABLE IF NOT EXISTS pastorales (
     hora_reunion       TIME         NULL,
     lugar_reunion      VARCHAR(140) NULL,
     acepta_voluntarios TINYINT(1)   NOT NULL DEFAULT 1,
+    -- Matrimonios y AMA no trabajan con personas sueltas sino con parejas.
+    -- Que una pastoral se organice así se marca aquí, en su formulario, y no
+    -- en una lista de slugs dentro del código: el día que otra quiera lo mismo
+    -- lo enciende quien la coordina. Las parejas viven en pastoral_parejas.
+    organiza_parejas   TINYINT(1)   NOT NULL DEFAULT 0,
     orden              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activa             TINYINT(1)   NOT NULL DEFAULT 1,
     -- Publicarla en el menú del panel (agrupada bajo su Comisión, con acceso
@@ -673,6 +678,37 @@ CREATE TABLE IF NOT EXISTS pastoral_documentos (
     KEY idx_pdo_pastoral (pastoral_id),
     CONSTRAINT fk_pdo_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
     CONSTRAINT fk_pdo_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Quién con quién dentro de una pastoral, para las que se organizan en parejas
+-- (pastorales.organiza_parejas). Una fila es una pareja: se descartó una
+-- columna `pareja_persona_id` en persona_pastorales porque obligaba a escribir
+-- el mismo hecho dos veces —la fila de cada uno apuntando al otro— y bastaba
+-- con que una quedara sin actualizar para que la base dijera que él está con
+-- ella y ella con nadie.
+--
+-- Cuelga de la pastoral, no de la ficha: el mismo matrimonio puede estar en
+-- Matrimonios y no en AMA, y a otra pastoral ir solo uno de los dos. Nadie
+-- está obligado a tener pareja; quien no la tiene es un integrante como
+-- cualquier otro, no un registro a medias.
+--
+-- Se guarda siempre el id menor en persona_a_id, para que "él con ella" y
+-- "ella con él" no puedan ser dos filas distintas. Las dos UNIQUE impiden
+-- repetir a alguien en la misma columna; que no esté además en la otra lo
+-- comprueba PastoralModel::personaEmparejada() antes de insertar, porque eso
+-- no lo expresa ninguna clave. Ver docs/migraciones/2026-09-05-parejas-por-pastoral.sql
+CREATE TABLE IF NOT EXISTS pastoral_parejas (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pastoral_id  TINYINT UNSIGNED  NOT NULL,
+    persona_a_id SMALLINT UNSIGNED NOT NULL,
+    persona_b_id SMALLINT UNSIGNED NOT NULL,
+    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_ppj_a (pastoral_id, persona_a_id),
+    UNIQUE KEY uq_ppj_b (pastoral_id, persona_b_id),
+    CONSTRAINT fk_ppj_pastoral FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ppj_a        FOREIGN KEY (persona_a_id) REFERENCES personas(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_ppj_b        FOREIGN KEY (persona_b_id) REFERENCES personas(id)   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

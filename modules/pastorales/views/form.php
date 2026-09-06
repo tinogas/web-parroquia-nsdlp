@@ -258,6 +258,21 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                                <?= ($esNueva || $pastoral['acepta_voluntarios']) ? 'checked' : '' ?>>
                         <label class="form-check-label small" for="acepta_voluntarios">Acepta voluntarios</label>
                     </div>
+                    <?php /* Matrimonios y AMA se organizan por parejas. Es una casilla y no una
+                             lista de slugs en el código para que la encienda quien coordine la
+                             pastoral el día que la necesite. Las parejas se forman en el panel
+                             de la pastoral, no aquí. */ ?>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               name="organiza_parejas" id="organiza_parejas" value="1"
+                               <?= (!$esNueva && $pastoral['organiza_parejas']) ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="organiza_parejas">
+                            Se organiza por parejas
+                            <span class="d-block text-muted">
+                                Permite ligar de dos en dos a sus integrantes, desde el panel de la pastoral.
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
