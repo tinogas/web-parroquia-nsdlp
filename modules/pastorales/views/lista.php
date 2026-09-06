@@ -32,6 +32,18 @@ $dibujarTarjeta = static function (array $pastoral): void {
                     <i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?> fs-4 text-primary"></i>
                     <h3 class="h6 fw-bold mb-0"><?= e($pastoral['nombre']) ?></h3>
                 </div>
+                <?php /* Quién coordina, con el mismo texto y los mismos iconos que el panel de
+                         la pastoral (views/panel.php): corazón si es una pareja —JECSA, Raíces,
+                         Matrimonios y AMA las coordina un matrimonio— y silueta si es una sola
+                         persona. Puesto aquí, la pregunta "¿cuáles se llevan en pareja?" se
+                         responde recorriendo la lista, sin abrir una por una. Se cambia en
+                         "Editar", no aquí. */ ?>
+                <?php if ($pastoral['responsable_nombre']): ?>
+                <p class="small text-muted mb-2">
+                    <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?> me-1"></i>
+                    Coordina <?= e($pastoral['responsable_nombre']) ?>
+                </p>
+                <?php endif; ?>
                 <?php if ($pastoral['descripcion_corta']): ?>
                 <p class="small text-muted mb-2"><?= e($pastoral['descripcion_corta']) ?></p>
                 <?php endif; ?>
