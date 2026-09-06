@@ -122,7 +122,7 @@ class CoroController extends Controller
         } else {
             $id = $this->modelo->crearCoro($datos);
             $this->auditoria('crear', 'coros', $id, 'Coro de la misa ' . $horarioId);
-            Session::flash('success', 'Coro creado. Ahora marca quiénes cantan en él.');
+            Session::flash('success', 'Coro creado. Ahora marca sus integrantes.');
         }
 
         $this->redirect(url_admin('coros'));
@@ -519,16 +519,16 @@ class CoroController extends Controller
         return $texto;
     }
 
-    /** Quiénes cantan en cada coro, indexado por coro_id, para la portada. */
+    /**
+     * Los integrantes de cada coro, indexados por coro_id, para la portada del
+     * módulo: la lista que despliega el "+" de cada misa y, de paso, las
+     * casillas ya marcadas del formulario. Antes esto se armaba aquí dando la
+     * vuelta a corosDeCadaCorista() y solo devolvía ids, que alcanzaban para
+     * marcar casillas pero no para escribir una lista con nombres.
+     */
     private function integrantesPorCoro(int $pastoralId): array
     {
-        $porCoro = [];
-        foreach ($this->modelo->corosDeCadaCorista($pastoralId) as $coristaId => $coroIds) {
-            foreach ($coroIds as $coroId) {
-                $porCoro[$coroId][] = $coristaId;
-            }
-        }
-        return $porCoro;
+        return $this->modelo->integrantesDeCadaCoro($pastoralId);
     }
 
     /**

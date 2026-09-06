@@ -850,3 +850,18 @@ a.evento-linea:hover {
         radial-gradient(circle, #fff 45%, transparent 47%) left  center / .22rem .22rem no-repeat,
         radial-gradient(circle, #fff 45%, transparent 47%) right center / .22rem .22rem no-repeat;
 }
+
+/* ---- El "+" que despliega los integrantes de un coro ----
+   Bootstrap le pone la clase `.collapsed` al botón mientras lo que abre está
+   cerrado, y se la quita al abrirlo: con eso basta para intercambiar los dos
+   iconos sin una línea de JavaScript. El botón lleva los dos dibujados y aquí
+   se esconde el que no toca. */
+.toggle-integrantes .icono-menos,
+.toggle-integrantes.collapsed .icono-mas {
+    display: inline-block;
+}
+
+.toggle-integrantes .icono-mas,
+.toggle-integrantes.collapsed .icono-menos {
+    display: none;
+}

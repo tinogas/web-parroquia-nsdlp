@@ -266,6 +266,34 @@ class CoroModel extends Model
     }
 
     /**
+     * Los integrantes de cada coro, indexados por coro_id y con lo que hace
+     * cada quien (voz e instrumento), en una sola consulta para todo el
+     * listado. Gemela de corosDeCadaCorista() en la dirección contraria.
+     *
+     * Trae también a los inactivos del catálogo, a diferencia del selector del
+     * formulario: si alguien se dio de baja pero sigue marcado en el coro de
+     * las 12, esconderlo de la lista haría pensar que ese coro tiene un
+     * integrante menos de los que la columna cuenta.
+     */
+    public function integrantesDeCadaCoro(int $pastoralId): array
+    {
+        $filas = $this->fetchAll(
+            'SELECT cc.coro_id, cr.id, cr.nombre, cr.voz, cr.instrumento, cr.activo
+               FROM coro_coristas cc
+               JOIN coristas cr ON cr.id = cc.corista_id
+              WHERE cr.pastoral_id = :pastoral
+              ORDER BY cr.nombre',
+            [':pastoral' => $pastoralId]
+        );
+
+        $porCoro = [];
+        foreach ($filas as $fila) {
+            $porCoro[(int) $fila['coro_id']][] = $fila;
+        }
+        return $porCoro;
+    }
+
+    /**
      * Fija en qué coros canta esta persona: borrar y reinsertar, como
      * ProclamadoresModel::sincronizarProclamadoresDeTurno().
      */
