@@ -237,26 +237,19 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                         <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Correo de contacto</label>
-                        <?php if ($responsableCuenta): ?>
-                        <p class="form-control-plaintext mb-0">
-                            <i class="bi bi-envelope me-1"></i><?= e($responsableCuenta['email']) ?>
-                        </p>
-                        <div class="form-text">
-                            Es el correo de acceso de la cuenta de <?= e($pastoral['responsable_nombre']) ?>;
-                            si el suyo cambia, este cambia solo.
-                        </div>
-                        <?php elseif (!$esNueva && $pastoral['responsable_pareja_id']): ?>
-                        <input type="email" name="contacto_email" id="contacto_email" class="form-control"
-                               value="<?= e((string) $pastoral['contacto_email']) ?>">
-                        <div class="form-text">
-                            Con una pareja al frente este correo se escribe a mano: entre dos cuentas
-                            no hay una "la suya", y publicar la equivocada es peor que preguntarlo.
-                        </div>
-                        <?php else: ?>
+                        <label for="contacto_email" class="form-label fw-semibold">Correo de la pastoral</label>
                         <input type="email" name="contacto_email" id="contacto_email" class="form-control"
                                value="<?= e($esNueva ? '' : (string) $pastoral['contacto_email']) ?>">
-                        <?php endif; ?>
+                        <div class="form-text">
+                            <?php /* Antes esto se copiaba solo del correo de acceso de quien
+                                     coordinaba. Se cambió a petición de la parroquia: el correo
+                                     es de la pastoral y tiene que sobrevivir a los relevos, en
+                                     vez de publicar en el sitio la dirección personal de quien
+                                     esté al frente hoy. */ ?>
+                            Es el correo de la pastoral, el que se publica en su página. No el
+                            personal de quien la coordina: si mañana coordina alguien más, este
+                            se queda igual.
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="contacto_telefono" class="form-label fw-semibold">Teléfono de contacto</label>

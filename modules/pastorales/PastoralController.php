@@ -3,7 +3,6 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
-require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 
 class PastoralController extends Controller
 {
@@ -37,7 +36,6 @@ class PastoralController extends Controller
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
             'parejas'           => (new PersonaModel())->parejasParaSelector(),
-            'responsableCuenta' => null,
             'padresDisponibles' => $this->modelo->candidatosPadre(),
             'tieneHijos'        => false,
         ]);
@@ -55,17 +53,12 @@ class PastoralController extends Controller
         }
         $this->requireAlcancePastoral((int) $pastoral['id']);
 
-        $responsableCuenta = $pastoral['responsable_persona_id']
-            ? (new UsuarioModel())->porPersona((int) $pastoral['responsable_persona_id'])
-            : null;
-
         $this->render('pastorales/form', [
             'titulo'            => $pastoral['nombre'],
             'pastoral'          => $pastoral,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
             'parejas'           => (new PersonaModel())->parejasParaSelector(),
-            'responsableCuenta' => $responsableCuenta,
             'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
             'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
             'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
@@ -237,20 +230,25 @@ class PastoralController extends Controller
 
         if ($responsablePersona) {
             $responsableNombre = $responsablePersona['nombre'];
-            $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
-            $contactoEmail     = $cuentaResponsable ? $cuentaResponsable['email'] : ($this->postStr('contacto_email') ?: null);
         } elseif ($responsablePareja) {
             // "Ella y Él", de las dos fichas, y se mantiene solo desde ahí
-            // (PersonaModel::sincronizarResponsable()). El correo, en cambio,
-            // se escribe a mano aunque los dos tengan cuenta: entre dos correos
-            // de acceso no hay forma no arbitraria de elegir uno, y adivinar
-            // mal aquí es publicar en el sitio el correo equivocado.
+            // (PersonaModel::sincronizarResponsable()).
             $responsableNombre = $responsablePareja['nombre'];
-            $contactoEmail     = $this->postStr('contacto_email') ?: null;
         } else {
             $responsableNombre = $this->postStr('responsable_nombre') ?: null;
-            $contactoEmail     = $this->postStr('contacto_email') ?: null;
         }
+
+        // El correo es de la pastoral, no de quien la coordina: se escribe aquí
+        // y no se hereda de ninguna cuenta. Antes se copiaba del correo de
+        // acceso del responsable —así se corrigió el caso de MESC, donde las dos
+        // direcciones llevaban una letra distinta—, y eso resolvía la
+        // discrepancia a costa de publicar en el sitio el correo personal de una
+        // persona y de dejar la pastoral sin dirección propia: al cambiar de
+        // coordinadora cambiaba también la dirección a la que la parroquia
+        // llevaba años escribiendo. Ahora cada pastoral tiene la suya, que
+        // sobrevive a los relevos; quien coordine puede poner la de su cuenta si
+        // así lo quiere, pero es una decisión suya y explícita.
+        $contactoEmail = $this->postStr('contacto_email') ?: null;
 
         $datos = [
             'centro_id'          => $this->postIntONull('centro_id'),

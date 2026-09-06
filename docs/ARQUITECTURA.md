@@ -1070,14 +1070,19 @@ mostrado **no es editable**: viene de `personas.nombre` y `PersonaModel::sincron
 lo vuelve a copiar cada vez que la ficha se guarda, exactamente con el mismo mecanismo que ya
 mantiene sincronizados `usuarios.nombre/telefono/foto` (`PersonaModel::sincronizarCuenta()`).
 
-El correo de contacto sigue la misma idea, pero en la dirección contraria: si la persona
-elegida tiene cuenta en el panel, `contacto_email` se toma de `usuarios.email` —el correo de
-acceso, «el del rol»— y `UsuarioModel::sincronizarPastoralResponsable()` lo vuelve a empujar
-cada vez que esa cuenta se guarda. Sin esto, `contacto_email` era un campo libre independiente
-que podía divergir del correo real de quien administra la pastoral, que es exactamente lo que
-pasaba con MESC: la ficha decía `aime.dessens@…` y la cuenta de la coordinadora era
-`aimee.dessens@…`, una letra distinta. Sin cuenta vinculada (el caso de Padre Germán Valdéz en
-Raíces), el campo sigue siendo de texto libre.
+El correo de contacto **no** sigue esa idea, y esto cambió: hoy `contacto_email` es un campo
+propio de la pastoral, se escribe a mano y no se hereda de ninguna cuenta. Durante un tiempo se
+tomó de `usuarios.email` —el correo de acceso de quien coordinaba, «el del rol»— y
+`UsuarioModel::sincronizarPastoralResponsable()` lo volvía a empujar cada vez que esa cuenta se
+guardaba. El problema que resolvía era real: la ficha de MESC decía `aime.dessens@…` y la cuenta
+de la coordinadora era `aimee.dessens@…`, una letra distinta. Pero lo resolvía publicando en el
+sitio la dirección personal de quien está al frente hoy, y dejando a la pastoral sin dirección
+propia: al cambiar de coordinadora cambiaba también el correo al que la parroquia llevaba años
+escribiendo, y el anterior seguía recibiendo lo de una pastoral que ya no lleva. A petición de
+la parroquia, cada pastoral tiene ahora su propio correo, que sobrevive a los relevos —quien
+coordine puede poner el de su cuenta, pero como decisión suya y explícita, no como copia
+automática—. La discrepancia de MESC vuelve a ser posible en teoría; lo que la evita ya no es
+el sistema sino que las dos direcciones dejen de ser la misma cosa.
 
 **Deliberadamente no hay un "organigrama de esta pastoral" aparte.**
 `organigrama_nodos.pastoral_id` ya existe desde antes de este issue: cada nodo del
@@ -1222,11 +1227,8 @@ listas como cualquier otro, sin advertencia ni marca.
 prefijado `persona:12`/`pareja:3`: con dos listas separadas se podrían elegir las dos a la vez
 y habría que decidir cuál gana, que es exactamente el tipo de estado contradictorio que no
 conviene poder representar. Con pareja, `responsable_nombre` es "Ella y Él", calculado de las
-dos fichas y mantenido desde ahí, igual que ya pasaba con una persona. `contacto_email`, en
-cambio, deja de sincronizarse: con una persona se toma el correo de acceso de su cuenta —la
-regla que corrigió el caso real de MESC—, pero entre las cuentas de dos no hay una "la suya", y
-adivinar mal ahí es publicar en el sitio el correo equivocado; así que con pareja al frente ese
-campo se escribe a mano y el formulario dice por qué.
+dos fichas y mantenido desde ahí, igual que ya pasaba con una persona. El correo no entra en
+esto: es de la pastoral y se escribe a mano, coordine quien coordine (ver más arriba).
 
 ### Publicar en dos escalones: interno y público
 

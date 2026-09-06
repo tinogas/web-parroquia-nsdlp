@@ -374,10 +374,12 @@ antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `
 
 `responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
 es el select del formulario: el responsable se elige del equipo pastoral. Con persona
-elegida, `responsable_nombre` y `contacto_email` se recalculan solos —del nombre de su
-ficha y del correo de acceso de su cuenta, si tiene una— y dejan de ser editables a mano;
-`responsable_nombre` solo se sigue escribiendo libre cuando `responsable_persona_id` es
-NULL (la persona todavía no está de alta en el equipo). Ver
+elegida, `responsable_nombre` se recalcula solo —del nombre de su ficha— y deja de ser
+editable a mano; solo se sigue escribiendo libre cuando `responsable_persona_id` es NULL
+(la persona todavía no está de alta en el equipo). `contacto_email` **no** se recalcula:
+es el correo de la pastoral, se escribe a mano y sobrevive a los relevos de quien la
+coordina. Lo heredó del correo de acceso del responsable hasta que la parroquia pidió lo
+contrario — el porqué del cambio, en `ARQUITECTURA.md`. Ver
 [`ARQUITECTURA.md`](ARQUITECTURA.md#contenido-propio-por-pastoral-issue-3).
 
 `pastoral_padre_id` (self-FK, `ON DELETE SET NULL`, índice `idx_pas_padre`) agrupa
@@ -396,8 +398,8 @@ pastorales de familia quien coordina es un matrimonio, no una persona. Es **excl
 valor prefijado `persona:12`/`pareja:3`, para que no puedan quedar elegidas las dos a la vez—
 y con pareja elegida `responsable_nombre` es "Ella y Él", calculado de las dos fichas y
 mantenido por `PersonaModel::sincronizarResponsable()`. Lo que **no** se sincroniza entonces es
-`contacto_email`: entre dos correos de acceso no hay una "la suya", así que con pareja al frente
-ese campo se escribe a mano y el formulario dice por qué. Si se borra la ficha de uno de los dos,
+`contacto_email`, que es de la pastoral y se escribe a mano coordine quien coordine.
+Si se borra la ficha de uno de los dos,
 la pareja desaparece y la pastoral queda sin responsable (SET NULL), no con uno roto.
 
 `visible_en_menu` (`TINYINT(1)`, default 0) decide si la pastoral aparece en el bloque
