@@ -35,15 +35,26 @@
 </div>
 <?php endif; ?>
 
-<?php /* El evangelio de hoy, justo después de las palabras del párroco: es el
-         contenido que cambia más rápido de toda la portada —a diario, contra
-         semanal de las misas— y sigue temáticamente a la bienvenida. Sin
-         sección si no hay entrada publicada para hoy, igual que el resto de
-         la portada: ninguna deja un encabezado con un hueco debajo. */ ?>
-<?php if (!empty($evangelioHoy)): ?>
+<?php /* La portada se abre en dos columnas: a la izquierda el evangelio del día
+         —el contenido que cambia más rápido de todo el sitio, a diario contra
+         semanal de las misas— y a la derecha lo que se viene a consultar de un
+         vistazo, las próximas misas y los próximos eventos. Cada bloque sigue
+         desapareciendo por su cuenta si no tiene qué mostrar: ninguno deja un
+         encabezado con un hueco debajo. Y si falta una columna entera, la que
+         queda recupera el ancho de lectura del resto de la página en vez de
+         quedarse angosta a un lado. */ ?>
+<?php
+$hayEvangelio   = !empty($evangelioHoy);
+$hayLateral     = !empty($proximasMisas) || !empty($proximosEventos);
+$anchoEvangelio = $hayLateral ? 'col-lg-7' : 'col-lg-8';
+$anchoLateral   = $hayEvangelio ? 'col-lg-5' : 'col-lg-8';
+?>
+<?php if ($hayEvangelio || $hayLateral): ?>
 <section class="mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+    <div class="row justify-content-center g-4 g-lg-5">
+
+        <?php if ($hayEvangelio): ?>
+        <div class="<?= $anchoEvangelio ?>">
             <?php /* Las dos partes llevan su propia etiqueta, y son la misma
                      etiqueta con el mismo aspecto: así el párroco escribe solo
                      el texto y no tiene que abrir cada entrada poniendo
@@ -61,119 +72,121 @@
             <div class="contenido-editorial"><?= $evangelioHoy['reflexion'] ?></div>
             <?php endif; ?>
         </div>
-    </div>
-</section>
-<?php endif; ?>
+        <?php endif; ?>
 
-<?php if (!empty($proximasMisas)): ?>
-<section class="mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <h2 class="h6 text-uppercase text-muted mb-3 text-center">Próximas misas</h2>
-            <div class="row g-3">
+        <?php if ($hayLateral): ?>
+        <div class="<?= $anchoLateral ?>">
+
+            <?php if (!empty($proximasMisas)): ?>
+            <?php /* En una columna angosta las tres misas ya no caben lado a
+                     lado sin partir la hora en dos renglones, así que van una
+                     debajo de otra: el día y el lugar a la izquierda, la hora
+                     a la derecha, que es el dato que se viene a buscar. */ ?>
+            <h2 class="h6 text-uppercase text-muted mb-3">Próximas misas</h2>
+            <div class="d-flex flex-column gap-2">
                 <?php foreach ($proximasMisas as $misa): ?>
-                <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm text-center h-100">
-                        <div class="card-body p-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-3 d-flex justify-content-between align-items-center gap-3">
+                        <div>
                             <div class="fw-bold text-capitalize"><?= e(nombre_dia((int) $misa['dia_semana'])) ?></div>
-                            <div class="text-dorado fs-5 fw-bold"><?= e(hora_corta($misa['hora'])) ?></div>
                             <?php if ($misa['lugar']): ?>
                             <div class="text-muted small"><?= e($misa['lugar']) ?></div>
                             <?php endif; ?>
                         </div>
+                        <div class="text-dorado fs-5 fw-bold text-nowrap"><?= e(hora_corta($misa['hora'])) ?></div>
                     </div>
                 </div>
                 <?php endforeach; ?>
             </div>
-            <p class="text-center mt-3 mb-0">
+            <p class="mt-2 mb-0">
                 <a href="<?= e(url_publica('horarios')) ?>" class="small">Ver todos los horarios <i class="bi bi-arrow-right"></i></a>
             </p>
+            <?php endif; ?>
+
+            <?php if (!empty($proximosEventos)): ?>
+            <h2 class="h6 text-uppercase text-muted mb-3 <?= !empty($proximasMisas) ? 'mt-4' : '' ?>">Próximos eventos</h2>
+            <div class="d-flex flex-column gap-2">
+                <?php foreach ($proximosEventos as $evento): ?>
+                <a href="<?= e(url_publica('eventos', ['slug' => $evento['slug']])) ?>"
+                   class="card border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3 d-flex gap-3 align-items-center">
+                        <div class="fecha-destacada" style="border-color:<?= e($evento['color'] ?: '#1e4d8b') ?>">
+                            <span class="dia"><?= e(date('j', strtotime($evento['fecha_inicio']))) ?></span>
+                            <span class="mes text-uppercase"><?= e(mes_abreviado($evento['fecha_inicio'])) ?></span>
+                        </div>
+                        <span class="fw-semibold text-body"><?= e($evento['titulo']) ?></span>
+                    </div>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <p class="mt-2 mb-0">
+                <a href="<?= e(url_publica('eventos')) ?>" class="small">Ver el calendario completo <i class="bi bi-arrow-right"></i></a>
+            </p>
+            <?php endif; ?>
+
         </div>
+        <?php endif; ?>
+
     </div>
 </section>
 <?php endif; ?>
 
-<?php /* Lo que viene: eventos y cursos, uno en cada columna. Los datos de
-         contacto no se repiten aquí porque el pie de página ya los lleva en
-         todas las pantallas del sitio. */ ?>
-<?php if (!empty($proximosEventos) || !empty($proximosCursos)): ?>
-<div class="row justify-content-center mt-1">
-<div class="col-lg-8">
-<div class="row g-4 justify-content-center">
-
-    <?php if (!empty($proximosEventos)): ?>
-    <div class="col-md-6">
-        <h2 class="h6 text-uppercase text-muted mb-3">Próximos eventos</h2>
-        <div class="d-flex flex-column gap-2">
-            <?php foreach ($proximosEventos as $evento): ?>
-            <a href="<?= e(url_publica('eventos', ['slug' => $evento['slug']])) ?>"
-               class="card border-0 shadow-sm text-decoration-none">
-                <div class="card-body p-3 d-flex gap-3 align-items-center">
-                    <div class="fecha-destacada" style="border-color:<?= e($evento['color'] ?: '#1e4d8b') ?>">
-                        <span class="dia"><?= e(date('j', strtotime($evento['fecha_inicio']))) ?></span>
-                        <span class="mes text-uppercase"><?= e(mes_abreviado($evento['fecha_inicio'])) ?></span>
-                    </div>
-                    <span class="fw-semibold text-body"><?= e($evento['titulo']) ?></span>
+<?php /* Los cursos se quedaron solos al subir los eventos a la columna de la
+         derecha, así que ocupan su propia franja, al mismo ancho de lectura
+         que el resto de la portada y con las tarjetas en rejilla en lugar de
+         una debajo de otra. Los datos de contacto no se repiten aquí porque
+         el pie de página ya los lleva en todas las pantallas del sitio. */ ?>
+<?php if (!empty($proximosCursos)): ?>
+<section class="mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="h6 text-uppercase text-muted mb-3">Próximos cursos</h2>
+            <div class="row g-3">
+                <?php foreach ($proximosCursos as $curso): ?>
+                <?php
+                // Se avisa de la inscripción solo si de verdad se puede uno inscribir:
+                // la casilla abierta y, si hay fecha de cierre, que no haya pasado.
+                $abierta = $curso['inscripciones_abiertas']
+                    && (!$curso['fecha_cierre_inscripcion'] || $curso['fecha_cierre_inscripcion'] >= date('Y-m-d'));
+                ?>
+                <div class="col-md-4">
+                    <a href="<?= e(url_publica('cursos', ['slug' => $curso['slug']])) ?>"
+                       class="card border-0 shadow-sm text-decoration-none h-100">
+                        <div class="card-body p-3">
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                                    <?= e(CursoModel::MODALIDADES[$curso['modalidad']] ?? $curso['modalidad']) ?>
+                                </span>
+                                <?php if ($abierta): ?>
+                                <span class="badge bg-success-subtle text-success-emphasis">Inscripciones abiertas</span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="fw-semibold text-body d-block mb-1"><?= e($curso['titulo']) ?></span>
+                            <?php if ($curso['fecha_inicio']): ?>
+                            <span class="small text-muted d-block">
+                                <i class="bi bi-calendar3 me-1"></i>Inicia el <?= e(fecha_larga($curso['fecha_inicio'])) ?>
+                            </span>
+                            <?php endif; ?>
+                            <?php if ($curso['horario'] || $curso['lugar']): ?>
+                            <span class="small text-muted d-block">
+                                <?php if ($curso['horario']): ?>
+                                <i class="bi bi-clock me-1"></i><?= e($curso['horario']) ?><?php endif; ?>
+                                <?php if ($curso['horario'] && $curso['lugar']): ?> · <?php endif; ?>
+                                <?php if ($curso['lugar']): ?>
+                                <i class="bi bi-geo-alt me-1"></i><?= e($curso['lugar']) ?><?php endif; ?>
+                            </span>
+                            <?php endif; ?>
+                        </div>
+                    </a>
                 </div>
-            </a>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
+            <p class="mt-3 mb-0">
+                <a href="<?= e(url_publica('cursos')) ?>" class="small">Ver todos los cursos <i class="bi bi-arrow-right"></i></a>
+            </p>
         </div>
-        <p class="mt-2 mb-0">
-            <a href="<?= e(url_publica('eventos')) ?>" class="small">Ver el calendario completo <i class="bi bi-arrow-right"></i></a>
-        </p>
     </div>
-    <?php endif; ?>
-
-    <?php if (!empty($proximosCursos)): ?>
-    <div class="col-md-6">
-        <h2 class="h6 text-uppercase text-muted mb-3">Próximos cursos</h2>
-        <div class="d-flex flex-column gap-2">
-            <?php foreach ($proximosCursos as $curso): ?>
-            <?php
-            // Se avisa de la inscripción solo si de verdad se puede uno inscribir:
-            // la casilla abierta y, si hay fecha de cierre, que no haya pasado.
-            $abierta = $curso['inscripciones_abiertas']
-                && (!$curso['fecha_cierre_inscripcion'] || $curso['fecha_cierre_inscripcion'] >= date('Y-m-d'));
-            ?>
-            <a href="<?= e(url_publica('cursos', ['slug' => $curso['slug']])) ?>"
-               class="card border-0 shadow-sm text-decoration-none">
-                <div class="card-body p-3">
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
-                            <?= e(CursoModel::MODALIDADES[$curso['modalidad']] ?? $curso['modalidad']) ?>
-                        </span>
-                        <?php if ($abierta): ?>
-                        <span class="badge bg-success-subtle text-success-emphasis">Inscripciones abiertas</span>
-                        <?php endif; ?>
-                    </div>
-                    <span class="fw-semibold text-body d-block mb-1"><?= e($curso['titulo']) ?></span>
-                    <?php if ($curso['fecha_inicio']): ?>
-                    <span class="small text-muted d-block">
-                        <i class="bi bi-calendar3 me-1"></i>Inicia el <?= e(fecha_larga($curso['fecha_inicio'])) ?>
-                    </span>
-                    <?php endif; ?>
-                    <?php if ($curso['horario'] || $curso['lugar']): ?>
-                    <span class="small text-muted d-block">
-                        <?php if ($curso['horario']): ?>
-                        <i class="bi bi-clock me-1"></i><?= e($curso['horario']) ?><?php endif; ?>
-                        <?php if ($curso['horario'] && $curso['lugar']): ?> · <?php endif; ?>
-                        <?php if ($curso['lugar']): ?>
-                        <i class="bi bi-geo-alt me-1"></i><?= e($curso['lugar']) ?><?php endif; ?>
-                    </span>
-                    <?php endif; ?>
-                </div>
-            </a>
-            <?php endforeach; ?>
-        </div>
-        <p class="mt-2 mb-0">
-            <a href="<?= e(url_publica('cursos')) ?>" class="small">Ver todos los cursos <i class="bi bi-arrow-right"></i></a>
-        </p>
-    </div>
-    <?php endif; ?>
-
-</div>
-</div>
-</div>
+</section>
 <?php endif; ?>
 
 <?php if (!empty($avisosRecientes)): ?>
