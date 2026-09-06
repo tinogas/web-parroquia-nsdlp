@@ -29,6 +29,16 @@
         <h1 class="h4 fw-bold mb-0">
             <i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?> text-dorado me-1"></i><?= e($pastoral['nombre']) ?>
         </h1>
+        <?php /* Quién coordina, aquí donde se mira. Es lo primero que se pregunta al entrar
+                 a una pastoral y hasta ahora solo se veía abriendo "Editar pastoral", que es
+                 donde se sigue cambiando: puede ser una persona o una pareja, y el nombre —de
+                 las dos fichas, si son dos— ya viene escrito de ahí. */ ?>
+        <?php if ($pastoral['responsable_nombre']): ?>
+        <p class="text-muted small mb-0 mt-1">
+            <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?> me-1"></i>
+            Coordina <?= e($pastoral['responsable_nombre']) ?>
+        </p>
+        <?php endif; ?>
     </div>
     <div class="d-flex gap-2">
         <?php if ($puedeEditar): ?>
