@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
         <h1 class="h4 fw-bold mb-1">Coros</h1>
-        <p class="text-muted mb-0 small">Un coro por misa de domingo, con su encargado y quiénes cantan en él.</p>
+        <p class="text-muted mb-0 small">Un coro por misa de domingo, con su encargado y sus integrantes.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <?php $navActiva = ''; require __DIR__ . '/_nav.php'; ?>
@@ -26,7 +26,7 @@
                         <th>Misa</th>
                         <th class="d-none d-md-table-cell">Sede</th>
                         <th>Encargado</th>
-                        <th class="text-center">Cantan</th>
+                        <th class="text-center">Integrantes</th>
                         <th>&nbsp;</th>
                     </tr>
                 </thead>
@@ -35,6 +35,7 @@
                 <?php
                 $coro   = $coros[(int) $horario['id']] ?? null;
                 $activo = $coro && $coro['activo'];
+                $misIntegrantes = $coro ? ($integrantes[(int) $coro['id']] ?? []) : [];
                 ?>
                     <tr class="<?= ($coro === null || $activo) ? '' : 'text-muted' ?>">
                         <td>
@@ -57,7 +58,23 @@
                             <?php endif; ?>
                         </td>
                         <td class="text-center small">
+                            <?php /* El número es el botón: despliega la fila de abajo con quién canta
+                                     en esta misa, que era el dato que obligaba a abrir el formulario
+                                     de cada coro para verlo. Sin coro o sin nadie marcado no hay nada
+                                     que desplegar, así que ahí va el número —o una raya— sin un botón
+                                     que no lleve a ninguna parte. */ ?>
+                            <?php if ($coro && $misIntegrantes): ?>
+                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none collapsed toggle-integrantes"
+                                    data-bs-toggle="collapse" data-bs-target="#integrantes<?= (int) $coro['id'] ?>"
+                                    aria-expanded="false" aria-controls="integrantes<?= (int) $coro['id'] ?>"
+                                    title="Ver quiénes cantan en esta misa">
+                                <i class="bi bi-plus-square icono-mas"></i>
+                                <i class="bi bi-dash-square icono-menos"></i>
+                                <span class="ms-1"><?= count($misIntegrantes) ?></span>
+                            </button>
+                            <?php else: ?>
                             <?= $coro ? (int) $coro['total_coristas'] : '<span class="text-muted">—</span>' ?>
+                            <?php endif; ?>
                         </td>
                         <td class="text-end text-nowrap">
                             <?php if ($coro && Auth::tienePermiso('coros.editar')): ?>
@@ -79,6 +96,43 @@
                             <?php endif; ?>
                         </td>
                     </tr>
+                    <?php if ($coro && $misIntegrantes): ?>
+                    <?php /* El desplegable vive dentro de una celda y no en la fila misma: una
+                             <tr class="collapse"> se anima cambiándole el alto, y en una tabla eso
+                             da tirones. Así la fila siempre está y lo que se abre y se cierra es el
+                             div de dentro. */ ?>
+                    <tr class="border-0">
+                        <td colspan="5" class="p-0 border-0">
+                            <div class="collapse" id="integrantes<?= (int) $coro['id'] ?>">
+                                <div class="px-3 pb-3 pt-1">
+                                    <?php $encargadoId = (int) ($coro['encargado_id'] ?? 0); ?>
+                                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-1">
+                                        <?php foreach ($misIntegrantes as $integrante): ?>
+                                        <div class="col small">
+                                            <?php $esEncargado = $encargadoId === (int) $integrante['id']; ?>
+                                            <i class="bi <?= $esEncargado ? 'bi-star-fill text-dorado' : 'bi-music-note text-muted' ?> me-1"
+                                               title="<?= $esEncargado ? 'Encargado del coro' : 'Integrante' ?>"></i>
+                                            <span class="<?= $integrante['activo'] ? '' : 'text-muted' ?>"><?= e($integrante['nombre']) ?></span>
+                                            <?php if ($esEncargado): ?>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis fw-normal">Encargado</span>
+                                            <?php endif; ?>
+                                            <?php if (!$integrante['activo']): ?>
+                                            <span class="badge bg-light text-dark border fw-normal">Inactivo</span>
+                                            <?php endif; ?>
+                                            <?php $hace = trim((string) $integrante['voz']
+                                                . ($integrante['voz'] && $integrante['instrumento'] ? ' · ' : '')
+                                                . (string) $integrante['instrumento']); ?>
+                                            <?php if ($hace !== ''): ?>
+                                            <span class="text-muted">— <?= e($hace) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 <?php endforeach; ?>
                 </tbody>
             </table>
@@ -90,7 +144,7 @@
 <?php if (!$coristas && $coros): ?>
 <p class="text-muted small">
     Todavía no hay nadie en el catálogo, así que ningún coro puede tener integrantes.
-    <a href="<?= e(url_admin('coros', 'coristas')) ?>">Agrega a quienes cantan</a>.
+    <a href="<?= e(url_admin('coros', 'coristas')) ?>">Agrega integrantes</a>.
 </p>
 <?php endif; ?>
 
@@ -108,7 +162,10 @@ foreach ($horarios as $horario):
         continue;
     }
     $coroId     = (int) $coro['id'];
-    $suyos      = $integrantes[$coroId] ?? [];
+    // `integrantes` trae ahora la ficha de cada quien —hace falta para la lista
+    // desplegable—, así que aquí se sacan solo los ids, que es lo que la casilla
+    // necesita comparar.
+    $suyos      = array_map('intval', array_column($integrantes[$coroId] ?? [], 'id'));
     $encargadoId = (int) ($coro['encargado_id'] ?? 0);
 ?>
 <div class="modal fade" id="coro<?= $coroId ?>" tabindex="-1" aria-hidden="true">
@@ -129,11 +186,11 @@ foreach ($horarios as $horario):
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold">Quiénes cantan</label>
+                    <label class="form-label small fw-semibold">Integrantes</label>
                     <?php if (!$coristas): ?>
                     <p class="text-muted small mb-0">
                         El catálogo está vacío.
-                        <a href="<?= e(url_admin('coros', 'coristas')) ?>">Agrega a quienes cantan</a> y vuelve aquí.
+                        <a href="<?= e(url_admin('coros', 'coristas')) ?>">Agrega integrantes</a> y vuelve aquí.
                     </p>
                     <?php else: ?>
                     <?php foreach ($coristas as $corista): ?>

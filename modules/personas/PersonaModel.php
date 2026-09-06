@@ -45,7 +45,11 @@ class PersonaModel extends Model
                        FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
                       WHERE pc.persona_id = p.id) AS centros_nombres,
                     (SELECT GROUP_CONCAT(pa2.nombre ORDER BY pa2.nombre SEPARATOR ', ')
-                       FROM pastorales pa2 WHERE pa2.responsable_persona_id = p.id) AS pastorales_coordina
+                       FROM pastorales pa2 WHERE pa2.responsable_persona_id = p.id) AS pastorales_coordina,
+                    (SELECT o.nombre
+                       FROM parejas j JOIN personas o
+                         ON o.id = CASE WHEN j.persona_a_id = p.id THEN j.persona_b_id ELSE j.persona_a_id END
+                      WHERE j.persona_a_id = p.id OR j.persona_b_id = p.id) AS pareja_nombre
                FROM personas p
                {$where}
               ORDER BY FIELD(p.tipo, " . $this->ordenTipos() . "), p.orden, p.nombre",
@@ -261,6 +265,96 @@ class PersonaModel extends Model
         $this->execute(
             'UPDATE pastorales SET responsable_nombre = :nombre WHERE responsable_persona_id = :persona',
             [':nombre' => $nombre, ':persona' => $personaId]
+        );
+
+        // Y si quien coordina es su pareja —JECSA y Raíces las coordina un
+        // matrimonio, igual que Matrimonios y AMA—, el nombre de la pastoral es
+        // el de los dos, recalculado aquí mismo: la pastoral tampoco guarda una
+        // copia editable de eso. Dos marcadores para la misma persona porque la
+        // conexión no emula los prepare (config/database.php).
+        $this->execute(
+            "UPDATE pastorales pas
+               JOIN parejas j   ON j.id = pas.responsable_pareja_id
+               JOIN personas a  ON a.id = j.persona_a_id
+               JOIN personas b  ON b.id = j.persona_b_id
+                SET pas.responsable_nombre = CONCAT(a.nombre, ' y ', b.nombre)
+              WHERE j.persona_a_id = :personaA OR j.persona_b_id = :personaB",
+            [':personaA' => $personaId, ':personaB' => $personaId]
+        );
+    }
+
+    // ── Parejas: quién está con quién ───────────────────────────────────
+    // Un matrimonio es el mismo en toda la parroquia, así que la liga se
+    // captura una vez, en la ficha, y la usan todas las pastorales: el panel de
+    // cada una dice con quién está su gente, y una pastoral puede tener de
+    // responsable a la pareja entera. Ver
+    // docs/migraciones/2026-09-05-parejas-de-la-parroquia.sql
+
+    /** La pareja de esta persona: la fila, con el id y el nombre del otro. Null si no tiene. */
+    public function parejaDe(int $personaId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT j.id, j.persona_a_id, j.persona_b_id,
+                    CASE WHEN j.persona_a_id = :personaCaso THEN j.persona_b_id ELSE j.persona_a_id END AS otro_id,
+                    o.nombre AS otro_nombre
+               FROM parejas j
+               JOIN personas o
+                 ON o.id = CASE WHEN j.persona_a_id = :personaOtro THEN j.persona_b_id ELSE j.persona_a_id END
+              WHERE j.persona_a_id = :personaA OR j.persona_b_id = :personaB',
+            [':personaCaso' => $personaId, ':personaOtro' => $personaId,
+             ':personaA' => $personaId, ':personaB' => $personaId]
+        );
+    }
+
+    /**
+     * Deja a esta persona con quien se indique, o sin pareja si llega null.
+     * Borra primero la que tuviera cada uno de los dos: cambiar de pareja es
+     * deshacer la anterior, no acumular filas que las UNIQUE rechazarían.
+     */
+    public function guardarPareja(int $personaId, ?int $otroId): void
+    {
+        $this->execute(
+            'DELETE FROM parejas WHERE persona_a_id = :personaA OR persona_b_id = :personaB',
+            [':personaA' => $personaId, ':personaB' => $personaId]
+        );
+        if ($otroId === null || $otroId === $personaId) {
+            return;
+        }
+        $this->execute(
+            'DELETE FROM parejas WHERE persona_a_id = :otroA OR persona_b_id = :otroB',
+            [':otroA' => $otroId, ':otroB' => $otroId]
+        );
+        // El id menor siempre primero, para que "él con ella" y "ella con él"
+        // no puedan ser dos filas distintas.
+        $this->execute(
+            'INSERT INTO parejas (persona_a_id, persona_b_id) VALUES (:a, :b)',
+            [':a' => min($personaId, $otroId), ':b' => max($personaId, $otroId)]
+        );
+    }
+
+    /** Las parejas de la parroquia, ya escritas "Ella y Él", para el selector de responsable. */
+    public function parejasParaSelector(): array
+    {
+        return $this->fetchAll(
+            "SELECT j.id, CONCAT(a.nombre, ' y ', b.nombre) AS nombre
+               FROM parejas j
+               JOIN personas a ON a.id = j.persona_a_id
+               JOIN personas b ON b.id = j.persona_b_id
+              ORDER BY a.nombre"
+        );
+    }
+
+    /** Una pareja concreta, ya escrita, para nombrar a quien coordina. */
+    public function parejaPorId(int $id): ?array
+    {
+        return $this->fetchOne(
+            "SELECT j.id, j.persona_a_id, j.persona_b_id,
+                    CONCAT(a.nombre, ' y ', b.nombre) AS nombre
+               FROM parejas j
+               JOIN personas a ON a.id = j.persona_a_id
+               JOIN personas b ON b.id = j.persona_b_id
+              WHERE j.id = :id",
+            [':id' => $id]
         );
     }
 

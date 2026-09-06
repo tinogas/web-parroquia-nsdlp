@@ -42,9 +42,11 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   listas. Coordinador general, además, ya puede dar de alta y editar las cuentas de
   Coordinador y Consulta de su propia pastoral, sin depender del administrador para eso.
 - **El responsable de cada pastoral se elige del equipo pastoral**, no se escribe a mano:
-  su nombre viene de su ficha y, si tiene cuenta, el correo de contacto de la pastoral se
-  toma del correo de acceso de esa cuenta —corrige el caso real de MESC, donde los dos
-  correos llevaban una letra distinta.
+  su nombre viene de su ficha, y puede ser una pareja en vez de una persona —en JECSA, en
+  Raíces, en Matrimonios y en AMA coordina un matrimonio—. Quién está con quién se marca
+  en la ficha de cada persona y vale en toda la parroquia. El correo, en cambio, es de la
+  pastoral y se escribe a mano: sobrevive a los relevos, en vez de publicar el correo
+  personal de quien esté al frente hoy.
 - **La portada muestra lo último publicado en Facebook**, con el Page Plugin oficial
   (un iframe, sin token ni API propia) sobre la misma URL que ya se usaba para el icono
   del pie.

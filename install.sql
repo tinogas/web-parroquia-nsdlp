@@ -584,6 +584,14 @@ CREATE TABLE IF NOT EXISTS pastorales (
     -- de nombre. Ver docs/ARQUITECTURA.md
     responsable_nombre     VARCHAR(140) NULL,
     responsable_persona_id SMALLINT UNSIGNED NULL,
+    -- En JECSA, en Raíces y en las dos pastorales de familia quien coordina es
+    -- un matrimonio, no una persona. responsable_pareja_id apunta entonces a
+    -- `parejas` y es excluyente con responsable_persona_id: el formulario los
+    -- ofrece en un solo selector y el controlador limpia el otro. Con pareja,
+    -- responsable_nombre es "Ella y Él" —de las dos fichas— y contacto_email
+    -- deja de sincronizarse solo: con dos cuentas no hay forma no arbitraria
+    -- de elegir una, así que ese se escribe a mano.
+    responsable_pareja_id  SMALLINT UNSIGNED NULL,
     -- contacto_email se sincroniza con el correo de acceso (usuarios.email) de
     -- la cuenta del responsable, si tiene una — UsuarioModel lo empuja aquí en
     -- cada guardado. Sin cuenta vinculada, es un campo libre normal.
@@ -605,9 +613,11 @@ CREATE TABLE IF NOT EXISTS pastorales (
     UNIQUE KEY uq_pas_slug (slug),
     KEY idx_pas_centro (centro_id),
     KEY idx_pas_responsable (responsable_persona_id),
+    KEY idx_pas_resp_pareja (responsable_pareja_id),
     KEY idx_pas_padre (pastoral_padre_id),
     CONSTRAINT fk_pas_centro      FOREIGN KEY (centro_id)              REFERENCES centros(id)  ON DELETE SET NULL,
     CONSTRAINT fk_pas_responsable FOREIGN KEY (responsable_persona_id) REFERENCES personas(id) ON DELETE SET NULL,
+    CONSTRAINT fk_pas_resp_pareja FOREIGN KEY (responsable_pareja_id)  REFERENCES parejas(id)  ON DELETE SET NULL,
     CONSTRAINT fk_pas_padre       FOREIGN KEY (pastoral_padre_id)      REFERENCES pastorales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -673,6 +683,41 @@ CREATE TABLE IF NOT EXISTS pastoral_documentos (
     KEY idx_pdo_pastoral (pastoral_id),
     CONSTRAINT fk_pdo_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE,
     CONSTRAINT fk_pdo_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Quién con quién: los matrimonios y las parejas del equipo pastoral. Es un
+-- dato de la parroquia y no de una pastoral —un matrimonio es el mismo en
+-- Matrimonios, en AMA y en JECSA—, así que se captura una sola vez, en la ficha
+-- de la persona, y lo usan todas: el panel de cada pastoral dice con quién está
+-- cada integrante, y `pastorales.responsable_pareja_id` deja que quien coordine
+-- sea la pareja entera.
+--
+-- Una fila es una pareja, no dos filas que se apuntan la una a la otra: con una
+-- columna `pareja_persona_id` en personas habría que escribir el mismo hecho
+-- dos veces y bastaría con que una quedara sin actualizar para que la base
+-- dijera que él está con ella y ella con nadie.
+--
+-- Se guarda siempre el id menor en persona_a_id, así que "él con ella" y "ella
+-- con él" no pueden ser dos filas distintas. Las dos UNIQUE impiden repetir a
+-- alguien dentro de la misma columna; que además no esté en la otra columna de
+-- otra fila lo comprueba PersonaModel::parejaDe() antes de guardar, porque eso
+-- no lo expresa ninguna clave.
+--
+-- Emparejar no es obligatorio ni es lo normal: la mayoría del equipo no tiene
+-- fila aquí y no le falta nada. CASCADE en las dos foráneas: si se borra una
+-- ficha la pareja deja de existir —no queda media pareja—, y la pastoral que la
+-- tuviera de responsable se queda sin responsable (SET NULL), no con uno roto.
+-- Ver docs/migraciones/2026-09-05-parejas-de-la-parroquia.sql
+CREATE TABLE IF NOT EXISTS parejas (
+    id           SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    persona_a_id SMALLINT UNSIGNED NOT NULL,
+    persona_b_id SMALLINT UNSIGNED NOT NULL,
+    created_at   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_par_a (persona_a_id),
+    UNIQUE KEY uq_par_b (persona_b_id),
+    CONSTRAINT fk_par_a FOREIGN KEY (persona_a_id) REFERENCES personas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_par_b FOREIGN KEY (persona_b_id) REFERENCES personas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

@@ -1,6 +1,6 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-        <h1 class="h4 fw-bold mb-1">Quiénes cantan</h1>
+        <h1 class="h4 fw-bold mb-1">Integrantes</h1>
         <p class="text-muted mb-0 small">El catálogo de la pastoral, y en qué misas canta cada quien.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">

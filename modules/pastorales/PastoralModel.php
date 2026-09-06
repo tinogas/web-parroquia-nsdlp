@@ -62,12 +62,12 @@ class PastoralModel extends Model
         $this->execute(
             'INSERT INTO pastorales
                 (centro_id, pastoral_padre_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
-                 responsable_nombre, responsable_persona_id,
+                 responsable_nombre, responsable_persona_id, responsable_pareja_id,
                  contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
                  acepta_voluntarios, orden, activa)
              VALUES
                 (:centro, :padre, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
-                 :responsable, :responsablePersona,
+                 :responsable, :responsablePersona, :responsablePareja,
                  :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
                  :voluntarios, :orden, :activa)',
             $this->parametros($datos)
@@ -83,6 +83,7 @@ class PastoralModel extends Model
                     descripcion_corta = :descCorta,
                     descripcion = :desc, imagen = :imagen, icono = :icono,
                     responsable_nombre = :responsable, responsable_persona_id = :responsablePersona,
+                    responsable_pareja_id = :responsablePareja,
                     contacto_email = :email,
                     contacto_telefono = :telefono, dia_reunion = :diaReunion,
                     hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
@@ -517,6 +518,7 @@ class PastoralModel extends Model
             ':icono'       => $datos['icono'],
             ':responsable'         => $datos['responsable_nombre'],
             ':responsablePersona'  => $datos['responsable_persona_id'],
+            ':responsablePareja'   => $datos['responsable_pareja_id'],
             ':email'       => $datos['contacto_email'],
             ':telefono'    => $datos['contacto_telefono'],
             ':diaReunion'  => $datos['dia_reunion'],

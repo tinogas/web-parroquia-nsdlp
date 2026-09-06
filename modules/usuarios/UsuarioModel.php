@@ -172,7 +172,6 @@ class UsuarioModel extends Model
             $id = $this->lastInsertId();
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
-            $this->sincronizarPastoralResponsable($datos['persona_id'], $datos['email']);
             $this->commit();
             return $id;
         } catch (Throwable $e) {
@@ -206,7 +205,6 @@ class UsuarioModel extends Model
             $this->execute($sql, $params);
             $this->sincronizarPastorales($id, $datos['pastorales']);
             $this->sincronizarCentros($id, $datos['centros']);
-            $this->sincronizarPastoralResponsable($datos['persona_id'], $datos['email']);
             $this->commit();
         } catch (Throwable $e) {
             $this->rollback();
@@ -252,30 +250,6 @@ class UsuarioModel extends Model
                 [':uid' => $usuarioId, ':pid' => $pid]
             );
         }
-    }
-
-    /**
-     * Si esta cuenta es la de la persona responsable de alguna pastoral, su
-     * correo de contacto público se toma de aquí —el correo de acceso, «el
-     * del rol»— para que no queden dos direcciones distintas de la misma
-     * cuenta. Sin esto, `pastorales.contacto_email` es un campo libre que
-     * diverge en cuanto alguien cambia su correo de acceso sin acordarse de
-     * ir a editar también la ficha de su pastoral (fue justo lo que le pasó
-     * a la de MESC: contacto_email tenía un correo con una letra distinta al
-     * de la cuenta real de la coordinadora). Ver
-     * PastoralController::guardar(), que hace el mismo cálculo al elegir
-     * responsable, para que no haya que esperar a que la cuenta se vuelva a
-     * guardar.
-     */
-    private function sincronizarPastoralResponsable(?int $personaId, string $email): void
-    {
-        if ($personaId === null) {
-            return;
-        }
-        $this->execute(
-            'UPDATE pastorales SET contacto_email = :email WHERE responsable_persona_id = :persona',
-            [':email' => $email, ':persona' => $personaId]
-        );
     }
 
     /**

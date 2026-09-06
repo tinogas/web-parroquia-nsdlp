@@ -3,7 +3,6 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
-require_once BASE_PATH . '/modules/usuarios/UsuarioModel.php';
 
 class PastoralController extends Controller
 {
@@ -36,7 +35,7 @@ class PastoralController extends Controller
             'pastoral'          => null,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
-            'responsableCuenta' => null,
+            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'padresDisponibles' => $this->modelo->candidatosPadre(),
             'tieneHijos'        => false,
         ]);
@@ -54,16 +53,12 @@ class PastoralController extends Controller
         }
         $this->requireAlcancePastoral((int) $pastoral['id']);
 
-        $responsableCuenta = $pastoral['responsable_persona_id']
-            ? (new UsuarioModel())->porPersona((int) $pastoral['responsable_persona_id'])
-            : null;
-
         $this->render('pastorales/form', [
             'titulo'            => $pastoral['nombre'],
             'pastoral'          => $pastoral,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
-            'responsableCuenta' => $responsableCuenta,
+            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
             'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
             'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
@@ -203,12 +198,18 @@ class PastoralController extends Controller
         // acceso —si tiene cuenta— manda sobre el de contacto: es la misma
         // regla que corrige el caso real de MESC, donde el correo de contacto
         // llevaba una letra distinta al de la cuenta de la coordinadora.
-        $responsablePersonaId = $this->postIntONull('responsable_persona_id');
-        $responsablePersona   = $responsablePersonaId
-            ? (new PersonaModel())->porId($responsablePersonaId) : null;
-        if ($responsablePersonaId && !$responsablePersona) {
-            $responsablePersonaId = null;   // id inválido: se ignora en silencio, como el resto de selects opcionales
-        }
+        // Y puede ser una persona o una pareja: en JECSA, en Raíces y en las dos
+        // pastorales de familia quien coordina es un matrimonio. Las dos
+        // opciones viven en un mismo selector ("persona:12" / "pareja:3"), así
+        // que no pueden quedar elegidas a la vez ni hay que limpiar la otra.
+        $personaModel = new PersonaModel();
+        [$tipoResponsable, $idResponsable] = $this->responsableElegido();
+
+        $responsablePersona = $tipoResponsable === 'persona' ? $personaModel->porId($idResponsable) : null;
+        $responsablePareja  = $tipoResponsable === 'pareja'  ? $personaModel->parejaPorId($idResponsable) : null;
+        // Un id inválido se ignora en silencio, como el resto de selects opcionales.
+        $responsablePersonaId = $responsablePersona ? (int) $responsablePersona['id'] : null;
+        $responsableParejaId  = $responsablePareja  ? (int) $responsablePareja['id']  : null;
 
         // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
         // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
@@ -229,12 +230,25 @@ class PastoralController extends Controller
 
         if ($responsablePersona) {
             $responsableNombre = $responsablePersona['nombre'];
-            $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
-            $contactoEmail     = $cuentaResponsable ? $cuentaResponsable['email'] : ($this->postStr('contacto_email') ?: null);
+        } elseif ($responsablePareja) {
+            // "Ella y Él", de las dos fichas, y se mantiene solo desde ahí
+            // (PersonaModel::sincronizarResponsable()).
+            $responsableNombre = $responsablePareja['nombre'];
         } else {
             $responsableNombre = $this->postStr('responsable_nombre') ?: null;
-            $contactoEmail     = $this->postStr('contacto_email') ?: null;
         }
+
+        // El correo es de la pastoral, no de quien la coordina: se escribe aquí
+        // y no se hereda de ninguna cuenta. Antes se copiaba del correo de
+        // acceso del responsable —así se corrigió el caso de MESC, donde las dos
+        // direcciones llevaban una letra distinta—, y eso resolvía la
+        // discrepancia a costa de publicar en el sitio el correo personal de una
+        // persona y de dejar la pastoral sin dirección propia: al cambiar de
+        // coordinadora cambiaba también la dirección a la que la parroquia
+        // llevaba años escribiendo. Ahora cada pastoral tiene la suya, que
+        // sobrevive a los relevos; quien coordine puede poner la de su cuenta si
+        // así lo quiere, pero es una decisión suya y explícita.
+        $contactoEmail = $this->postStr('contacto_email') ?: null;
 
         $datos = [
             'centro_id'          => $this->postIntONull('centro_id'),
@@ -247,6 +261,7 @@ class PastoralController extends Controller
             'icono'              => $this->postStr('icono') ?: 'bi-people',
             'responsable_nombre'      => $responsableNombre,
             'responsable_persona_id'  => $responsablePersonaId,
+            'responsable_pareja_id'   => $responsableParejaId,
             'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
@@ -457,6 +472,21 @@ class PastoralController extends Controller
         Session::flash('success', 'Documento eliminado.');
 
         $this->redirect(url_admin('pastorales', 'editar', ['id' => $documento['pastoral_id']]));
+    }
+
+    /**
+     * Lee el selector de responsable, que ofrece personas y parejas en la misma
+     * lista. Devuelve ['persona'|'pareja'|null, id]. Un valor con otra forma se
+     * trata como "sin responsable", igual que un id que no existe: es defensa
+     * ante un POST manipulado, no un caso de uso.
+     */
+    private function responsableElegido(): array
+    {
+        $ref = $this->postStr('responsable_ref');
+        if (preg_match('/^(persona|pareja):(\d+)$/', $ref, $m)) {
+            return [$m[1], (int) $m[2]];
+        }
+        return [null, 0];
     }
 
     private function scriptEditor(): string
