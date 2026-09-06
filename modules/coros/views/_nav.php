@@ -15,7 +15,7 @@
  */
 $pantallasModulo = [
     ''            => ['Coros',          'bi-music-note-list'],
-    'coristas'    => ['Quiénes cantan', 'bi-people'],
+    'coristas'    => ['Integrantes',    'bi-people'],
     'actividades' => ['Actividades',    'bi-clipboard-check'],
     'documentos'  => ['Documentos',     'bi-file-earmark-pdf'],
 ];

@@ -36,6 +36,7 @@ class PastoralController extends Controller
             'pastoral'          => null,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
+            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'responsableCuenta' => null,
             'padresDisponibles' => $this->modelo->candidatosPadre(),
             'tieneHijos'        => false,
@@ -63,6 +64,7 @@ class PastoralController extends Controller
             'pastoral'          => $pastoral,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
+            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'responsableCuenta' => $responsableCuenta,
             'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
             'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
@@ -104,21 +106,6 @@ class PastoralController extends Controller
         // en config/app.php, que a propósito no incluye personas.*.
         $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
 
-        // Matrimonios y AMA se organizan por parejas: la casilla de la propia
-        // pastoral decide si esta pantalla las muestra. `parejaDe` es el mapa
-        // persona => con quién está, para poder decirlo en la lista de
-        // integrantes sin volver a consultar por cada renglón; quien no
-        // aparezca en el mapa participa solo, que es igual de válido.
-        $parejas  = [];
-        $parejaDe = [];
-        if ($pastoral['organiza_parejas']) {
-            $parejas = $this->modelo->parejas((int) $pastoral['id']);
-            foreach ($parejas as $pareja) {
-                $parejaDe[(int) $pareja['persona_a_id']] = $pareja['nombre_b'];
-                $parejaDe[(int) $pareja['persona_b_id']] = $pareja['nombre_a'];
-            }
-        }
-
         $this->render('pastorales/panel', [
             'titulo'        => $pastoral['nombre'],
             'pastoral'      => $pastoral,
@@ -126,9 +113,6 @@ class PastoralController extends Controller
             'moduloDedicado' => MODULO_POR_PASTORAL[$pastoral['slug']] ?? null,
             'documentos'    => $this->modelo->documentos((int) $pastoral['id']),
             'personas'      => $personas,
-            'organizaParejas' => (bool) $pastoral['organiza_parejas'],
-            'parejas'         => $parejas,
-            'parejaDe'        => $parejaDe,
             // Una Comisión suele tener a su gente marcada en las pastorales que
             // agrupa, no en ella misma: sin esto, su lista vacía parecería un
             // error en vez de lo normal.
@@ -221,12 +205,18 @@ class PastoralController extends Controller
         // acceso —si tiene cuenta— manda sobre el de contacto: es la misma
         // regla que corrige el caso real de MESC, donde el correo de contacto
         // llevaba una letra distinta al de la cuenta de la coordinadora.
-        $responsablePersonaId = $this->postIntONull('responsable_persona_id');
-        $responsablePersona   = $responsablePersonaId
-            ? (new PersonaModel())->porId($responsablePersonaId) : null;
-        if ($responsablePersonaId && !$responsablePersona) {
-            $responsablePersonaId = null;   // id inválido: se ignora en silencio, como el resto de selects opcionales
-        }
+        // Y puede ser una persona o una pareja: en JECSA, en Raíces y en las dos
+        // pastorales de familia quien coordina es un matrimonio. Las dos
+        // opciones viven en un mismo selector ("persona:12" / "pareja:3"), así
+        // que no pueden quedar elegidas a la vez ni hay que limpiar la otra.
+        $personaModel = new PersonaModel();
+        [$tipoResponsable, $idResponsable] = $this->responsableElegido();
+
+        $responsablePersona = $tipoResponsable === 'persona' ? $personaModel->porId($idResponsable) : null;
+        $responsablePareja  = $tipoResponsable === 'pareja'  ? $personaModel->parejaPorId($idResponsable) : null;
+        // Un id inválido se ignora en silencio, como el resto de selects opcionales.
+        $responsablePersonaId = $responsablePersona ? (int) $responsablePersona['id'] : null;
+        $responsableParejaId  = $responsablePareja  ? (int) $responsablePareja['id']  : null;
 
         // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
         // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
@@ -249,6 +239,14 @@ class PastoralController extends Controller
             $responsableNombre = $responsablePersona['nombre'];
             $cuentaResponsable = (new UsuarioModel())->porPersona((int) $responsablePersona['id']);
             $contactoEmail     = $cuentaResponsable ? $cuentaResponsable['email'] : ($this->postStr('contacto_email') ?: null);
+        } elseif ($responsablePareja) {
+            // "Ella y Él", de las dos fichas, y se mantiene solo desde ahí
+            // (PersonaModel::sincronizarResponsable()). El correo, en cambio,
+            // se escribe a mano aunque los dos tengan cuenta: entre dos correos
+            // de acceso no hay forma no arbitraria de elegir uno, y adivinar
+            // mal aquí es publicar en el sitio el correo equivocado.
+            $responsableNombre = $responsablePareja['nombre'];
+            $contactoEmail     = $this->postStr('contacto_email') ?: null;
         } else {
             $responsableNombre = $this->postStr('responsable_nombre') ?: null;
             $contactoEmail     = $this->postStr('contacto_email') ?: null;
@@ -265,13 +263,13 @@ class PastoralController extends Controller
             'icono'              => $this->postStr('icono') ?: 'bi-people',
             'responsable_nombre'      => $responsableNombre,
             'responsable_persona_id'  => $responsablePersonaId,
+            'responsable_pareja_id'   => $responsableParejaId,
             'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
             'hora_reunion'       => $this->postStr('hora_reunion') ?: null,
             'lugar_reunion'      => $this->postStr('lugar_reunion') ?: null,
             'acepta_voluntarios' => $this->postBool('acepta_voluntarios'),
-            'organiza_parejas'   => $this->postBool('organiza_parejas'),
             'orden'              => $this->postInt('orden'),
             // Un coordinador puede tener alcance global de facto si un admin se
             // lo concede, pero de entrada solo admin/editor deciden si una
@@ -479,103 +477,18 @@ class PastoralController extends Controller
     }
 
     /**
-     * Liga a dos integrantes de la pastoral como pareja. Pide
-     * `pastorales.editar` —el permiso que ya tiene quien coordina— y no
-     * `personas.editar`: esto no toca ninguna ficha, solo dice quién está con
-     * quién dentro de esta pastoral.
+     * Lee el selector de responsable, que ofrece personas y parejas en la misma
+     * lista. Devuelve ['persona'|'pareja'|null, id]. Un valor con otra forma se
+     * trata como "sin responsable", igual que un id que no existe: es defensa
+     * ante un POST manipulado, no un caso de uso.
      */
-    public function parejaGuardar(): void
+    private function responsableElegido(): array
     {
-        $this->requirePermiso('pastorales.editar');
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect(url_admin('pastorales'));
-            return;
+        $ref = $this->postStr('responsable_ref');
+        if (preg_match('/^(persona|pareja):(\d+)$/', $ref, $m)) {
+            return [$m[1], (int) $m[2]];
         }
-        $this->validarCsrf();
-
-        $pastoralId = $this->postInt('pastoral_id');
-        $pastoral   = $this->modelo->porId($pastoralId);
-        if (!$pastoral) {
-            Session::flash('error', 'No encontramos esa pastoral.');
-            $this->redirect(url_admin('pastorales'));
-            return;
-        }
-        $this->requireAlcancePastoral($pastoralId);
-
-        $destino = url_admin('pastorales', 'panel', ['id' => $pastoralId]);
-
-        if (!$pastoral['organiza_parejas']) {
-            Session::flash('error', 'Esta pastoral no se organiza por parejas.');
-            $this->redirect($destino);
-            return;
-        }
-
-        $a = $this->postInt('persona_a_id');
-        $b = $this->postInt('persona_b_id');
-        if (!$a || !$b || $a === $b) {
-            Session::flash('error', 'Elige a dos personas distintas.');
-            $this->redirect($destino);
-            return;
-        }
-
-        // Las dos tienen que pertenecer ya a la pastoral: la pareja liga a
-        // quienes están, no da de alta a nadie —eso se sigue haciendo en la
-        // ficha de cada persona, en Equipo pastoral—.
-        $miembros = [];
-        foreach ((new PersonaModel())->todas([$pastoralId]) as $persona) {
-            $miembros[(int) $persona['id']] = $persona['nombre'];
-        }
-        if (!isset($miembros[$a], $miembros[$b])) {
-            Session::flash('error', 'Las dos personas tienen que estar en esta pastoral.');
-            $this->redirect($destino);
-            return;
-        }
-
-        foreach ([$a, $b] as $personaId) {
-            if ($this->modelo->personaEmparejada($pastoralId, $personaId)) {
-                Session::flash('error', $miembros[$personaId] . ' ya está en una pareja aquí. Deshaz esa primero.');
-                $this->redirect($destino);
-                return;
-            }
-        }
-
-        $etiqueta = $miembros[$a] . ' y ' . $miembros[$b];
-        $id = $this->modelo->crearPareja($pastoralId, $a, $b);
-        $this->auditoria('crear', 'pastoral_parejas', $id, $etiqueta);
-        Session::flash('success', 'Pareja formada: ' . $etiqueta . '.');
-
-        $this->redirect($destino);
-    }
-
-    /** Deshace la liga. No borra a nadie: los dos siguen en la pastoral, por separado. */
-    public function parejaEliminar(): void
-    {
-        $this->requirePermiso('pastorales.editar');
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect(url_admin('pastorales'));
-            return;
-        }
-        $this->validarCsrf();
-
-        $pareja = $this->modelo->parejaPorId($this->postInt('id'));
-        if (!$pareja) {
-            $this->redirect(url_admin('pastorales'));
-            return;
-        }
-        $this->requireAlcancePastoral((int) $pareja['pastoral_id']);
-
-        $personaModel = new PersonaModel();
-        $a = $personaModel->porId((int) $pareja['persona_a_id']);
-        $b = $personaModel->porId((int) $pareja['persona_b_id']);
-        $etiqueta = trim(($a['nombre'] ?? '') . ' y ' . ($b['nombre'] ?? ''));
-
-        $this->modelo->eliminarPareja((int) $pareja['id']);
-        $this->auditoria('eliminar', 'pastoral_parejas', (int) $pareja['id'], $etiqueta);
-        Session::flash('success', 'Pareja deshecha. Los dos siguen en la pastoral.');
-
-        $this->redirect(url_admin('pastorales', 'panel', ['id' => $pareja['pastoral_id']]));
+        return [null, 0];
     }
 
     private function scriptEditor(): string

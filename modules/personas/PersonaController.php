@@ -50,6 +50,13 @@ class PersonaController extends Controller
             'asignadas'        => [],
             'centros'          => (new CentroModel())->activos(),
             'centrosAsignados' => [],
+            // La pareja se elige aquí, en la ficha, porque es un dato de la
+            // persona y no de una pastoral: el mismo matrimonio vale en
+            // Matrimonios, en AMA y en JECSA. Al dar de alta todavía no hay a
+            // quién ligar —la ficha no existe—, así que el selector aparece
+            // vacío y se usa al editar.
+            'candidatosPareja' => [],
+            'parejaActual'     => null,
         ]);
     }
 
@@ -71,6 +78,8 @@ class PersonaController extends Controller
             'asignadas'        => $this->modelo->pastoralesDe((int) $persona['id']),
             'centros'          => (new CentroModel())->activos(),
             'centrosAsignados' => $this->modelo->centrosDe((int) $persona['id']),
+            'candidatosPareja' => $this->modelo->paraSelector(),
+            'parejaActual'     => $this->modelo->parejaDe((int) $persona['id']),
         ]);
     }
 
@@ -141,6 +150,24 @@ class PersonaController extends Controller
             $id = $this->modelo->crear($datos);
             $this->auditoria('crear', 'personas', $id, $nombre);
             Session::flash('success', 'Persona agregada.');
+        }
+
+        // La pareja se aplica después de tener el id (una ficha nueva no lo
+        // tiene antes de guardarse). Cambiar de pareja deshace la anterior de
+        // los dos: nadie puede estar en dos a la vez, y elegir "sin pareja"
+        // simplemente la deshace.
+        if ($id && array_key_exists('pareja_persona_id', $_POST)) {
+            $otroId = $this->postIntONull('pareja_persona_id');
+            if ($otroId === $id) {
+                Session::flash('warning', 'Se guardó, pero nadie puede ser su propia pareja.');
+            } else {
+                $anterior = $this->modelo->parejaDe($id);
+                $este     = $anterior['otro_id'] ?? null;
+                if ((int) $este !== (int) $otroId) {
+                    $this->modelo->guardarPareja($id, $otroId);
+                    $this->auditoria('editar', 'parejas', $id, $nombre);
+                }
+            }
         }
 
         $this->redirect(url_admin('personas'));

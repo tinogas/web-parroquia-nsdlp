@@ -184,21 +184,47 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     require BASE_PATH . '/shared/views/parciales/campo_imagen.php';
                     ?>
 
-                    <?php $responsablePersonaId = $esNueva ? 0 : (int) ($pastoral['responsable_persona_id'] ?? 0); ?>
+                    <?php
+                    /* Personas y parejas en un mismo selector, con el valor
+                       prefijado ("persona:12" / "pareja:3"): así no pueden
+                       quedar elegidas las dos a la vez, que es lo que pasaría
+                       con dos listas separadas. Quien coordina JECSA, Raíces,
+                       Matrimonios o AMA suele ser un matrimonio; en el resto de
+                       las pastorales, una persona. */
+                    $refActual = '';
+                    if (!$esNueva && $pastoral['responsable_pareja_id']) {
+                        $refActual = 'pareja:' . (int) $pastoral['responsable_pareja_id'];
+                    } elseif (!$esNueva && $pastoral['responsable_persona_id']) {
+                        $refActual = 'persona:' . (int) $pastoral['responsable_persona_id'];
+                    }
+                    ?>
                     <div class="mb-3">
-                        <label for="responsable_persona_id" class="form-label fw-semibold">Responsable</label>
-                        <select name="responsable_persona_id" id="responsable_persona_id" class="form-select">
+                        <label for="responsable_ref" class="form-label fw-semibold">Responsable</label>
+                        <select name="responsable_ref" id="responsable_ref" class="form-select">
                             <option value="">— Elegir del equipo pastoral —</option>
-                            <?php foreach ($personas as $persona): ?>
-                            <option value="<?= (int) $persona['id'] ?>"
-                                <?= $responsablePersonaId === (int) $persona['id'] ? 'selected' : '' ?>>
-                                <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
-                            </option>
-                            <?php endforeach; ?>
+                            <?php if ($parejas): ?>
+                            <optgroup label="Parejas">
+                                <?php foreach ($parejas as $pareja): ?>
+                                <?php $ref = 'pareja:' . (int) $pareja['id']; ?>
+                                <option value="<?= e($ref) ?>" <?= $refActual === $ref ? 'selected' : '' ?>>
+                                    <?= e($pareja['nombre']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                            <?php endif; ?>
+                            <optgroup label="Personas">
+                                <?php foreach ($personas as $persona): ?>
+                                <?php $ref = 'persona:' . (int) $persona['id']; ?>
+                                <option value="<?= e($ref) ?>" <?= $refActual === $ref ? 'selected' : '' ?>>
+                                    <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </optgroup>
                         </select>
                         <div class="form-text">
-                            Su nombre se toma de su ficha del equipo pastoral. Si todavía no está de alta ahí,
-                            escríbelo abajo en vez de elegir uno de la lista.
+                            El nombre se toma de su ficha del equipo pastoral —de las dos, si es una pareja—.
+                            Si todavía no está de alta ahí, escríbelo abajo en vez de elegir de la lista.
+                            Las parejas de la lista se forman en la ficha de cada persona.
                         </div>
                     </div>
                     <div class="mb-3">
@@ -206,7 +232,7 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                             Nombre, si no está en el equipo pastoral
                         </label>
                         <input type="text" name="responsable_nombre" id="responsable_nombre" class="form-control"
-                               value="<?= e($esNueva || $responsablePersonaId ? '' : (string) $pastoral['responsable_nombre']) ?>"
+                               value="<?= e($esNueva || $refActual ? '' : (string) $pastoral['responsable_nombre']) ?>"
                                maxlength="140">
                         <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
                     </div>
@@ -219,6 +245,13 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                         <div class="form-text">
                             Es el correo de acceso de la cuenta de <?= e($pastoral['responsable_nombre']) ?>;
                             si el suyo cambia, este cambia solo.
+                        </div>
+                        <?php elseif (!$esNueva && $pastoral['responsable_pareja_id']): ?>
+                        <input type="email" name="contacto_email" id="contacto_email" class="form-control"
+                               value="<?= e((string) $pastoral['contacto_email']) ?>">
+                        <div class="form-text">
+                            Con una pareja al frente este correo se escribe a mano: entre dos cuentas
+                            no hay una "la suya", y publicar la equivocada es peor que preguntarlo.
                         </div>
                         <?php else: ?>
                         <input type="email" name="contacto_email" id="contacto_email" class="form-control"
@@ -257,21 +290,6 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                                name="acepta_voluntarios" id="acepta_voluntarios" value="1"
                                <?= ($esNueva || $pastoral['acepta_voluntarios']) ? 'checked' : '' ?>>
                         <label class="form-check-label small" for="acepta_voluntarios">Acepta voluntarios</label>
-                    </div>
-                    <?php /* Matrimonios y AMA se organizan por parejas. Es una casilla y no una
-                             lista de slugs en el código para que la encienda quien coordine la
-                             pastoral el día que la necesite. Las parejas se forman en el panel
-                             de la pastoral, no aquí. */ ?>
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               name="organiza_parejas" id="organiza_parejas" value="1"
-                               <?= (!$esNueva && $pastoral['organiza_parejas']) ? 'checked' : '' ?>>
-                        <label class="form-check-label small" for="organiza_parejas">
-                            Se organiza por parejas
-                            <span class="d-block text-muted">
-                                Permite ligar de dos en dos a sus integrantes, desde el panel de la pastoral.
-                            </span>
-                        </label>
                     </div>
                 </div>
             </div>

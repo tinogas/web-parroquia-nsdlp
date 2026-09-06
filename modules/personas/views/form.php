@@ -97,6 +97,44 @@
                 </div>
             </div>
 
+            <?php
+            /* Su pareja. Es un dato de la persona y no de una pastoral —un
+               matrimonio es el mismo en Matrimonios, en AMA y en JECSA—, así que
+               se captura una sola vez, aquí, y de aquí lo toman todas: el panel
+               de cada pastoral dice con quién está su gente, y una pastoral puede
+               tener de responsable a la pareja entera.
+
+               No es obligatorio ni es lo normal: la mayoría del equipo no tiene a
+               nadie marcado y no le falta nada. En una ficha nueva ni se ofrece:
+               todavía no hay a quién ligar porque la ficha no existe hasta que se
+               guarda. */
+            ?>
+            <?php if (!$esNueva): ?>
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <label for="pareja_persona_id" class="form-label fw-semibold">Su pareja</label>
+                    <div class="form-text mb-2">
+                        Con quién forma matrimonio o pareja dentro del equipo pastoral. Opcional:
+                        déjalo en blanco si participa por su cuenta.
+                    </div>
+                    <select name="pareja_persona_id" id="pareja_persona_id" class="form-select">
+                        <option value="">— Sin pareja —</option>
+                        <?php foreach ($candidatosPareja as $candidato): ?>
+                        <?php if ((int) $candidato['id'] === (int) $persona['id']) { continue; } ?>
+                        <option value="<?= (int) $candidato['id'] ?>"
+                            <?= (int) ($parejaActual['otro_id'] ?? 0) === (int) $candidato['id'] ? 'selected' : '' ?>>
+                            <?= e($candidato['nombre']) ?><?= $candidato['cargo'] ? ' — ' . e($candidato['cargo']) : '' ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">
+                        Si quien elijas ya estaba con alguien más, esa pareja se deshace: nadie
+                        puede estar en dos a la vez.
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="card border-0 shadow-sm mt-4">
                 <div class="card-body p-4">
                     <label class="form-label fw-semibold">Sede o centros</label>

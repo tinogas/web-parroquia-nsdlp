@@ -1181,44 +1181,52 @@ desactivado): confirmar con contraseña es la única fricción entre un clic y p
 pastoral y sus documentos/actividades para siempre (avisos, eventos y cursos sobreviven
 como contenido general, por `ON DELETE SET NULL`).
 
-### Parejas dentro de una pastoral: Matrimonios y AMA
+### Parejas: un dato de la parroquia, y la pastoral que coordina un matrimonio
 
-Matrimonios y AMA no trabajan con personas sueltas: trabajan con parejas. El sistema sabía
-que él y ella estaban los dos en la pastoral, pero no que estaban el uno con el otro, y eso
-es justo lo que esas dos pastorales necesitan para convocar, repartir y llevar cuenta de su
-gente. `pastoral_parejas` guarda esa liga —solo la liga: ni fecha de matrimonio ni notas, se
-pidió el vínculo y nada más, y añadirle columnas después no obliga a rehacer nada de esto—.
+Matrimonios y AMA no trabajan con personas sueltas sino con parejas, y en JECSA y en Raíces
+quien coordina es un matrimonio. El sistema sabía que él y ella estaban los dos en el equipo,
+pero no que estaban el uno con el otro. `parejas` guarda esa liga —solo la liga: ni fecha de
+matrimonio ni notas, se pidió el vínculo y nada más, y añadirle columnas después no obliga a
+rehacer nada de esto—.
 
-**Una fila es una pareja.** La alternativa era una columna `pareja_persona_id` en
-`persona_pastorales`, y se descartó porque obliga a escribir el mismo hecho dos veces —la
-fila de cada uno apuntando al otro— y basta con que una quede sin actualizar para que la
-base diga que él está con ella y ella con nadie. Con una fila, la pareja existe o no
-existe. El id menor va siempre en `persona_a_id`, así que "él con ella" y "ella con él"
-tampoco pueden ser dos filas distintas.
+**Es de la parroquia, no de la pastoral, y se corrigió a los veinte minutos.** El primer
+intento fue una tabla `pastoral_parejas` donde cada pastoral ligaba a su propia gente, y no
+sobrevivió al segundo requisito del mismo día: el matrimonio que coordina JECSA no tenía dónde
+existir, porque JECSA no se organiza por parejas; y el que está en Matrimonios y en AMA había
+que capturarlo dos veces, con dos filas para un solo hecho que acaban divergiendo. Un
+matrimonio es el mismo en toda la parroquia, así que la liga subió ahí. Con eso desapareció
+también `pastorales.organiza_parejas`, la casilla que decidía qué pastoral podía ligar: ya no
+gobierna ninguna pantalla, porque ligar dejó de hacerse en la pastoral.
 
-**La liga es de la pastoral, no de la ficha.** El mismo matrimonio puede estar en
-Matrimonios y no en AMA, y a la Pastoral de la Salud ir solo uno de los dos; por eso cuelga
-de `pastoral_id`, igual que la pertenencia en `persona_pastorales`, y `personas` no cambió.
-Quien deja la pastoral pierde ahí su pareja y conserva su ficha intacta.
+**Se captura en la ficha, en Equipo pastoral**, junto a sus pastorales y sus sedes, que es
+donde ya viven los demás datos parroquiales de una persona. El panel de cada pastoral solo lo
+muestra —"♥ Con Fulana" bajo cada integrante—, y lo muestra en cualquier pastoral, no solo en
+las de familia: es un dato de la persona, y saber que dos de tu gente son matrimonio sirve
+igual en Coros. Es la misma regla que ya rige la pertenencia: el panel de la pastoral enseña
+quién está en ella pero no lo edita, porque dos sitios para marcar lo mismo es como se acaba
+con una persona en dos pastorales por descuido.
 
-**Emparejar no es obligatorio, y no emparejar no es un registro a medias.** En las dos
-pastorales hay quien participa sin su cónyuge, así que quien no tiene pareja aparece en la
-lista de integrantes como cualquier otro, sin advertencia ni marca. Y ligar no da de alta a
-nadie: las dos personas tienen que estar ya en la pastoral —el selector solo ofrece a
-quienes pertenecen y todavía no están emparejados—, porque la pertenencia sigue teniendo
-una sola fuente, el checklist de la ficha en Equipo pastoral. Es la misma regla que ya
-explica por qué el panel de la pastoral muestra a su gente pero no la edita.
+**Una fila es una pareja.** La alternativa era una columna `pareja_persona_id` en `personas`, y
+se descartó porque obliga a escribir el mismo hecho dos veces —la fila de cada uno apuntando al
+otro— y basta con que una quede sin actualizar para que la base diga que él está con ella y
+ella con nadie. El id menor va siempre en `persona_a_id`, así que "él con ella" y "ella con él"
+tampoco pueden ser dos filas distintas. Cambiar de pareja deshace la anterior de los dos:
+nadie está en dos a la vez, y ese es todo el mantenimiento que hay.
 
-**Qué pastoral se organiza así se marca, no se programa.** `pastorales.organiza_parejas` es
-una casilla del formulario de la pastoral, junto a "Acepta voluntarios", y no una lista de
-slugs en `config/app.php` como `MODULO_POR_PASTORAL`. La diferencia es que aquel mapa
-apunta a módulos que hay que escribir —no se puede "activar" un módulo de MESC para otra
-pastoral—, mientras que esto no necesita código detrás: el día que la Pastoral Familiar
-quiera organizarse igual, lo enciende quien la coordina.
+**Emparejar no es obligatorio, y no emparejar no es un registro a medias.** La mayoría del
+equipo no tiene pareja registrada y no le falta nada; quien participa solo aparece en las
+listas como cualquier otro, sin advertencia ni marca.
 
-Formar y deshacer parejas pide `pastorales.editar`, el permiso que ya tiene quien coordina,
-y no `personas.editar`: esto no toca ninguna ficha. Deshacer tampoco borra a nadie —los dos
-siguen en la pastoral, por separado—, y así lo dice el propio botón antes de confirmar.
+**El responsable de una pastoral puede ser una persona o una pareja.** Son dos columnas
+(`responsable_persona_id`, `responsable_pareja_id`) pero un solo selector, con el valor
+prefijado `persona:12`/`pareja:3`: con dos listas separadas se podrían elegir las dos a la vez
+y habría que decidir cuál gana, que es exactamente el tipo de estado contradictorio que no
+conviene poder representar. Con pareja, `responsable_nombre` es "Ella y Él", calculado de las
+dos fichas y mantenido desde ahí, igual que ya pasaba con una persona. `contacto_email`, en
+cambio, deja de sincronizarse: con una persona se toma el correo de acceso de su cuenta —la
+regla que corrigió el caso real de MESC—, pero entre las cuentas de dos no hay una "la suya", y
+adivinar mal ahí es publicar en el sitio el correo equivocado; así que con pareja al frente ese
+campo se escribe a mano y el formulario dice por qué.
 
 ### Publicar en dos escalones: interno y público
 

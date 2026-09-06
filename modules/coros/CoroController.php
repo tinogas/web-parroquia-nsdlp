@@ -162,7 +162,7 @@ class CoroController extends Controller
         }
 
         $this->render('coros/coristas_lista', [
-            'titulo'      => 'Quiénes cantan',
+            'titulo'      => 'Integrantes',
             'pastoralId'  => $pastoralId,
             'coristas'    => $this->modelo->coristas($pastoralId),
             'personas'    => (new PersonaModel())->paraSelector(),
