@@ -65,7 +65,12 @@
                         </div>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <?= e(ROLES_NOMBRES[$usuario['rol']] ?? $usuario['rol']) ?>
+                        <?php /* El nombre del rol dice poco por sí solo; lo que hace se lee al
+                                 pasar el ratón, sin sacar al usuario de la lista. Mismo texto que
+                                 el del formulario: ROLES_DESCRIPCION, en config/app.php. */ ?>
+                        <span title="<?= e(ROLES_DESCRIPCION[$usuario['rol']] ?? '') ?>">
+                            <?= e(ROLES_NOMBRES[$usuario['rol']] ?? $usuario['rol']) ?>
+                        </span>
                         <?php if ($usuario['cargo']): ?>
                         <?php /* El cargo real sale de su ficha del equipo pastoral; el rol es lo
                                  que puede hacer en el panel, que no siempre se llama igual. */ ?>

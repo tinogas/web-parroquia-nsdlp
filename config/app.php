@@ -88,6 +88,52 @@ define('ROLES_NOMBRES', [
 ]);
 
 /**
+ * Qué hace cada rol, en una frase, para quien da de alta una cuenta y no tiene
+ * por qué conocer la matriz de PERMISOS que está más abajo. Vive aquí, a un
+ * paso de esa matriz, para que quien cambie lo que un rol puede hacer vea el
+ * texto que lo explica sin buscarlo en otro archivo — es la lección de los
+ * nombres de las pastorales, que se escribían en tres sitios distintos.
+ *
+ * Lo usa el formulario de usuarios (modules/usuarios/views/form.php), debajo
+ * del selector de rol y en el modal de perfiles adicionales, y el listado, como
+ * texto al pasar el ratón sobre el rol de cada cuenta.
+ *
+ * Dicen QUÉ puede hacer, nunca sobre qué pastoral: eso lo deciden los dos
+ * checklists de la propia cuenta, y por eso ningún rol lleva el nombre de una
+ * pastoral. Ver docs/ARQUITECTURA.md, "El alcance por pastoral es ortogonal a
+ * la matriz".
+ */
+define('ROLES_DESCRIPCION', [
+    ROL_ADMIN =>
+        'Todo, sin límite: cuentas, configuración del sitio, respaldos y la bitácora de '
+        . 'quién hizo qué. Es el único que puede entrar como otra persona ("Usar como…"). '
+        . 'Conviene que sean pocos.',
+    ROL_EDITOR =>
+        'Todo el contenido del sitio —textos, páginas, horarios, equipo pastoral, avisos, '
+        . 'eventos, galería, cursos y las fichas de todas las pastorales—, sin límite de '
+        . 'pastoral. No toca cuentas ni configuración, y no ve datos personales: ni los '
+        . 'mensajes de contacto ni las inscripciones a cursos.',
+    ROL_COORDINADOR_GENERAL =>
+        'Lo mismo que Coordinador, pero sobre su pastoral en varias sedes o en toda la '
+        . 'parroquia. Además edita la ficha de su pastoral —responsable, correo, horario de '
+        . 'reunión, lo que se publica de ella— y da de alta y edita las cuentas de su propia '
+        . 'pastoral, nunca de un rol igual o superior al suyo.',
+    ROL_COORDINADOR =>
+        'Su pastoral en una sede: publica sus avisos, sus eventos y sus cursos, sube fotos '
+        . 'y documentos, y entra al módulo propio de su pastoral si lo tiene (MESC, '
+        . 'Catequesis, Proclamadores o Coros). No edita la ficha de la pastoral ni administra '
+        . 'cuentas: eso es de la coordinación general.',
+    ROL_CONSULTA =>
+        'Solo mira, sin poder cambiar nada: el calendario de la parroquia, su pastoral, sus '
+        . 'documentos y los avisos que su pastoral publica hacia dentro. Es el rol de quien '
+        . 'pertenece a una pastoral y entra a enterarse.',
+    ROL_SECRETARIA =>
+        'Solo trámites: los mensajes que llegan por el formulario de contacto y las '
+        . 'inscripciones a cursos, que puede exportar. No edita el sitio. Es un rol aparte '
+        . 'porque esos dos módulos son los que guardan datos personales, algunos de menores.',
+]);
+
+/**
  * Los tres escalones por los que pasa un aviso o un curso, en orden. La clave
  * es lo que viaja por el formulario y por la cadena de consulta del listado.
  *
@@ -165,7 +211,14 @@ define('PERMISOS_COORDINACION', [
     'avisos.ver', 'avisos.crear', 'avisos.editar', 'avisos.publicar',
     'eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.publicar',
     'galeria.ver', 'galeria.crear', 'galeria.eliminar',
-    'pastorales.ver', 'pastorales.editar',
+    // `pastorales.editar` NO entra aquí: la ficha de la pastoral —su responsable,
+    // su correo, su descripción pública, su Comisión— la tocan el administrador
+    // y la coordinación general, no quien coordina en una sola sede. Es lo que
+    // pidió la parroquia: esa ficha es de la pastoral entera, y quien coordina
+    // una comunidad no tiene por qué poder cambiar lo que se publica de todas.
+    // Coordinador general la recupera más abajo, con el mismo array_merge que
+    // ya usa para las cuentas.
+    'pastorales.ver',
     'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
     'documentos.ver', 'documentos.crear', 'documentos.eliminar',
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
@@ -250,6 +303,7 @@ define('PERMISOS', [
     // qué rangos de rol) lo aplica UsuarioController, no esta matriz: aquí
     // solo se decide la acción, igual que con el resto de módulos.
     ROL_COORDINADOR_GENERAL => array_merge(PERMISOS_COORDINACION, [
+        'pastorales.editar',
         'usuarios.ver', 'usuarios.crear', 'usuarios.editar',
     ]),
 
