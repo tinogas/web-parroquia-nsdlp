@@ -72,6 +72,11 @@ class ContactoPublicoController extends ControllerPublico
         if ($datos['email'] !== '' && !filter_var($datos['email'], FILTER_VALIDATE_EMAIL)) {
             $errores[] = 'El correo no tiene un formato válido.';
         }
+        // Antes bastaba con que no estuviera vacío: una sola letra pasaba, y
+        // luego no había a quién responderle.
+        if (!telefono_valido($datos['telefono'])) {
+            $errores[] = 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO;
+        }
         if (!$this->postBool('consentimiento')) {
             $errores[] = 'Debes aceptar el aviso de privacidad para enviar el mensaje.';
         }

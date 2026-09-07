@@ -1829,10 +1829,43 @@ expediente —domicilio, fecha de nacimiento, sus otras pastorales— sigue sien
 `personas.ver`. En el panel básico de pastoral, que es la única pantalla donde el dato es
 nuevo, el número **no se imprime**: va en el enlace.
 
-Queda un hueco conocido y a la vista: no hay validación de teléfono en ninguna captura del
-proyecto, así que diez dígitos mal tecleados abren la conversación de un desconocido, y una
-extensión pegada al número (`662 220 7214 ext 12`) arma un enlace que WhatsApp rechazará.
-El helper protege el formato, no la puntería de quien capturó.
+### El teléfono se valida al capturarlo, con una regla más estricta que la de dibujarlo
+
+El botón de WhatsApp dejó a la vista un hueco que llevaba ahí desde la fase 1: **no había
+ninguna validación de teléfono en el proyecto**. Los catorce campos eran `type="tel"` sin
+`pattern`, `postStr()` solo hacía `trim` y `strip_tags`, y en el formulario público de
+contacto bastaba con que el campo no estuviera vacío —una sola letra pasaba, y luego no
+había a quién responderle—. Con eso, `662 220 7214 ext 12` se guardaba tal cual, daba doce
+dígitos y armaba un enlace de WhatsApp que no lleva a nadie.
+
+`telefono_valido()` (`core/helpers.php`) es ahora el control, y corre **en el servidor** en
+los trece puntos de captura: las cuatro fichas del panel (equipo pastoral, sedes, ficha de
+pastoral, cuentas), los dos teléfonos de una visita de MESC, los cuatro catálogos de
+pastoral, los dos campos del sitio público (contacto e inscripción a un curso) y el tipo
+`telefono` de la configuración, que caía en el `default` de `valorDelCampo()` y se guardaba
+sin mirar. El `placeholder` y la ayuda de cada campo son la cortesía; la regla del proyecto
+sigue siendo que lo del navegador no es un control.
+
+**Es más estricta que `telefono_internacional()`, y a propósito.** Esa función tiene que
+arreglárselas con lo que ya está guardado, así que acepta cualquier cosa de once a quince
+dígitos. La validación, con el dato todavía en la mano de quien lo escribe, puede pedir
+bien: diez dígitos (con espacios, guiones o paréntesis, como se quiera); o de otro país
+**solo si lo dice un `+` o un `00`** delante, con lo que un número de once dígitos deja de
+ser ambiguo entre un extranjero y un local mal teclado; o doce y trece dígitos que empiecen
+con `LADA_PAIS`, para quien escribe su propio número con el 52 por delante. Y cualquier
+letra lo invalida, que es lo que atrapa la extensión pegada.
+
+**Ninguna de las dos reglas invalida lo que ya está guardado**: se comprobaron los 27
+teléfonos de la base real —los tres formatos de la parroquia, en trece columnas de doce
+tablas— y todos pasan. Era la condición para no romper la edición de una ficha existente.
+
+El texto que explica la regla vive en `TELEFONO_FORMATO` (`config/app.php`), a un paso de
+`LADA_PAIS` y del validador, y lo usan tanto los mensajes de error como la ayuda debajo de
+cada campo: cambiar la regla y cambiar la explicación son el mismo gesto. Es la lección de
+los nombres de las pastorales, que se escribían en tres sitios distintos.
+
+Lo que la validación **no** puede es cuidar la puntería: diez dígitos bien formados pero
+equivocados abren la conversación de un desconocido, y eso no lo detecta nada.
 
 ### Moderación
 

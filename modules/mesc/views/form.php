@@ -43,7 +43,9 @@ $esNuevo = $visita === null;
                         <div class="col-md-4">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   placeholder="662 220 7214"
                                    value="<?= e($esNuevo ? '' : (string) $visita['telefono']) ?>" maxlength="20">
+                            <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         </div>
                     </div>
 
@@ -96,7 +98,9 @@ $esNuevo = $visita === null;
                         <div class="col-md-4">
                             <label for="solicitante_telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="solicitante_telefono" id="solicitante_telefono" class="form-control"
+                                   placeholder="662 220 7214"
                                    value="<?= e($esNuevo ? '' : (string) $visita['solicitante_telefono']) ?>" maxlength="20">
+                            <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         </div>
                     </div>
                 </div>

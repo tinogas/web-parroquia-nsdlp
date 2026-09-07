@@ -180,6 +180,13 @@ class PastoralController extends Controller
             $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
             return;
         }
+        // Este teléfono se publica en el sitio, así que un dedazo lo ve
+        // cualquiera que entre a la ficha de la pastoral.
+        if (!telefono_valido($this->postStr('contacto_telefono'))) {
+            Session::flash('error', 'El teléfono de contacto no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
+            return;
+        }
 
         $slugPedido = $this->postStr('slug');
         $slug = $slugPedido !== ''

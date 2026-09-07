@@ -165,7 +165,9 @@ $dibujarModalCorista = static function (
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
+                               placeholder="662 220 7214"
                                value="<?= e($vacio ? '' : (string) $corista['telefono']) ?>" maxlength="20">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Correo</label>

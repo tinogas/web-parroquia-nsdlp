@@ -35,6 +35,10 @@ Las mismas del sistema de inventario, sin excepciones:
   JSON-LD de la portada— usa `telefono_internacional()` de `core/helpers.php`, que
   normaliza al dibujar. No se normaliza al guardar a propósito: ver
   [`ARQUITECTURA.md`](ARQUITECTURA.md), "Escribirle al equipo son enlaces `wa.me`".
+  Lo que sí se comprueba al guardar, desde los trece puntos de captura, es que el formato
+  sirva: `telefono_valido()`, con una regla más estricta que la de dibujar y que acepta
+  los tres formatos ya guardados. Se verificó contra los 27 teléfonos de la base real,
+  para que editar una ficha existente no falle.
 
 No hay sistema de migraciones. `install.sql` es un archivo único acumulativo que se
 mantiene sincronizado etapa por etapa, hasta que el sitio salga a producción.

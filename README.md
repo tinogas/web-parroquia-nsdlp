@@ -143,6 +143,12 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   teléfono, que era la mitad del problema. Son enlaces `wa.me`: abren WhatsApp, no mandan
   nada por su cuenta, así que no hay costo, ni trámite con Meta, ni una sola llamada
   saliente desde el servidor.
+- **Los teléfonos se validan al capturarlos.** No se validaban en ninguna parte: en el
+  formulario de contacto bastaba con que el campo no estuviera vacío, y una extensión
+  pegada al número se guardaba tal cual y luego no llevaba a nadie. Ahora los trece campos
+  de teléfono del panel y del sitio piden diez dígitos —escritos como se quiera— o el
+  número de otro país con su `+` delante, y lo explican debajo del campo. Ninguno de los
+  teléfonos ya guardados quedó fuera de la regla.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

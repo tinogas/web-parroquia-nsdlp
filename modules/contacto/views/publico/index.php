@@ -100,10 +100,14 @@
                         <div class="col-md-6">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   maxlength="20" placeholder="662 220 7214"
                                    value="<?= e($valores['telefono'] ?? '') ?>">
                         </div>
                     </div>
-                    <p class="form-text mt-n2 mb-3">Déjanos al menos un correo o un teléfono para poder responderte.</p>
+                    <p class="form-text mt-n2 mb-3">
+                        Déjanos al menos un correo o un teléfono para poder responderte.
+                        Si nos dejas teléfono: <?= e(TELEFONO_FORMATO) ?>
+                    </p>
 
                     <div class="mb-3">
                         <label for="mensaje" class="form-label fw-semibold">Mensaje</label>

@@ -174,6 +174,17 @@ define('ROLES_CON_ALCANCE_PASTORAL', [
 define('LADA_PAIS', '52');
 
 /**
+ * Cómo se pide un teléfono, en una frase. Vive junto a LADA_PAIS y a un paso
+ * de telefono_valido(), que es quien la hace cumplir, para que cambiar la regla
+ * y cambiar la explicación sean el mismo gesto — la lección de los nombres de
+ * las pastorales, que se escribían en tres sitios distintos.
+ *
+ * La usan los mensajes de error de los controladores y la ayuda debajo de cada
+ * campo de teléfono del panel y del sitio. Ver docs/ARQUITECTURA.md
+ */
+define('TELEFONO_FORMATO', 'Diez dígitos, como 662 220 7214. Si es de otro país, con + y su clave, como +1 520 555 1234.');
+
+/**
  * Las cuatro pastorales que tienen módulo propio, por slug. El módulo resuelve
  * así cuál es la suya (MescModel::pastoralId() y sus gemelos) y el menú decide
  * con esto si dibuja el enlace: tener el permiso `mesc.*` no basta —lo llevan

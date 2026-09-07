@@ -248,6 +248,58 @@ if (!function_exists('e')) {
     }
 
     /**
+     * ¿Se puede capturar esto como teléfono? Es el control del lado del
+     * servidor; el placeholder del campo es la cortesía.
+     *
+     * Vacío es válido: casi todos los campos de teléfono son opcionales, y
+     * quien exige el dato lo comprueba por su cuenta —tutor_telefono cuando el
+     * inscrito es menor, por ejemplo—.
+     *
+     * Es más estricta que telefono_internacional(), y a propósito. Esa función
+     * tiene que arreglárselas con lo que ya está guardado desde antes de que
+     * existiera esta regla, así que acepta cualquier cosa de once a quince
+     * dígitos; aquí, con el dato todavía en la mano de quien lo escribe, se
+     * puede pedir bien:
+     *
+     *   - Diez dígitos, con o sin espacios, guiones o paréntesis. Es el caso
+     *     normal: '6622240453', '662 220 7214', '(662) 220 7214' — los tres
+     *     formatos que la parroquia ya tiene guardados pasan sin tocarlos.
+     *   - De otro país, solo si lo dice un '+' o un '00' delante. Así un número
+     *     de once dígitos deja de ser ambiguo entre un extranjero y un local
+     *     mal teclado.
+     *   - Doce o trece dígitos que empiezan con LADA_PAIS, para quien escribe
+     *     su propio número con el 52 por delante y sin '+'.
+     *
+     * Y cualquier letra lo invalida. Eso es lo que atrapa la extensión pegada
+     * al número —'662 220 7214 ext 12'—, que da doce dígitos, pasaría por
+     * largo y armaría un enlace de WhatsApp que no lleva a nadie.
+     */
+    function telefono_valido(?string $telefono): bool
+    {
+        $texto = trim((string) $telefono);
+        if ($texto === '') {
+            return true;
+        }
+        // Solo lo que se usa para escribir un teléfono.
+        if (!preg_match('/^\+?[0-9 ()\-.]+$/', $texto)) {
+            return false;
+        }
+        $digitos = preg_replace('/\D+/', '', $texto);
+        $largo   = strlen($digitos);
+
+        // Internacional declarado: el prefijo lo dice, no lo adivinamos.
+        if (str_starts_with($texto, '+') || str_starts_with($digitos, '00')) {
+            $sinSalida = str_starts_with($digitos, '00') ? substr($digitos, 2) : $digitos;
+            return strlen($sinSalida) >= 11 && strlen($sinSalida) <= 15;
+        }
+        // Nacional con su clave de país por delante, sin '+'.
+        if (($largo === 12 || $largo === 13) && str_starts_with($digitos, LADA_PAIS)) {
+            return true;
+        }
+        return $largo === 10;
+    }
+
+    /**
      * El enlace "click to chat" de WhatsApp, con el mensaje ya escrito. No
      * manda nada: abre la conversación en WhatsApp Web o en la app, y quien
      * envía es la persona desde su propio WhatsApp. Ver docs/ARQUITECTURA.md

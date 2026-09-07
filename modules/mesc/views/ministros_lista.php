@@ -127,7 +127,9 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
                         <div class="form-text">Viene de su ficha del equipo pastoral.</div>
                         <?php else: ?>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
+                               placeholder="662 220 7214"
                                value="<?= e($vacio ? '' : (string) $ministro['telefono']) ?>" maxlength="20">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         <?php endif; ?>
                     </div>
                     <div class="form-check form-switch">

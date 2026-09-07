@@ -211,6 +211,13 @@ class CoroController extends Controller
             $this->redirect(url_admin('coros', 'coristas'));
             return;
         }
+        // Con ficha vinculada el teléfono viene de ella, ya validado al
+        // guardarla; aquí solo se revisa lo escrito a mano.
+        if (!$persona && !telefono_valido($telefono)) {
+            Session::flash('error', 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect(url_admin('coros', 'coristas'));
+            return;
+        }
 
         // La voz y el instrumento sí son del módulo, no de la ficha: se leen del
         // formulario incluso con persona vinculada, y sincronizarPersonal() no

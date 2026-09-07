@@ -35,8 +35,14 @@ class ConfiguracionModel extends Model
         'direccion'          => ['Dirección',              'texto',    'contacto', 'Calle y número.'],
         'ciudad'             => ['Ciudad y estado',        'texto',    'contacto', ''],
         'cp'                 => ['Código postal',          'texto',    'contacto', ''],
-        'telefono'           => ['Teléfono',               'telefono', 'contacto', 'Se convierte en un enlace para llamar desde el celular.'],
-        'whatsapp'           => ['WhatsApp',               'telefono', 'contacto', 'Solo números, con clave de país. Ejemplo: 526621234567'],
+        'telefono'           => ['Teléfono',               'telefono', 'contacto',
+                                 'Se convierte en un enlace para llamar desde el celular. ' . TELEFONO_FORMATO],
+        // La ayuda anterior pedía "solo números, con clave de país
+        // (526621234567)" y el valor guardado la contradecía: eran diez dígitos
+        // sin clave, con lo que el enlace wa.me no abría. Ahora se escribe como
+        // se dice y la clave la pone telefono_internacional() al dibujarlo.
+        'whatsapp'           => ['WhatsApp',               'telefono', 'contacto',
+                                 'Escríbelo como lo dices; la clave de país se agrega sola. ' . TELEFONO_FORMATO],
         'email'              => ['Correo electrónico',     'email',    'contacto', 'Correo de la oficina parroquial.'],
         'horario_oficina'    => ['Horario de oficina',     'parrafo',  'contacto', 'Una línea por cada bloque de horario.'],
         'mapa_embed'         => ['Mapa',                   'mapa',     'contacto',
