@@ -13,6 +13,11 @@
         <?php if (!$proclamadores): ?>
         <p class="text-muted small mb-3">Todavía no hay proclamadores registrados.</p>
         <?php else: ?>
+        <?php
+        $mw_lista = 'proclamadores';
+        $mw_filas = $proclamadores;
+        require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
+        ?>
         <div class="table-responsive mb-3">
             <table class="table table-sm align-middle">
                 <thead class="table-light">
@@ -48,12 +53,17 @@
                                 . ($proclamador['email'] ?? ''))) ?>
                         </td>
                         <td class="text-end">
-                            <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
-                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                    data-bs-toggle="modal" data-bs-target="#proclamador<?= (int) $proclamador['id'] ?>">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <?php endif; ?>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <?php if (Auth::tienePermiso('personas.contactar')): ?>
+                                <?= boton_whatsapp($proclamador['telefono'], $proclamador['nombre']) ?>
+                                <?php endif; ?>
+                                <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#proclamador<?= (int) $proclamador['id'] ?>">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>

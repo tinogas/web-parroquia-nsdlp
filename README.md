@@ -136,6 +136,13 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   coordina una sola sede: esa ficha es de la pastoral entera. Y el panel explica qué hace
   cada rol —debajo del selector al dar de alta una cuenta, y al pasar el ratón sobre el rol
   en el listado—, para no tener que recordarlo de memoria.
+- **Avisarle por WhatsApp a la gente de una pastoral.** Junto a cada integrante hay un botón
+  que abre la conversación con el mensaje ya escrito —el texto se teclea una vez arriba del
+  listado y lo llevan todos, con `{nombre}` donde vaya el nombre de pila—. Funciona igual
+  con quien tiene ficha en el equipo y con quien está anotado solo con su nombre y su
+  teléfono, que era la mitad del problema. Son enlaces `wa.me`: abren WhatsApp, no mandan
+  nada por su cuenta, así que no hay costo, ni trámite con Meta, ni una sola llamada
+  saliente desde el servidor.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

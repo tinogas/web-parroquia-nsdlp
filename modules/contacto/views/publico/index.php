@@ -22,18 +22,18 @@
                         </span>
                     </li>
                     <?php endif; ?>
-                    <?php if (Config::tiene('telefono')): ?>
+                    <?php if ($telContacto = tel_enlace(Config::get('telefono'))): ?>
                     <li>
                         <i class="bi bi-telephone text-primary"></i>
-                        <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', Config::get('telefono'))) ?>">
+                        <a href="<?= e($telContacto) ?>">
                             <?= e(Config::get('telefono')) ?>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Config::tiene('whatsapp')): ?>
+                    <?php if ($waContacto = whatsapp_enlace(Config::get('whatsapp'))): ?>
                     <li>
                         <i class="bi bi-whatsapp text-primary"></i>
-                        <a href="https://wa.me/<?= e(preg_replace('/[^0-9]/', '', Config::get('whatsapp'))) ?>"
+                        <a href="<?= e($waContacto) ?>"
                            target="_blank" rel="noopener">Escribir por WhatsApp</a>
                     </li>
                     <?php endif; ?>

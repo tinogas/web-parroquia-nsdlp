@@ -162,6 +162,18 @@ define('ROLES_CON_ALCANCE_PASTORAL', [
 ]);
 
 /**
+ * Clave de país para los enlaces de WhatsApp y `tel:`. Los teléfonos se
+ * capturan como se dicen aquí —diez dígitos de Hermosillo, con o sin espacios
+ * y paréntesis— y ninguno trae la clave; telefono_internacional() se la
+ * antepone al dibujar el enlace, sin tocar el dato guardado.
+ *
+ * Es constante y no clave de `configuracion` a propósito: una parroquia no se
+ * muda de país, y un dedazo en un campo del panel rompería en silencio todos
+ * los botones de WhatsApp a la vez. Ver docs/ARQUITECTURA.md
+ */
+define('LADA_PAIS', '52');
+
+/**
  * Las cuatro pastorales que tienen módulo propio, por slug. El módulo resuelve
  * así cuál es la suya (MescModel::pastoralId() y sus gemelos) y el menú decide
  * con esto si dibuja el enlace: tener el permiso `mesc.*` no basta —lo llevan
@@ -219,6 +231,13 @@ define('PERMISOS_COORDINACION', [
     // Coordinador general la recupera más abajo, con el mismo array_merge que
     // ya usa para las cuentas.
     'pastorales.ver',
+    // Escribirle por WhatsApp a la gente de su pastoral, desde los listados de
+    // integrantes. Es un permiso propio y no `personas.ver` porque no abre la
+    // ficha —ni domicilio, ni fecha de nacimiento, ni las demás pastorales de
+    // esa persona—, solo el botón que abre la conversación; y porque los
+    // permisos que ya gobiernan esas pantallas (mesc.ver y sus gemelos) los
+    // lleva también Consulta, que mira y no actúa. Ver docs/ARQUITECTURA.md
+    'personas.contactar',
     'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
     'documentos.ver', 'documentos.crear', 'documentos.eliminar',
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
@@ -247,7 +266,7 @@ define('PERMISOS', [
         'evangelio.ver', 'evangelio.editar',
         'horarios.ver', 'horarios.editar',
         'centros.ver', 'centros.editar',
-        'personas.ver', 'personas.editar',
+        'personas.ver', 'personas.editar', 'personas.contactar',
         'organigrama.ver', 'organigrama.editar',
         // El editor no toca la configuración global: los datos de contacto, el
         // logo y las claves legales son responsabilidad del administrador.

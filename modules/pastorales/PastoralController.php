@@ -93,10 +93,16 @@ class PastoralController extends Controller
         // muestra a quien ya administra la pastoral —requireAlcancePastoral()
         // acaba de comprobarlo—, y no se le exige `personas.ver`: saber quién
         // está en tu propia pastoral es parte de coordinarla, y esos nombres y
-        // cargos ya salen en el directorio público. Lo que sí exige permiso es
-        // el botón que lleva a la ficha, donde están el teléfono, el correo y
-        // la fecha de nacimiento. Ver el comentario de PERMISOS_COORDINACION
-        // en config/app.php, que a propósito no incluye personas.*.
+        // cargos ya salen en el directorio público.
+        //
+        // Lo que sí exige permiso es el botón que lleva a la ficha, donde están
+        // el domicilio, la fecha de nacimiento y las demás pastorales de esa
+        // persona; y, aparte, el botón de WhatsApp, que pide
+        // `personas.contactar`: poder escribirle a la gente de la pastoral es
+        // parte de coordinarla, pero no es lo mismo que abrir su expediente, y
+        // por eso son dos llaves y no una. El número no se imprime en pantalla,
+        // viaja en el enlace. Ver el comentario de PERMISOS_COORDINACION en
+        // config/app.php, que a propósito sigue sin incluir personas.ver.
         $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
 
         $this->render('pastorales/panel', [

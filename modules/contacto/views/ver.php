@@ -37,7 +37,11 @@
                     <?php if ($mensaje['telefono']): ?>
                     <li>
                         <i class="bi bi-telephone"></i>
-                        <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', $mensaje['telefono'])) ?>"><?= e($mensaje['telefono']) ?></a>
+                        <?php if ($telMensaje = tel_enlace($mensaje['telefono'])): ?>
+                        <a href="<?= e($telMensaje) ?>"><?= e($mensaje['telefono']) ?></a>
+                        <?php else: ?>
+                        <?= e($mensaje['telefono']) ?>
+                        <?php endif; ?>
                     </li>
                     <?php endif; ?>
                 </ul>

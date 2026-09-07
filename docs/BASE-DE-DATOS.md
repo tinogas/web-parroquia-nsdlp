@@ -28,6 +28,13 @@ Las mismas del sistema de inventario, sin excepciones:
 - Índices con prefijo: `uq_` para únicos, `idx_` para búsqueda, `fk_` para claves foráneas.
 - **Borrado lógico**: los registros se desactivan, no se eliminan.
 - Columnas alineadas verticalmente y secciones separadas por comentarios `-- ---- … ----`.
+- Las columnas `telefono` (y `contacto_telefono`, `tutor_telefono`,
+  `solicitante_telefono`) son `VARCHAR(20)` y **guardan lo que cada quien escribió**:
+  conviven `6622240453`, `662 220 7214` y `(662) 220 7214`, ninguno con clave de país.
+  Quien los necesite en formato internacional —los enlaces de WhatsApp y de `tel:`, el
+  JSON-LD de la portada— usa `telefono_internacional()` de `core/helpers.php`, que
+  normaliza al dibujar. No se normaliza al guardar a propósito: ver
+  [`ARQUITECTURA.md`](ARQUITECTURA.md), "Escribirle al equipo son enlaces `wa.me`".
 
 No hay sistema de migraciones. `install.sql` es un archivo único acumulativo que se
 mantiene sincronizado etapa por etapa, hasta que el sitio salga a producción.

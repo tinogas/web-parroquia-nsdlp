@@ -212,6 +212,91 @@ if (!function_exists('e')) {
         return rtrim($espacio !== false ? mb_substr($corte, 0, $espacio) : $corte, ',.;:') . '…';
     }
 
+    // ── Teléfonos ───────────────────────────────────────────────────────
+
+    /**
+     * Un teléfono escrito como se dice → los dígitos que exige un enlace de
+     * WhatsApp: internacional, sin '+', sin espacios ni paréntesis.
+     *
+     * Los teléfonos de la parroquia conviven en tres formatos —'6622240453',
+     * '662 220 7214', '(662) 220 7214'— y ninguno trae clave de país, así que
+     * a los de diez dígitos se les antepone LADA_PAIS. No se toca el dato
+     * guardado: la normalización es al dibujar, para que cada quien siga
+     * leyendo el número como lo escribió.
+     *
+     * Devuelve '' cuando lo capturado no alcanza para escribirle a nadie, y
+     * quien llama entonces no dibuja el botón. Nunca inventa un número: más
+     * vale sin botón que un enlace a la conversación de un desconocido.
+     */
+    function telefono_internacional(?string $telefono): string
+    {
+        $digitos = preg_replace('/\D+/', '', (string) $telefono);
+
+        // '00' es el prefijo de salida internacional, no parte del número.
+        if (str_starts_with($digitos, '00')) {
+            $digitos = substr($digitos, 2);
+        }
+        // Diez dígitos es un número nacional: le falta la clave de país.
+        if (strlen($digitos) === 10) {
+            $digitos = LADA_PAIS . $digitos;
+        }
+        // Once es el mínimo con clave de país; quince, el máximo de E.164. Los
+        // '521…' de trece que dejó el celular mexicano de antes de 2019 caen
+        // dentro y se respetan: WhatsApp los sigue resolviendo, y reescribir lo
+        // que alguien tecleó a propósito arriesga más de lo que arregla.
+        return (strlen($digitos) >= 11 && strlen($digitos) <= 15) ? $digitos : '';
+    }
+
+    /**
+     * El enlace "click to chat" de WhatsApp, con el mensaje ya escrito. No
+     * manda nada: abre la conversación en WhatsApp Web o en la app, y quien
+     * envía es la persona desde su propio WhatsApp. Ver docs/ARQUITECTURA.md
+     *
+     * '' si el teléfono no se pudo normalizar.
+     */
+    function whatsapp_enlace(?string $telefono, string $mensaje = ''): string
+    {
+        $numero = telefono_internacional($telefono);
+        if ($numero === '') {
+            return '';
+        }
+        // rawurlencode y no urlencode: WhatsApp quiere los espacios como %20;
+        // con '+' llegan literales al chat.
+        return 'https://wa.me/' . $numero
+             . ($mensaje !== '' ? '?text=' . rawurlencode($mensaje) : '');
+    }
+
+    /** Href de `tel:` en formato internacional, para que marque también desde fuera. */
+    function tel_enlace(?string $telefono): string
+    {
+        $numero = telefono_internacional($telefono);
+        return $numero !== '' ? 'tel:+' . $numero : '';
+    }
+
+    /**
+     * El botón de WhatsApp de un integrante de una pastoral, listo para pintar
+     * —devuelve HTML, como icono_cruz() o badge_escalon()—.
+     *
+     * Cadena vacía, y no un botón deshabilitado, cuando no hay teléfono
+     * utilizable: es la misma regla que rige los permisos, un botón que no
+     * aplica no se dibuja. Hoy es el caso común, no el raro: coristas y
+     * proclamadores tienen el teléfono en NULL casi todos.
+     *
+     * El nombre viaja en data-nombre y el número en el href; assets/js/whatsapp.js
+     * los usa para meter el mensaje que se escribe una vez arriba del listado.
+     */
+    function boton_whatsapp(?string $telefono, string $nombre = '', string $clases = 'btn btn-sm btn-outline-success'): string
+    {
+        $url = whatsapp_enlace($telefono);
+        if ($url === '') {
+            return '';
+        }
+        $titulo = $nombre !== '' ? 'Escribir por WhatsApp a ' . $nombre : 'Escribir por WhatsApp';
+        return '<a href="' . e($url) . '" target="_blank" rel="noopener"'
+             . ' class="' . e($clases) . ' js-whatsapp" data-nombre="' . e($nombre) . '"'
+             . ' title="' . e($titulo) . '"><i class="bi bi-whatsapp"></i></a>';
+    }
+
     // ── Imágenes ────────────────────────────────────────────────────────
 
     /**
