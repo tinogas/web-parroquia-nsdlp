@@ -122,6 +122,21 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   necesita una cuenta con alguno de esos dos roles para publicarlo él mismo. Por ahora vive
   solo en la portada, justo después de su bienvenida, y solo mientras es el día de hoy.
 
+- **Quién con quién, y quién lleva cada pastoral.** El equipo pastoral guarda las parejas
+  —un matrimonio es el mismo en Matrimonios, en AMA y en JECSA, así que se marca una sola
+  vez, en la ficha de cada persona— y con eso el responsable de una pastoral puede ser un
+  matrimonio y no solo una persona, que es como se coordinan JECSA, Raíces, Matrimonios y
+  AMA. Emparejar es opcional: quien participa por su cuenta se queda como está. El nombre de
+  quien coordina se lee ahora sin abrir la ficha: en el listado y en el panel de cada
+  pastoral, y en el sitio público bajo cada Comisión y en cada tarjeta.
+- **Cada pastoral tiene su propio correo.** Antes se copiaba del correo de acceso de quien la
+  coordinaba, lo que publicaba en el sitio una dirección personal y la cambiaba en cada
+  relevo; ahora es un campo suyo, que se escribe a mano y se queda.
+- **La ficha de la pastoral la editan administración y coordinación general**, no quien
+  coordina una sola sede: esa ficha es de la pastoral entera. Y el panel explica qué hace
+  cada rol —debajo del selector al dar de alta una cuenta, y al pasar el ratón sobre el rol
+  en el listado—, para no tener que recordarlo de memoria.
+
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y
 calificaciones sobre el catálogo de cursos) sigue fuera de este alcance. Ver

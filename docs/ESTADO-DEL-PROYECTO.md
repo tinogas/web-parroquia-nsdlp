@@ -39,7 +39,7 @@ no se ha empezado.
 | Quiénes somos | Historia, misión y visión, equipo pastoral, organigrama |
 | Horarios | Misas, confesiones, adoración y oficina, agrupados por tipo y por sede |
 | Sacramentos | Requisitos y documentos por sacramento (informativo; el trámite es en oficina) |
-| Pastorales | Fichas de cada pastoral, agrupadas por la Comisión que las coordina |
+| Pastorales | Fichas de cada pastoral, agrupadas por la Comisión que las coordina, con el nombre de quien lleva cada una |
 | Cursos | Catálogo con temario e inscripción en línea, con cupo y lista de espera |
 | Avisos | Boletín y noticias — solo lo que cada pastoral decidió sacar a la página |
 | Eventos | Calendario en cuatro vistas: día, semana, mes y año |
@@ -55,21 +55,25 @@ desactualizar) y cada página trae sus etiquetas Open Graph para compartirse bie
 |---|---|
 | **Administrador** | Todo: usuarios, configuración, respaldos, auditoría, sin límite |
 | **Editor** | Publica y modera todo el contenido del sitio; no toca usuarios ni configuración |
-| **Coordinador general de pastoral** | Administra su pastoral en varias sedes o en toda la parroquia; además da de alta y edita cuentas de su propia pastoral |
-| **Coordinador de pastoral** | Administra su pastoral en una sola sede: sus eventos, sus cursos y sus avisos (con el escalón interno y el salto a la página) |
+| **Coordinador general de pastoral** | Administra su pastoral en varias sedes o en toda la parroquia; además edita la ficha de la pastoral y da de alta y edita cuentas de la misma |
+| **Coordinador de pastoral** | Administra su pastoral en una sola sede: sus eventos, sus cursos y sus avisos (con el escalón interno y el salto a la página). No edita la ficha de la pastoral |
 | **Consulta** | Solo mira: su calendario, sus documentos y los avisos internos de su pastoral. No crea ni edita nada |
 | **Secretaría** | Solo inscripciones a cursos y mensajes de contacto. No toca el sitio — existe por una separación legal de quién ve datos de menores |
 
 Ningún rol lleva el nombre de una pastoral en sí (no hay "Administrador MESC"): la
-pastoral y la sede se asignan por separado, en la cuenta.
+pastoral y la sede se asignan por separado, en la cuenta. Y el panel lo explica solo: al
+elegir un rol en el formulario de usuarios sale, debajo del selector, qué puede hacer ese
+rol, y lo mismo al pasar el ratón sobre el rol en el listado de cuentas.
 
 ## Los módulos del panel, por tema
 
 **Contenido del sitio** — `bloques` (textos editables), `paginas`, `evangelio` (el evangelio
 del día y la reflexión del párroco, solo Admin y Editor), `carrusel`, `galeria`.
 
-**La parroquia** — `centros` (sedes), `personas` (equipo pastoral), `organigrama`,
-`horarios`, `pastorales` (con su jerarquía de Comisiones y su panel básico por pastoral).
+**La parroquia** — `centros` (sedes), `personas` (equipo pastoral, con la pareja de cada
+quien: quién con quién es un dato de la parroquia y lo usan todas las pastorales),
+`organigrama`, `horarios`, `pastorales` (con su jerarquía de Comisiones, su panel básico por
+pastoral, y un responsable que puede ser una persona o un matrimonio).
 
 **Comunicación** — `avisos`, `eventos`, `agenda` (calendario interno, ve borradores de
 toda la parroquia a propósito, para que nadie reserve el salón dos veces).

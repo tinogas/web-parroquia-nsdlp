@@ -184,6 +184,8 @@ pedidos después, cada uno con su origen; todos están implementados y probados 
 | Publicación en dos escalones | Avisos y cursos ganan un peldaño intermedio entre borrador y sitio público: publicado hacia dentro, visible a la pastoral (y a sus hijas si es una Comisión) desde el panel de inicio, marcado como nuevo hasta que se revisa | Uso real del panel |
 | Evangelio del día | El párroco publica la lectura del día y su reflexión, cada una por separado, con un único estado de publicación; se muestra en la portada solo mientras es el día de hoy | Petición del párroco |
 | Parejas del equipo pastoral | Quién con quién se marca en la ficha de cada persona y vale en toda la parroquia: el panel de cada pastoral lo muestra, y quien coordina puede ser una pareja y no una sola persona —JECSA, Raíces, Matrimonios y AMA las coordina un matrimonio—. Emparejar es opcional: quien participa solo se queda como está | Petición de la parroquia |
+| El correo es de la pastoral | `contacto_email` deja de copiarse del correo de acceso de quien coordina: cada pastoral tiene el suyo, que sobrevive a los relevos en vez de publicar la dirección personal de quien esté al frente hoy | Petición de la parroquia |
+| Quién coordina, a la vista, y quién edita la ficha | El nombre de quien lleva cada pastoral se lee en el listado y en el panel —y en el sitio público, bajo cada Comisión y en cada tarjeta— sin abrir la ficha; y esa ficha pasa a editarla solo administración y coordinación general. El panel explica además qué hace cada rol al dar de alta una cuenta | Petición de la parroquia |
 
 El detalle de cada decisión —y de los errores que estos bloques encontraron en el código de
 la fase 1— está en [`ARQUITECTURA.md`](ARQUITECTURA.md).
