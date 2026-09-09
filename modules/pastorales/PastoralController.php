@@ -93,10 +93,16 @@ class PastoralController extends Controller
         // muestra a quien ya administra la pastoral —requireAlcancePastoral()
         // acaba de comprobarlo—, y no se le exige `personas.ver`: saber quién
         // está en tu propia pastoral es parte de coordinarla, y esos nombres y
-        // cargos ya salen en el directorio público. Lo que sí exige permiso es
-        // el botón que lleva a la ficha, donde están el teléfono, el correo y
-        // la fecha de nacimiento. Ver el comentario de PERMISOS_COORDINACION
-        // en config/app.php, que a propósito no incluye personas.*.
+        // cargos ya salen en el directorio público.
+        //
+        // Lo que sí exige permiso es el botón que lleva a la ficha, donde están
+        // el domicilio, la fecha de nacimiento y las demás pastorales de esa
+        // persona; y, aparte, el botón de WhatsApp, que pide
+        // `personas.contactar`: poder escribirle a la gente de la pastoral es
+        // parte de coordinarla, pero no es lo mismo que abrir su expediente, y
+        // por eso son dos llaves y no una. El número no se imprime en pantalla,
+        // viaja en el enlace. Ver el comentario de PERMISOS_COORDINACION en
+        // config/app.php, que a propósito sigue sin incluir personas.ver.
         $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
 
         $this->render('pastorales/panel', [
@@ -171,6 +177,13 @@ class PastoralController extends Controller
         $nombre = $this->postStr('nombre');
         if ($nombre === '') {
             Session::flash('error', 'La pastoral necesita un nombre.');
+            $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
+            return;
+        }
+        // Este teléfono se publica en el sitio, así que un dedazo lo ve
+        // cualquiera que entre a la ficha de la pastoral.
+        if (!telefono_valido($this->postStr('contacto_telefono'))) {
+            Session::flash('error', 'El teléfono de contacto no tiene un formato válido. ' . TELEFONO_FORMATO);
             $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
             return;
         }

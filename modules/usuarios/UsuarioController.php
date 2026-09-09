@@ -307,6 +307,11 @@ class UsuarioController extends Controller
         if ($password !== '' && strlen($password) < 8) {
             $errores[] = 'La contraseña debe tener al menos 8 caracteres.';
         }
+        // Solo llega con valor cuando la cuenta no está vinculada a una ficha:
+        // con ficha, el campo no se dibuja y el teléfono se copia de ella.
+        if (!telefono_valido($this->postStr('telefono'))) {
+            $errores[] = 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO;
+        }
 
         // Nadie puede desactivarse a sí mismo desde el formulario: a la baja
         // solo se llega por la acción eliminar(), que además bloquea el propio id.

@@ -65,6 +65,10 @@ pastoral y la sede se asignan por separado, en la cuenta. Y el panel lo explica 
 elegir un rol en el formulario de usuarios sale, debajo del selector, qué puede hacer ese
 rol, y lo mismo al pasar el ratón sobre el rol en el listado de cuentas.
 
+Administración, edición y las dos coordinaciones llevan además `personas.contactar`: el
+botón que abre WhatsApp con los integrantes de una pastoral. Consulta no lo tiene —sigue
+viendo los teléfonos que ya veía, pero mira y no actúa.
+
 ## Los módulos del panel, por tema
 
 **Contenido del sitio** — `bloques` (textos editables), `paginas`, `evangelio` (el evangelio
@@ -73,7 +77,9 @@ del día y la reflexión del párroco, solo Admin y Editor), `carrusel`, `galeri
 **La parroquia** — `centros` (sedes), `personas` (equipo pastoral, con la pareja de cada
 quien: quién con quién es un dato de la parroquia y lo usan todas las pastorales),
 `organigrama`, `horarios`, `pastorales` (con su jerarquía de Comisiones, su panel básico por
-pastoral, y un responsable que puede ser una persona o un matrimonio).
+pastoral, y un responsable que puede ser una persona o un matrimonio). En los listados de
+integrantes —los cuatro módulos dedicados y el panel básico— cada quien lleva su botón de
+WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos llevarán.
 
 **Comunicación** — `avisos`, `eventos`, `agenda` (calendario interno, ve borradores de
 toda la parroquia a propósito, para que nadie reserve el salón dos veces).

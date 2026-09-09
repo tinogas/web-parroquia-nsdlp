@@ -54,7 +54,9 @@
                     <div class="col-md-6">
                         <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                         <input type="tel" name="telefono" id="telefono" class="form-control"
+                               maxlength="20" placeholder="662 220 7214"
                                value="<?= e($valores['telefono'] ?? '') ?>">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                     </div>
                     <div class="col-md-12">
                         <label for="centro" class="form-label fw-semibold">Centro al que perteneces</label>
@@ -86,7 +88,9 @@
                     <div class="col-md-4">
                         <label for="tutor_telefono" class="form-label fw-semibold">Teléfono</label>
                         <input type="tel" name="tutor_telefono" id="tutor_telefono" class="form-control"
+                               maxlength="20" placeholder="662 220 7214"
                                value="<?= e($valores['tutor_telefono'] ?? '') ?>">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                     </div>
                 </div>
 

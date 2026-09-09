@@ -90,6 +90,13 @@ class CatequesisController extends Controller
             $this->redirect(url_admin('catequesis'));
             return;
         }
+        // Con ficha vinculada el teléfono viene de ella, ya validado al
+        // guardarla; aquí solo se revisa lo escrito a mano.
+        if (!$persona && !telefono_valido($telefono)) {
+            Session::flash('error', 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect(url_admin('catequesis'));
+            return;
+        }
 
         $datos = [
             'pastoral_id' => $pastoralId,

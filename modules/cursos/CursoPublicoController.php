@@ -125,6 +125,15 @@ class CursoPublicoController extends ControllerPublico
         if ($esMenor && ($tutorNombre === '' || $tutorParentesco === '' || $tutorTelefono === '')) {
             $errores[] = 'Como quien se inscribe es menor de edad, marca la casilla "Padre, madre o tutor" y completa nombre, parentesco y teléfono: son obligatorios.';
         }
+        // El del tutor es el único teléfono obligatorio del sistema —es la vía
+        // para localizar a la familia de un menor—, así que aquí el formato
+        // importa más que en ningún otro campo.
+        if (!telefono_valido($this->postStr('telefono'))) {
+            $errores[] = 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO;
+        }
+        if (!telefono_valido($tutorTelefono)) {
+            $errores[] = 'El teléfono del padre, madre o tutor no tiene un formato válido. ' . TELEFONO_FORMATO;
+        }
 
         if (!$this->postBool('consentimiento')) {
             $errores[] = 'Debes aceptar el aviso de privacidad para inscribirte.';

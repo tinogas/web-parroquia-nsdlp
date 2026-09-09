@@ -101,6 +101,13 @@ class PersonaController extends Controller
             $this->redirect($id ? url_admin('personas', 'editar', ['id' => $id]) : url_admin('personas', 'nueva'));
             return;
         }
+        // El teléfono se propaga a las cuatro tablas de pastoral y alimenta los
+        // enlaces de WhatsApp, así que un dedazo aquí se multiplica.
+        if (!telefono_valido($this->postStr('telefono'))) {
+            Session::flash('error', 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect($id ? url_admin('personas', 'editar', ['id' => $id]) : url_admin('personas', 'nueva'));
+            return;
+        }
 
         $actual = $id ? $this->modelo->porId($id) : null;
         $foto   = $actual['foto'] ?? null;
