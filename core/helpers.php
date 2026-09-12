@@ -212,6 +212,143 @@ if (!function_exists('e')) {
         return rtrim($espacio !== false ? mb_substr($corte, 0, $espacio) : $corte, ',.;:') . '…';
     }
 
+    // ── Teléfonos ───────────────────────────────────────────────────────
+
+    /**
+     * Un teléfono escrito como se dice → los dígitos que exige un enlace de
+     * WhatsApp: internacional, sin '+', sin espacios ni paréntesis.
+     *
+     * Los teléfonos de la parroquia conviven en tres formatos —'6622240453',
+     * '662 220 7214', '(662) 220 7214'— y ninguno trae clave de país, así que
+     * a los de diez dígitos se les antepone LADA_PAIS. No se toca el dato
+     * guardado: la normalización es al dibujar, para que cada quien siga
+     * leyendo el número como lo escribió.
+     *
+     * Devuelve '' cuando lo capturado no alcanza para escribirle a nadie, y
+     * quien llama entonces no dibuja el botón. Nunca inventa un número: más
+     * vale sin botón que un enlace a la conversación de un desconocido.
+     */
+    function telefono_internacional(?string $telefono): string
+    {
+        $digitos = preg_replace('/\D+/', '', (string) $telefono);
+
+        // '00' es el prefijo de salida internacional, no parte del número.
+        if (str_starts_with($digitos, '00')) {
+            $digitos = substr($digitos, 2);
+        }
+        // Diez dígitos es un número nacional: le falta la clave de país.
+        if (strlen($digitos) === 10) {
+            $digitos = LADA_PAIS . $digitos;
+        }
+        // Once es el mínimo con clave de país; quince, el máximo de E.164. Los
+        // '521…' de trece que dejó el celular mexicano de antes de 2019 caen
+        // dentro y se respetan: WhatsApp los sigue resolviendo, y reescribir lo
+        // que alguien tecleó a propósito arriesga más de lo que arregla.
+        return (strlen($digitos) >= 11 && strlen($digitos) <= 15) ? $digitos : '';
+    }
+
+    /**
+     * ¿Se puede capturar esto como teléfono? Es el control del lado del
+     * servidor; el placeholder del campo es la cortesía.
+     *
+     * Vacío es válido: casi todos los campos de teléfono son opcionales, y
+     * quien exige el dato lo comprueba por su cuenta —tutor_telefono cuando el
+     * inscrito es menor, por ejemplo—.
+     *
+     * Es más estricta que telefono_internacional(), y a propósito. Esa función
+     * tiene que arreglárselas con lo que ya está guardado desde antes de que
+     * existiera esta regla, así que acepta cualquier cosa de once a quince
+     * dígitos; aquí, con el dato todavía en la mano de quien lo escribe, se
+     * puede pedir bien:
+     *
+     *   - Diez dígitos, con o sin espacios, guiones o paréntesis. Es el caso
+     *     normal: '6622240453', '662 220 7214', '(662) 220 7214' — los tres
+     *     formatos que la parroquia ya tiene guardados pasan sin tocarlos.
+     *   - De otro país, solo si lo dice un '+' o un '00' delante. Así un número
+     *     de once dígitos deja de ser ambiguo entre un extranjero y un local
+     *     mal teclado.
+     *   - Doce o trece dígitos que empiezan con LADA_PAIS, para quien escribe
+     *     su propio número con el 52 por delante y sin '+'.
+     *
+     * Y cualquier letra lo invalida. Eso es lo que atrapa la extensión pegada
+     * al número —'662 220 7214 ext 12'—, que da doce dígitos, pasaría por
+     * largo y armaría un enlace de WhatsApp que no lleva a nadie.
+     */
+    function telefono_valido(?string $telefono): bool
+    {
+        $texto = trim((string) $telefono);
+        if ($texto === '') {
+            return true;
+        }
+        // Solo lo que se usa para escribir un teléfono.
+        if (!preg_match('/^\+?[0-9 ()\-.]+$/', $texto)) {
+            return false;
+        }
+        $digitos = preg_replace('/\D+/', '', $texto);
+        $largo   = strlen($digitos);
+
+        // Internacional declarado: el prefijo lo dice, no lo adivinamos.
+        if (str_starts_with($texto, '+') || str_starts_with($digitos, '00')) {
+            $sinSalida = str_starts_with($digitos, '00') ? substr($digitos, 2) : $digitos;
+            return strlen($sinSalida) >= 11 && strlen($sinSalida) <= 15;
+        }
+        // Nacional con su clave de país por delante, sin '+'.
+        if (($largo === 12 || $largo === 13) && str_starts_with($digitos, LADA_PAIS)) {
+            return true;
+        }
+        return $largo === 10;
+    }
+
+    /**
+     * El enlace "click to chat" de WhatsApp, con el mensaje ya escrito. No
+     * manda nada: abre la conversación en WhatsApp Web o en la app, y quien
+     * envía es la persona desde su propio WhatsApp. Ver docs/ARQUITECTURA.md
+     *
+     * '' si el teléfono no se pudo normalizar.
+     */
+    function whatsapp_enlace(?string $telefono, string $mensaje = ''): string
+    {
+        $numero = telefono_internacional($telefono);
+        if ($numero === '') {
+            return '';
+        }
+        // rawurlencode y no urlencode: WhatsApp quiere los espacios como %20;
+        // con '+' llegan literales al chat.
+        return 'https://wa.me/' . $numero
+             . ($mensaje !== '' ? '?text=' . rawurlencode($mensaje) : '');
+    }
+
+    /** Href de `tel:` en formato internacional, para que marque también desde fuera. */
+    function tel_enlace(?string $telefono): string
+    {
+        $numero = telefono_internacional($telefono);
+        return $numero !== '' ? 'tel:+' . $numero : '';
+    }
+
+    /**
+     * El botón de WhatsApp de un integrante de una pastoral, listo para pintar
+     * —devuelve HTML, como icono_cruz() o badge_escalon()—.
+     *
+     * Cadena vacía, y no un botón deshabilitado, cuando no hay teléfono
+     * utilizable: es la misma regla que rige los permisos, un botón que no
+     * aplica no se dibuja. Hoy es el caso común, no el raro: coristas y
+     * proclamadores tienen el teléfono en NULL casi todos.
+     *
+     * El nombre viaja en data-nombre y el número en el href; assets/js/whatsapp.js
+     * los usa para meter el mensaje que se escribe una vez arriba del listado.
+     */
+    function boton_whatsapp(?string $telefono, string $nombre = '', string $clases = 'btn btn-sm btn-outline-success'): string
+    {
+        $url = whatsapp_enlace($telefono);
+        if ($url === '') {
+            return '';
+        }
+        $titulo = $nombre !== '' ? 'Escribir por WhatsApp a ' . $nombre : 'Escribir por WhatsApp';
+        return '<a href="' . e($url) . '" target="_blank" rel="noopener"'
+             . ' class="' . e($clases) . ' js-whatsapp" data-nombre="' . e($nombre) . '"'
+             . ' title="' . e($titulo) . '"><i class="bi bi-whatsapp"></i></a>';
+    }
+
     // ── Imágenes ────────────────────────────────────────────────────────
 
     /**

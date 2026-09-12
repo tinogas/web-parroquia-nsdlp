@@ -18,6 +18,11 @@
         <?php if (!$ministros): ?>
         <p class="text-muted small mb-3">Todavía no hay ministros registrados.</p>
         <?php else: ?>
+        <?php
+        $mw_lista = 'ministros';
+        $mw_filas = $ministros;
+        require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
+        ?>
         <div class="table-responsive mb-3">
             <table class="table table-sm align-middle">
                 <thead class="table-light">
@@ -44,12 +49,17 @@
                         <td class="fw-semibold"><?= e($ministro['nombre']) ?></td>
                         <td class="d-none d-md-table-cell small"><?= e($ministro['telefono']) ?></td>
                         <td class="text-end">
-                            <?php if (Auth::tienePermiso('mesc.editar')): ?>
-                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                    data-bs-toggle="modal" data-bs-target="#ministro<?= (int) $ministro['id'] ?>">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <?php endif; ?>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <?php if (Auth::tienePermiso('personas.contactar')): ?>
+                                <?= boton_whatsapp($ministro['telefono'], $ministro['nombre']) ?>
+                                <?php endif; ?>
+                                <?php if (Auth::tienePermiso('mesc.editar')): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#ministro<?= (int) $ministro['id'] ?>">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -117,7 +127,9 @@ $dibujarModalMinistro = static function (string $idModal, ?array $ministro, int 
                         <div class="form-text">Viene de su ficha del equipo pastoral.</div>
                         <?php else: ?>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
+                               placeholder="662 220 7214"
                                value="<?= e($vacio ? '' : (string) $ministro['telefono']) ?>" maxlength="20">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         <?php endif; ?>
                     </div>
                     <div class="form-check form-switch">

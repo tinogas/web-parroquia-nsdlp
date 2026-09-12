@@ -106,7 +106,9 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                         <div class="col-md-5">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   maxlength="20" placeholder="662 220 7214"
                                    value="<?= e($esNuevo ? '' : (string) $cuenta['telefono']) ?>">
+                            <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         </div>
                         <?php endif; ?>
                     </div>

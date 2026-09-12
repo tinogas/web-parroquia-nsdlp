@@ -107,6 +107,14 @@ class MescController extends Controller
             $this->redirect($id ? url_admin('mesc', 'editar', ['id' => $id]) : url_admin('mesc', 'nueva'));
             return;
         }
+        // Los dos teléfonos de la visita: el de la casa y el de quien la pidió.
+        // Aquí importa más que en otras partes —de este dato depende avisar que
+        // se va en camino— y es el único formulario con dos a la vez.
+        if (!telefono_valido($this->postStr('telefono')) || !telefono_valido($this->postStr('solicitante_telefono'))) {
+            Session::flash('error', 'Alguno de los dos teléfonos no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect($id ? url_admin('mesc', 'editar', ['id' => $id]) : url_admin('mesc', 'nueva'));
+            return;
+        }
 
         $lat = $this->postStr('latitud');
         $lng = $this->postStr('longitud');
@@ -414,6 +422,13 @@ class MescController extends Controller
 
         if ($nombre === '') {
             Session::flash('error', 'El ministro necesita un nombre corto, o elige a alguien del equipo pastoral.');
+            $this->redirect(url_admin('mesc', 'ministros'));
+            return;
+        }
+        // Solo lo escrito a mano: con ficha vinculada, el teléfono viene de
+        // ella y ya se validó al guardarla.
+        if (!$persona && !telefono_valido($this->postStr('telefono'))) {
+            Session::flash('error', 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
             $this->redirect(url_admin('mesc', 'ministros'));
             return;
         }

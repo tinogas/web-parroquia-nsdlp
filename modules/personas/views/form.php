@@ -82,8 +82,11 @@
                         <div class="col-md-6">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   maxlength="20" placeholder="662 220 7214"
                                    value="<?= e($esNueva ? '' : (string) $persona['telefono']) ?>">
-                            <div class="form-text">Opcional. No se muestra en el sitio público.</div>
+                            <div class="form-text">
+                                Opcional. No se muestra en el sitio público. <?= e(TELEFONO_FORMATO) ?>
+                            </div>
                         </div>
                     </div>
 

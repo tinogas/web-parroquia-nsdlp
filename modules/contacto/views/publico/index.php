@@ -22,18 +22,18 @@
                         </span>
                     </li>
                     <?php endif; ?>
-                    <?php if (Config::tiene('telefono')): ?>
+                    <?php if ($telContacto = tel_enlace(Config::get('telefono'))): ?>
                     <li>
                         <i class="bi bi-telephone text-primary"></i>
-                        <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', Config::get('telefono'))) ?>">
+                        <a href="<?= e($telContacto) ?>">
                             <?= e(Config::get('telefono')) ?>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Config::tiene('whatsapp')): ?>
+                    <?php if ($waContacto = whatsapp_enlace(Config::get('whatsapp'))): ?>
                     <li>
                         <i class="bi bi-whatsapp text-primary"></i>
-                        <a href="https://wa.me/<?= e(preg_replace('/[^0-9]/', '', Config::get('whatsapp'))) ?>"
+                        <a href="<?= e($waContacto) ?>"
                            target="_blank" rel="noopener">Escribir por WhatsApp</a>
                     </li>
                     <?php endif; ?>
@@ -100,10 +100,14 @@
                         <div class="col-md-6">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   maxlength="20" placeholder="662 220 7214"
                                    value="<?= e($valores['telefono'] ?? '') ?>">
                         </div>
                     </div>
-                    <p class="form-text mt-n2 mb-3">Déjanos al menos un correo o un teléfono para poder responderte.</p>
+                    <p class="form-text mt-n2 mb-3">
+                        Déjanos al menos un correo o un teléfono para poder responderte.
+                        Si nos dejas teléfono: <?= e(TELEFONO_FORMATO) ?>
+                    </p>
 
                     <div class="mb-3">
                         <label for="mensaje" class="form-label fw-semibold">Mensaje</label>

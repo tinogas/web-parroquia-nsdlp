@@ -67,6 +67,11 @@ class CentroController extends Controller
             $this->redirect($id ? url_admin('centros', 'editar', ['id' => $id]) : url_admin('centros', 'nuevo'));
             return;
         }
+        if (!telefono_valido($this->postStr('telefono'))) {
+            Session::flash('error', 'El teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
+            $this->redirect($id ? url_admin('centros', 'editar', ['id' => $id]) : url_admin('centros', 'nuevo'));
+            return;
+        }
 
         $actual = $id ? $this->modelo->porId($id) : null;
         $imagen = $actual['imagen'] ?? null;

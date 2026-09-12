@@ -254,7 +254,9 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     <div class="mb-3">
                         <label for="contacto_telefono" class="form-label fw-semibold">Teléfono de contacto</label>
                         <input type="tel" name="contacto_telefono" id="contacto_telefono" class="form-control"
+                               maxlength="20" placeholder="662 220 7214"
                                value="<?= e($esNueva ? '' : (string) $pastoral['contacto_telefono']) ?>">
+                        <div class="form-text">Se publica en la ficha de la pastoral. <?= e(TELEFONO_FORMATO) ?></div>
                     </div>
                 </div>
             </div>

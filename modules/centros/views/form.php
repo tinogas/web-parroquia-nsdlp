@@ -55,7 +55,9 @@
                         <div class="col-md-4">
                             <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono" class="form-control"
+                                   maxlength="20" placeholder="662 220 7214"
                                    value="<?= e($esNuevo ? '' : (string) $centro['telefono']) ?>">
+                            <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                         </div>
                     </div>
 

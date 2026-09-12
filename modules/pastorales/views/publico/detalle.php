@@ -146,10 +146,10 @@
                                 <a href="mailto:<?= e($pastoral['contacto_email']) ?>"><?= e($pastoral['contacto_email']) ?></a>
                             </li>
                             <?php endif; ?>
-                            <?php if ($pastoral['contacto_telefono']): ?>
+                            <?php if ($telPastoral = tel_enlace($pastoral['contacto_telefono'])): ?>
                             <li>
                                 <i class="bi bi-telephone text-primary"></i>
-                                <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', $pastoral['contacto_telefono'])) ?>">
+                                <a href="<?= e($telPastoral) ?>">
                                     <?= e($pastoral['contacto_telefono']) ?>
                                 </a>
                             </li>

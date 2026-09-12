@@ -47,8 +47,10 @@ class InicioController extends ControllerPublico
         if (Config::tiene('logo')) {
             $datos['logo'] = url_absoluta(url_activo(Config::get('logo')));
         }
-        if (Config::tiene('telefono')) {
-            $datos['telephone'] = Config::get('telefono');
+        // schema.org espera el teléfono en E.164, no como se escribe en la
+        // papeleta: '+526622207214', no '(662) 220 7214'.
+        if ($telefonoE164 = telefono_internacional(Config::get('telefono'))) {
+            $datos['telephone'] = '+' . $telefonoE164;
         }
         if (Config::tiene('email')) {
             $datos['email'] = Config::get('email');

@@ -13,6 +13,11 @@
         <?php if (!$proclamadores): ?>
         <p class="text-muted small mb-3">Todavía no hay proclamadores registrados.</p>
         <?php else: ?>
+        <?php
+        $mw_lista = 'proclamadores';
+        $mw_filas = $proclamadores;
+        require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
+        ?>
         <div class="table-responsive mb-3">
             <table class="table table-sm align-middle">
                 <thead class="table-light">
@@ -48,12 +53,17 @@
                                 . ($proclamador['email'] ?? ''))) ?>
                         </td>
                         <td class="text-end">
-                            <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
-                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                    data-bs-toggle="modal" data-bs-target="#proclamador<?= (int) $proclamador['id'] ?>">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <?php endif; ?>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <?php if (Auth::tienePermiso('personas.contactar')): ?>
+                                <?= boton_whatsapp($proclamador['telefono'], $proclamador['nombre']) ?>
+                                <?php endif; ?>
+                                <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#proclamador<?= (int) $proclamador['id'] ?>">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -131,7 +141,9 @@ $dibujarModalProclamador = static function (
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Teléfono</label>
                         <input type="tel" name="telefono" class="form-control form-control-sm"
+                               placeholder="662 220 7214"
                                value="<?= e($vacio ? '' : (string) $proclamador['telefono']) ?>" maxlength="20">
+                        <div class="form-text"><?= e(TELEFONO_FORMATO) ?></div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Correo</label>

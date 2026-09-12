@@ -99,6 +99,8 @@ class ConfiguracionController extends Controller
 
             'url' => $this->validarUrl($this->postStr($clave), $etiqueta),
 
+            'telefono' => $this->validarTelefono($this->postStr($clave)),
+
             // El horario de oficina y la descripción del sitio conservan los
             // saltos de línea, así que no se puede usar postStr (que recorta).
             'parrafo' => trim(strip_tags((string) ($_POST[$clave] ?? ''))),
@@ -158,6 +160,20 @@ class ConfiguracionController extends Controller
     {
         if ($valor !== '' && !filter_var($valor, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('el correo no tiene un formato válido.');
+        }
+        return $valor;
+    }
+
+    /**
+     * El tipo `telefono` caía en el `default` y se guardaba lo que fuera. De
+     * estas dos claves —el teléfono de la parroquia y su WhatsApp— salen el
+     * enlace para llamar del pie de página y el "Escribir por WhatsApp" de la
+     * página de contacto, así que un dedazo aquí lo ve todo el que entre.
+     */
+    private function validarTelefono(string $valor): string
+    {
+        if (!telefono_valido($valor)) {
+            throw new RuntimeException('el teléfono no tiene un formato válido. ' . TELEFONO_FORMATO);
         }
         return $valor;
     }

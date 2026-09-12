@@ -48,10 +48,10 @@ $redes = array_filter([
                         </span>
                     </li>
                     <?php endif; ?>
-                    <?php if (Config::tiene('telefono')): ?>
+                    <?php if ($telPie = tel_enlace(Config::get('telefono'))): ?>
                     <li>
                         <i class="bi bi-telephone"></i>
-                        <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', Config::get('telefono'))) ?>">
+                        <a href="<?= e($telPie) ?>">
                             <?= e(Config::get('telefono')) ?>
                         </a>
                     </li>

@@ -169,6 +169,11 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
             <?php endif; ?>
         </p>
         <?php else: ?>
+        <?php
+        $mw_lista = 'pastoral' . (int) $pastoral['id'];
+        $mw_filas = $personas;
+        require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
+        ?>
         <ul class="list-group list-group-flush">
             <?php foreach ($personas as $persona): ?>
             <li class="list-group-item d-flex align-items-center justify-content-between gap-2 px-0">
@@ -202,12 +207,20 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                         <?php endif; ?>
                     </div>
                 </div>
-                <?php if ($puedeEditarPersonas): ?>
-                <a href="<?= e(url_admin('personas', 'editar', ['id' => $persona['id']])) ?>"
-                   class="btn btn-sm btn-outline-primary" title="Editar su ficha">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <?php endif; ?>
+                <div class="d-flex gap-1 flex-shrink-0">
+                    <?php /* El número no se imprime aquí: el botón abre la conversación y
+                             el teléfono se queda en el enlace. Quien necesite el dato en
+                             pantalla entra a la ficha, que es lo que pide personas.ver. */ ?>
+                    <?php if (Auth::tienePermiso('personas.contactar')): ?>
+                    <?= boton_whatsapp($persona['telefono'], $persona['nombre']) ?>
+                    <?php endif; ?>
+                    <?php if ($puedeEditarPersonas): ?>
+                    <a href="<?= e(url_admin('personas', 'editar', ['id' => $persona['id']])) ?>"
+                       class="btn btn-sm btn-outline-primary" title="Editar su ficha">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
             </li>
             <?php endforeach; ?>
         </ul>

@@ -1784,6 +1784,89 @@ Hoy nadie tiene la pastoral de Coros asignada en `usuarios_pastorales`, así que
 solo lo ven las cuentas de alcance global. Darle acceso a la pastoral es añadir esa fila
 desde Usuarios, no tocar código.
 
+### Escribirle al equipo son enlaces `wa.me`, no la API de Meta
+
+La parroquia pidió poder avisarle por WhatsApp a la gente de una pastoral —una reunión, un
+cambio de turno—, y el caso incluía expresamente a **quien no tiene ficha**: en MESC,
+Catequesis, Proclamadores y Coros un integrante puede existir con `persona_id = NULL`, solo
+con su nombre y su teléfono escritos a mano. Por eso el botón vive en los listados de
+integrantes y no en la ficha de `personas`: en la ficha esa gente no está.
+
+**El botón abre la conversación, no manda el mensaje.** Es un enlace `https://wa.me/<número>`
+con el texto en `?text=`; lo abre WhatsApp Web o la app, y quien envía es la persona desde
+su propio WhatsApp. La alternativa —la Cloud API de Meta— manda sola, pero exige cuenta de
+Meta Business verificada, un número exclusivo que deja de servir en la app normal,
+plantillas aprobadas por Meta para iniciar conversación y pago por conversación. Es la
+misma decisión que ya sostiene "Antispam sin servicios de terceros": el proyecto no hace
+**ninguna** llamada HTTP saliente, y esta no iba a ser la primera para mandar un recado. El
+día que la parroquia contrate la API, la normalización del número y el lugar del botón se
+reaprovechan enteros.
+
+**La normalización es al dibujar, no al guardar.** `wa.me` exige el número internacional,
+solo dígitos y sin `+`; lo guardado conviene tres formatos —`6622240453`, `662 220 7214`,
+`(662) 220 7214`— y ninguno trae clave de país. `telefono_internacional()`
+(`core/helpers.php`) le antepone `LADA_PAIS` a los de diez dígitos y respeta los que ya la
+traen, incluidos los `521…` de trece que dejó el celular mexicano de antes de 2019. No hay
+migración ni `UPDATE`: cada quien sigue leyendo el número como lo escribió, y un dato raro
+no se corrompe. Cuando el número no se puede normalizar, el helper devuelve `''` y **el
+botón no se dibuja** — la misma regla que rige los permisos, nada gris y nada muerto. Los
+cuatro `preg_replace` inline que armaban los `tel:` a mano se retiraron a favor de
+`tel_enlace()`, que emite `tel:+52…`.
+
+**El mensaje es un cuadro, no una plantilla guardada.** Arriba de cada listado hay un
+"Mensaje para todos" (`shared/views/parciales/mensaje_whatsapp.php`) que `assets/js/app.js`
+pega al enlace de cada quien, sustituyendo `{nombre}` por su nombre de pila y guardando el
+borrador en `sessionStorage`. Se consideró una clave en `configuracion` y se descartó: una
+plantilla fija solo puede saludar, y el aviso de la reunión —que es lo que de verdad se
+manda a quince personas— cambia cada vez. Así además no toca la base de datos.
+
+**El permiso es propio: `personas.contactar`.** No sirve `personas.ver`, que no lo tiene
+ninguna coordinación; ni bastan `mesc.ver` y sus gemelos, que los lleva también Consulta —el
+integrante de a pie— y que ya dejan el teléfono a la vista en texto plano desde antes. El
+permiso nuevo va en `PERMISOS_COORDINACION` y en `ROL_EDITOR`, y separa exactamente lo que
+hay que separar: escribirle a la gente de tu pastoral es parte de coordinarla; abrir su
+expediente —domicilio, fecha de nacimiento, sus otras pastorales— sigue siendo
+`personas.ver`. En el panel básico de pastoral, que es la única pantalla donde el dato es
+nuevo, el número **no se imprime**: va en el enlace.
+
+### El teléfono se valida al capturarlo, con una regla más estricta que la de dibujarlo
+
+El botón de WhatsApp dejó a la vista un hueco que llevaba ahí desde la fase 1: **no había
+ninguna validación de teléfono en el proyecto**. Los catorce campos eran `type="tel"` sin
+`pattern`, `postStr()` solo hacía `trim` y `strip_tags`, y en el formulario público de
+contacto bastaba con que el campo no estuviera vacío —una sola letra pasaba, y luego no
+había a quién responderle—. Con eso, `662 220 7214 ext 12` se guardaba tal cual, daba doce
+dígitos y armaba un enlace de WhatsApp que no lleva a nadie.
+
+`telefono_valido()` (`core/helpers.php`) es ahora el control, y corre **en el servidor** en
+los trece puntos de captura: las cuatro fichas del panel (equipo pastoral, sedes, ficha de
+pastoral, cuentas), los dos teléfonos de una visita de MESC, los cuatro catálogos de
+pastoral, los dos campos del sitio público (contacto e inscripción a un curso) y el tipo
+`telefono` de la configuración, que caía en el `default` de `valorDelCampo()` y se guardaba
+sin mirar. El `placeholder` y la ayuda de cada campo son la cortesía; la regla del proyecto
+sigue siendo que lo del navegador no es un control.
+
+**Es más estricta que `telefono_internacional()`, y a propósito.** Esa función tiene que
+arreglárselas con lo que ya está guardado, así que acepta cualquier cosa de once a quince
+dígitos. La validación, con el dato todavía en la mano de quien lo escribe, puede pedir
+bien: diez dígitos (con espacios, guiones o paréntesis, como se quiera); o de otro país
+**solo si lo dice un `+` o un `00`** delante, con lo que un número de once dígitos deja de
+ser ambiguo entre un extranjero y un local mal teclado; o doce y trece dígitos que empiecen
+con `LADA_PAIS`, para quien escribe su propio número con el 52 por delante. Y cualquier
+letra lo invalida, que es lo que atrapa la extensión pegada.
+
+**Ninguna de las dos reglas invalida lo que ya está guardado**: se comprobaron los 27
+teléfonos de la base real —los tres formatos de la parroquia, en trece columnas de doce
+tablas— y todos pasan. Era la condición para no romper la edición de una ficha existente.
+
+El texto que explica la regla vive en `TELEFONO_FORMATO` (`config/app.php`), a un paso de
+`LADA_PAIS` y del validador, y lo usan tanto los mensajes de error como la ayuda debajo de
+cada campo: cambiar la regla y cambiar la explicación son el mismo gesto. Es la lección de
+los nombres de las pastorales, que se escribían en tres sitios distintos.
+
+Lo que la validación **no** puede es cuidar la puntería: diez dígitos bien formados pero
+equivocados abren la conversación de un desconocido, y eso no lo detecta nada.
+
 ### Moderación
 
 Los coordinadores no tienen `avisos.publicar` ni `galeria.publicar`, así que en esas dos

@@ -121,8 +121,10 @@ autorización registrada no puede llegar al sitio ni por descuido.
 **Listas de inscritos o folios.** Viven exclusivamente en el panel autenticado. No hay ni
 habrá una vista pública de "quiénes se inscribieron".
 
-**Domicilios y teléfonos particulares** de feligreses o del equipo pastoral. En la tabla
-`personas` se publica únicamente el correo institucional.
+**Domicilios y teléfonos particulares** de feligreses o del equipo pastoral **en el sitio
+público**. De la tabla `personas` se publica únicamente el correo institucional. Dentro del
+panel es otra cosa: el teléfono del equipo pastoral es dato de trabajo y sirve para
+contactarlos —ver el permiso `personas.contactar` en la tabla de abajo—.
 
 ## Control de acceso
 
@@ -131,7 +133,24 @@ habrá una vista pública de "quiénes se inscribieron".
 | Administrador | Sí |
 | Secretaría | Sí |
 | Editor | No |
-| Coordinador | **No**, ni siquiera de su propia pastoral |
+| Coordinador | **No** los de terceros. Sí el contacto de su propia pastoral |
+
+Lo que esta tabla gobierna son los datos de **terceros**: las inscripciones a cursos y los
+mensajes de contacto, que traen datos de menores. Ahí un coordinador no entra, ni siquiera
+tratándose de su pastoral.
+
+Distinto es el contacto de su propia gente. Del equipo pastoral, un coordinador ve el
+nombre, el cargo y el teléfono de los integrantes de su pastoral, y con el permiso
+`personas.contactar` puede escribirles por WhatsApp desde el panel. No ve el domicilio, la
+fecha de nacimiento ni el resto de la ficha: eso sigue tras `personas.ver`, que ninguna
+coordinación tiene. La versión anterior de esta tabla decía "**No**, ni siquiera de su
+propia pastoral", y era falsa desde antes de que existiera ese permiso: los listados de
+ministros, catequistas, proclamadores y coristas muestran el teléfono en texto plano a
+quien coordina.
+
+Al abrir WhatsApp, el número pasa al celular de quien escribe y la conversación ocurre
+fuera de este sistema: es contacto entre personas del equipo, no una base de datos que el
+panel exporte.
 
 El rol de secretaría existe precisamente para esto: separar a quien administra trámites de
 quien edita la web. Un coordinador de pastoral juvenil publica avisos y sube fotos de sus
