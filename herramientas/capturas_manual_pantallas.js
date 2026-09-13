@@ -136,6 +136,24 @@ module.exports = [
         sesion: 'publico',
         espera: '#email',
     },
+    {
+        id: 'acceso-error',
+        titulo: 'El aviso cuando los datos no coinciden',
+        url: '/admin/auth/login',
+        sesion: 'publico',
+        espera: '#email',
+        // Un correo que no existe: el mensaje que sale es el mismo que con la
+        // contraseña equivocada, que es justo lo que el capítulo explica.
+        antes: async (page) => {
+            await page.type('#email', 'quien.sea@ejemplo.com');
+            await page.type('#password', 'no-es-la-buena');
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                page.click('button[type="submit"]'),
+            ]);
+            await page.waitForSelector('.alert-danger');
+        },
+    },
 
     // ------------------------------------------------------------
     // El panel por dentro
@@ -153,5 +171,73 @@ module.exports = [
         url: '/admin/panel',
         espera: '.sidebar-link',
         recorte: '#sidebar',
+    },
+    {
+        id: 'acceso-barra-superior',
+        titulo: 'La barra de arriba',
+        url: '/admin/panel',
+        espera: '.navbar',
+        recorte: '.navbar',
+    },
+    {
+        id: 'acceso-menu-usuario',
+        titulo: 'El menú de tu nombre, desplegado',
+        url: '/admin/panel',
+        espera: '.navbar .btn-outline-light',
+        // El desplegable se dibuja fuera de la barra, así que la captura es de
+        // la ventana entera y no un recorte.
+        antes: async (page) => {
+            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.waitForSelector('.dropdown-menu.show');
+        },
+    },
+    {
+        id: 'panel-campana',
+        titulo: 'La campana, desplegada',
+        url: '/admin/panel',
+        espera: '.navbar .bi-bell, .navbar .bi-bell-fill',
+        antes: async (page) => {
+            await page.click('.navbar .bi-bell, .navbar .bi-bell-fill');
+            await page.waitForSelector('.dropdown-menu.show');
+        },
+    },
+    {
+        id: 'panel-accesos',
+        titulo: 'Los accesos rápidos',
+        url: '/admin/panel',
+        espera: '.sidebar-link',
+        // La rejilla de accesos rápidos no tiene id propio; es la primera de
+        // las tres filas de tarjetas de esa forma en la pantalla de inicio.
+        recorte: 'div.row.row-cols-2.row-cols-sm-3.row-cols-lg-4',
+    },
+    {
+        id: 'panel-listado',
+        titulo: 'Un listado del panel, con sus filtros y sus botones',
+        url: '/admin/avisos',
+        espera: 'table',
+    },
+
+    // ------------------------------------------------------------
+    // Quién puede hacer qué
+    // ------------------------------------------------------------
+
+    {
+        id: 'roles-usuario-form',
+        titulo: 'El formulario de una cuenta: rol, pastorales y sedes',
+        url: '/admin/usuarios/nuevo',
+        espera: 'select[name="rol"]',
+        completa: true,
+    },
+    {
+        id: 'roles-usar-como',
+        titulo: 'Usar como…',
+        url: '/admin/panel',
+        espera: '.navbar .btn-outline-light',
+        antes: async (page) => {
+            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.waitForSelector('.dropdown-menu.show');
+            await page.click('[data-bs-target="#modalUsarComo"]');
+            await page.waitForSelector('#modalUsarComo.show');
+        },
     },
 ];

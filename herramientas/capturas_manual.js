@@ -315,22 +315,33 @@ async function main() {
         const page = await navegador.newPage();
         await page.setViewport(VENTANA);
 
-        const necesitaSesion = elegidas.some((p) => p.sesion !== 'publico');
-        if (necesitaSesion) {
-            console.log('Entrando al panel…');
-            await entrar(page);
-        }
+        // Primero todo lo que se ve sin entrar y después lo del panel, aunque
+        // el catálogo los mezcle: la pantalla de acceso es de las que hay que
+        // fotografiar ANTES de iniciar sesión, porque con la sesión abierta
+        // esa dirección ya no enseña el formulario, redirige al panel.
+        const publicas = elegidas.filter((p) => p.sesion === 'publico');
+        const privadas = elegidas.filter((p) => p.sesion !== 'publico');
 
         console.log('Capturando ' + elegidas.length + ' pantalla(s) en docs/manual/img/');
         let fallos = 0;
-        for (const pantalla of elegidas) {
+
+        const disparar = async (pantalla) => {
             try {
                 await capturar(page, pantalla);
             } catch (e) {
                 fallos++;
                 console.error('  [falla] ' + pantalla.id + ': ' + e.message);
             }
+        };
+
+        for (const pantalla of publicas) { await disparar(pantalla); }
+
+        if (privadas.length) {
+            console.log('Entrando al panel…');
+            await entrar(page);
+            for (const pantalla of privadas) { await disparar(pantalla); }
         }
+
         if (fallos) { process.exitCode = 1; }
     } finally {
         await navegador.close();

@@ -365,7 +365,14 @@ def escribir_texto(parrafo, texto: str):
 
 def insertar_imagen(documento, ruta: Path, pie_texto: str):
     if not ruta.exists():
+        # Se deja constancia en el documento, no solo en la consola: un hueco
+        # mudo pasa desapercibido al revisar y acaba entregándose así.
         print(f'  [falta] {ruta.name}')
+        aviso = documento.add_paragraph()
+        aviso.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = aviso.add_run(f'[falta la captura {ruta.name}]')
+        run.font.italic = True
+        run.font.color.rgb = GRIS
         return
 
     with Image.open(ruta) as imagen:
