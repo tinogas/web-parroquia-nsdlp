@@ -49,20 +49,20 @@ El orden es el del número en el nombre del archivo.
 
 ### Las pastorales con módulo propio
 
-- 15 — MESC: visitas a enfermos, rutas y turnos *(en preparación)*
-- 16 — Catequesis: catequistas y periodos *(en preparación)*
-- 17 — Proclamadores: quién proclama y su calendario *(en preparación)*
-- 18 — Coros: un coro por misa *(en preparación)*
+- [15 — MESC: visitas a enfermos, rutas y turnos](15-mesc.md)
+- [16 — Catequesis: catequistas y periodos](16-catequesis.md)
+- [17 — Proclamadores: quién proclama y su calendario](17-proclamadores.md)
+- [18 — Coros: un coro por misa](18-coros.md)
 
 ### Contenido del sitio
 
-- 19 — Páginas, bloques y evangelio del día *(en preparación)*
+- [19 — Páginas, bloques y evangelio del día](19-paginas-bloques-y-evangelio.md)
 
 ### Administración
 
-- 20 — Usuarios *(en preparación)*
-- 21 — Configuración *(en preparación)*
-- 22 — Respaldos y bitácora *(en preparación)*
+- [20 — Usuarios](20-usuarios.md)
+- [21 — Configuración](21-configuracion.md)
+- [22 — Respaldos y bitácora](22-respaldos-y-bitacora.md)
 
 ## Las capturas
 

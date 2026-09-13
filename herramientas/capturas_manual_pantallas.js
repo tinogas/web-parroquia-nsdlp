@@ -525,6 +525,131 @@ module.exports = [
     },
 
     // ------------------------------------------------------------
+    // Las pastorales con módulo propio
+    // ------------------------------------------------------------
+
+    {
+        id: 'mesc-visitas',
+        titulo: 'MESC — Visitas a enfermos',
+        url: '/admin/mesc',
+        espera: 'table',
+        // Lo más delicado que guarda el sistema: quién está enfermo y dónde
+        // vive. Ni el nombre ni el domicilio pueden salir de esta pantalla.
+        tapar: [
+            ['table tbody td:first-child .fw-semibold', EJEMPLOS_NOMBRES],
+            ['table tbody td:nth-child(2)', 'Calle Ejemplo 123, Col. Centro'],
+        ],
+    },
+    {
+        id: 'mesc-ministros',
+        titulo: 'MESC — Ministros',
+        url: '/admin/mesc/ministros',
+        espera: 'table',
+    },
+    {
+        id: 'mesc-turnos',
+        titulo: 'MESC — Calendario de turnos',
+        url: '/admin/mesc/turnos',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'mesc-rutas',
+        titulo: 'MESC — Rutas de visita',
+        url: '/admin/mesc/rutas',
+        espera: '.sidebar-link',
+        tapar: [['table tbody td:first-child .fw-semibold', EJEMPLOS_NOMBRES]],
+    },
+    {
+        id: 'catequesis-catequistas',
+        titulo: 'Catequesis — Catequistas',
+        url: '/admin/catequesis',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'catequesis-periodos',
+        titulo: 'Catequesis — Periodos',
+        url: '/admin/catequesis/periodos',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'proclamadores-lista',
+        titulo: 'Proclamadores — Quiénes proclaman',
+        url: '/admin/proclamadores',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'proclamadores-turnos',
+        titulo: 'Proclamadores — Calendario de turnos',
+        url: '/admin/proclamadores/turnos',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'coros-lista',
+        titulo: 'Coros — Un coro por misa',
+        url: '/admin/coros',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'coros-integrantes',
+        titulo: 'Coros — Integrantes',
+        url: '/admin/coros/coristas',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
+    // Contenido del sitio
+    // ------------------------------------------------------------
+
+    {
+        id: 'bloques-lista',
+        titulo: 'Los textos del sitio',
+        url: '/admin/bloques',
+        espera: 'table',
+    },
+    {
+        id: 'paginas-lista',
+        titulo: 'Las páginas libres',
+        url: '/admin/paginas',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'evangelio-lista',
+        titulo: 'El evangelio del día',
+        url: '/admin/evangelio',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
+    // Administración
+    // ------------------------------------------------------------
+
+    {
+        id: 'usuarios-lista',
+        titulo: 'Las cuentas del panel',
+        url: '/admin/usuarios',
+        espera: 'table',
+    },
+    {
+        id: 'configuracion-form',
+        titulo: 'La configuración del sitio',
+        url: '/admin/configuracion',
+        espera: '.sidebar-link',
+        completa: true,
+    },
+    {
+        id: 'auditoria-lista',
+        titulo: 'La bitácora',
+        url: '/admin/auditoria',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'respaldos-lista',
+        titulo: 'Los respaldos de la base',
+        url: '/admin/respaldos',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
     // Quién puede hacer qué
     // ------------------------------------------------------------
 

@@ -64,7 +64,7 @@ GRIS   = RGBColor(0x6C, 0x75, 0x7D)
 
 ANCHO_UTIL_CM  = 16.0   # Carta menos los márgenes de 2.5 cm
 ALTO_MAXIMO_CM = 20.0   # para que una captura larga no ocupe dos páginas
-ANCHO_MAXIMO_PX = 1600  # a 16 cm son unos 254 ppp: de sobra para imprimir
+ANCHO_MAXIMO_PX = 1300  # a 16 cm son unos 206 ppp: nítido en pantalla y bueno en papel
 
 
 # ------------------------------------------------------------
