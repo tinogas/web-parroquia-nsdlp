@@ -28,6 +28,71 @@
  * ve cualquiera, luego la puerta de entrada al panel y después los módulos.
  */
 
+/**
+ * Nombres de relleno para las pantallas que listan personas. Se turnan, así
+ * que una lista de seis renglones sale con seis nombres distintos y se sigue
+ * leyendo como lo que es.
+ */
+const EJEMPLOS_NOMBRES = [
+    'María Elena Ruiz Bernal',
+    'Guadalupe Soto Ramírez',
+    'Javier Navarro Peña',
+    'Ana Rivas Domínguez',
+    'Rosa María Gil Ochoa',
+    'Carlos Medina Vázquez',
+];
+
+/** El nombre de cada quien dentro de la tarjeta «Cumpleaños de …» del panel. */
+const NOMBRES_CUMPLEANEROS = '.card .d-flex.flex-wrap.gap-3 > div > div.small > div:first-child';
+
+/**
+ * Lo que hay que tapar en CUALQUIER captura de la pantalla de inicio: la
+ * tarjeta de cumpleaños ata cada nombre a su día de nacimiento, que es un dato
+ * de la ficha y no algo que la parroquia publique. Los días se quedan —un día
+ * suelto, sin nombre, no es de nadie— y las fotos se cambian por una silueta,
+ * porque el avatar que dibuja el sistema cuando no hay foto lleva las
+ * iniciales de verdad.
+ */
+const TAPAR_INICIO = [[NOMBRES_CUMPLEANEROS, EJEMPLOS_NOMBRES]];
+const FOTOS_INICIO = ['.card .d-flex.flex-wrap.gap-3 img'];
+
+/** El nombre de quien tiene la sesión abierta, arriba a la derecha. */
+const NOMBRE_EN_LA_BARRA = '.navbar .btn-outline-light span';
+
+/** El «Hola, Fulano» con el que abre la pantalla de inicio. */
+const SALUDO_DEL_PANEL = 'h1.h4.fw-bold';
+
+/**
+ * Entra al panel como otra cuenta, por «Usar como…», para fotografiar lo que
+ * esa persona ve —un menú corto, una campana con avisos sin leer— sin conocer
+ * su contraseña. `despues` deshace la impersonación, para que las capturas
+ * siguientes no salgan con la sesión prestada.
+ */
+const usarComo = (usuarioId) => async (page) => {
+    await page.click('.navbar .btn-outline-light.dropdown-toggle');
+    await page.waitForSelector('.dropdown-menu.show');
+    await page.click('[data-bs-target="#modalUsarComo"]');
+    await page.waitForSelector('#modalUsarComo.show');
+    await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        page.evaluate((id) => {
+            const campo = document.querySelector(
+                'form.fila-usar-como input[name="usuario_id"][value="' + id + '"]');
+            campo.closest('form').querySelector('button[type="submit"]').click();
+        }, usuarioId),
+    ]);
+};
+
+const volverAAdmin = async (page) => {
+    await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        page.evaluate(() => {
+            const form = document.querySelector('form[action*="terminar_impersonacion"]');
+            if (form) { form.querySelector('button[type="submit"]').click(); }
+        }),
+    ]);
+};
+
 module.exports = [
 
     // ------------------------------------------------------------
@@ -164,6 +229,12 @@ module.exports = [
         titulo: 'Panel de inicio',
         url: '/admin/panel',
         espera: '.sidebar-link',
+        // La tarjeta de cumpleaños ata cada nombre a su día de nacimiento, que
+        // es un dato de la ficha y no algo que la parroquia publique. Los
+        // nombres se cambian por ejemplos; los días se quedan, porque un día
+        // suelto, sin nombre, no es de nadie.
+        tapar: TAPAR_INICIO,
+        fotos: FOTOS_INICIO,
     },
     {
         id: 'panel-menu',
@@ -184,6 +255,8 @@ module.exports = [
         titulo: 'El menú de tu nombre, desplegado',
         url: '/admin/panel',
         espera: '.navbar .btn-outline-light',
+        tapar: TAPAR_INICIO,
+        fotos: FOTOS_INICIO,
         // El desplegable se dibuja fuera de la barra, así que la captura es de
         // la ventana entera y no un recorte.
         antes: async (page) => {
@@ -196,10 +269,37 @@ module.exports = [
         titulo: 'La campana, desplegada',
         url: '/admin/panel',
         espera: '.navbar .bi-bell, .navbar .bi-bell-fill',
+        // Desde la sesión de una coordinación general, no desde la del
+        // administrador: lo que hay que enseñar es la campana CON avisos sin
+        // leer, y la cuenta del administrador ya los leyó todos. Es la misma
+        // pantalla que esa persona ve al entrar con su contraseña, así que la
+        // franja de «Actuando como…» se quita —ver disimularImpersonacion()— y
+        // su nombre se cambia por uno de ejemplo.
         antes: async (page) => {
+            await usarComo(6)(page);
             await page.click('.navbar .bi-bell, .navbar .bi-bell-fill');
             await page.waitForSelector('.dropdown-menu.show');
         },
+        despues: volverAAdmin,
+        disimularImpersonacion: true,
+        // Su nombre sale en dos sitios —la barra y el saludo— y los dos se
+        // cambian por el mismo ejemplo, para que la captura se lea como la de
+        // una sola persona.
+        tapar: TAPAR_INICIO.concat([
+            [NOMBRE_EN_LA_BARRA, EJEMPLOS_NOMBRES[0]],
+            [SALUDO_DEL_PANEL,   'Hola, ' + EJEMPLOS_NOMBRES[0]],
+        ]),
+        fotos: FOTOS_INICIO.concat(['.navbar img']),
+    },
+    {
+        id: 'panel-menu-coordinador',
+        titulo: 'El mismo menú, visto por una coordinación de pastoral',
+        url: '/admin/panel',
+        espera: '.sidebar-link',
+        antes: usarComo(6),
+        despues: volverAAdmin,
+        disimularImpersonacion: true,
+        recorte: '#sidebar',
     },
     {
         id: 'panel-accesos',
@@ -233,6 +333,9 @@ module.exports = [
         titulo: 'Usar como…',
         url: '/admin/panel',
         espera: '.navbar .btn-outline-light',
+        // La tarjeta de cumpleaños se ve de fondo, tras el modal.
+        tapar: TAPAR_INICIO,
+        fotos: FOTOS_INICIO,
         antes: async (page) => {
             await page.click('.navbar .btn-outline-light.dropdown-toggle');
             await page.waitForSelector('.dropdown-menu.show');

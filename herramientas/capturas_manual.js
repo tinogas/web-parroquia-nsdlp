@@ -162,10 +162,14 @@ async function enmascarar(page, tapar = []) {
         // --- Reglas de esta pantalla ------------------------------------
         // Todo lo que case con el selector pasa a decir el texto de ejemplo:
         // columnas enteras de una tabla, quién escribe un mensaje, cumpleaños.
+        // Con una lista de ejemplos en vez de uno solo, se van turnando: seis
+        // renglones que dijeran el mismo nombre delatarían el retoque y harían
+        // ilegible la pantalla que se quiere enseñar.
         for (const [selector, ejemplo] of selectoresATapar) {
-            for (const el of document.querySelectorAll(selector)) {
-                el.textContent = ejemplo;
-            }
+            const lista = Array.isArray(ejemplo) ? ejemplo : [ejemplo];
+            document.querySelectorAll(selector).forEach((el, i) => {
+                el.textContent = lista[i % lista.length];
+            });
         }
     }, tapar, TELEFONOS_PUBLICOS);
 }
@@ -192,6 +196,55 @@ async function sustituir(page, cambios = []) {
             }
         }
     }, cambios);
+}
+
+/**
+ * Cambia fotos y avatares por una silueta neutra. Hace falta donde el nombre
+ * ya se sustituyó pero la imagen seguiría delatando a la persona: el avatar
+ * que dibuja el sistema cuando no hay foto lleva las iniciales de verdad, y
+ * junto a su pastoral y su día de cumpleaños eso alcanza para reconocer a
+ * alguien dentro de la parroquia.
+ */
+async function neutralizarFotos(page, selectores = []) {
+    if (!selectores.length) { return; }
+    await page.evaluate((lista) => {
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+            + '<rect width="64" height="64" fill="#ced4da"/>'
+            + '<circle cx="32" cy="24" r="11" fill="#f8f9fa"/>'
+            + '<path d="M12 60c0-11 9-18 20-18s20 7 20 18z" fill="#f8f9fa"/></svg>';
+        const dataUri = 'data:image/svg+xml;base64,' + btoa(svg);
+        for (const selector of lista) {
+            for (const img of document.querySelectorAll(selector)) {
+                img.setAttribute('src', dataUri);
+                img.removeAttribute('srcset');
+            }
+        }
+    }, selectores);
+}
+
+/**
+ * Quita la franja de «Actuando como…» y el desplazamiento que trae consigo.
+ *
+ * Se usa cuando la pantalla se fotografía desde la sesión de otra persona
+ * —«Usar como…»— por una razón de contenido y no de permisos: la campana con
+ * avisos sin leer, por ejemplo, que la cuenta del administrador ya leyó. Lo
+ * que queda es exactamente lo que esa persona ve al entrar con su contraseña,
+ * así que la captura no enseña nada que no ocurra; la franja, en cambio,
+ * hablaría de un rodeo del guion que al lector no le sirve de nada.
+ *
+ * En la captura que SÍ explica la impersonación (capítulo 4), no se usa: ahí
+ * la franja es justamente lo que hay que enseñar.
+ */
+async function disimularImpersonacion(page) {
+    await page.evaluate(() => {
+        document.querySelector('.banner-impersonando')?.remove();
+        document.body.classList.remove('impersonando');
+        // Y el aviso verde de «Ahora estás usando el panel como…», que sale
+        // una sola vez, justo al entrar: es el otro rastro del rodeo.
+        for (const alerta of document.querySelectorAll('.alert')) {
+            if (/usando el panel como/i.test(alerta.textContent)) { alerta.remove(); }
+        }
+    });
 }
 
 /** Dibuja un recuadro sobre los elementos que el manual va a explicar. */
@@ -260,7 +313,9 @@ async function capturar(page, pantalla) {
     // dispara demasiado pronto.
     await new Promise((r) => setTimeout(r, 400));
 
+    if (pantalla.disimularImpersonacion) { await disimularImpersonacion(page); }
     await enmascarar(page, pantalla.tapar);
+    await neutralizarFotos(page, pantalla.fotos);
     await sustituir(page, pantalla.sustituir);
     await marcar(page, pantalla.marcar);
 
@@ -275,6 +330,10 @@ async function capturar(page, pantalla) {
     } else {
         await page.screenshot(opciones);
     }
+
+    // Para deshacer lo que la pantalla haya dejado montado —una impersonación,
+    // sobre todo— antes de seguir con la siguiente.
+    if (pantalla.despues) { await pantalla.despues(page); }
 
     const kb = Math.round(fs.statSync(destino).size / 1024);
     console.log('  [ok] ' + path.basename(destino) + ' (' + kb + ' KB) ' + pantalla.titulo);

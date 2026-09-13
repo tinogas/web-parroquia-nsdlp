@@ -521,12 +521,21 @@ def convertir(documento, texto: str, carpeta: Path):
 
         # --- Listas ---
         vineta   = re.match(r'^(\s*)[-*]\s+(.*)$', linea)
-        numerada = re.match(r'^(\s*)\d+\.\s+(.*)$', linea)
+        numerada = re.match(r'^(\s*)(\d+)\.\s+(.*)$', linea)
         if vineta or numerada:
             cerrar()
-            sangria, contenido = (vineta or numerada).groups()
-            estilo = 'List Bullet' if vineta else 'List Number'
-            if len(sangria) >= 2:
+            if vineta:
+                sangria, contenido = vineta.groups()
+                estilo = 'List Bullet'
+            else:
+                # El número se escribe a mano, con el que trae el Markdown, en
+                # vez de dejárselo al estilo «List Number» de Word: ese estilo
+                # comparte una sola numeración en todo el documento, así que la
+                # segunda lista del manual empezaba en 7 y la tercera en 12.
+                sangria, ordinal, contenido = numerada.groups()
+                contenido = f'{ordinal}. {contenido}'
+                estilo = 'List Paragraph'
+            if len(sangria) >= 2 and vineta:
                 estilo += ' 2'
             # Una entrada puede seguir en las líneas de abajo, sangradas.
             i += 1
@@ -536,6 +545,11 @@ def convertir(documento, texto: str, carpeta: Path):
                 contenido += ' ' + lineas[i].strip()
                 i += 1
             parrafo = documento.add_paragraph(style=estilo)
+            if not vineta:
+                # Sangría colgante, para que la segunda línea de una entrada
+                # larga no se meta debajo del número.
+                parrafo.paragraph_format.left_indent = Cm(1.0)
+                parrafo.paragraph_format.first_line_indent = Cm(-0.6)
             escribir_texto(parrafo, contenido)
             continue
 

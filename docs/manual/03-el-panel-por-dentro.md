@@ -56,10 +56,17 @@ Está agrupado por temas, y el orden es siempre el mismo:
 | **Administración** | Configuración, usuarios, bitácora y respaldos |
 
 **Tu menú probablemente es más corto que este.** Cada entrada se dibuja solo si
-tu cuenta tiene permiso para esa pantalla, así que una coordinadora ve cuatro o
-cinco renglones y el administrador los ve todos. No es que las opciones estén
+tu cuenta tiene permiso para esa pantalla, así que una coordinadora ve un puñado
+de renglones y el administrador los ve todos. No es que las opciones estén
 «escondidas»: si no están, tu cuenta no las tiene. El capítulo 4 explica quién
 ve qué.
+
+![El mismo menú, visto por una coordinación de pastoral](img/panel-menu-coordinador.webp)
+
+Este es el mismo menú de arriba, en la cuenta de una coordinación general de
+pastoral: sin la sección de Contenido, sin Trámites, con una sola pastoral en
+la sección Pastorales y con Usuarios como única entrada de Administración
+—porque puede dar de alta las cuentas de su propia pastoral, y nada más—.
 
 Los módulos de pastoral —MESC, Catequesis, Proclamadores, Coros— tienen además
 una regla propia: no basta con el permiso, hay que **administrar esa pastoral
@@ -84,13 +91,18 @@ cuenta; al pulsarla se despliega la lista, separada en sus dos grupos, y cada
 renglón lleva directo a lo suyo. Si son más de cinco, el último renglón dice
 cuántos faltan y lleva al listado completo.
 
-Dos detalles:
+En la captura de arriba solo aparece el grupo de **avisos**: es la campana de
+una coordinación general, que no atiende los mensajes de contacto. Y eso lleva
+a los tres detalles que conviene saber:
 
-- **«Sin leer» es de verdad tuyo.** Un aviso deja de contar cuando **tú** lo
-  abres, no cuando lo abre otra persona ni cuando pasa el tiempo.
 - **Solo cuenta lo que puedes abrir.** Si tu cuenta no atiende los mensajes de
   contacto, la campana no te los anuncia: sería enseñarte a medias un dato
   personal y mandarte a una pantalla que no puedes ver.
+- **«Sin leer» es de verdad tuyo.** Un aviso deja de contar cuando **tú** lo
+  abres, no cuando lo abre otra persona ni cuando pasa el tiempo.
+- **Un aviso vencido deja de contar.** Si ya pasó su fecha de «visible hasta»,
+  desaparece de la campana aunque nunca lo hayas abierto: anunciar algo que ya
+  no está vigente solo estorba.
 
 ## Cómo funciona cualquier listado
 
@@ -101,15 +113,17 @@ Casi todos los módulos abren con una tabla, y todas las tablas funcionan igual:
 - **Arriba a la derecha, el botón azul** para dar de alta algo nuevo —«Nuevo
   aviso», «Nuevo evento»—. Si no lo ves, tu cuenta puede consultar pero no
   crear.
-- **Los filtros**, en una fila de botones: *Todos*, *Borrador*, *Publicado*… Se
-  combinan con el selector de pastoral cuando el módulo lo tiene, así que
-  «solo las mías, en borrador» es una consulta normal.
+- **Los filtros**, en una fila de botones: *Todos*, *Borradores*, *De la
+  pastoral*, *En la página*. Se combinan con el selector de **Pastoral** de la
+  derecha, así que «solo las mías, en borrador» es una consulta normal.
 - **La tabla**, con lo más importante en las primeras columnas. En una pantalla
   angosta o en un celular, las columnas menos importantes se esconden solas; no
   se pierde nada, se ven al entrar al registro.
 - **Las insignias de estado**, que dicen de un vistazo en qué escalón va cada
-  cosa: *Borrador*, *Publicado para la pastoral*, *Publicado en la página*, y a
-  veces *Destacado* o *Vencido*.
+  cosa: *De la pastoral* cuando se publicó solo hacia dentro, *En la página*
+  cuando ya se ve en el sitio, y nada de eso cuando sigue en borrador. A veces
+  se les suma *Destacado* o *Vencido* —esta última, cuando ya pasó su fecha de
+  «visible hasta» y por eso dejó de mostrarse—.
 - **Los botones de cada renglón**, a la derecha: el ojo para leer, la flecha
   para abrirlo en el sitio —solo si ya está publicado—, el lápiz para editar y
   el bote de basura para borrar. Aparecen según lo que tu cuenta pueda hacer.
