@@ -84,6 +84,10 @@ ejemplo—. Si se deja vacía, no aparece.
 
 > **Se llena desde:** Contenido → Bloques.
 
+Así se ve la portada entera, con todas esas secciones una debajo de otra:
+
+![Portada del sitio, de arriba abajo](img/publico-inicio-completa.webp)
+
 ## Quiénes somos
 
 ![Quiénes somos](img/publico-nosotros.webp)
