@@ -337,6 +337,80 @@ module.exports = [
     },
 
     // ------------------------------------------------------------
+    // Eventos
+    // ------------------------------------------------------------
+
+    {
+        id: 'eventos-lista',
+        titulo: 'El listado de eventos',
+        url: '/admin/eventos',
+        espera: 'table',
+    },
+    {
+        id: 'eventos-form',
+        titulo: 'El formulario de un evento',
+        url: '/admin/eventos/nuevo',
+        espera: '#titulo',
+        completa: true,
+    },
+
+    // ------------------------------------------------------------
+    // Cursos e inscripciones
+    // ------------------------------------------------------------
+
+    {
+        id: 'cursos-lista',
+        titulo: 'El listado de cursos',
+        url: '/admin/cursos',
+        espera: 'table',
+    },
+    {
+        id: 'cursos-form',
+        titulo: 'El formulario de un curso',
+        url: '/admin/cursos/nuevo',
+        espera: '#titulo',
+        completa: true,
+    },
+    {
+        id: 'inscripciones-lista',
+        titulo: 'Las inscripciones que llegan por el sitio',
+        url: '/admin/inscripciones',
+        espera: 'table',
+        // La segunda columna es el nombre de quien se inscribió. El teléfono y
+        // el correo los tapa ya la regla general.
+        tapar: [['table tbody td:nth-child(2)', EJEMPLOS_NOMBRES]],
+    },
+    {
+        id: 'inscripciones-ver',
+        titulo: 'Una inscripción por dentro',
+        url: '/admin/inscripciones/ver?id=1',
+        espera: 'dl.row',
+        // De esta pantalla no puede salir nada: es el expediente de una
+        // persona real, con su fecha de nacimiento, y a veces la de un menor.
+        tapar: [
+            ['dl.row dd:nth-of-type(1)', EJEMPLOS_NOMBRES[0]],
+            ['dl.row dd:nth-of-type(2)', '3 de marzo de 1998'],
+        ],
+    },
+
+    // ------------------------------------------------------------
+    // Agenda
+    // ------------------------------------------------------------
+
+    {
+        id: 'agenda-mes',
+        titulo: 'La agenda interna, vista de mes',
+        url: '/admin/agenda',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'agenda-semana',
+        titulo: 'La agenda interna, vista de semana',
+        url: '/admin/agenda?vista=semana',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
     // Quién puede hacer qué
     // ------------------------------------------------------------
 

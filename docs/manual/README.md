@@ -34,9 +34,9 @@ El orden es el del número en el nombre del archivo.
 ### Comunicación
 
 - [05 — Avisos](05-avisos.md)
-- 06 — Eventos *(en preparación)*
-- 07 — Cursos e inscripciones *(en preparación)*
-- 08 — Agenda *(en preparación)*
+- [06 — Eventos](06-eventos.md)
+- [07 — Cursos e inscripciones](07-cursos-e-inscripciones.md)
+- [08 — Agenda](08-agenda.md)
 - 09 — Galería y carrusel *(en preparación)*
 - 10 — Mensajes de contacto *(en preparación)*
 
