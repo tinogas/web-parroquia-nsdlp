@@ -37,15 +37,15 @@ El orden es el del número en el nombre del archivo.
 - [06 — Eventos](06-eventos.md)
 - [07 — Cursos e inscripciones](07-cursos-e-inscripciones.md)
 - [08 — Agenda](08-agenda.md)
-- 09 — Galería y carrusel *(en preparación)*
-- 10 — Mensajes de contacto *(en preparación)*
+- [09 — Galería y carrusel](09-galeria-y-carrusel.md)
+- [10 — Mensajes de contacto](10-mensajes-de-contacto.md)
 
 ### La parroquia
 
-- 11 — Horarios y sedes *(en preparación)*
-- 12 — Equipo pastoral y organigrama *(en preparación)*
-- 13 — Pastorales *(en preparación)*
-- 14 — Sacramentos *(en preparación)*
+- [11 — Horarios y sedes](11-horarios-y-sedes.md)
+- [12 — Equipo pastoral y organigrama](12-equipo-pastoral-y-organigrama.md)
+- [13 — Pastorales](13-pastorales.md)
+- [14 — Sacramentos](14-sacramentos.md)
 
 ### Las pastorales con módulo propio
 

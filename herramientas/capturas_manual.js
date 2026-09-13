@@ -165,10 +165,21 @@ async function enmascarar(page, tapar = []) {
         // Con una lista de ejemplos en vez de uno solo, se van turnando: seis
         // renglones que dijeran el mismo nombre delatarían el retoque y harían
         // ilegible la pantalla que se quiere enseñar.
+        // Se sustituye el TEXTO del elemento, no el elemento entero: muchos de
+        // estos datos viven junto a un icono o dentro de un enlace, y borrarlos
+        // con textContent se llevaría por delante media pantalla.
+        const ponerTexto = (el, texto) => {
+            const sueltos = [...el.childNodes]
+                .filter((n) => n.nodeType === 3 && n.nodeValue.trim() !== '');
+            if (!sueltos.length) { el.textContent = texto; return; }
+            sueltos[0].nodeValue = texto;
+            for (const nodo of sueltos.slice(1)) { nodo.nodeValue = ''; }
+        };
+
         for (const [selector, ejemplo] of selectoresATapar) {
             const lista = Array.isArray(ejemplo) ? ejemplo : [ejemplo];
             document.querySelectorAll(selector).forEach((el, i) => {
-                el.textContent = lista[i % lista.length];
+                ponerTexto(el, lista[i % lista.length]);
             });
         }
     }, tapar, TELEFONOS_PUBLICOS);

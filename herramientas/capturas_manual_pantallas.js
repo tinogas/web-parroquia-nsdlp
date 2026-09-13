@@ -411,6 +411,120 @@ module.exports = [
     },
 
     // ------------------------------------------------------------
+    // Galería y carrusel
+    // ------------------------------------------------------------
+
+    {
+        id: 'galeria-lista',
+        titulo: 'La galería en el panel',
+        url: '/admin/galeria',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'galeria-subir',
+        titulo: 'Subir fotografías',
+        url: '/admin/galeria/subir',
+        espera: '#fotos',
+    },
+    {
+        id: 'carrusel-lista',
+        titulo: 'Las diapositivas de la portada',
+        url: '/admin/carrusel',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
+    // Mensajes de contacto
+    // ------------------------------------------------------------
+
+    {
+        id: 'mensajes-lista',
+        titulo: 'Los mensajes que llegan por el formulario',
+        url: '/admin/mensajes',
+        espera: 'table',
+        // Quien escribe por el formulario es alguien de fuera de la parroquia:
+        // su nombre no se publica en ninguna parte, tampoco aquí.
+        tapar: [['table tbody td:first-child span', EJEMPLOS_NOMBRES]],
+    },
+    {
+        id: 'mensajes-ver',
+        titulo: 'Un mensaje por dentro',
+        url: '/admin/mensajes/ver?id=2',
+        espera: '.lista-contacto',
+        // Su nombre sale dos veces: en la tarjeta de contacto y en la miga de
+        // pan de arriba.
+        tapar: [
+            ['.lista-contacto li:first-child', EJEMPLOS_NOMBRES[1]],
+            ['.breadcrumb li:last-child',      'De ' + EJEMPLOS_NOMBRES[1]],
+        ],
+    },
+
+    // ------------------------------------------------------------
+    // La parroquia: horarios, sedes, equipo, organigrama, pastorales
+    // ------------------------------------------------------------
+
+    {
+        id: 'horarios-lista',
+        titulo: 'Los horarios en el panel',
+        url: '/admin/horarios',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'horarios-form',
+        titulo: 'El formulario de un horario',
+        url: '/admin/horarios/nuevo',
+        espera: '#tipo',
+        completa: true,
+    },
+    {
+        id: 'centros-lista',
+        titulo: 'Las sedes y los centros',
+        url: '/admin/centros',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'personas-lista',
+        titulo: 'El equipo pastoral',
+        url: '/admin/personas',
+        espera: 'table',
+        // Aquí no hace falta tapar nada: el listado enseña nombre, cargo y
+        // pastorales, que es justo lo que la página «Quiénes somos» ya publica
+        // de cada persona, fotos incluidas. El teléfono y el correo, que sí
+        // son suyos, los tapa la regla general.
+    },
+    {
+        id: 'personas-form',
+        titulo: 'La ficha de una persona del equipo',
+        url: '/admin/personas/nueva',
+        espera: '#nombre',
+        completa: true,
+    },
+    {
+        id: 'organigrama-lista',
+        titulo: 'El organigrama en el panel',
+        url: '/admin/organigrama',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'pastorales-lista',
+        titulo: 'Las pastorales, agrupadas por comisión',
+        url: '/admin/pastorales',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'pastorales-panel',
+        titulo: 'El panel básico de una pastoral',
+        url: '/admin/pastorales/panel?id=18',
+        espera: '.sidebar-link',
+    },
+    {
+        id: 'sacramentos-lista',
+        titulo: 'Los sacramentos en el panel',
+        url: '/admin/sacramentos',
+        espera: '.sidebar-link',
+    },
+
+    // ------------------------------------------------------------
     // Quién puede hacer qué
     // ------------------------------------------------------------
 
