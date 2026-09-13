@@ -27,9 +27,9 @@ El orden es el del número en el nombre del archivo.
 
 - [00 — Introducción](00-introduccion.md)
 - [01 — El sitio público](01-el-sitio-publico.md)
-- 02 — Entrar al panel *(en preparación)*
-- 03 — El panel por dentro *(en preparación)*
-- 04 — Quién puede hacer qué: roles, pastoral y sede *(en preparación)*
+- [02 — Entrar al panel](02-entrar-al-panel.md)
+- [03 — El panel por dentro](03-el-panel-por-dentro.md)
+- [04 — Quién puede hacer qué: roles, pastoral y sede](04-quien-puede-hacer-que.md)
 
 ### Comunicación
 
