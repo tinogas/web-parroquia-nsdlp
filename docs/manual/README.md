@@ -33,7 +33,7 @@ El orden es el del número en el nombre del archivo.
 
 ### Comunicación
 
-- 05 — Avisos *(en preparación)*
+- [05 — Avisos](05-avisos.md)
 - 06 — Eventos *(en preparación)*
 - 07 — Cursos e inscripciones *(en preparación)*
 - 08 — Agenda *(en preparación)*

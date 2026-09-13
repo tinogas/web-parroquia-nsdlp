@@ -65,6 +65,13 @@ recuadro. Debajo, el enlace al calendario completo.
 
 > **Se llena desde:** Comunicación → Eventos.
 
+**Próximos cursos y Últimos avisos.** Las convocatorias abiertas y los tres
+avisos más recientes que estén publicados en el sitio. Como todo lo de esta
+página, cada sección se dibuja solo si tiene algo que mostrar: si no hay avisos
+vigentes, ahí no queda un hueco vacío.
+
+> **Se llena desde:** Comunicación → Cursos y Comunicación → Avisos.
+
 **Lo último en Facebook.** Las publicaciones recientes de la página de Facebook
 de la parroquia, tal cual las muestra Facebook. No hay que copiar nada a mano:
 lo que se publique allá aparece aquí solo. Basta con que la dirección de la

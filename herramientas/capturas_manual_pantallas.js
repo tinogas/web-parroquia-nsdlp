@@ -318,6 +318,25 @@ module.exports = [
     },
 
     // ------------------------------------------------------------
+    // Avisos
+    // ------------------------------------------------------------
+
+    {
+        id: 'avisos-form',
+        titulo: 'El formulario de un aviso',
+        url: '/admin/avisos/nuevo',
+        espera: '#titulo',
+        completa: true,
+    },
+    {
+        id: 'avisos-escalon',
+        titulo: 'Los tres escalones de publicación',
+        url: '/admin/avisos/nuevo',
+        espera: 'fieldset legend',
+        recorte: 'fieldset',
+    },
+
+    // ------------------------------------------------------------
     // Quién puede hacer qué
     // ------------------------------------------------------------
 
