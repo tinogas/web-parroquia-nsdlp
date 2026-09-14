@@ -107,6 +107,112 @@ class PersonaModel extends Model
         return $porTipo;
     }
 
+    /**
+     * Quien está marcada para el directorio telefónico impreso —altos mandos
+     * y cargos importantes del organigrama, no todo el equipo—, agrupada por
+     * pastoral y ordenada dentro de cada una por jerarquía: primero quien
+     * coordina la Comisión entera ("Coordinador general"), luego quien
+     * coordina esa pastoral en concreto ("Coordinador"), luego quien tiene
+     * "Encargad-" en su cargo, y el resto por nombre. Ver
+     * PersonaController::directorioImprimir() y
+     * docs/migraciones/2026-09-13-directorio-telefonico.sql
+     *
+     * Pertenecer a una pastoral aquí es "estar en persona_pastorales, O ser
+     * su responsable (persona o pareja)": un coordinador puede estar marcado
+     * como responsable de su pastoral sin que además tenga la palomita de
+     * pertenencia marcada en su propia ficha, y aun así tiene que aparecer en
+     * el directorio de esa pastoral — no solo en la lista general.
+     *
+     * @param  array $pastorales Filas planas de pastorales activas (id,
+     *                            pastoral_padre_id, responsable_persona_id,
+     *                            responsable_pareja_id) — ver
+     *                            PastoralModel::activas().
+     * @return array{por_pastoral: array<int, array>, sin_pastoral: array}
+     *         `por_pastoral`: pastoral_id => fichas de personas, ya
+     *         ordenadas. `sin_pastoral`: quien está marcada para el
+     *         directorio pero no pertenece —ni coordina— ninguna pastoral.
+     */
+    public function paraDirectorioPorPastoral(array $pastorales): array
+    {
+        $personas = [];
+        foreach ($this->fetchAll(
+            "SELECT p.*,
+                    (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
+                       FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
+                      WHERE pc.persona_id = p.id) AS centros_nombres
+               FROM personas p
+              WHERE p.activo = 1 AND p.en_directorio = 1
+              ORDER BY p.nombre"
+        ) as $persona) {
+            $personas[(int) $persona['id']] = $persona;
+        }
+        if (!$personas) {
+            return ['por_pastoral' => [], 'sin_pastoral' => []];
+        }
+
+        $miembros = [];
+        foreach ($this->fetchAll('SELECT persona_id, pastoral_id FROM persona_pastorales') as $fila) {
+            $miembros[(int) $fila['pastoral_id']][(int) $fila['persona_id']] = true;
+        }
+
+        $parejas = [];
+        foreach ($this->fetchAll('SELECT id, persona_a_id, persona_b_id FROM parejas') as $fila) {
+            $parejas[(int) $fila['id']] = [(int) $fila['persona_a_id'], (int) $fila['persona_b_id']];
+        }
+
+        $vistos    = [];
+        $resultado = [];
+        foreach ($pastorales as $pastoral) {
+            $pastoralId   = (int) $pastoral['id'];
+            $esComision   = $pastoral['pastoral_padre_id'] === null;
+            $responsables = [];
+            if (!empty($pastoral['responsable_persona_id'])) {
+                $responsables[] = (int) $pastoral['responsable_persona_id'];
+            }
+            if (!empty($pastoral['responsable_pareja_id'])) {
+                $responsables = array_merge($responsables, $parejas[(int) $pastoral['responsable_pareja_id']] ?? []);
+            }
+
+            $idsAqui = array_unique(array_merge(array_keys($miembros[$pastoralId] ?? []), $responsables));
+            $fichas  = [];
+            foreach ($idsAqui as $personaId) {
+                if (!isset($personas[$personaId])) {
+                    continue; // no está marcada para el directorio, o está inactiva
+                }
+                $ficha          = $personas[$personaId];
+                $esResponsable  = in_array($personaId, $responsables, true);
+                $ficha['rango'] = $esResponsable
+                    ? ($esComision ? 0 : 1)
+                    : (stripos((string) $ficha['cargo'], 'ncargad') !== false ? 2 : 3);
+                $fichas[]       = $ficha;
+                $vistos[$personaId] = true;
+            }
+            usort($fichas, static fn (array $a, array $b): int => $a['rango'] <=> $b['rango'] ?: strcmp($a['nombre'], $b['nombre']));
+
+            if ($fichas) {
+                $resultado[$pastoralId] = $fichas;
+            }
+        }
+
+        // Quien no pertenece —ni coordina— ninguna pastoral: normalmente el
+        // párroco, el vicario y el personal de oficina, que no se organizan
+        // por pastoral. Va siempre arriba de todo el directorio (ver
+        // PersonaController::directorioImprimir()) y en este orden fijo, no
+        // alfabético: párroco, luego vicario, luego personal de oficina, y
+        // hasta el final los laicos —el que pida el puesto, no el nombre—.
+        $ordenSinPastoral = ['parroco' => 0, 'vicario' => 1, 'diacono' => 2, 'religioso' => 3, 'staff' => 4, 'laico' => 5];
+        $sinPastoral = array_values(array_filter(
+            $personas,
+            static fn (array $p): bool => !isset($vistos[(int) $p['id']])
+        ));
+        usort($sinPastoral, static function (array $a, array $b) use ($ordenSinPastoral): int {
+            return ($ordenSinPastoral[$a['tipo']] ?? 99) <=> ($ordenSinPastoral[$b['tipo']] ?? 99)
+                ?: strcmp($a['nombre'], $b['nombre']);
+        });
+
+        return ['por_pastoral' => $resultado, 'sin_pastoral' => $sinPastoral];
+    }
+
     /** id => nombre de las personas activas, para el selector del organigrama. */
     public function paraSelector(): array
     {
@@ -139,9 +245,9 @@ class PersonaModel extends Model
         try {
             $this->execute(
                 'INSERT INTO personas
-                    (nombre, cargo, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo)
+                    (nombre, cargo, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo, en_directorio)
                  VALUES
-                    (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :fechaNacimiento, :orden, :activo)',
+                    (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :fechaNacimiento, :orden, :activo, :enDirectorio)',
                 $this->parametros($datos)
             );
             $id = $this->lastInsertId();
@@ -163,7 +269,8 @@ class PersonaModel extends Model
                 'UPDATE personas
                     SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
                         foto = :foto, email = :email, telefono = :telefono,
-                        fecha_nacimiento = :fechaNacimiento, orden = :orden, activo = :activo
+                        fecha_nacimiento = :fechaNacimiento, orden = :orden, activo = :activo,
+                        en_directorio = :enDirectorio
                   WHERE id = :id',
                 $this->parametros($datos) + [':id' => $id]
             );
@@ -433,6 +540,7 @@ class PersonaModel extends Model
             ':fechaNacimiento' => $datos['fecha_nacimiento'],
             ':orden'           => $datos['orden'],
             ':activo'          => $datos['activo'],
+            ':enDirectorio'    => $datos['en_directorio'],
         ];
     }
 

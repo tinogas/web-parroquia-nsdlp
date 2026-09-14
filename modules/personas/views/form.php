@@ -266,6 +266,19 @@
                         <label class="form-check-label fw-semibold" for="activo">Activo</label>
                         <div class="form-text">Si ya no forma parte del equipo, desactívala en vez de eliminarla.</div>
                     </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               name="en_directorio" id="en_directorio" value="1"
+                               <?= (!$esNueva && $persona['en_directorio']) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-semibold" for="en_directorio">
+                            Incluir en el directorio telefónico
+                        </label>
+                        <div class="form-text">
+                            Para altos mandos y cargos importantes del organigrama: marca solo a
+                            quien deba salir impreso con su teléfono en el directorio del equipo.
+                        </div>
+                    </div>
                 </div>
             </div>
 

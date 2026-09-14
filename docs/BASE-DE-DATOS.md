@@ -286,9 +286,26 @@ Señor"). Ver [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sede y centros".
 
 Párroco, vicarios, diáconos, religiosos, laicos y personal. `nombre`, `cargo`, `tipo`
 ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`, `staff`), `semblanza`, `foto`,
-`email`, `telefono`, `fecha_nacimiento`, `orden`, `activo`.
+`email`, `telefono`, `fecha_nacimiento`, `orden`, `activo`, `en_directorio`.
 
 Solo se publica el correo institucional. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
+
+`en_directorio` (TINYINT(1), default 0) marca a quién imprimir en el directorio
+telefónico del equipo (`PersonaModel::paraDirectorioPorPastoral()`, `PersonaController::
+directorioImprimir()`): pensado para altos mandos y cargos importantes del organigrama,
+no para todo el equipo activo, por eso es una casilla propia y no se deriva ni de
+`activo` ni de tener nodo en `organigrama_nodos`. La vista de impresión vive en el
+panel, no en el sitio público, porque lleva teléfonos. Ver
+[`migraciones/2026-09-13-directorio-telefonico.sql`](migraciones/2026-09-13-directorio-telefonico.sql).
+
+El directorio se agrupa por pastoral y su jerarquía —una Comisión y, indentadas debajo,
+sus dimensiones—, no por `tipo`: dentro de cada pastoral, primero quien la coordina
+("Coordinador general" si es responsable de la Comisión entera, "Coordinador" si lo es
+solo de esa dimensión, vía `pastorales.responsable_persona_id`/`responsable_pareja_id`),
+luego quien tiene "Encargad-" en su `cargo`, y el resto por nombre. Pertenecer a una
+pastoral para esto es estar en `persona_pastorales` **o** ser su responsable, aunque no
+tenga la palomita de pertenencia marcada. Quien está en el directorio sin pertenecer ni
+coordinar ninguna pastoral cae en un grupo final, "Sin pastoral asignada".
 
 `fecha_nacimiento` (DATE, opcional) es para `PersonaModel::cumpleanerosDelMes()`, que arma
 la tarjeta "Cumpleaños de [mes]" del panel de inicio (`PanelController::index()`). Solo

@@ -482,6 +482,11 @@ CREATE TABLE IF NOT EXISTS personas (
     fecha_nacimiento DATE         NULL,
     orden      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo     TINYINT(1)        NOT NULL DEFAULT 1,
+    -- Quién entra al directorio telefónico impreso: una casilla aparte y no
+    -- "todo activo", porque el directorio es para altos mandos y cargos
+    -- importantes del organigrama, no para todo el equipo pastoral. Ver
+    -- docs/migraciones/2026-09-13-directorio-telefonico.sql
+    en_directorio TINYINT(1)     NOT NULL DEFAULT 0,
     created_at DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_per_tipo (tipo, orden)

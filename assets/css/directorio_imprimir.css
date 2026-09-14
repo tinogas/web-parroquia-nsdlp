@@ -1,0 +1,193 @@
+/* ============================================================
+   Directorio telefónico del equipo pastoral — vista de impresión/PDF
+   Página independiente (sin el layout del panel): se abre en pestaña nueva y
+   se imprime o se guarda como PDF con el diálogo del propio navegador. Sin
+   librería de PDF: misma idea que organigrama_imprimir.css y
+   turnos_imprimir.css, que resolvieron lo mismo para el organigrama y los
+   calendarios de turnos; se repite en vez de compartir hoja porque son
+   páginas sueltas con formas distintas. Ver docs/ARQUITECTURA.md
+
+   Agrupado por pastoral y su jerarquía (Comisión → Dimensión), indentado con
+   .di-nivel-1/.di-nivel-2: no es una tabla, porque una tabla no indenta bien
+   dos niveles de grupo dentro de sí misma. Ver
+   modules/personas/views/directorio_imprimir.php
+   ============================================================ */
+
+:root {
+    --di-azul:        #1e4d8b;
+    --di-azul-oscuro: #16233a;
+    --di-linea:       #d9d9d9;
+    --di-gris-texto:  #6c757d;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #24303f;
+    margin: 0;
+    padding: 1.5rem 1.25rem 3rem;
+    background: #fff;
+}
+
+.di-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.di-volver {
+    color: var(--di-azul);
+    text-decoration: none;
+    font-size: .9rem;
+}
+
+.di-volver:hover {
+    text-decoration: underline;
+}
+
+.di-boton-imprimir {
+    background: var(--di-azul);
+    color: #fff;
+    border: 0;
+    border-radius: .4rem;
+    padding: .55rem 1.1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.di-boton-imprimir:hover {
+    background: var(--di-azul-oscuro);
+}
+
+.di-encabezado {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.di-encabezado .di-parroquia {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--di-azul-oscuro);
+    margin: 0;
+}
+
+.di-encabezado .di-subtitulo {
+    font-size: 1rem;
+    color: var(--di-gris-texto);
+    margin: .2rem 0 0;
+}
+
+.di-vacio {
+    text-align: center;
+    color: var(--di-gris-texto);
+    font-style: italic;
+}
+
+/* ---- Comisión y sus dimensiones ---- */
+
+.di-comision {
+    max-width: 760px;
+    margin: 0 auto 1.75rem;
+    break-inside: avoid;
+}
+
+.di-comision-titulo {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--di-azul-oscuro);
+    margin: 0 0 .4rem;
+    padding-bottom: .25rem;
+    border-bottom: 2px solid var(--di-azul);
+}
+
+.di-dimension {
+    margin-left: 1.25rem;
+    margin-top: .6rem;
+}
+
+.di-dimension-titulo {
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--di-azul);
+    margin: 0 0 .2rem;
+}
+
+/* ---- Personas: indentadas según su nivel ---- */
+
+.di-personas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.di-nivel-1 {
+    margin-left: 1.25rem;
+}
+
+.di-nivel-2 {
+    margin-left: 2.5rem;
+}
+
+.di-persona {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 .75rem;
+    padding: .3rem 0;
+    border-bottom: 1px solid var(--di-linea);
+    font-size: .88rem;
+}
+
+.di-persona:last-child {
+    border-bottom: 0;
+}
+
+.di-nombre {
+    font-weight: 600;
+    flex: 1 1 220px;
+}
+
+.di-cargo {
+    color: var(--di-gris-texto);
+    flex: 2 1 220px;
+}
+
+.di-sede {
+    color: var(--di-azul);
+    font-size: .8rem;
+    font-style: italic;
+    flex: 1 1 140px;
+}
+
+.di-telefono {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.di-correo {
+    color: var(--di-gris-texto);
+    font-size: .82rem;
+    flex-basis: 100%;
+}
+
+@media print {
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+    }
+
+    @page {
+        size: portrait;
+        margin: 14mm;
+    }
+}

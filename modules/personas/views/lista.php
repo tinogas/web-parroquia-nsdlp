@@ -6,9 +6,15 @@
             asignarse al organigrama.
         </p>
     </div>
-    <a href="<?= e(url_admin('personas', 'nueva')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nueva persona
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= e(url_admin('personas', 'directorio_imprimir')) ?>" target="_blank"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i>Imprimir directorio
+        </a>
+        <a href="<?= e(url_admin('personas', 'nueva')) ?>" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nueva persona
+        </a>
+    </div>
 </div>
 
 <?php
@@ -116,11 +122,18 @@ $porAmbito   = $porPastoral + $porCentro;
                                 ?>
                                 <div class="text-muted small"><i class="bi bi-people me-1"></i><?= e(implode(', ', $ambitos)) ?></div>
                                 <?php endif; ?>
-                                <?php if (!empty($persona['pastorales_coordina'])): ?>
-                                <div class="small mt-1">
+                                <?php if (!empty($persona['pastorales_coordina']) || !empty($persona['en_directorio'])): ?>
+                                <div class="small mt-1 d-flex flex-wrap gap-1">
+                                    <?php if (!empty($persona['pastorales_coordina'])): ?>
                                     <span class="badge bg-primary-subtle text-primary-emphasis">
                                         <i class="bi bi-star-fill me-1"></i>Coordina: <?= e($persona['pastorales_coordina']) ?>
                                     </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($persona['en_directorio'])): ?>
+                                    <span class="badge bg-info-subtle text-info-emphasis">
+                                        <i class="bi bi-telephone me-1"></i>En directorio
+                                    </span>
+                                    <?php endif; ?>
                                 </div>
                                 <?php endif; ?>
                             </div>

@@ -143,6 +143,7 @@ class PersonaController extends Controller
             'fecha_nacimiento' => $this->postStrONull('fecha_nacimiento'),
             'orden'      => $this->postInt('orden'),
             'activo'     => $this->postBool('activo'),
+            'en_directorio' => $this->postBool('en_directorio'),
             'pastorales' => $pastorales,
             'centros'    => $centros,
         ];
@@ -178,6 +179,31 @@ class PersonaController extends Controller
         }
 
         $this->redirect(url_admin('personas'));
+    }
+
+    /**
+     * Directorio telefónico en hoja aparte: página independiente sin el
+     * layout del panel, igual que MescController::turnosImprimir() y
+     * NosotrosController::organigramaImprimir(). A diferencia del organigrama,
+     * esta vista vive en el panel y no en el sitio público: lleva teléfonos,
+     * que nunca se publican (docs/PRIVACIDAD.md).
+     *
+     * Agrupado por pastoral y jerarquía —Comisión, sus dimensiones, y dentro
+     * de cada una Coordinador general/Coordinador/Encargado antes que el
+     * resto—, no por tipo: ver PersonaModel::paraDirectorioPorPastoral().
+     */
+    public function directorioImprimir(): void
+    {
+        $this->requirePermiso('personas.ver');
+
+        $pastoralModelo = new PastoralModel();
+        $directorio     = $this->modelo->paraDirectorioPorPastoral($pastoralModelo->activas());
+
+        $this->renderSinLayout('personas/directorio_imprimir', [
+            'agrupado'     => $pastoralModelo->activasAgrupadas(),
+            'porPastoral'  => $directorio['por_pastoral'],
+            'sinPastoral'  => $directorio['sin_pastoral'],
+        ]);
     }
 
     public function eliminar(): void

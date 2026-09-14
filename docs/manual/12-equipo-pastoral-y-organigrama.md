@@ -55,12 +55,33 @@ dice.
 - **Sede o centros** y **Pastorales**, en dos listas de palomitas. Se puede
   pertenecer a varias de cada una.
 - **Activa**, el interruptor de siempre.
+- **Incluir en el directorio telefónico.** Aparte de "Activa": no es para todo
+  el equipo, es para altos mandos y cargos importantes del organigrama —a
+  quien tenga sentido imprimir con su teléfono en un directorio del equipo.
+  Se marca ficha por ficha, igual que se decide quién sale en "Quiénes somos".
 
 > **Dar de alta a alguien aquí lo publica en el sitio.** Toda persona activa
 > aparece en «Quiénes somos» con su nombre, su cargo, su foto y su semblanza.
 > Para que deje de aparecer —alguien que dejó su encargo— se marca la ficha
 > como inactiva; no hace falta borrarla, y conviene no hacerlo: su nombre puede
 > estar todavía colgando del organigrama o de un catálogo.
+
+## El directorio telefónico
+
+Desde el listado, el botón **"Imprimir directorio"** abre en una pestaña
+aparte una hoja lista para imprimir o guardar como PDF con solo a quienes se
+marcó con la casilla "Incluir en el directorio telefónico" de su ficha, con su
+cargo, teléfono y correo. A diferencia del organigrama, esta hoja no es
+pública: lleva teléfonos, que nunca se publican en el sitio.
+
+Va agrupado por pastoral, siguiendo la misma jerarquía de Comisión y
+Dimensión que el resto del sistema: cada Comisión (por ejemplo, Litúrgica)
+encabeza su bloque, y debajo, indentadas, sus dimensiones (Coros, MESC,
+Proclamadores…). Dentro de cada una, primero aparece quien la coordina —quien
+coordina la Comisión entera, y luego quien coordina cada dimensión en
+concreto—, después quien tiene "Encargado" o "Encargada" en su cargo, y al
+final el resto, por nombre. Quien está marcada para el directorio pero no
+pertenece a ninguna pastoral cae en un último grupo, "Sin pastoral asignada".
 
 ## El organigrama
 
