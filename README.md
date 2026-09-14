@@ -288,6 +288,7 @@ cada decisión está en
 
 | Documento | Contenido |
 |---|---|
+| [`docs/manual/`](docs/manual/README.md) | **Manual de usuario** para el equipo parroquial: cómo se usa el sitio y el panel, con capturas. Se entrega en Word, armado con `herramientas/manual_a_word.py` |
 | [`docs/PLAN.md`](docs/PLAN.md) | Alcance de la fase 1, lo excluido y por qué, etapas de implementación |
 | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Patrón MVC, routing de dos áreas, layouts, contenido editable, decisiones y sus trade-offs |
 | [`docs/BASE-DE-DATOS.md`](docs/BASE-DE-DATOS.md) | Diccionario de datos completo y convenciones SQL |

@@ -56,3 +56,12 @@ node_modules/
 
 # Caché de los scripts de herramientas/
 __pycache__/
+
+# El manual de usuario armado: lo produce herramientas/manual_a_word.py a partir
+# de los capítulos de docs/manual/, que sí se versionan. Un .docx no se puede
+# revisar en un diff ni fusionar entre ramas, y son varios megas que se
+# reescriben enteros con cada corrección; el historial acabaría pesando más por
+# las versiones del manual que por el proyecto. Se genera cuando hay que
+# entregarlo:  python herramientas/manual_a_word.py --pdf
+docs/manual/Manual-de-usuario.docx
+docs/manual/Manual-de-usuario.pdf
