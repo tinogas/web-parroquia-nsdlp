@@ -1,0 +1,186 @@
+/* ============================================================
+   Mapa de pastorales — vista de impresión/PDF
+   Página independiente (sin el layout del panel): se abre en pestaña nueva y
+   se imprime o se guarda como PDF con el diálogo del propio navegador. Sin
+   librería de PDF: misma idea que organigrama_imprimir.css,
+   turnos_imprimir.css y directorio_imprimir.css. Ver docs/ARQUITECTURA.md
+
+   Árbol indentado con guías verticales (estilo "explorador de archivos"), no
+   cajitas conectadas por líneas como el organigrama de personas: con
+   Comisiones de hasta seis hijas, un árbol horizontal se haría demasiado
+   ancho para imprimirse en una hoja. Ver
+   modules/pastorales/views/mapa_imprimir.php
+   ============================================================ */
+
+:root {
+    --mp-azul:        #1e4d8b;
+    --mp-azul-oscuro: #16233a;
+    --mp-linea:       #adb9c7;
+    --mp-gris-texto:  #6c757d;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #24303f;
+    margin: 0;
+    padding: 1.5rem 1.25rem 3rem;
+    background: #fff;
+}
+
+.mp-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.mp-volver {
+    color: var(--mp-azul);
+    text-decoration: none;
+    font-size: .9rem;
+}
+
+.mp-volver:hover {
+    text-decoration: underline;
+}
+
+.mp-boton-imprimir {
+    background: var(--mp-azul);
+    color: #fff;
+    border: 0;
+    border-radius: .4rem;
+    padding: .55rem 1.1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mp-boton-imprimir:hover {
+    background: var(--mp-azul-oscuro);
+}
+
+.mp-encabezado {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.mp-encabezado .mp-parroquia {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--mp-azul-oscuro);
+    margin: 0;
+}
+
+.mp-encabezado .mp-subtitulo {
+    font-size: 1rem;
+    color: var(--mp-gris-texto);
+    margin: .2rem 0 0;
+}
+
+.mp-vacio {
+    text-align: center;
+    color: var(--mp-gris-texto);
+    font-style: italic;
+}
+
+/* ---- Árbol de guías verticales ----
+   Cada <li> reserva un margen a la izquierda para su propio tramo de línea
+   (::before, continua de arriba abajo) y su conector en L hacia el texto
+   (::after, horizontal). :last-child corta su propio tramo a la mitad, para
+   que la guía no siga bajando después del último hijo. Los nodos de primer
+   nivel (Comisiones y pastorales sueltas) no llevan guía: no cuelgan de nada. */
+
+.mp-arbol {
+    /* 900px, no 640: con hoja horizontal (ver @page más abajo) el área
+       imprimible en Carta —la más angosta de las dos, más angosta que A4—
+       mide unos 950px; nombres largos como los de una pareja responsable
+       ("De la Familia") ya no se cortan al imprimir. */
+    max-width: 900px;
+    margin: 0 auto;
+    list-style: none;
+    padding: 0;
+}
+
+.mp-arbol ul {
+    list-style: none;
+    margin: .15rem 0 .5rem;
+    padding: 0;
+}
+
+.mp-arbol li {
+    position: relative;
+}
+
+.mp-arbol > li {
+    margin-bottom: 1.1rem;
+    break-inside: avoid;
+}
+
+.mp-arbol ul li {
+    padding: .3rem 0 .3rem 1.5rem;
+}
+
+.mp-arbol ul li::before {
+    content: '';
+    position: absolute;
+    left: .5rem;
+    top: 0;
+    bottom: 0;
+    border-left: 2px solid var(--mp-linea);
+}
+
+.mp-arbol ul li:last-child::before {
+    bottom: 50%;
+}
+
+.mp-arbol ul li::after {
+    content: '';
+    position: absolute;
+    left: .5rem;
+    top: .95rem;
+    width: 1rem;
+    border-top: 2px solid var(--mp-linea);
+}
+
+.mp-nombre {
+    font-weight: 600;
+}
+
+.mp-arbol > li > .mp-nombre {
+    font-size: 1.05rem;
+    color: var(--mp-azul-oscuro);
+    padding-bottom: .2rem;
+    border-bottom: 2px solid var(--mp-azul);
+    display: inline-block;
+    min-width: 45%;
+}
+
+.mp-responsable {
+    color: var(--mp-gris-texto);
+    font-size: .85rem;
+    margin-left: .6rem;
+}
+
+@media print {
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+    }
+
+    @page {
+        /* Horizontal, no vertical: el árbol es angosto de arriba a abajo pero
+           algunos nombres de pareja responsable son largos, y necesitan más
+           ancho de hoja que el que da una vertical. */
+        size: landscape;
+        margin: 14mm;
+    }
+}

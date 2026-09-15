@@ -68,6 +68,30 @@ class PastoralController extends Controller
     }
 
     /**
+     * Mapa de pastorales en hoja aparte: página independiente sin el layout
+     * del panel, igual que PersonaController::directorioImprimir() y
+     * MescController::turnosImprimir(). Un árbol indentado —Comisión y,
+     * debajo, sus dimensiones— de solo texto, no de cajitas conectadas por
+     * líneas como el organigrama de personas: con Comisiones de hasta seis
+     * hijas (Litúrgica), un árbol horizontal se haría demasiado ancho para
+     * imprimirse en una hoja.
+     *
+     * Mismo alcance que index(): quien no tiene alcance global solo ve las
+     * pastorales que administra.
+     */
+    public function mapaImprimir(): void
+    {
+        $this->requirePermiso('pastorales.ver');
+
+        $agrupado = $this->modelo->agrupadoVisible(Auth::tieneAlcanceGlobal() ? null : Auth::pastoralesPermitidas());
+
+        $this->renderSinLayout('pastorales/mapa_imprimir', [
+            'comisiones' => $agrupado['comisiones'],
+            'sueltas'    => $agrupado['sueltas'],
+        ]);
+    }
+
+    /**
      * Panel básico: avisos, eventos, cursos y documentos de una pastoral,
      * todos genéricos por pastoral_id —solo se enlaza a ellos ya filtrados,
      * no se duplica su CRUD—, salvo documentos, que se gestionan aquí mismo

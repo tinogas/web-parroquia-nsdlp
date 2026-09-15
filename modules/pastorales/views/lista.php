@@ -5,11 +5,17 @@
             <?= Auth::tieneAlcanceGlobal() ? 'Todos los grupos y pastorales de la parroquia.' : 'Las pastorales que coordinas.' ?>
         </p>
     </div>
-    <?php if (Auth::tienePermiso('pastorales.crear')): ?>
-    <a href="<?= e(url_admin('pastorales', 'nueva')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nueva pastoral
-    </a>
-    <?php endif; ?>
+    <div class="d-flex gap-2">
+        <a href="<?= e(url_admin('pastorales', 'mapa_imprimir')) ?>" target="_blank"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-diagram-3 me-1"></i>Imprimir mapa
+        </a>
+        <?php if (Auth::tienePermiso('pastorales.crear')): ?>
+        <a href="<?= e(url_admin('pastorales', 'nueva')) ?>" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nueva pastoral
+        </a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php if (!$comisiones && !$sueltas): ?>
