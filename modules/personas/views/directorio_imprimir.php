@@ -29,23 +29,22 @@
  *                 siempre arriba de todo, antes que cualquier Comisión.
  */
 if (!function_exists('directorio_imprimir_persona')) {
+    /**
+     * Las cinco columnas se escriben siempre, aunque vengan vacías: con
+     * columnas de ancho fijo (ver .di-persona en el CSS), omitir un `<span>`
+     * cuando falta el dato correrría las columnas de esa fila respecto a las
+     * demás. Cada una trunca con "…" si no cabe, para que todo el renglón
+     * quepa en una sola línea —incluido el correo, que antes se iba abajo—.
+     */
     function directorio_imprimir_persona(array $persona): void
     {
         ?>
         <li class="di-persona">
-            <span class="di-nombre"><?= e($persona['nombre']) ?></span>
-            <?php if ($persona['cargo']): ?>
-            <span class="di-cargo"><?= e($persona['cargo']) ?></span>
-            <?php endif; ?>
-            <?php if (!empty($persona['centros_nombres'])): ?>
-            <span class="di-sede"><?= e($persona['centros_nombres']) ?></span>
-            <?php endif; ?>
-            <?php if ($persona['telefono']): ?>
-            <span class="di-telefono"><?= e($persona['telefono']) ?></span>
-            <?php endif; ?>
-            <?php if ($persona['email']): ?>
-            <span class="di-correo"><?= e($persona['email']) ?></span>
-            <?php endif; ?>
+            <span class="di-nombre" title="<?= e($persona['nombre']) ?>"><?= e($persona['nombre']) ?></span>
+            <span class="di-cargo" title="<?= e((string) $persona['cargo']) ?>"><?= e((string) $persona['cargo']) ?></span>
+            <span class="di-sede" title="<?= e((string) ($persona['centros_nombres'] ?? '')) ?>"><?= e((string) ($persona['centros_nombres'] ?? '')) ?></span>
+            <span class="di-telefono"><?= e((string) $persona['telefono']) ?></span>
+            <span class="di-correo" title="<?= e((string) $persona['email']) ?>"><?= e((string) $persona['email']) ?></span>
         </li>
         <?php
     }

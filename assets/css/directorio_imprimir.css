@@ -93,7 +93,10 @@ body {
 /* ---- Comisión y sus dimensiones ---- */
 
 .di-comision {
-    max-width: 760px;
+    /* 700px, no 760: en Carta (Letter) el área imprimible con el margen de
+       14mm de @page apenas mide ~710px — más ancho y la última columna
+       (correo) se saldría de la hoja en vez de solo truncar con "…". */
+    max-width: 700px;
     margin: 0 auto 1.75rem;
     break-inside: avoid;
 }
@@ -135,46 +138,51 @@ body {
     margin-left: 2.5rem;
 }
 
+/* Cuadrícula de columnas fijas: nombre, cargo, sede, teléfono y correo
+   siempre en el mismo renglón —antes el correo, con flex-basis:100%, se iba
+   solo a su propia línea—. Cada columna trunca con "…" en vez de partirse en
+   dos líneas, así el renglón nunca crece más de lo que mide una fila. */
 .di-persona {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1.3fr 1.5fr 1fr 95px 1.4fr;
     align-items: baseline;
-    gap: 0 .75rem;
+    column-gap: .6rem;
     padding: .3rem 0;
     border-bottom: 1px solid var(--di-linea);
-    font-size: .88rem;
+    font-size: .84rem;
 }
 
 .di-persona:last-child {
     border-bottom: 0;
 }
 
+.di-persona > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .di-nombre {
     font-weight: 600;
-    flex: 1 1 220px;
 }
 
 .di-cargo {
     color: var(--di-gris-texto);
-    flex: 2 1 220px;
 }
 
 .di-sede {
     color: var(--di-azul);
     font-size: .8rem;
     font-style: italic;
-    flex: 1 1 140px;
 }
 
 .di-telefono {
-    white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
 
 .di-correo {
     color: var(--di-gris-texto);
-    font-size: .82rem;
-    flex-basis: 100%;
+    font-size: .8rem;
 }
 
 @media print {
