@@ -138,13 +138,13 @@ body {
     margin-left: 2.5rem;
 }
 
-/* Cuadrícula de columnas fijas: nombre, cargo, sede, teléfono y correo
-   siempre en el mismo renglón —antes el correo, con flex-basis:100%, se iba
-   solo a su propia línea—. Cada columna trunca con "…" en vez de partirse en
-   dos líneas, así el renglón nunca crece más de lo que mide una fila. */
+/* Cuadrícula de columnas fijas: nombre, cargo, sede y teléfono siempre en el
+   mismo renglón. Cada columna trunca con "…" en vez de partirse en dos
+   líneas, así el renglón nunca crece más de lo que mide una fila. Sin
+   columna de correo: es un directorio telefónico, no de correos. */
 .di-persona {
     display: grid;
-    grid-template-columns: 1.3fr 1.5fr 1fr 95px 1.4fr;
+    grid-template-columns: 1.4fr 1.7fr 1.1fr 100px;
     align-items: baseline;
     column-gap: .6rem;
     padding: .3rem 0;
@@ -178,11 +178,6 @@ body {
 
 .di-telefono {
     font-variant-numeric: tabular-nums;
-}
-
-.di-correo {
-    color: var(--di-gris-texto);
-    font-size: .8rem;
 }
 
 @media print {

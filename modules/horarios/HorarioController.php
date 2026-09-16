@@ -16,9 +16,30 @@ class HorarioController extends Controller
     {
         $this->requirePermiso('horarios.ver');
 
+        $centros = $this->centrosDelFiltro();
+        [$filtroCentro, $idsCentro] = $this->filtroCentro($centros);
+
         $this->render('horarios/lista', [
-            'titulo'   => 'Horarios',
-            'horarios' => $this->modelo->todos(),
+            'titulo'        => 'Horarios',
+            'horarios'      => $this->modelo->todos($idsCentro),
+            'centros'       => $centros,
+            'filtroCentro'  => $filtroCentro,
+        ]);
+    }
+
+    /**
+     * Horario completo en hoja aparte, agrupado por sede: página
+     * independiente sin el layout del panel, igual que
+     * PersonaController::directorioImprimir() y
+     * PastoralController::mapaImprimir(). Sin coro ni encargado —eso es del
+     * módulo Coros—, es el horario para imprimir y pegar en cada sede.
+     */
+    public function horariosImprimir(): void
+    {
+        $this->requirePermiso('horarios.ver');
+
+        $this->renderSinLayout('horarios/horarios_imprimir', [
+            'porCentro' => $this->modelo->todosPorCentro(),
         ]);
     }
 
@@ -83,6 +104,7 @@ class HorarioController extends Controller
             'vigente_hasta' => $this->postStr('vigente_hasta') ?: null,
             'orden'         => $this->postInt('orden'),
             'activo'        => $this->postBool('activo'),
+            'tiene_coro'    => $this->postBool('tiene_coro'),
         ];
 
         if ($id && $this->modelo->porId($id)) {

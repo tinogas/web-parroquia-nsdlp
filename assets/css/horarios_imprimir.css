@@ -1,0 +1,185 @@
+/* ============================================================
+   Horario completo por sede — vista de impresión/PDF
+   Página independiente (sin el layout del panel): se abre en pestaña nueva y
+   se imprime o se guarda como PDF con el diálogo del propio navegador. Sin
+   librería de PDF: misma idea que directorio_imprimir.css,
+   pastorales_mapa_imprimir.css y organigrama_imprimir.css. Ver
+   docs/ARQUITECTURA.md
+
+   Un solo encabezado arriba de todo el documento (logo y nombre de la
+   parroquia), no uno por sede: las sedes se listan una tras otra debajo, no
+   cada una en su propia hoja — a diferencia de directorio_imprimir.css, que
+   sí separa por página. Ver modules/horarios/views/horarios_imprimir.php
+   ============================================================ */
+
+:root {
+    --hi-azul:        #1e4d8b;
+    --hi-azul-oscuro: #16233a;
+    --hi-linea:       #d9d9d9;
+    --hi-gris-texto:  #6c757d;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #24303f;
+    margin: 0;
+    padding: 1.5rem 1.25rem 3rem;
+    background: #fff;
+}
+
+.hi-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.hi-volver {
+    color: var(--hi-azul);
+    text-decoration: none;
+    font-size: .9rem;
+}
+
+.hi-volver:hover {
+    text-decoration: underline;
+}
+
+.hi-boton-imprimir {
+    background: var(--hi-azul);
+    color: #fff;
+    border: 0;
+    border-radius: .4rem;
+    padding: .55rem 1.1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hi-boton-imprimir:hover {
+    background: var(--hi-azul-oscuro);
+}
+
+.hi-encabezado {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.hi-logo {
+    display: block;
+    max-height: 72px;
+    margin: 0 auto .6rem;
+}
+
+.hi-encabezado .hi-parroquia {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--hi-azul-oscuro);
+    margin: 0;
+}
+
+.hi-encabezado .hi-subtitulo {
+    font-size: 1rem;
+    color: var(--hi-gris-texto);
+    margin: .2rem 0 0;
+}
+
+.hi-vacio {
+    text-align: center;
+    color: var(--hi-gris-texto);
+    font-style: italic;
+}
+
+/* ---- Sede ---- */
+
+.hi-sede {
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    break-inside: avoid;
+}
+
+.hi-nombre-sede {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--hi-azul-oscuro);
+    margin: 0;
+    padding-bottom: .25rem;
+    border-bottom: 2px solid var(--hi-azul);
+}
+
+.hi-lugar-sede {
+    font-size: .9rem;
+    font-style: italic;
+    color: var(--hi-azul);
+    margin: .3rem 0 0;
+}
+
+.hi-tipo {
+    font-size: .85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--hi-gris-texto);
+    margin: 1rem 0 .3rem;
+}
+
+/* ---- Tabla de horarios ---- */
+
+.hi-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .92rem;
+    margin-bottom: .25rem;
+}
+
+.hi-tabla td {
+    padding: .35rem .5rem;
+    border-bottom: 1px solid var(--hi-linea);
+    text-align: left;
+    vertical-align: top;
+}
+
+.hi-tabla tr:last-child td {
+    border-bottom: 0;
+}
+
+.hi-dia {
+    font-weight: 600;
+    width: 30%;
+    white-space: nowrap;
+}
+
+.hi-hora {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    width: 26%;
+}
+
+.hi-nota {
+    color: var(--hi-gris-texto);
+}
+
+.hi-lugar-fila {
+    color: var(--hi-azul);
+    font-style: italic;
+}
+
+@media print {
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+    }
+
+    @page {
+        size: portrait;
+        margin: 14mm;
+    }
+}

@@ -71,8 +71,9 @@ dice.
 Desde el listado, el botón **"Imprimir directorio"** abre en una pestaña
 aparte una hoja lista para imprimir o guardar como PDF con solo a quienes se
 marcó con la casilla "Incluir en el directorio telefónico" de su ficha, con su
-cargo, teléfono y correo. A diferencia del organigrama, esta hoja no es
-pública: lleva teléfonos, que nunca se publican en el sitio.
+cargo, sede y teléfono. A diferencia del organigrama, esta hoja no es
+pública: lleva teléfonos, que nunca se publican en el sitio. Sin correo: es
+un directorio telefónico, y el institucional ya se ve en "Quiénes somos".
 
 Va agrupado por pastoral, siguiendo la misma jerarquía de Comisión y
 Dimensión que el resto del sistema: cada Comisión (por ejemplo, Litúrgica)

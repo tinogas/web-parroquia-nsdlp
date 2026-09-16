@@ -28,6 +28,25 @@ posada— no es un horario, es un evento (capítulo 6).
   dura un rato, como la adoración o la oficina.
 - **Lugar** y **Nota**, los dos en texto libre: «capilla del Santísimo»,
   «excepto el primer viernes».
+- **Tiene coro.** Marca qué misas llevan coro, para que el módulo de Coros
+  pueda asignarles personal y encargado. Ya no se escribe "con coro" en la
+  Nota: esa era texto libre, sin forma de filtrar por ahí ni de ligarlo a
+  nadie.
+
+El listado también se puede **filtrar por sede o centro**, igual que el resto
+de catálogos de la parroquia.
+
+### Imprimir los horarios
+
+El botón **"Imprimir horarios"** abre en una pestaña aparte una hoja lista
+para imprimir o guardar como PDF: el logo y el nombre de la parroquia una sola
+vez arriba, y debajo, una tras otra, cada sede con sus horarios vigentes hoy
+—misas, confesiones, adoración, oficina y otro, cada tipo por separado—.
+
+El lugar (la capilla o el sitio dentro de la sede) se muestra una sola vez,
+bajo el nombre de la sede, para no repetirlo en cada renglón; solo vuelve a
+aparecer en un renglón concreto cuando ese horario ocurre en un lugar distinto
+del resto de su sede.
 
 ### Los horarios de temporada
 

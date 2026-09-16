@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
         <h1 class="h4 fw-bold mb-1">Coros</h1>
-        <p class="text-muted mb-0 small">Un coro por misa de domingo, con su encargado y sus integrantes.</p>
+        <p class="text-muted mb-0 small">Horarios con coro, su encargado y sus integrantes.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <?php $navActiva = ''; require __DIR__ . '/_nav.php'; ?>
@@ -13,7 +13,7 @@
         <?php if (!$horarios): ?>
         <div class="text-center py-4">
             <i class="bi bi-clock d-block display-6 text-muted mb-2"></i>
-            <p class="text-muted small mb-2">No hay ninguna misa de domingo capturada en Horarios.</p>
+            <p class="text-muted small mb-2">No hay ningún horario marcado "Tiene coro" en Horarios.</p>
             <?php if (Auth::tienePermiso('horarios.ver')): ?>
             <a href="<?= e(url_admin('horarios')) ?>" class="btn btn-sm btn-outline-primary">Ir a Horarios</a>
             <?php endif; ?>
@@ -23,7 +23,7 @@
             <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Misa</th>
+                        <th>Horario</th>
                         <th class="d-none d-md-table-cell">Sede</th>
                         <th>Encargado</th>
                         <th class="text-center">Integrantes</th>
@@ -39,6 +39,7 @@
                 ?>
                     <tr class="<?= ($coro === null || $activo) ? '' : 'text-muted' ?>">
                         <td>
+                            <span class="fw-semibold text-capitalize"><?= e(nombre_dia((int) $horario['dia_semana'])) ?></span>
                             <span class="fw-semibold"><?= e(hora_corta($horario['hora'])) ?></span>
                             <?php if ($horario['nota']): ?>
                             <span class="text-muted small d-block"><?= e($horario['nota']) ?></span>
@@ -59,7 +60,7 @@
                         </td>
                         <td class="text-center small">
                             <?php /* El número es el botón: despliega la fila de abajo con quién canta
-                                     en esta misa, que era el dato que obligaba a abrir el formulario
+                                     en este horario, que era el dato que obligaba a abrir el formulario
                                      de cada coro para verlo. Sin coro o sin nadie marcado no hay nada
                                      que desplegar, así que ahí va el número —o una raya— sin un botón
                                      que no lleve a ninguna parte. */ ?>
@@ -67,7 +68,7 @@
                             <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none collapsed toggle-integrantes"
                                     data-bs-toggle="collapse" data-bs-target="#integrantes<?= (int) $coro['id'] ?>"
                                     aria-expanded="false" aria-controls="integrantes<?= (int) $coro['id'] ?>"
-                                    title="Ver quiénes cantan en esta misa">
+                                    title="Ver quiénes cantan en este horario">
                                 <i class="bi bi-plus-square icono-mas"></i>
                                 <i class="bi bi-dash-square icono-menos"></i>
                                 <span class="ms-1"><?= count($misIntegrantes) ?></span>
@@ -177,10 +178,7 @@ foreach ($horarios as $horario):
 
             <div class="modal-header border-0 pb-0">
                 <h2 class="h6 modal-title fw-bold">
-                    Coro de la misa de <?= e(hora_corta($horario['hora'])) ?>
-                    <span class="d-block text-muted fw-normal small">
-                        <?= e(CoroController::etiquetaDeCoro($horario)) ?>
-                    </span>
+                    Coro de <?= e(CoroController::etiquetaDeCoro($horario)) ?>
                 </h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>

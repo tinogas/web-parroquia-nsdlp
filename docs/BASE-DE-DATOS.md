@@ -366,10 +366,11 @@ Recurrencia semanal, no fechas concretas.
 | `hora` | TIME | |
 | `hora_fin` | TIME NULL | Para adoración y oficina |
 | `lugar` | VARCHAR(120) | Templo, capilla, etc. |
-| `nota` | VARCHAR(160) | "Con coro", "Bilingüe"… |
+| `nota` | VARCHAR(160) | "Bilingüe", "excepto el primer viernes"… |
 | `vigente_desde` | DATE NULL | Horarios de temporada |
 | `vigente_hasta` | DATE NULL | |
 | `orden`, `activo` | | |
+| `tiene_coro` | TINYINT(1), default 0 | Qué misas llevan coro, para que el módulo de Coros les asigne personal y encargado — ya no se escribía "con coro" en `nota` (texto libre, sin forma de filtrar ni de ligar a nadie). Ver [`migraciones/2026-09-15-horarios-tiene-coro.sql`](migraciones/2026-09-15-horarios-tiene-coro.sql) |
 
 Índices `idx_hor_tipo_dia (tipo, dia_semana, hora)` e `idx_hor_centro (centro_id)`.
 
@@ -765,22 +766,29 @@ a N por turno (una lectura puede repartirse entre dos personas).
 
 ---
 
-## Coros — un coro por misa dominical
+## Coros — un coro por misa con coro
 
 El cuarto módulo de pastoral dedicada, y el más pequeño: tres tablas, sin calendario de
-turnos. La asignación aquí no es un rol mensual sino permanente —el coro de las 12:00
-canta todos los domingos—, así que no hay nada que capturar semana a semana, y por lo
-mismo tampoco colores litúrgicos ni hoja imprimible. Sí tiene las pantallas de
-actividades y documentos, pero sin tabla propia: escriben en `pastoral_tablero` y
-`pastoral_documentos` a través de `PastoralModel`, las mismas filas que ve el panel básico
-de la pastoral —igual que en Catequesis y Proclamadores—.
+turnos. La asignación aquí no es un rol mensual sino permanente —el coro de una misa canta
+ahí todas las semanas—, así que no hay nada que capturar semana a semana, y por lo mismo
+tampoco colores litúrgicos ni hoja imprimible. Sí tiene las pantallas de actividades y
+documentos, pero sin tabla propia: escriben en `pastoral_tablero` y `pastoral_documentos`
+a través de `PastoralModel`, las mismas filas que ve el panel básico de la pastoral —igual
+que en Catequesis y Proclamadores—.
 
 **Aquí sí hay una FK a `horarios`, y en los turnos no.** `mesc_turnos` y
 `proclamadores_turnos` la evitan a propósito porque cubren una *ocurrencia* concreta ("el
 domingo 3 de agosto") mientras `horarios` es *recurrencia semanal*, así que atarlos ahí no
-resolvería la fecha. Un coro es justamente la recurrencia: "los domingos a las 12:00" es
-exactamente la fila de `horarios` que ya existe. La FK es correcta aquí por el mismo motivo
-por el que allí no lo era.
+resolvería la fecha. Un coro es justamente la recurrencia: la misa marcada `tiene_coro` en
+`horarios` (ver esa tabla, y `docs/migraciones/2026-09-15-horarios-tiene-coro.sql`) es
+exactamente esa recurrencia. La FK es correcta aquí por el mismo motivo por el que allí no
+lo era.
+
+Hasta antes de esa casilla, `CoroModel` filtraba `horarios` a mano por `dia_semana = 0`
+—"un coro por misa de domingo", literalmente el único criterio que existía—: todo coro era,
+por definición, de una misa dominical. La casilla lo hizo explícito y editable desde
+Horarios en vez de ser un supuesto fijo del código, así que hoy una misa de cualquier día
+puede llevar coro si se marca.
 
 ### `coros`
 
@@ -790,13 +798,12 @@ por el que allí no lo era.
 **`horario_id` es `NOT NULL`, `UNIQUE` (`uq_cor_horario`) y `ON DELETE CASCADE`**, las tres
 cosas por la misma razón: el horario no es un atributo del coro sino su identidad entera.
 Un coro no guarda nombre —se llama con su misa, y `CoroController::etiquetaDeCoro()` lo
-compone a partir de la hora, el centro y la nota del horario («10:30 a. m. · Jesús el Señor
-(Misa para Niños)»)—, así que si esa misa cambia
-de hora el coro cambia de nombre solo, y si la misa se borra el coro deja de significar
-nada. `UNIQUE` impide que dos coros se disputen el mismo horario; el controlador comprueba
-además que sea una misa (`tipo = 'misa'`) de domingo (`dia_semana = 0`) y activa, que es lo
-que la restricción no puede mirar. Borrar la misa se lleva el coro y sus asignaciones,
-nunca a los coristas.
+compone a partir del día, la hora, el centro y la nota del horario («Domingo 10:30 a. m. ·
+Jesús el Señor (Misa para Niños)»)—, así que si esa misa cambia de hora el coro cambia de
+nombre solo, y si la misa se borra el coro deja de significar nada. `UNIQUE` impide que dos
+coros se disputen el mismo horario; el controlador comprueba además que sea una misa
+(`tipo = 'misa'`) con `tiene_coro = 1` y activa, que es lo que la restricción no puede
+mirar. Borrar la misa se lleva el coro y sus asignaciones, nunca a los coristas.
 
 **`encargado_id`** (FK a `coristas`, `ON DELETE SET NULL`) es una columna y no un
 `es_encargado` en el pivote porque el encargado es **uno**: una columna no puede tener dos

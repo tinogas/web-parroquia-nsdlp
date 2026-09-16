@@ -11,16 +11,19 @@ require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
  * mensaje claro si todavía no existe o si quien mira no la administra.
  *
  * Dos pantallas y nada más. No hay calendario de turnos porque aquí la
- * asignación no es un rol mensual sino permanente —el coro de las 12:00 canta
- * todos los domingos—, y por lo mismo tampoco colores litúrgicos ni hoja
+ * asignación no es un rol mensual sino permanente —el coro de una misa canta
+ * ahí todas las semanas—, y por lo mismo tampoco colores litúrgicos ni hoja
  * imprimible; las actividades y los documentos ya se administran desde el
  * panel básico de la pastoral y duplicar su pantalla es justo lo que se
  * corrigió al sacarlas de Catequesis.
  *
- * La portada es el catálogo de coros, y se recorre por MISA, no por coro: lo
- * que se consulta es "quién canta en la de 12", y una misa dominical sin coro
- * es una respuesta tan válida como cualquier otra —además de la única forma de
- * ofrecer el botón de crearlo donde se echa en falta—.
+ * La portada es el catálogo de coros, y se recorre por HORARIO, no por coro:
+ * lo que se consulta es "quién canta en la de 12", y un horario con coro
+ * activado en Horarios pero sin coro creado todavía es una respuesta tan
+ * válida como cualquier otra —además de la única forma de ofrecer el botón de
+ * crearlo donde se echa en falta—. Y no es solo de misas: la casilla "Tiene
+ * coro" está disponible en cualquier tipo de horario (una Adoración
+ * eucarística, por ejemplo), así que este módulo tampoco filtra por tipo.
  */
 class CoroController extends Controller
 {
@@ -57,7 +60,7 @@ class CoroController extends Controller
         $this->render('coros/coros_lista', [
             'titulo'     => 'Coros',
             'pastoralId' => $pastoralId,
-            'horarios'   => $this->modelo->horariosDominicales(),
+            'horarios'   => $this->modelo->horariosConCoro(),
             'coros'      => $this->modelo->corosPorHorario($pastoralId),
             'coristas'   => $this->modelo->coristasActivos($pastoralId),
             'integrantes' => $this->integrantesPorCoro($pastoralId),
@@ -88,14 +91,14 @@ class CoroController extends Controller
             $horarioId = (int) $existente['horario_id'];
         } else {
             $horarioId = $this->postInt('horario_id');
-            $horario   = $horarioId ? $this->modelo->horarioDominicalPorId($horarioId) : null;
+            $horario   = $horarioId ? $this->modelo->horarioConCoroPorId($horarioId) : null;
             if (!$horario) {
-                Session::flash('error', 'Elige una misa de domingo para ese coro.');
+                Session::flash('error', 'Elige un horario marcado "Tiene coro" en Horarios.');
                 $this->redirect(url_admin('coros'));
                 return;
             }
             if ($this->modelo->coroPorHorario($horarioId)) {
-                Session::flash('error', 'Esa misa ya tiene coro. Edita el que existe en vez de crear otro.');
+                Session::flash('error', 'Ese horario ya tiene coro. Edita el que existe en vez de crear otro.');
                 $this->redirect(url_admin('coros'));
                 return;
             }
@@ -117,11 +120,11 @@ class CoroController extends Controller
 
             $this->modelo->actualizarCoro($id, $datos);
             $this->modelo->sincronizarCoristasDeCoro($id, $coristaIds);
-            $this->auditoria('editar', 'coros', $id, 'Coro de la misa ' . $horarioId);
+            $this->auditoria('editar', 'coros', $id, 'Coro del horario ' . $horarioId);
             Session::flash('success', 'Coro actualizado.');
         } else {
             $id = $this->modelo->crearCoro($datos);
-            $this->auditoria('crear', 'coros', $id, 'Coro de la misa ' . $horarioId);
+            $this->auditoria('crear', 'coros', $id, 'Coro del horario ' . $horarioId);
             Session::flash('success', 'Coro creado. Ahora marca sus integrantes.');
         }
 
@@ -143,7 +146,7 @@ class CoroController extends Controller
         if ($coro) {
             $this->requireAlcancePastoral((int) $coro['pastoral_id']);
             $this->modelo->eliminarCoro($id);
-            $this->auditoria('eliminar', 'coros', $id, 'Coro de la misa ' . (int) $coro['horario_id']);
+            $this->auditoria('eliminar', 'coros', $id, 'Coro del horario ' . (int) $coro['horario_id']);
             Session::flash('success', 'Coro eliminado. Quienes cantaban en él siguen en el catálogo.');
         }
 
@@ -498,7 +501,7 @@ class CoroController extends Controller
         $porHorario = $this->modelo->corosPorHorario($pastoralId);
 
         $etiquetados = [];
-        foreach ($this->modelo->horariosDominicales() as $horario) {
+        foreach ($this->modelo->horariosConCoro() as $horario) {
             $coro = $porHorario[(int) $horario['id']] ?? null;
             if (!$coro) {
                 continue;
@@ -510,13 +513,16 @@ class CoroController extends Controller
     }
 
     /**
-     * "Domingo 12:00 · Villa Bonita (Misa para Niños)". La nota del horario
-     * entra porque es lo que distingue dos misas del mismo lugar en la misma
-     * mañana, y sin ella dos coros distintos se leerían casi igual.
+     * "Domingo 12:00 · Villa Bonita (Misa para Niños)". El día entra porque,
+     * a diferencia de cuando este módulo solo miraba misas de domingo, ahora
+     * "Tiene coro" puede marcarse en la de cualquier día (ver
+     * CoroModel::horariosConCoro()); la nota del horario entra porque es lo
+     * que distingue dos misas del mismo lugar en la misma mañana, y sin ella
+     * dos coros distintos se leerían casi igual.
      */
     public static function etiquetaDeCoro(array $horario): string
     {
-        $texto = hora_corta($horario['hora']);
+        $texto = ucfirst(nombre_dia((int) $horario['dia_semana'])) . ' ' . hora_corta($horario['hora']);
         if (!empty($horario['centro_nombre'])) {
             $texto .= ' · ' . $horario['centro_nombre'];
         }

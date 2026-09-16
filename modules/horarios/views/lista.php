@@ -11,10 +11,49 @@ foreach ($horarios as $horario) {
             Misas, confesiones, adoración eucarística y horario de oficina.
         </p>
     </div>
-    <a href="<?= e(url_admin('horarios', 'nuevo')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nuevo horario
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= e(url_admin('horarios', 'horarios_imprimir')) ?>" target="_blank"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i>Imprimir horarios
+        </a>
+        <a href="<?= e(url_admin('horarios', 'nuevo')) ?>" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo horario
+        </a>
+    </div>
 </div>
+
+<?php if (count($centros) > 1): /* Con una sola sede el selector no elige nada. */ ?>
+<form method="GET" action="<?= e(url_admin('horarios')) ?>" class="row g-2 align-items-end mb-3">
+    <?php if (!URLS_AMIGABLES): ?>
+    <?php /* Sin URLs amigables la ruta va en la cadena de consulta, y un GET
+             descarta la del action: hay que repetirla como campos. */ ?>
+    <input type="hidden" name="area" value="admin">
+    <input type="hidden" name="modulo" value="horarios">
+    <?php endif; ?>
+    <div class="col-auto">
+        <label for="centro" class="form-label small fw-semibold mb-1">Sede o centro</label>
+        <select name="centro" id="centro" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            <?php foreach ($centros as $centro): ?>
+            <option value="<?= (int) $centro['id'] ?>"
+                    <?= $filtroCentro === (string) $centro['id'] ? 'selected' : '' ?>>
+                <?= e($centro['nombre']) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+    </div>
+    <?php if ($filtroCentro !== ''): ?>
+    <div class="col-auto">
+        <a href="<?= e(url_admin('horarios')) ?>" class="btn btn-sm btn-outline-secondary">Quitar</a>
+    </div>
+    <?php endif; ?>
+</form>
+<?php endif; ?>
 
 <?php if (!$horarios): ?>
 <div class="card border-0 shadow-sm">
@@ -50,6 +89,11 @@ foreach ($horarios as $horario) {
                         <td>
                             <?= e(hora_corta($horario['hora'])) ?>
                             <?php if ($horario['hora_fin']): ?> – <?= e(hora_corta($horario['hora_fin'])) ?><?php endif; ?>
+                            <?php if ($horario['tiene_coro']): ?>
+                            <span class="badge bg-info-subtle text-info-emphasis ms-1">
+                                <i class="bi bi-music-note-beamed me-1"></i>Con coro
+                            </span>
+                            <?php endif; ?>
                             <?php if ($horario['nota']): ?>
                             <div class="text-muted small"><?= e($horario['nota']) ?></div>
                             <?php endif; ?>

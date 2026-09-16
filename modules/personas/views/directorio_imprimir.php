@@ -30,11 +30,12 @@
  */
 if (!function_exists('directorio_imprimir_persona')) {
     /**
-     * Las cinco columnas se escriben siempre, aunque vengan vacías: con
+     * Las cuatro columnas se escriben siempre, aunque vengan vacías: con
      * columnas de ancho fijo (ver .di-persona en el CSS), omitir un `<span>`
      * cuando falta el dato correrría las columnas de esa fila respecto a las
      * demás. Cada una trunca con "…" si no cabe, para que todo el renglón
-     * quepa en una sola línea —incluido el correo, que antes se iba abajo—.
+     * quepa en una sola línea. Sin correo: es un directorio TELEFÓNICO, y el
+     * correo institucional ya se publica en "Quiénes somos".
      */
     function directorio_imprimir_persona(array $persona): void
     {
@@ -44,7 +45,6 @@ if (!function_exists('directorio_imprimir_persona')) {
             <span class="di-cargo" title="<?= e((string) $persona['cargo']) ?>"><?= e((string) $persona['cargo']) ?></span>
             <span class="di-sede" title="<?= e((string) ($persona['centros_nombres'] ?? '')) ?>"><?= e((string) ($persona['centros_nombres'] ?? '')) ?></span>
             <span class="di-telefono"><?= e((string) $persona['telefono']) ?></span>
-            <span class="di-correo" title="<?= e((string) $persona['email']) ?>"><?= e((string) $persona['email']) ?></span>
         </li>
         <?php
     }

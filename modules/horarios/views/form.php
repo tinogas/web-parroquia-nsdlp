@@ -86,11 +86,21 @@
                                placeholder="Ej. Templo principal, capilla…">
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="nota" class="form-label fw-semibold">Nota</label>
                         <input type="text" name="nota" id="nota" class="form-control"
                                value="<?= e($esNuevo ? '' : (string) $horario['nota']) ?>" maxlength="160"
-                               placeholder="Ej. Con coro, misa en inglés…">
+                               placeholder="Ej. Misa en inglés, excepto el primer viernes…">
+                    </div>
+
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               name="tiene_coro" id="tiene_coro" value="1"
+                               <?= (!$esNuevo && $horario['tiene_coro']) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-semibold" for="tiene_coro">Tiene coro</label>
+                        <div class="form-text">
+                            Para que el módulo de Coros pueda asignarle personal y encargado a esta misa.
+                        </div>
                     </div>
 
                 </div>

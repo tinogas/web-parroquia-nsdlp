@@ -554,6 +554,11 @@ CREATE TABLE IF NOT EXISTS horarios (
     vigente_hasta DATE             NULL,
     orden         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     activo        TINYINT(1)       NOT NULL DEFAULT 1,
+    -- Qué misas llevan coro, para que el módulo de Coros pueda asignarles
+    -- personal y encargado: ya no se escribe "con coro" en `nota` (texto
+    -- libre, sin forma de filtrar ni de ligar gente). Ver
+    -- docs/migraciones/2026-09-15-horarios-tiene-coro.sql
+    tiene_coro    TINYINT(1)       NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     KEY idx_hor_tipo_dia (tipo, dia_semana, hora),
     KEY idx_hor_centro (centro_id),

@@ -1686,17 +1686,25 @@ vinculen a mano desde el panel.
 
 `modules/coros/` es el cuarto de esta familia y la prueba de que el patrón admite tamaños
 muy distintos: tres tablas propias y ni una línea de calendario. Lo que la pastoral
-necesitaba registrar era **quién canta en qué misa dominical y quién encabeza cada coro**,
+necesitaba registrar era **quién canta en qué misa con coro y quién encabeza cada coro**,
 y eso no cabía en el sistema genérico —ni el panel básico de la pastoral ni el checklist
 de la ficha de `personas` tienen dónde guardar ninguna de las dos cosas—, que es
 exactamente el criterio con el que se justifican MESC, Catequesis y Proclamadores.
 
+Qué misa "tiene coro" no siempre fue una casilla: al principio era, literalmente, "toda
+misa de domingo" —`CoroModel` filtraba `horarios` a mano por `dia_semana = 0`—, porque esa
+era la única regla que existía en la práctica. `horarios.tiene_coro` (ver
+`docs/BASE-DE-DATOS.md` y `docs/migraciones/2026-09-15-horarios-tiene-coro.sql`) lo hizo
+explícito y editable desde Horarios en vez de un supuesto fijo del código: antes se escribía
+"con coro" a mano en la nota del horario, sin forma de filtrar por eso ni de ligarlo a
+ningún coro.
+
 **Un coro no tiene nombre: es el de su misa.** `coros.horario_id` es `NOT NULL`, `UNIQUE`
 y `ON DELETE CASCADE` —las tres por lo mismo—, y el nombre visible lo compone
-`CoroController::etiquetaDeCoro()` con la hora, el centro y la nota del horario:
-«12:00 p. m. · Parroquia Nuestra Señora de la Paz», «10:30 a. m. · Jesús el Señor (Misa
-para Niños)» —sin la palabra «domingo», que en este módulo se sobreentiende en todas las
-filas—. Si esa misa
+`CoroController::etiquetaDeCoro()` con el día, la hora, el centro y la nota del horario:
+«Domingo 12:00 p. m. · Parroquia Nuestra Señora de la Paz», «Domingo 10:30 a. m. · Jesús el
+Señor (Misa para Niños)» —el día sí entra en la etiqueta, a diferencia de cuando el módulo
+solo miraba misas de domingo y repetirlo en cada fila no decía nada nuevo—. Si esa misa
 cambia de hora, el coro cambia de nombre solo; si se borra, el coro deja de significar algo
 y se va con ella. La nota entra en la etiqueta porque es lo único que distingue dos misas
 del mismo lugar en la misma mañana.

@@ -6,22 +6,25 @@ require_once BASE_PATH . '/core/Model.php';
  *
  * Es el más pequeño de los cuatro módulos de pastoral dedicada, y el único sin
  * calendario de turnos: aquí la asignación no es un rol mensual sino
- * permanente —el coro de las 12:00 canta todos los domingos—, así que tampoco
- * hay colores litúrgicos ni hoja imprimible. Las actividades y los documentos
- * se gestionan desde el panel básico de la pastoral, no se duplican aquí.
+ * permanente —el coro de una misa canta ahí todas las semanas—, así que
+ * tampoco hay colores litúrgicos ni hoja imprimible. Las actividades y los
+ * documentos se gestionan desde el panel básico de la pastoral, no se
+ * duplican aquí.
  *
  * Un coro NO tiene nombre propio: es el de su misa. De ahí la FK a `horarios`,
  * que MescModel y ProclamadoresModel evitan a propósito en sus turnos —un
  * turno cubre una ocurrencia concreta ("el domingo 3 de agosto") y `horarios`
  * es recurrencia semanal, así que atarlo ahí no resolvería la fecha—. Aquí es
- * al revés: el coro ES la recurrencia, y "los domingos a las 12:00" es
- * exactamente la fila de `horarios` que ya existe.
+ * al revés: el coro ES la recurrencia, y la misa de `horarios` que lo lleva ya
+ * es esa recurrencia.
+ *
+ * Qué misas llevan coro ya no se adivina por ser domingo: es la casilla
+ * `horarios.tiene_coro` (docs/migraciones/2026-09-15-horarios-tiene-coro.sql),
+ * que marca Horarios, no este módulo — antes se escribía "con coro" a mano en
+ * la nota del horario, sin forma de filtrar por eso.
  */
 class CoroModel extends Model
 {
-    /** Domingo, en la convención de `horarios.dia_semana` (0=domingo … 6=sábado). */
-    public const DIA_DOMINGO = 0;
-
     /** La única pastoral que administra este módulo, resuelta por slug (no por id fijo: los id no se siembran en install.sql). */
     public function pastoralId(): ?int
     {
@@ -31,40 +34,45 @@ class CoroModel extends Model
         ) ?: null;
     }
 
-    // ── Horarios de misa dominical ───────────────────────────────────────
+    // ── Horarios con coro ────────────────────────────────────────────────
     // La fuente de identidad de un coro. Se leen de `horarios` tal cual: este
-    // módulo no crea ni edita horarios, eso sigue siendo del módulo Horarios.
+    // módulo no crea ni edita horarios, ni su casilla "Tiene coro" — eso sigue
+    // siendo del módulo Horarios.
 
     /**
-     * Las misas del domingo que hoy están activas, con el nombre de su sede.
-     * Ordenadas por centro y hora, que es como se leen en la portada.
+     * Los horarios activos marcados "Tiene coro" en Horarios, con el nombre de
+     * su sede. Ordenados por centro y hora, que es como se leen en la portada.
+     *
+     * Sin filtrar por `tipo`: la casilla está disponible en cualquier tipo de
+     * horario, no solo misa —una Adoración eucarística también puede llevar
+     * coro—, así que restringir aquí a `tipo = 'misa'` escondería justo lo que
+     * alguien acaba de activar en Horarios.
      *
      * Sin filtrar por vigente_desde/vigente_hasta a propósito: un horario de
      * temporada —la misa de Urbi, que cambia de hora entre verano e invierno—
      * sigue siendo el mismo coro todo el año, y esconderlo fuera de su
      * temporada dejaría a ese coro sin dónde aparecer medio año.
      */
-    public function horariosDominicales(): array
+    public function horariosConCoro(): array
     {
         return $this->fetchAll(
             "SELECT h.*, c.nombre AS centro_nombre
                FROM horarios h
                LEFT JOIN centros c ON c.id = h.centro_id
-              WHERE h.tipo = 'misa' AND h.dia_semana = :dia AND h.activo = 1
-              ORDER BY c.orden, c.nombre, h.hora",
-            [':dia' => self::DIA_DOMINGO]
+              WHERE h.tiene_coro = 1 AND h.activo = 1
+              ORDER BY c.orden, c.nombre, h.hora"
         );
     }
 
-    /** Revalidación en servidor de lo que llega por POST: que exista y sea misa dominical activa. */
-    public function horarioDominicalPorId(int $id): ?array
+    /** Revalidación en servidor de lo que llega por POST: que exista y tenga "Tiene coro" activo. Ver horariosConCoro(). */
+    public function horarioConCoroPorId(int $id): ?array
     {
         return $this->fetchOne(
             "SELECT h.*, c.nombre AS centro_nombre
                FROM horarios h
                LEFT JOIN centros c ON c.id = h.centro_id
-              WHERE h.id = :id AND h.tipo = 'misa' AND h.dia_semana = :dia AND h.activo = 1",
-            [':id' => $id, ':dia' => self::DIA_DOMINGO]
+              WHERE h.id = :id AND h.tiene_coro = 1 AND h.activo = 1",
+            [':id' => $id]
         );
     }
 

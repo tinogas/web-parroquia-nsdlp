@@ -20,14 +20,90 @@ class HorarioModel extends Model
     /** Orden del tipo en la página pública: misas arriba, confesiones al final. */
     private const ORDEN_PUBLICO = ['misa', 'confesion', 'adoracion', 'oficina', 'otro'];
 
-    public function todos(): array
+    /** @param ?array $centros Filtro opcional por sede/centro: null = todas, [] = ninguna. */
+    public function todos(?array $centros = null): array
     {
+        [$condicionCentro, $paramsCentro] = $this->condicionAlcance($centros, 'h.centro_id');
+        $where = $condicionCentro !== '' ? "WHERE {$condicionCentro}" : '';
+
         return $this->fetchAll(
             "SELECT h.*, c.nombre AS centro_nombre
                FROM horarios h
                LEFT JOIN centros c ON c.id = h.centro_id
-              ORDER BY FIELD(h.tipo, " . $this->campoOrden(array_keys(self::TIPOS)) . "), h.dia_semana, h.hora"
+               {$where}
+              ORDER BY FIELD(h.tipo, " . $this->campoOrden(array_keys(self::TIPOS)) . "), h.dia_semana, h.hora",
+            $paramsCentro
         );
+    }
+
+    /**
+     * Todos los horarios vigentes hoy, agrupados por sede/centro y, dentro de
+     * cada una, por tipo —para el horario imprimible por sede
+     * (HorarioController::horariosImprimir())—. Mismo criterio de vigencia
+     * que vigentesPorTipo() (activo y dentro de vigente_desde/vigente_hasta),
+     * pero agrupado por centro en primer lugar, no por tipo.
+     *
+     * Sin centro asignado cae en su propio grupo, al final (`ORDER BY
+     * centro_id IS NULL`): no se pierde, pero tampoco se mezcla con una sede
+     * de verdad. Dentro de cada centro, de domingo a sábado y de la mañana a
+     * la noche —el orden en que ya se capturan en el admin, a diferencia de
+     * vigentesPorTipo(), que reordena a partir del lunes para el sitio
+     * público—.
+     *
+     * `lugar_principal` es el lugar más repetido entre los horarios de esa
+     * sede (empate: el primero que aparece), para mostrarlo una sola vez bajo
+     * el nombre de la sede en vez de en cada renglón. Es una sola porque en la
+     * práctica sí lo es —dentro de una sede, misa, confesión y adoración
+     * comparten capilla—, pero no siempre: "otro" (Rosario, catequesis...)
+     * suele anotar el nombre de la sede entera, no la capilla, y una sede sin
+     * centro agrupa varias Casas de Oración con lugares distintos entre sí. En
+     * los dos casos la vista se queda con el lugar propio de ese renglón en
+     * vez de asumir el principal; ver `con_sede` (falso = no hay uno solo que
+     * asumir) y comparar `lugar` contra `lugar_principal` fila por fila.
+     *
+     * @return array<int, array{nombre: string, con_sede: bool, lugar_principal: ?string, horarios: array}>
+     *         Indexado por centro_id (0 = sin sede asignada).
+     */
+    public function todosPorCentro(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT h.*, c.nombre AS centro_nombre
+               FROM horarios h
+               LEFT JOIN centros c ON c.id = h.centro_id
+              WHERE h.activo = 1
+                AND (h.vigente_desde IS NULL OR h.vigente_desde <= CURDATE())
+                AND (h.vigente_hasta IS NULL OR h.vigente_hasta >= CURDATE())
+              ORDER BY (h.centro_id IS NULL), c.orden, c.nombre,
+                       FIELD(h.tipo, " . $this->campoOrden(self::ORDEN_PUBLICO) . "), h.dia_semana, h.hora"
+        );
+
+        $porCentro = [];
+        foreach ($filas as $fila) {
+            $clave = $fila['centro_id'] !== null ? (int) $fila['centro_id'] : 0;
+            $porCentro[$clave]['nombre']   ??= $fila['centro_nombre'] ?? 'Sin sede asignada';
+            $porCentro[$clave]['con_sede'] ??= $fila['centro_id'] !== null;
+            $porCentro[$clave]['horarios'][] = $fila;
+        }
+
+        foreach ($porCentro as &$grupo) {
+            $grupo['lugar_principal'] = null;
+            if (!$grupo['con_sede']) {
+                continue; // Varias Casas de Oración distintas: no hay un "principal" que asumir.
+            }
+            $conteo = [];
+            foreach ($grupo['horarios'] as $h) {
+                if (!empty($h['lugar'])) {
+                    $conteo[$h['lugar']] = ($conteo[$h['lugar']] ?? 0) + 1;
+                }
+            }
+            if ($conteo) {
+                arsort($conteo);
+                $grupo['lugar_principal'] = array_key_first($conteo);
+            }
+        }
+        unset($grupo);
+
+        return $porCentro;
     }
 
     public function porId(int $id): ?array
@@ -130,8 +206,8 @@ class HorarioModel extends Model
     {
         $this->execute(
             'INSERT INTO horarios
-                (centro_id, tipo, dia_semana, hora, hora_fin, lugar, nota, vigente_desde, vigente_hasta, orden, activo)
-             VALUES (:centro, :tipo, :dia, :hora, :horaFin, :lugar, :nota, :desde, :hasta, :orden, :activo)',
+                (centro_id, tipo, dia_semana, hora, hora_fin, lugar, nota, vigente_desde, vigente_hasta, orden, activo, tiene_coro)
+             VALUES (:centro, :tipo, :dia, :hora, :horaFin, :lugar, :nota, :desde, :hasta, :orden, :activo, :tieneCoro)',
             $this->parametros($datos)
         );
         return $this->lastInsertId();
@@ -143,7 +219,7 @@ class HorarioModel extends Model
             'UPDATE horarios
                 SET centro_id = :centro, tipo = :tipo, dia_semana = :dia, hora = :hora, hora_fin = :horaFin,
                     lugar = :lugar, nota = :nota, vigente_desde = :desde, vigente_hasta = :hasta,
-                    orden = :orden, activo = :activo
+                    orden = :orden, activo = :activo, tiene_coro = :tieneCoro
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -168,6 +244,7 @@ class HorarioModel extends Model
             ':hasta'   => $datos['vigente_hasta'],
             ':orden'   => $datos['orden'],
             ':activo'  => $datos['activo'],
+            ':tieneCoro' => $datos['tiene_coro'],
         ];
     }
 
