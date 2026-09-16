@@ -68,6 +68,8 @@ dice.
 
 ## El directorio telefónico
 
+![El directorio telefónico para imprimir](img/personas-directorio-imprimir.webp)
+
 Desde el listado, el botón **"Imprimir directorio"** abre en una pestaña
 aparte una hoja lista para imprimir o guardar como PDF con solo a quienes se
 marcó con la casilla "Incluir en el directorio telefónico" de su ficha, con su

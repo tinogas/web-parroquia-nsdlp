@@ -1,27 +1,28 @@
 # 18. Coros
 
-La pastoral de música, organizada de una forma propia: **un coro por misa con
-coro**.
+La pastoral de música, organizada de una forma propia: **un coro por horario
+marcado "Tiene coro"**.
 
 **Menú:** Pastorales → Coros.
 
 ## Los coros
 
-![Coros — Un coro por misa](img/coros-lista.webp)
+![Coros — Horarios con coro](img/coros-lista.webp)
 
-La lista no se captura: **sale de los horarios**. Toda misa marcada con la
+La lista no se captura: **sale de los horarios**. Todo horario marcado con la
 casilla **"Tiene coro"** en Parroquia → Horarios aparece aquí como un renglón,
-con su día, su hora y su sede, y a cada una se le asigna:
+con su día, su hora y su sede —no hace falta que sea una misa: una Adoración
+eucarística también puede llevar coro—, y a cada uno se le asigna:
 
 - Un **encargado**, elegido del equipo pastoral. Mientras no haya, el renglón
   dice *Sin encargado*.
-- Sus **integrantes**, con el número de quienes cantan en esa misa y un **+**
-  para agregar a alguien.
+- Sus **integrantes**, con el número de quienes cantan ahí y un **+** para
+  agregar a alguien.
 
-Eso tiene una consecuencia práctica: **si una misa no aparece aquí, revisa su
-casilla "Tiene coro" en Horarios.** Se marca ahí y el coro aparece solo — ya no
-se escribe "con coro" a mano en la Nota del horario, que era texto libre sin
-forma de filtrar por eso.
+Eso tiene una consecuencia práctica: **si un horario no aparece aquí, revisa
+su casilla "Tiene coro" en Horarios.** Se marca ahí y el coro aparece solo —
+ya no se escribe "con coro" a mano en la Nota del horario, que era texto libre
+sin forma de filtrar por eso.
 
 ## Integrantes
 

@@ -28,6 +28,9 @@
  * ve cualquiera, luego la puerta de entrada al panel y después los módulos.
  */
 
+const fs   = require('fs');
+const path = require('path');
+
 /**
  * Nombres de relleno para las pantallas que listan personas. Se turnan, así
  * que una lista de seis renglones sale con seis nombres distintos y se sigue
@@ -61,6 +64,38 @@ const NOMBRE_EN_LA_BARRA = '.navbar .btn-outline-light span';
 
 /** El «Hola, Fulano» con el que abre la pantalla de inicio. */
 const SALUDO_DEL_PANEL = 'h1.h4.fw-bold';
+
+/**
+ * Credenciales de una cuenta CON perfiles adicionales, para las dos capturas
+ * que documentan ese caso —ver más abajo, "Cuando tienes más de un perfil"—.
+ * Hoy es la única cuenta así en la base; el correo institucional no es un
+ * dato a proteger (el sitio ya publica quién coordina cada pastoral, igual
+ * que con MANUAL_EMAIL), pero la contraseña sí, y por eso sigue el mismo
+ * mecanismo que esa otra: herramientas/.env o variables de entorno.
+ *
+ *     # herramientas/.env
+ *     MANUAL_EMAIL_PERFILES=zulema.alvarez@parroquiansdlp.org
+ *     MANUAL_PASSWORD_PERFILES=la-que-sea
+ *
+ * Este archivo no tiene acceso al `env` que ya leyó capturas_manual.js —son
+ * dos módulos separados a propósito, ver la cabecera de este archivo—, así
+ * que lee el suyo propio, con el mismo formato.
+ */
+function leerEnv() {
+    const archivo = path.join(__dirname, '.env');
+    if (!fs.existsSync(archivo)) { return {}; }
+    const datos = {};
+    for (const linea of fs.readFileSync(archivo, 'utf8').split(/\r?\n/)) {
+        const m = linea.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/i);
+        if (m) { datos[m[1]] = m[2].trim().replace(/^["']|["']$/g, ''); }
+    }
+    return datos;
+}
+const envPerfiles = leerEnv();
+const EMAIL_PERFILES    = process.env.MANUAL_EMAIL_PERFILES
+    || envPerfiles.MANUAL_EMAIL_PERFILES    || 'zulema.alvarez@parroquiansdlp.org';
+const PASSWORD_PERFILES = process.env.MANUAL_PASSWORD_PERFILES
+    || envPerfiles.MANUAL_PASSWORD_PERFILES || '';
 
 /**
  * Entra al panel como otra cuenta, por «Usar como…», para fotografiar lo que
@@ -217,6 +252,81 @@ module.exports = [
                 page.click('button[type="submit"]'),
             ]);
             await page.waitForSelector('.alert-danger');
+        },
+    },
+
+    // ------------------------------------------------------------
+    // Cuando tienes más de un perfil
+    // ------------------------------------------------------------
+    // Estas dos necesitan una cuenta CON perfiles adicionales —ver
+    // EMAIL_PERFILES/PASSWORD_PERFILES arriba—, que no es la de
+    // MANUAL_EMAIL/MANUAL_PASSWORD (el administrador, que no tiene
+    // ninguno). Van marcadas sesion:'publico' aunque la segunda ya esté
+    // "adentro": es la forma de que el motor las corra ANTES de entrar()
+    // —ver capturas_manual.js—, encadenadas entre sí con la MISMA sesión, sin
+    // volver a escribir la contraseña ni dejarla abierta para las capturas
+    // que siguen, que sí esperan la sesión del administrador.
+    {
+        id: 'acceso-elegir-perfil',
+        titulo: 'La pantalla que pregunta con cuál perfil entras',
+        url: '/admin/auth/login',
+        sesion: 'publico',
+        espera: '#email',
+        antes: async (page) => {
+            if (!PASSWORD_PERFILES) {
+                throw new Error(
+                    'Falta MANUAL_PASSWORD_PERFILES en herramientas/.env: la contraseña de '
+                    + 'una cuenta con perfiles adicionales, para esta captura y la siguiente.'
+                );
+            }
+            await page.type('#email', EMAIL_PERFILES);
+            await page.type('#password', PASSWORD_PERFILES);
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                page.click('button[type="submit"]'),
+            ]);
+            await page.waitForSelector('input[name="perfil_id"]');
+        },
+        // El único dato personal de esta pantalla es su nombre, arriba del todo.
+        tapar: [['.caja-acceso h1', EJEMPLOS_NOMBRES[0]]],
+        despues: async (page) => {
+            // Sigue con el perfil marcado por defecto —el principal—, para
+            // que la siguiente captura, ya adentro, ofrezca el cambio AL
+            // perfil adicional en vez de mostrar la vuelta.
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                page.click('button[type="submit"]'),
+            ]);
+        },
+    },
+    {
+        id: 'acceso-cambiar-perfil',
+        titulo: 'El modal para cambiar de perfil sin cerrar sesión',
+        url: '/admin/panel',
+        sesion: 'publico',
+        espera: '.navbar .btn-outline-light',
+        tapar: TAPAR_INICIO.concat([
+            [NOMBRE_EN_LA_BARRA, EJEMPLOS_NOMBRES[0]],
+            [SALUDO_DEL_PANEL,   'Hola, ' + EJEMPLOS_NOMBRES[0]],
+        ]),
+        fotos: FOTOS_INICIO.concat(['.navbar img']),
+        // El modal se dibuja fuera de la barra, así que la captura es de la
+        // ventana entera y no un recorte —igual que acceso-menu-usuario—.
+        antes: async (page) => {
+            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.waitForSelector('.dropdown-menu.show');
+            await page.click('[data-bs-target="#modalCambiarPerfil"]');
+            await page.waitForSelector('#modalCambiarPerfil.show');
+        },
+        despues: async (page) => {
+            // Cierra esta sesión antes de que el resto del catálogo entre
+            // como el administrador —ver entrar() en capturas_manual.js—.
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                page.evaluate(() => {
+                    document.querySelector('form[action*="logout"] button[type="submit"]').click();
+                }),
+            ]);
         },
     },
 
@@ -477,6 +587,15 @@ module.exports = [
         completa: true,
     },
     {
+        id: 'horarios-imprimir',
+        titulo: 'El horario para imprimir, agrupado por sede',
+        url: '/admin/horarios/horarios_imprimir',
+        // Página aparte, sin el menú lateral del panel: no hay '.sidebar-link'
+        // que esperar, se espera su propio encabezado.
+        espera: '.hi-encabezado',
+        completa: true,
+    },
+    {
         id: 'centros-lista',
         titulo: 'Las sedes y los centros',
         url: '/admin/centros',
@@ -500,6 +619,17 @@ module.exports = [
         completa: true,
     },
     {
+        id: 'personas-directorio-imprimir',
+        titulo: 'El directorio telefónico para imprimir',
+        url: '/admin/personas/directorio_imprimir',
+        espera: '.di-encabezado',
+        completa: true,
+        // El teléfono de cada quien lo tapa ya la regla general (encuentra
+        // cualquier número de diez dígitos por su forma); el nombre no tiene
+        // una forma reconocible, así que aquí sí hace falta decir dónde está.
+        tapar: [['.di-nombre', EJEMPLOS_NOMBRES]],
+    },
+    {
         id: 'organigrama-lista',
         titulo: 'El organigrama en el panel',
         url: '/admin/organigrama',
@@ -516,6 +646,15 @@ module.exports = [
         titulo: 'El panel básico de una pastoral',
         url: '/admin/pastorales/panel?id=18',
         espera: '.sidebar-link',
+    },
+    {
+        id: 'pastorales-mapa-imprimir',
+        titulo: 'El mapa de pastorales para imprimir',
+        url: '/admin/pastorales/mapa_imprimir',
+        espera: '.mp-arbol, .mp-vacio',
+        completa: true,
+        // Quién coordina cada pastoral ya lo publica el sitio; no hace falta
+        // tapar ningún nombre aquí.
     },
     {
         id: 'sacramentos-lista',
@@ -585,7 +724,7 @@ module.exports = [
     },
     {
         id: 'coros-lista',
-        titulo: 'Coros — Un coro por misa',
+        titulo: 'Coros — Horarios con coro',
         url: '/admin/coros',
         espera: '.sidebar-link',
     },

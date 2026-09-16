@@ -20,6 +20,18 @@ responsable; lo que la hace comisión es que otras la tienen marcada como su
 quien coordina una comisión recibe también lo que publican hacia dentro las
 pastorales que agrupa.
 
+### El mapa de pastorales para imprimir
+
+![El mapa de pastorales para imprimir](img/pastorales-mapa-imprimir.webp)
+
+El botón **"Imprimir mapa"** del listado abre en una pestaña aparte un árbol
+de la jerarquía completa, listo para imprimir o guardar como PDF: cada
+Comisión encabeza su bloque y, indentadas debajo con una guía vertical, sus
+dimensiones —Litúrgica con Coros, MESC, Proclamadores…—, cada una con quién la
+coordina al lado. No es un árbol de cajitas conectadas por líneas como el del
+organigrama: con Comisiones de hasta seis hijas, una hoja no alcanzaría a lo
+ancho.
+
 ## La ficha
 
 Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.

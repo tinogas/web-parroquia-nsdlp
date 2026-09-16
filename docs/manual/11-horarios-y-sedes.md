@@ -38,6 +38,8 @@ de catálogos de la parroquia.
 
 ### Imprimir los horarios
 
+![El horario para imprimir, agrupado por sede](img/horarios-imprimir.webp)
+
 El botón **"Imprimir horarios"** abre en una pestaña aparte una hoja lista
 para imprimir o guardar como PDF: el logo y el nombre de la parroquia una sola
 vez arriba, y debajo, una tras otra, cada sede con sus horarios vigentes hoy

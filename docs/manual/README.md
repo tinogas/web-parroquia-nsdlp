@@ -88,6 +88,18 @@ MANUAL_EMAIL=admin@parroquiansdlp.org
 MANUAL_PASSWORD=…
 ```
 
+Dos capturas del capítulo 2 —la pantalla que pregunta con cuál perfil entras
+y el modal para cambiarlo— necesitan además una cuenta CON perfiles
+adicionales, que no es la del administrador. Van en el mismo archivo:
+
+```
+MANUAL_EMAIL_PERFILES=zulema.alvarez@parroquiansdlp.org
+MANUAL_PASSWORD_PERFILES=…
+```
+
+Sin esas dos líneas, esas dos capturas fallan con un mensaje explicando qué
+falta; el resto del catálogo no las necesita y se genera igual.
+
 Las capturas se guardan en WebP, que pesa la quinta parte que un PNG y se ve
 igual; al armar el Word se convierten solas, porque Word no lee ese formato.
 

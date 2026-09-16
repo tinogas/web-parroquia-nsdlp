@@ -76,8 +76,10 @@ contraseña aparece una pantalla intermedia que pregunta **con cuál quieres
 entrar**. Se elige uno y se continúa. Lo que puedes hacer durante esa sesión
 es lo del perfil que elegiste, ni más ni menos.
 
+![La pantalla que pregunta con cuál perfil entras](img/acceso-elegir-perfil.webp)
+
 No hay que cerrar sesión para cambiarte: en el menú de tu nombre, arriba a la
-derecha, está **Cambiar de perfil**.
+derecha, está **Cambiar de perfil**. Más abajo, en «Tu menú», se ve cómo.
 
 El capítulo 4 explica por qué existe esto y cuándo conviene pedirlo.
 
@@ -109,6 +111,19 @@ falta saber cuando algo no aparece donde lo esperabas. Debajo, según tu cuenta:
 - **Usar como…**, solo para el administrador. Sirve para ver el panel con los
   ojos de otra persona; se explica en el capítulo 4.
 - **Cerrar sesión**, siempre.
+
+### Cambiar de perfil
+
+Quien tiene perfiles adicionales ve esa opción en el menú. Al elegirla se
+abre un modal con las opciones disponibles —tu rol principal y cada perfil
+adicional, salvo el que ya está activo— y un botón **Usar** junto a cada una.
+
+![El modal para cambiar de perfil](img/acceso-cambiar-perfil.webp)
+
+El cambio es inmediato y no vuelve a pedir contraseña: la sesión ya demostró
+quién eres, así que solo se actualiza el rol y el alcance con el que
+trabajas, sin tocar lo demás. Queda en la bitácora, igual que un inicio de
+sesión.
 
 ## Cerrar sesión
 
