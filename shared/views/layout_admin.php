@@ -5,26 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title><?= isset($titulo) ? e($titulo) . ' — ' : '' ?>Panel · <?= e($appName) ?></title>
+    <link rel="preload" href="<?= e(url_activo('assets/fonts/inter-latin-wght-normal.woff2')) ?>" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="<?= e(url_activo('assets/css/app.css')) ?>?v=<?= e(APP_VERSION) ?>">
+    <link rel="stylesheet" href="<?= e(url_activo_versionado('assets/css/app.css')) ?>">
 </head>
 <body<?= Auth::estaImpersonando() ? ' class="impersonando"' : '' ?>>
 
-<nav class="navbar navbar-dark bg-dark px-3 fixed-top" style="z-index:1040">
+<nav class="navbar navbar-dark barra-panel px-3 fixed-top" style="z-index:1040">
     <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-outline-secondary" id="sidebarToggle" aria-label="Mostrar u ocultar el menú">
-            <i class="bi bi-list fs-5"></i>
+        <button class="boton-menu" id="sidebarToggle" aria-label="Mostrar u ocultar el menú">
+            <i class="bi bi-list fs-4"></i>
         </button>
-        <a class="navbar-brand fw-bold mb-0" href="<?= e(url_admin('panel')) ?>">
-            <i class="bi bi-house-heart text-warning me-1"></i>
-            <span class="d-none d-sm-inline"><?= e(APP_CORTO) ?></span>
-            <span class="d-sm-none">Panel</span>
+        <?php /* El logo y el nombre de la parroquia, como en el sitio; "Panel"
+                 encima, en dorado, para que nunca se confunda con él. */ ?>
+        <a class="marca-panel" href="<?= e(url_admin('panel')) ?>">
+            <?php if (Config::tiene('logo')): ?>
+            <img src="<?= e(url_activo(Config::get('logo'))) ?>" alt="">
+            <?php else: ?>
+            <i class="bi bi-house-heart text-dorado fs-4"></i>
+            <?php endif; ?>
+            <span class="lineas">
+                <span class="linea1">Panel</span>
+                <span class="linea2 d-none d-sm-inline"><?= e(preg_replace('/^Parroquia\s+/iu', '', Config::get('parroquia_nombre', APP_NAME))) ?></span>
+            </span>
         </a>
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <a href="<?= e(url_publica('inicio')) ?>" class="text-white-50 text-decoration-none small" target="_blank"
+        <a href="<?= e(url_publica('inicio')) ?>" class="enlace-barra" target="_blank"
            title="Abrir el sitio en una pestaña nueva">
             <i class="bi bi-box-arrow-up-right me-1"></i><span class="d-none d-md-inline">Ver el sitio</span>
         </a>
@@ -181,7 +190,7 @@
         }
         ?>
         <div class="dropdown">
-            <button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-2"
+            <button class="btn btn-sm boton-usuario dropdown-toggle"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="<?= e(foto_o_avatar($usuario['foto'] ?? null, $usuario['nombre'] ?? '', 52)) ?>" alt=""
                      class="rounded-circle" style="width:26px;height:26px;object-fit:cover">
@@ -367,7 +376,7 @@ $candidatosImpersonar = (new UsuarioModel())->paraImpersonar();
 
 <script>const APP_URL = <?= json_encode(url_base(), JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?= e(url_activo('assets/js/app.js')) ?>?v=<?= e(APP_VERSION) ?>"></script>
+<script src="<?= e(url_activo_versionado('assets/js/app.js')) ?>"></script>
 <?php if (isset($scriptExtra)) { echo $scriptExtra; } ?>
 </body>
 </html>

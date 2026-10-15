@@ -1,17 +1,159 @@
 /* ============================================================
    Panel de administración
-   ============================================================ */
+   ============================================================
+   Misma identidad que el sitio público —azul noche, dorado, fondo marfil y
+   filetes finos en vez de sombras— pero pensada para trabajar: todo en
+   Inter, que se lee mejor en tablas y formularios largos, y la serif
+   (Fraunces) reservada al nombre de la parroquia en la barra. Las fuentes
+   son las mismas de assets/fonts que usa publico.css.
+*/
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/inter-latin-ext-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/fraunces-latin-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
-    --sidebar-ancho:  240px;
-    --navbar-alto:    56px;
+    --sidebar-ancho:  248px;
+    --navbar-alto:    60px;
     --color-primario: #1e4d8b;
     --color-dorado:   #c9a227;
     --color-oscuro:   #16233a;
+    --fondo:          #f8f6f1;
+    --marfil:         #f1ece0;
+    --borde:          #e6dfcf;
+    --tinta:          #16233a;
+    --tinta-suave:    #5a6375;
+    --radio:          .75rem;
+    --serif:          'Fraunces', Georgia, serif;
+
+    --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --bs-body-color:       var(--tinta);
+    --bs-body-bg:          var(--fondo);
+    --bs-secondary-color:  var(--tinta-suave);
+    --bs-border-color:     var(--borde);
+    --bs-link-color-rgb:   30, 77, 139;
 }
 
 body {
-    background: #f4f6f9;
+    background: var(--fondo);
+    color: var(--tinta);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Barra superior ---- */
+
+.barra-panel {
+    min-height: var(--navbar-alto);
+    background: var(--color-oscuro);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.boton-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: .5rem;
+    color: rgba(255, 255, 255, .8);
+    background: transparent;
+}
+
+.boton-menu:hover,
+.boton-menu:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+}
+
+.marca-panel {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: #fff;
+    text-decoration: none;
+}
+
+.marca-panel:hover { color: #fff; }
+
+.marca-panel img {
+    height: 34px;
+    width: auto;
+}
+
+.marca-panel .lineas {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.marca-panel .linea1 {
+    font-size: .64rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--color-dorado);
+}
+
+.marca-panel .linea2 {
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    font-weight: 450;
+}
+
+.enlace-barra {
+    color: rgba(255, 255, 255, .7);
+    text-decoration: none;
+    font-size: .875rem;
+    border-radius: .5rem;
+    padding: .35rem .6rem;
+}
+
+.enlace-barra:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+}
+
+.boton-usuario {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 999px;
+    padding: .2rem .7rem .2rem .25rem;
+    background: rgba(255, 255, 255, .04);
+}
+
+.boton-usuario:hover,
+.boton-usuario.show,
+.boton-usuario:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .25);
 }
 
 /* ---- Barra lateral ---- */
@@ -23,7 +165,10 @@ body {
     width: var(--sidebar-ancho);
     height: calc(100vh - var(--navbar-alto));
     background: var(--color-oscuro);
+    border-right: 1px solid rgba(255, 255, 255, .06);
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, .15) transparent;
     transition: transform .2s ease;
     z-index: 1030;
 }
@@ -33,27 +178,30 @@ body {
 }
 
 .sidebar-nav {
-    padding: .75rem 0;
+    padding: .75rem 0 1.5rem;
 }
 
 .sidebar-section {
-    padding: .5rem 1rem .25rem;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .06em;
+    padding: 1rem 1.25rem .35rem;
+    font-size: .66rem;
+    font-weight: 600;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, .38);
+    color: rgba(201, 162, 39, .75);
 }
 
 .sidebar-link {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: .65rem;
-    padding: .55rem 1rem;
-    color: rgba(255, 255, 255, .78);
+    gap: .7rem;
+    margin: 1px .6rem;
+    padding: .5rem .7rem;
+    border-radius: .5rem;
+    color: rgba(255, 255, 255, .74);
     text-decoration: none;
-    font-size: .925rem;
-    border-left: 3px solid transparent;
+    font-size: .9rem;
+    transition: background .15s ease, color .15s ease;
 }
 
 .sidebar-link:hover {
@@ -62,15 +210,32 @@ body {
 }
 
 .sidebar-link.active {
-    background: rgba(255, 255, 255, .09);
-    border-left-color: var(--color-dorado);
+    background: rgba(255, 255, 255, .1);
     color: #fff;
     font-weight: 600;
+}
+
+/* El filo dorado del enlace activo, pegado al borde izquierdo de la barra. */
+.sidebar-link.active::before {
+    content: "";
+    position: absolute;
+    left: -.6rem;
+    top: .45rem;
+    bottom: .45rem;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-dorado);
 }
 
 .sidebar-link i {
     width: 1.15rem;
     text-align: center;
+    opacity: .9;
+}
+
+.sidebar-link.active i {
+    color: var(--color-dorado);
+    opacity: 1;
 }
 
 /* ---- Contenido ---- */
@@ -78,7 +243,7 @@ body {
 .main-content {
     margin-top: var(--navbar-alto);
     margin-left: var(--sidebar-ancho);
-    padding: 1.5rem;
+    padding: 2rem 2.25rem 3rem;
     transition: margin-left .2s ease;
 }
 
@@ -89,7 +254,7 @@ body {
 @media (max-width: 991.98px) {
     .sidebar       { transform: translateX(-100%); }
     .sidebar.visible { transform: translateX(0); }
-    .main-content  { margin-left: 0; padding: 1rem; }
+    .main-content  { margin-left: 0; padding: 1.25rem 1rem 2rem; }
 }
 
 /* ---- Aviso de "Usar como…" (impersonación) ---- */
@@ -124,10 +289,15 @@ body.impersonando .sidebar {
     overflow-wrap: anywhere;
 }
 
-/* ---- Pantalla de acceso ---- */
+/* ---- Pantalla de acceso ----
+   El mismo atardecer de la portada del sitio, oscurecido para que la caja
+   se lea encima. */
 
 .pantalla-acceso {
-    background: linear-gradient(160deg, var(--color-oscuro) 0%, var(--color-primario) 100%);
+    background:
+        linear-gradient(180deg, rgba(22, 35, 58, .55) 0%, rgba(22, 35, 58, .85) 100%),
+        url('../img/portada.svg') center 65% / cover no-repeat,
+        var(--color-oscuro);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -138,6 +308,28 @@ body.impersonando .sidebar {
 .caja-acceso {
     width: 100%;
     max-width: 420px;
+}
+
+.caja-acceso .card {
+    background: #fff;
+    border: 0 !important;
+    border-radius: 1rem;
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .55) !important;
+}
+
+.caja-acceso .form-control,
+.caja-acceso .input-group-text {
+    border-color: var(--borde);
+    background-color: #fff;
+}
+
+.caja-acceso .input-group-text {
+    color: var(--tinta-suave);
+}
+
+.caja-acceso .form-control:focus {
+    border-color: var(--color-dorado);
+    box-shadow: 0 0 0 .2rem rgba(201, 162, 39, .2);
 }
 
 .icono-acceso {
@@ -864,4 +1056,363 @@ a.evento-linea:hover {
 .toggle-integrantes .icono-mas,
 .toggle-integrantes.collapsed .icono-menos {
     display: none;
+}
+
+/* ============================================================
+   Componentes del panel
+   ============================================================
+   Las vistas usan el mismo marcado de Bootstrap en todas partes
+   ("card border-0 shadow-sm", "h1.h4.fw-bold", "thead.table-light",
+   botones "btn-sm btn-outline-*"). En vez de tocar ochenta vistas, aquí se
+   redefine qué significa cada pieza dentro del panel.
+*/
+
+/* ---- Títulos de página ---- */
+
+.main-content h1.h4 {
+    font-size: 1.55rem;
+    font-weight: 650 !important;
+    letter-spacing: -.02em;
+    color: var(--tinta);
+}
+
+.main-content h1.h4 + .text-muted,
+.main-content h1.h4 + p {
+    font-size: .92rem;
+}
+
+.main-content .breadcrumb {
+    font-size: .85rem;
+    margin-bottom: .35rem;
+}
+
+.main-content .breadcrumb a {
+    text-decoration: none;
+}
+
+/* ---- Tarjetas: filete en vez de sombra ---- */
+
+.main-content .card {
+    border: 1px solid var(--borde) !important;
+    border-radius: var(--radio);
+    box-shadow: none !important;
+    background: #fff;
+}
+
+.main-content .card > .card-header {
+    background: transparent;
+    border-bottom-color: var(--borde);
+    font-weight: 600;
+}
+
+.main-content .card-img-top {
+    border-top-left-radius: calc(var(--radio) - 1px);
+    border-top-right-radius: calc(var(--radio) - 1px);
+}
+
+.main-content a.card {
+    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.main-content a.card:hover {
+    border-color: rgba(201, 162, 39, .6) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -12px rgba(22, 35, 58, .35) !important;
+}
+
+/* ---- Tablas ---- */
+
+.main-content .table {
+    --bs-table-hover-bg: rgba(241, 236, 224, .55);
+    --bs-table-border-color: var(--borde);
+    margin-bottom: 0;
+}
+
+.main-content .table > thead.table-light > tr > th,
+.main-content .table > thead > tr > th {
+    --bs-table-bg: #fbfaf6;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    border-bottom-color: var(--borde);
+    padding-top: .8rem;
+    padding-bottom: .8rem;
+    white-space: nowrap;
+}
+
+.main-content .table > tbody > tr > td {
+    padding-top: .85rem;
+    padding-bottom: .85rem;
+}
+
+/* Dentro de una tarjeta, el último renglón no lleva filete: el borde de la
+   tarjeta ya cierra la tabla, y los dos juntos se veían como una raya doble. */
+.main-content .card .table > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.main-content .card > .table-responsive:first-child .table > thead > tr:first-child > th:first-child,
+.main-content .card > .table:first-child > thead > tr:first-child > th:first-child {
+    border-top-left-radius: calc(var(--radio) - 1px);
+}
+
+.main-content .card > .table-responsive:first-child .table > thead > tr:first-child > th:last-child,
+.main-content .card > .table:first-child > thead > tr:first-child > th:last-child {
+    border-top-right-radius: calc(var(--radio) - 1px);
+}
+
+/* Los botones de cada renglón (ver, abrir, editar, borrar) eran tres o cuatro
+   cuadros con borde por fila, y pesaban más que el propio contenido. Quedan
+   como iconos discretos que se encienden al pasar el ratón; borrar conserva
+   su rojo al encenderse para que no se confunda. */
+.main-content td .btn-sm[class*="btn-outline-"] {
+    --bs-btn-border-color: transparent;
+    --bs-btn-bg: transparent;
+    --bs-btn-color: var(--tinta-suave);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+    border-radius: .45rem;
+    padding: .3rem .5rem;
+}
+
+.main-content td .btn-sm.btn-outline-primary {
+    --bs-btn-hover-bg: rgba(30, 77, 139, .1);
+    --bs-btn-hover-color: var(--color-primario);
+    --bs-btn-active-bg: rgba(30, 77, 139, .16);
+    --bs-btn-active-color: var(--color-primario);
+}
+
+.main-content td .btn-sm.btn-outline-secondary,
+.main-content td .btn-sm.btn-outline-dark {
+    --bs-btn-hover-bg: var(--marfil);
+    --bs-btn-hover-color: var(--tinta);
+    --bs-btn-active-bg: var(--marfil);
+    --bs-btn-active-color: var(--tinta);
+}
+
+.main-content td .btn-sm.btn-outline-danger {
+    --bs-btn-color: #b4544a;
+    --bs-btn-hover-bg: rgba(180, 35, 24, .1);
+    --bs-btn-hover-color: #b42318;
+    --bs-btn-active-bg: rgba(180, 35, 24, .16);
+    --bs-btn-active-color: #b42318;
+}
+
+.main-content td .btn-sm.btn-outline-success {
+    --bs-btn-color: #2f7a4f;
+    --bs-btn-hover-bg: rgba(47, 122, 79, .1);
+    --bs-btn-hover-color: #2f7a4f;
+}
+
+.main-content td .btn-sm.btn-outline-warning {
+    --bs-btn-color: #9a7a12;
+    --bs-btn-hover-bg: rgba(201, 162, 39, .14);
+    --bs-btn-hover-color: #7d6210;
+}
+
+/* ---- Insignias: una sola familia ----
+   Mismo radio, mismo peso y tonos suaves de la paleta; el color sigue
+   diciendo lo mismo que antes (verde publicado, ámbar destacado, gris
+   vencido...), solo que todas hablan igual. */
+
+.main-content .badge {
+    font-weight: 550;
+    border-radius: .45rem;
+    padding: .32em .6em;
+    letter-spacing: .01em;
+}
+
+.main-content .badge.bg-secondary-subtle,
+.main-content .badge.bg-light {
+    background: var(--marfil) !important;
+    color: var(--tinta-suave) !important;
+    border: 0 !important;
+}
+
+.main-content .badge.bg-warning-subtle {
+    background: rgba(201, 162, 39, .16) !important;
+    color: #7d6210 !important;
+}
+
+.main-content .badge.bg-success-subtle {
+    background: rgba(47, 122, 79, .12) !important;
+    color: #2f6b47 !important;
+}
+
+.main-content .badge.bg-info-subtle {
+    background: rgba(30, 77, 139, .1) !important;
+    color: var(--color-primario) !important;
+}
+
+.main-content .badge.bg-danger-subtle {
+    background: rgba(180, 35, 24, .1) !important;
+    color: #9a2b20 !important;
+}
+
+.main-content .badge.bg-primary-subtle {
+    background: rgba(30, 77, 139, .1) !important;
+    color: var(--color-primario) !important;
+}
+
+/* ---- Filtros en grupo (Todos · Borradores · De la pastoral · En la página) ----
+   Pasan a control segmentado, igual que las pestañas de días del sitio: el
+   elegido en blanco sobre fondo marfil. */
+
+.main-content .btn-group-sm {
+    background: var(--marfil);
+    border-radius: .6rem;
+    padding: .2rem;
+    gap: .15rem;
+    max-width: 100%;
+    overflow-x: auto;           /* en el celular se recorre de lado, no se parte */
+    scrollbar-width: none;
+}
+
+.main-content .btn-group-sm > .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    border: 0 !important;
+    border-radius: .45rem !important;
+    font-weight: 500;
+    padding: .35rem .8rem;
+}
+
+.main-content .btn-group-sm > .btn-outline-secondary,
+.main-content .btn-group-sm > .btn-outline-primary {
+    --bs-btn-color: var(--tinta-suave);
+    --bs-btn-bg: transparent;
+    --bs-btn-hover-bg: rgba(255, 255, 255, .6);
+    --bs-btn-hover-color: var(--tinta);
+    --bs-btn-active-bg: #fff;
+    --bs-btn-active-color: var(--tinta);
+}
+
+.main-content .btn-group-sm > .btn-primary,
+.main-content .btn-group-sm > .btn-check:checked + .btn {
+    --bs-btn-bg: #fff;
+    --bs-btn-color: var(--tinta);
+    --bs-btn-hover-bg: #fff;
+    --bs-btn-hover-color: var(--tinta);
+    --bs-btn-active-bg: #fff;
+    --bs-btn-active-color: var(--tinta);
+    background: #fff !important;
+    color: var(--tinta) !important;
+    box-shadow: 0 1px 3px rgba(22, 35, 58, .14);
+}
+
+/* ---- Botones ---- */
+
+.btn {
+    border-radius: .5rem;
+    font-weight: 500;
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--tinta);
+    --bs-btn-border-color: var(--borde);
+    --bs-btn-hover-bg: var(--marfil);
+    --bs-btn-hover-color: var(--tinta);
+    --bs-btn-hover-border-color: #d9cfb8;
+    --bs-btn-active-bg: var(--marfil);
+    --bs-btn-active-color: var(--tinta);
+    --bs-btn-active-border-color: #d9cfb8;
+    --bs-btn-bg: #fff;
+}
+
+/* ---- Formularios ---- */
+
+.main-content .form-label {
+    font-weight: 550;
+    font-size: .9rem;
+    margin-bottom: .35rem;
+}
+
+.main-content .form-control,
+.main-content .form-select {
+    border-color: var(--borde);
+    border-radius: .5rem;
+    background-color: #fff;
+}
+
+.main-content .form-control:focus,
+.main-content .form-select:focus {
+    border-color: var(--color-dorado);
+    box-shadow: 0 0 0 .2rem rgba(201, 162, 39, .2);
+}
+
+.main-content .form-check-input:checked {
+    background-color: var(--color-primario);
+    border-color: var(--color-primario);
+}
+
+.main-content .form-text {
+    color: var(--tinta-suave);
+}
+
+/* ---- Pestañas, avisos, listas, paginación y desplegables ---- */
+
+.main-content .nav-tabs {
+    border-bottom-color: var(--borde);
+}
+
+.main-content .nav-tabs .nav-link {
+    color: var(--tinta-suave);
+    border: 0;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+}
+
+.main-content .nav-tabs .nav-link:hover {
+    color: var(--tinta);
+    border-bottom-color: var(--borde);
+}
+
+.main-content .nav-tabs .nav-link.active {
+    color: var(--tinta);
+    background: transparent;
+    border-bottom-color: var(--color-dorado);
+}
+
+.main-content .alert {
+    border-radius: var(--radio);
+}
+
+.main-content .list-group-item {
+    border-color: var(--borde);
+}
+
+.pagination {
+    --bs-pagination-color: var(--color-primario);
+    --bs-pagination-border-color: var(--borde);
+    --bs-pagination-hover-bg: var(--marfil);
+    --bs-pagination-hover-border-color: var(--borde);
+    --bs-pagination-active-bg: var(--color-oscuro);
+    --bs-pagination-active-border-color: var(--color-oscuro);
+}
+
+.dropdown-menu {
+    border-color: var(--borde);
+    border-radius: .65rem;
+    box-shadow: 0 12px 32px -12px rgba(22, 35, 58, .3);
+    padding: .4rem;
+}
+
+.dropdown-item {
+    border-radius: .4rem;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--marfil);
+}
+
+.modal-content {
+    border: 0;
+    border-radius: 1rem;
+}
+
+:focus-visible {
+    outline-color: var(--color-dorado);
 }
