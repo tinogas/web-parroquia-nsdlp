@@ -51,6 +51,21 @@ if (!function_exists('e')) {
     }
 
     /**
+     * url_activo() con ?v= para hojas de estilo y scripts. La versión lleva
+     * la fecha de modificación del archivo además de APP_VERSION: con solo
+     * APP_VERSION, un CSS que se corrige sin subir la versión le llega al
+     * navegador con el mismo ?v= y este se queda con la copia vieja —HTML
+     * nuevo con estilos viejos, piezas encimadas—, que es justo lo que pasó
+     * durante el rediseño.
+     */
+    function url_activo_versionado(string $ruta): string
+    {
+        $archivo = BASE_PATH . '/' . ltrim($ruta, '/');
+        $marca   = is_file($archivo) ? '.' . filemtime($archivo) : '';
+        return url_activo($ruta) . '?v=' . rawurlencode(APP_VERSION . $marca);
+    }
+
+    /**
      * URL de una página del sitio público.
      *
      *   url_publica('inicio')                            → /
