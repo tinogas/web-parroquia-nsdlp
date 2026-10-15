@@ -62,9 +62,16 @@ $canonica     = $urlCanonica ?? null;
     <link rel="icon" href="<?= e(url_activo(Config::get('favicon'))) ?>">
     <?php endif; ?>
 
+    <?php /* Marca que hay JavaScript antes de pintar nada: el CSS lo usa para
+             que lo que depende de él —las pestañas de días en Horarios— se vea
+             completo, todo desplegado, cuando el script no llega a cargar. */ ?>
+    <script>document.documentElement.classList.add('js');</script>
+
+    <link rel="preload" href="<?= e(url_activo('assets/fonts/fraunces-latin-wght-normal.woff2')) ?>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<?= e(url_activo('assets/fonts/inter-latin-wght-normal.woff2')) ?>" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="<?= e(url_activo('assets/css/publico.css')) ?>?v=<?= e(APP_VERSION) ?>">
+    <link rel="stylesheet" href="<?= e(url_activo_versionado('assets/css/publico.css')) ?>">
 </head>
 <body class="sitio-publico">
 
@@ -74,18 +81,29 @@ $canonica     = $urlCanonica ?? null;
 
 <?php if (!empty($hero)) { echo $hero; /* HTML compuesto por el controlador */ } ?>
 
+<?php /* $sinContenedor: la vista arma sus propias franjas a todo el ancho
+         (la portada); si no, va en el contenedor de siempre. */ ?>
+<?php if (!empty($sinContenedor)): ?>
+<main id="contenido">
+    <?php if (!empty($flash)): ?>
+    <div class="container pt-4"><?php require BASE_PATH . '/shared/views/parciales/flash.php'; ?></div>
+    <?php endif; ?>
+    <?php require $vistaPath; ?>
+</main>
+<?php else: ?>
 <main id="contenido" class="py-4 py-md-5">
     <div class="container">
         <?php if (!empty($flash)) { require BASE_PATH . '/shared/views/parciales/flash.php'; } ?>
         <?php require $vistaPath; ?>
     </div>
 </main>
+<?php endif; ?>
 
 <?php require BASE_PATH . '/shared/views/parciales/publico_footer.php'; ?>
 
 <script>const APP_URL = <?= json_encode(url_base(), JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?= e(url_activo('assets/js/publico.js')) ?>?v=<?= e(APP_VERSION) ?>"></script>
+<script src="<?= e(url_activo_versionado('assets/js/publico.js')) ?>"></script>
 <?php if (isset($scriptExtra)) { echo $scriptExtra; } ?>
 </body>
 </html>

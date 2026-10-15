@@ -176,6 +176,59 @@ class EventoModel extends Model
      * eventos. $pastoralId acota a "el calendario de esta pastoral" en su
      * ficha pública (issue #3).
      */
+    /**
+     * La próxima fiesta patronal de la parroquia, para la franja de la
+     * portada, con su novena y si ese día hay kermés. Solo eventos publicados:
+     * la franja aparece cuando la fiesta se publica en la agenda y se va sola
+     * al día siguiente.
+     *
+     * No hay un campo "es la fiesta patronal": se reconoce por el título, que
+     * es como viene escrita en la agenda que se importa cada año ("FIESTA
+     * PATRONAL NUESTRA SEÑORA DE LA PAZ Misa"). Se queda con la de la sede o
+     * la que no tiene sede, no con la de un centro —San Pío celebra la suya
+     * en septiembre—, y solo si falta menos de $dias.
+     *
+     * @return ?array{fiesta: array, novena: ?array, kermes: bool}
+     */
+    public function fiestaPatronalProxima(int $dias = 60): ?array
+    {
+        $deLaSede = '(e.centro_id IS NULL OR c.tipo = \'sede\')';
+
+        $fiesta = $this->fetchOne(
+            "SELECT e.* FROM eventos e LEFT JOIN centros c ON c.id = e.centro_id
+              WHERE e.publicado = 1 AND {$deLaSede}
+                AND e.titulo LIKE '%fiesta patronal%'
+                AND DATE(e.fecha_inicio) >= CURDATE()
+                AND DATE(e.fecha_inicio) <= DATE_ADD(CURDATE(), INTERVAL " . max(1, $dias) . " DAY)
+              ORDER BY e.fecha_inicio
+              LIMIT 1"
+        );
+        if (!$fiesta) {
+            return null;
+        }
+
+        // La novena es la que termina antes de la fiesta y empezó, a lo más,
+        // dos semanas antes: hay otras novenas en el año (Guadalupe, Navidad).
+        $novena = $this->fetchOne(
+            "SELECT e.* FROM eventos e LEFT JOIN centros c ON c.id = e.centro_id
+              WHERE e.publicado = 1 AND {$deLaSede}
+                AND e.titulo LIKE '%novena%'
+                AND DATE(COALESCE(e.fecha_fin, e.fecha_inicio)) < DATE(:fiesta1)
+                AND DATE(e.fecha_inicio) >= DATE_SUB(DATE(:fiesta2), INTERVAL 15 DAY)
+              ORDER BY e.fecha_inicio DESC
+              LIMIT 1",
+            [':fiesta1' => $fiesta['fecha_inicio'], ':fiesta2' => $fiesta['fecha_inicio']]
+        );
+
+        $kermes = (bool) $this->fetchColumn(
+            "SELECT COUNT(*) FROM eventos
+              WHERE publicado = 1 AND titulo LIKE '%kerm%' AND DATE(fecha_inicio) = DATE(:fiesta)",
+            [':fiesta' => $fiesta['fecha_inicio']]
+        );
+
+        return ['fiesta' => $fiesta, 'novena' => $novena, 'kermes' => $kermes];
+    }
+
     public function proximos(int $limite = 6, ?int $pastoralId = null): array
     {
         $condicionPastoral = $pastoralId !== null ? ' AND pastoral_id = :pastoral' : '';

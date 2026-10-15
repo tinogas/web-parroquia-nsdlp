@@ -1,75 +1,132 @@
-<h1 class="titulo-pagina mb-2">Pastorales</h1>
-
-<?php if (!empty($bloques['pastorales_intro']['contenido'])): ?>
-<div class="contenido-editorial mb-4">
-    <?= $bloques['pastorales_intro']['contenido'] ?>
-</div>
-<?php endif; ?>
-
-<?php if (!$comisiones && !$sueltas): ?>
-<p class="text-muted fst-italic">Estamos actualizando el listado de pastorales.</p>
-<?php endif; ?>
-
 <?php
-/** Una tarjeta de pastoral, igual para hijas de Comisión y para pastorales sueltas. */
-$dibujarTarjeta = static function (array $pastoral): void {
-    ?>
-    <div class="col-md-6 col-lg-4">
-        <a href="<?= e(url_publica('pastorales', ['slug' => $pastoral['slug']])) ?>" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100 tarjeta-aviso">
-                <div class="card-body p-4">
-                    <div class="fs-2 text-dorado mb-2"><i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?>"></i></div>
-                    <h3 class="h6 fw-bold mb-2 text-body"><?= e($pastoral['nombre']) ?></h3>
-                    <?php if ($pastoral['responsable_nombre']): ?>
-                    <p class="small text-secondary mb-1">
-                        <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-people' : 'bi-person' ?> me-1"></i><?= e($pastoral['responsable_nombre']) ?>
-                    </p>
-                    <?php endif; ?>
-                    <?php if ($pastoral['descripcion_corta']): ?>
-                    <p class="small text-muted mb-0"><?= e($pastoral['descripcion_corta']) ?></p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </a>
-    </div>
-    <?php
+/**
+ * Pastorales en rejilla tipo "bento": una tarjeta por Comisión con sus
+ * pastorales dentro, y las pastorales sueltas como tarjetas propias. Las
+ * Comisiones con cuatro o más pastorales ocupan dos columnas para que su
+ * lista respire; grid-auto-flow: dense rellena los huecos que eso deja.
+ *
+ * Quién coordina se sigue leyendo sin abrir la ficha —una silueta si es una
+ * persona, dos si es un matrimonio—; correo y teléfono, en cambio, siguen
+ * solo en la ficha de cada pastoral, que es donde tiene sentido escribirle.
+ */
+
+/** "Miércoles, 8:00 p. m." o '' si la pastoral no tiene reunión fija. */
+$reunion = static function (array $p): string {
+    $partes = array_filter([
+        $p['dia_reunion'] ? ucfirst(mb_strtolower($p['dia_reunion'])) : '',
+        $p['hora_reunion'] ? hora_corta($p['hora_reunion']) : '',
+    ]);
+    return implode(', ', $partes);
 };
+
+$responsable = static function (array $p): string {
+    if (!$p['responsable_nombre']) {
+        return '';
+    }
+    $icono = $p['responsable_pareja_id'] ? 'bi-people' : 'bi-person';
+    return '<i class="bi ' . $icono . ' me-1" aria-hidden="true"></i>' . e($p['responsable_nombre']);
+};
+
+$total = count($comisiones) + count($sueltas);
+
+// Se resalta la Comisión más grande, que es la que más gente busca y la que
+// más se beneficia de llamar la atención; con empate, la primera.
+$masGrande = null;
+foreach ($comisiones as $i => $grupo) {
+    if ($masGrande === null || count($grupo['hijas']) > count($comisiones[$masGrande]['hijas'])) {
+        $masGrande = $i;
+    }
+}
 ?>
 
-<?php foreach ($comisiones as $grupo): ?>
-<section class="mb-5">
-    <h2 class="h5 fw-bold mb-3">
-        <a href="<?= e(url_publica('pastorales', ['slug' => $grupo['padre']['slug']])) ?>" class="text-decoration-none text-body">
-            <i class="bi <?= e($grupo['padre']['icono'] ?: 'bi-people') ?> text-dorado me-1"></i>
-            <?= e($grupo['padre']['nombre']) ?>
-        </a>
-    </h2>
-    <?php /* Quién coordina la Comisión, debajo de su nombre. Nombre y nada más: el
-             correo y el teléfono siguen en la ficha de cada pastoral, que es donde
-             tiene sentido escribirle a alguien. Dos siluetas si la coordina un
-             matrimonio —JECSA, Raíces, Matrimonios y AMA—, una si es una persona. */ ?>
-    <?php if ($grupo['padre']['responsable_nombre']): ?>
-    <p class="text-secondary small mb-2">
-        <i class="bi <?= $grupo['padre']['responsable_pareja_id'] ? 'bi-people' : 'bi-person' ?> me-1"></i><?= e($grupo['padre']['responsable_nombre']) ?>
-    </p>
-    <?php endif; ?>
-    <?php if ($grupo['padre']['descripcion_corta']): ?>
-    <p class="text-muted small mb-3"><?= e($grupo['padre']['descripcion_corta']) ?></p>
-    <?php endif; ?>
-    <div class="row g-4">
-        <?php foreach ($grupo['hijas'] as $pastoral): ?>
-        <?php $dibujarTarjeta($pastoral); ?>
-        <?php endforeach; ?>
+<div class="encabezado-seccion">
+    <span class="antetitulo">Pastorales</span>
+    <h1 class="titulo-pagina mb-3">Hay un lugar para ti</h1>
+    <?php if (!empty($bloques['pastorales_intro']['contenido'])): ?>
+    <div class="contenido-editorial text-tinta-suave">
+        <?= $bloques['pastorales_intro']['contenido'] ?>
     </div>
-</section>
-<?php endforeach; ?>
+    <?php else: ?>
+    <p>Las pastorales se agrupan en comisiones. Entra a la que te interese para ver cuándo se reúne y cómo contactar a quien la coordina.</p>
+    <?php endif; ?>
+</div>
 
-<?php if ($sueltas): ?>
-<section class="mb-4">
-    <div class="row g-4">
-        <?php foreach ($sueltas as $pastoral): ?>
-        <?php $dibujarTarjeta($pastoral); ?>
-        <?php endforeach; ?>
-    </div>
-</section>
+<?php if ($total === 0): ?>
+<p class="text-muted fst-italic">Estamos actualizando el listado de pastorales.</p>
+<?php else: ?>
+
+<div class="bento">
+    <?php foreach ($comisiones as $i => $grupo): ?>
+    <?php
+    $padre = $grupo['padre'];
+    $hijas = $grupo['hijas'];
+    $ancha = count($hijas) >= 4;
+    ?>
+    <section class="bento-tarjeta <?= $ancha ? 'ancha' : '' ?> <?= $i === $masGrande ? 'destacada' : '' ?>"
+             aria-labelledby="comision-<?= (int) $padre['id'] ?>">
+        <div class="bento-cabecera">
+            <span class="bento-icono"><i class="bi <?= e($padre['icono'] ?: 'bi-people') ?>" aria-hidden="true"></i></span>
+            <span class="bento-cuenta"><?= count($hijas) ?> <?= count($hijas) === 1 ? 'pastoral' : 'pastorales' ?></span>
+        </div>
+        <div>
+            <h2 class="bento-titulo" id="comision-<?= (int) $padre['id'] ?>">
+                <a href="<?= e(url_publica('pastorales', ['slug' => $padre['slug']])) ?>"><?= e($padre['nombre']) ?></a>
+            </h2>
+            <?php if ($padre['responsable_nombre']): ?>
+            <p class="bento-responsable mt-1"><?= $responsable($padre) ?></p>
+            <?php endif; ?>
+            <?php if ($padre['descripcion_corta']): ?>
+            <p class="bento-descripcion mt-1"><?= e($padre['descripcion_corta']) ?></p>
+            <?php endif; ?>
+        </div>
+        <?php if ($hijas): ?>
+        <ul class="bento-lista">
+            <?php foreach ($hijas as $hija): ?>
+            <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
+            <li>
+                <a href="<?= e(url_publica('pastorales', ['slug' => $hija['slug']])) ?>">
+                    <span class="nombre"><?= e($hija['nombre']) ?></span>
+                    <?php if ($hija['responsable_nombre']): ?>
+                    <span class="detalle"><?= $responsable($hija) ?></span>
+                    <?php endif; ?>
+                    <?php if ($detalle): ?>
+                    <span class="detalle"><?= e($detalle) ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
+    </section>
+    <?php endforeach; ?>
+
+    <?php foreach ($sueltas as $pastoral): ?>
+    <?php $cuando = $reunion($pastoral); ?>
+    <section class="bento-tarjeta" aria-labelledby="pastoral-<?= (int) $pastoral['id'] ?>">
+        <div class="bento-cabecera">
+            <span class="bento-icono"><i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?>" aria-hidden="true"></i></span>
+            <?php if ($cuando): ?>
+            <span class="bento-cuenta"><?= e($cuando) ?></span>
+            <?php endif; ?>
+        </div>
+        <div>
+            <h2 class="bento-titulo" id="pastoral-<?= (int) $pastoral['id'] ?>">
+                <a href="<?= e(url_publica('pastorales', ['slug' => $pastoral['slug']])) ?>"><?= e($pastoral['nombre']) ?></a>
+            </h2>
+            <?php if ($pastoral['responsable_nombre']): ?>
+            <p class="bento-responsable mt-1"><?= $responsable($pastoral) ?></p>
+            <?php endif; ?>
+            <?php if ($pastoral['descripcion_corta']): ?>
+            <p class="bento-descripcion mt-1"><?= e($pastoral['descripcion_corta']) ?></p>
+            <?php endif; ?>
+        </div>
+        <div class="bento-pie">
+            <a href="<?= e(url_publica('pastorales', ['slug' => $pastoral['slug']])) ?>" class="enlace-flecha small">
+                Conocer más <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </section>
+    <?php endforeach; ?>
+</div>
+
 <?php endif; ?>

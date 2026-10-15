@@ -1,12 +1,70 @@
 /* ============================================================
    Sitio público
-   ============================================================ */
+   ============================================================
+   Diseño editorial: fondo marfil, títulos en serif (Fraunces) y texto en
+   Inter, sobre la misma paleta de siempre —azul, dorado y azul noche—. Las
+   tarjetas pasaron de sombra a filete fino, que es lo que le da el aire de
+   impreso. Las dos fuentes se sirven desde assets/fonts (licencia SIL OFL),
+   sin pedir nada a Google: el sitio no depende de un tercero para verse bien.
+*/
+
+@font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/fraunces-latin-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/fraunces-latin-ext-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../fonts/inter-latin-ext-wght-normal.woff2') format('woff2-variations');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
-    --azul:        #1e4d8b;
-    --azul-oscuro: #16233a;
-    --dorado:      #c9a227;
-    --crema:       #faf8f4;
+    --azul:         #1e4d8b;
+    --azul-oscuro:  #16233a;
+    --dorado:       #c9a227;
+    --crema:        #faf7f0;
+    --marfil:       #f1ece0;
+    --borde:        #e4dccb;
+    --tinta:        #16233a;
+    --tinta-suave:  #5a6375;
+    --radio:        .75rem;
+    --serif:        'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:         'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    /* Bootstrap toma de aquí la letra, los grises y los filetes de todo. */
+    --bs-body-font-family:   var(--sans);
+    --bs-body-color:         var(--tinta);
+    --bs-body-bg:            var(--crema);
+    --bs-secondary-color:    var(--tinta-suave);
+    --bs-border-color:       var(--borde);
+    --bs-link-color-rgb:     30, 77, 139;
+    --bs-link-hover-color-rgb: 22, 35, 58;
 }
 
 .sitio-publico {
@@ -14,7 +72,9 @@
     flex-direction: column;
     min-height: 100vh;
     background: var(--crema);
-    color: #24303f;
+    color: var(--tinta);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
 }
 
 .salto-contenido {
@@ -28,47 +88,147 @@
 }
 
 .text-dorado { color: var(--dorado) !important; }
+.text-tinta-suave { color: var(--tinta-suave) !important; }
 
-/* ---- Barra de navegación ---- */
+/* ---- Tipografía ----
+   Todo título va en serif salvo los que llevan text-uppercase, que en este
+   sitio son siempre etiquetas pequeñas ("PRÓXIMAS MISAS") y se quedan en sans
+   con más tracking: son el antetítulo de la sección, no un título. Va con
+   :where() para que el ámbito (el contenido y la portada, no el pie oscuro)
+   no sume especificidad y cualquier clase de componente pueda corregirlo. */
 
-.barra-sitio {
-    background: var(--azul-oscuro);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+:where(.sitio-publico main, .portada-editorial) :is(h1, h2, h3, h4, .h1, .h2, .h3, .h4, .h5):not(.text-uppercase) {
+    font-family: var(--serif);
+    font-weight: 500;
+    letter-spacing: -.01em;
+    color: var(--tinta);
 }
 
-.barra-sitio .marca-texto {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.05;
+:where(.sitio-publico main) :is(h1, h2, h3, h4, h5, h6).fw-bold:not(.text-uppercase) {
+    font-weight: 600 !important;
 }
 
-.barra-sitio .marca-linea1 {
-    font-size: .68rem;
-    letter-spacing: .13em;
+:where(.sitio-publico main) :is(h2, h3, h4, h5, h6, p).text-uppercase,
+.antetitulo {
+    font-family: var(--sans);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    color: var(--azul) !important;
+}
+
+.antetitulo {
+    display: block;
     text-transform: uppercase;
-    color: var(--dorado);
+    margin-bottom: .6rem;
 }
 
-.barra-sitio .marca-linea2 {
-    font-size: .98rem;
-    font-weight: 600;
+.titulo-pagina {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 450 !important;
+    letter-spacing: -.015em;
+    line-height: 1.1;
+    color: var(--tinta);
+    text-wrap: balance;
 }
 
-.barra-sitio .nav-link {
-    color: rgba(255, 255, 255, .8);
-    font-size: .95rem;
-    padding-inline: .8rem;
+.titulo-seccion {
+    font-family: var(--serif);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 450;
+    letter-spacing: -.015em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin-bottom: .75rem;
 }
 
-.barra-sitio .nav-link:hover,
-.barra-sitio .nav-link:focus {
-    color: #fff;
+.encabezado-seccion {
+    max-width: 42rem;
+    margin-bottom: 2rem;
 }
 
-.barra-sitio .nav-link.active {
-    color: #fff;
-    font-weight: 600;
-    box-shadow: inset 0 -2px 0 var(--dorado);
+.encabezado-seccion p {
+    color: var(--tinta-suave);
+    line-height: 1.7;
+    margin-bottom: 0;
+}
+
+.enlace-flecha {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .9rem;
+    font-weight: 500;
+    color: var(--azul);
+    text-decoration: none;
+}
+
+.enlace-flecha:hover {
+    color: var(--azul-oscuro);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* ---- Tarjetas, insignias, botones y campos ----
+   Las vistas usan "card border-0 shadow-sm" en todas partes; en lugar de
+   tocar cada una, aquí se cambia lo que significa una tarjeta en el sitio. */
+
+.sitio-publico .card {
+    background: #fff;
+    border: 1px solid var(--borde) !important;
+    border-radius: var(--radio);
+    box-shadow: none !important;
+}
+
+.sitio-publico .card-img-top {
+    border-top-left-radius: calc(var(--radio) - 1px);
+    border-top-right-radius: calc(var(--radio) - 1px);
+}
+
+.tarjeta-aviso,
+.sitio-publico a.card {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.tarjeta-aviso:hover,
+.sitio-publico a.card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(201, 162, 39, .55) !important;
+    box-shadow: 0 6px 20px -10px rgba(22, 35, 58, .25) !important;
+}
+
+.sitio-publico .badge.bg-secondary-subtle {
+    background: var(--marfil) !important;
+    color: var(--tinta-suave) !important;
+    font-weight: 500;
+    border-radius: .5rem;
+}
+
+.sitio-publico .btn {
+    border-radius: .5rem;
+    font-weight: 500;
+}
+
+.sitio-publico .btn-primary {
+    --bs-btn-bg: var(--azul);
+    --bs-btn-border-color: var(--azul);
+    --bs-btn-hover-bg: #18406f;
+    --bs-btn-hover-border-color: #18406f;
+    --bs-btn-active-bg: #143559;
+    --bs-btn-active-border-color: #143559;
+}
+
+.sitio-publico .btn-outline-primary {
+    --bs-btn-color: var(--azul);
+    --bs-btn-border-color: var(--borde);
+    --bs-btn-bg: #fff;
+    --bs-btn-hover-color: var(--tinta);
+    --bs-btn-hover-bg: var(--marfil);
+    --bs-btn-hover-border-color: var(--borde);
+    --bs-btn-active-color: var(--tinta);
+    --bs-btn-active-bg: var(--marfil);
+    --bs-btn-active-border-color: var(--borde);
 }
 
 .btn-dorado {
@@ -82,7 +242,279 @@
 .btn-dorado:focus {
     background: #b8941f;
     border-color: #b8941f;
+    color: var(--azul-oscuro);
+}
+
+.sitio-publico .form-control,
+.sitio-publico .form-select {
+    border-color: var(--borde);
+    background-color: #fff;
+    border-radius: .5rem;
+}
+
+.sitio-publico .form-control:focus,
+.sitio-publico .form-select:focus {
+    border-color: var(--dorado);
+    box-shadow: 0 0 0 .2rem rgba(201, 162, 39, .2);
+}
+
+.sitio-publico .alert-light {
+    background: #fff;
+    border-color: var(--borde) !important;
+    border-radius: var(--radio);
+}
+
+/* ---- Barra de navegación ---- */
+
+.barra-sitio {
+    background: var(--azul-oscuro);
+    min-height: 4rem;
+    transition: box-shadow .2s ease;
+}
+
+.barra-sitio.con-sombra {
+    box-shadow: 0 6px 24px -12px rgba(0, 0, 0, .5);
+}
+
+.barra-sitio .marca-texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.barra-sitio .marca-linea1 {
+    font-size: .66rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--dorado);
+}
+
+.barra-sitio .marca-linea2 {
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    font-weight: 450;
+}
+
+.barra-sitio .nav-link {
+    color: rgba(255, 255, 255, .8);
+    white-space: nowrap;
+    font-size: .9rem;
+    padding: .45rem .75rem !important;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+}
+
+.barra-sitio .nav-link:hover,
+.barra-sitio .nav-link:focus {
     color: #fff;
+    background: rgba(255, 255, 255, .08);
+}
+
+.barra-sitio .nav-link.active {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+}
+
+/* Con nueve secciones más Contacto, la barra completa solo cabe desde 1200 px
+   (navbar-expand-xl); por debajo va el menú plegable. Entre 1200 y 1400 los
+   enlaces se aprietan un poco para no partirse en dos renglones. */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+    .barra-sitio .nav-link { padding: .45rem .5rem !important; font-size: .86rem; }
+}
+
+@media (max-width: 1199.98px) {
+    .barra-sitio .navbar-collapse {
+        border-top: 1px solid rgba(255, 255, 255, .1);
+        margin-top: .5rem;
+        padding: .5rem 0 .75rem;
+    }
+    .barra-sitio .nav-link { padding: .6rem .75rem !important; }
+}
+
+/* ---- Portada editorial ----
+   Ilustración (o foto) apaisada arriba, que se funde con el fondo, y debajo
+   el texto en dos columnas: el lema a la izquierda y el título a la
+   derecha. Es el "Editorial Image Hero" de la propuesta de rediseño. */
+
+.portada-editorial {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sin desvanecido abajo: fundir el suelo oscuro de la ilustración con el
+   marfil dejaba una franja gris sucia, y con la escala de Windows al 125 %
+   la máscara además pintaba una línea en el borde derecho. */
+.portada-imagen {
+    overflow: hidden;
+    background: #141226;   /* el color del suelo, por si la imagen tarda */
+}
+
+.portada-imagen img {
+    display: block;
+    width: 100%;
+    height: auto;   /* los atributos width/height solo reservan el espacio */
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    object-position: center 60%;
+}
+
+@media (min-width: 576px) {
+    .portada-imagen img { aspect-ratio: 9 / 4; max-height: 34rem; }
+}
+
+.portada-texto {
+    padding-top: 2.25rem;
+    padding-bottom: 1rem;
+}
+
+.portada-lema {
+    color: var(--tinta-suave);
+    line-height: 1.6;
+    max-width: 21rem;
+    margin: 0;
+}
+
+.portada-editorial .portada-titulo {
+    font-family: var(--serif);
+    font-weight: 400 !important;
+    font-size: clamp(2rem, 4.4vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin-bottom: 1.25rem;
+}
+
+.portada-descripcion {
+    color: var(--tinta-suave);
+    line-height: 1.7;
+    max-width: 36rem;
+}
+
+.portada-descripcion > :last-child { margin-bottom: 0; }
+
+.portada-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem 1.5rem;
+    margin-top: 1.75rem;
+}
+
+/* Entrada suave, la misma de la propuesta: sube 12 px y se desenfoca menos. */
+@media (prefers-reduced-motion: no-preference) {
+    .aparece {
+        animation: aparece .45s cubic-bezier(.22, 1, .36, 1) both;
+    }
+    .aparece-2 { animation-delay: .08s; }
+    .aparece-3 { animation-delay: .16s; }
+
+    @keyframes aparece {
+        from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+        to   { opacity: 1; transform: none;             filter: none; }
+    }
+}
+
+/* ---- Próximas misas ---- */
+
+.misas-proximas {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1rem;
+}
+
+@media (min-width: 576px) {
+    .misas-proximas { padding: 1.25rem; }
+}
+
+.misas-proximas-cabecera {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .88rem;
+    color: var(--tinta-suave);
+    margin-bottom: .85rem;
+}
+
+.misas-proximas .misas-proximas-titulo {
+    font-family: var(--sans);
+    font-size: .88rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--tinta-suave);
+    margin: 0;
+}
+
+.misas-proximas-lista {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 768px) {
+    .misas-proximas .misas-proximas-titulo {
+    font-family: var(--sans);
+    font-size: .88rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--tinta-suave);
+    margin: 0;
+}
+
+.misas-proximas-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.misa-proxima {
+    background: var(--marfil);
+    border-radius: .6rem;
+    padding: .9rem 1rem;
+}
+
+.misa-proxima .cuando {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--tinta-suave);
+}
+
+.misa-proxima .hora {
+    display: block;
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    line-height: 1.2;
+    margin-top: .15rem;
+}
+
+.misa-proxima .lugar {
+    display: flex;
+    gap: .35rem;
+    align-items: baseline;
+    font-size: .85rem;
+    color: var(--tinta-suave);
+    margin-top: .2rem;
+}
+
+.misa-proxima.primera {
+    background: var(--azul-oscuro);
+    color: #fff;
+}
+
+.misa-proxima.primera .cuando { color: var(--dorado); }
+.misa-proxima.primera .lugar  { color: rgba(255, 255, 255, .75); }
+
+/* ---- Bloques de la portada ---- */
+
+.evangelio-dia .contenido-editorial {
+    font-family: var(--serif);
+    font-size: 1.12rem;
+    line-height: 1.75;
+}
+
+.reflexion-dia {
+    border-left: 3px solid var(--dorado);
+    padding-left: 1.25rem;
 }
 
 /* ---- Carrusel de portada ---- */
@@ -93,66 +525,36 @@
 }
 
 .carrusel-inicio .carousel-caption {
-    background: rgba(22, 35, 58, .55);
-    border-radius: .5rem;
+    background: rgba(22, 35, 58, .6);
+    border-radius: var(--radio);
     padding: 1rem 1.5rem;
     bottom: 2.5rem;
 }
 
-/* ---- Tarjetas de avisos y galería ---- */
-
-.tarjeta-aviso {
-    transition: transform .15s ease, box-shadow .15s ease;
+.carrusel-inicio .carousel-caption h2 {
+    font-family: var(--serif);
+    font-weight: 450 !important;
+    color: #fff;
 }
 
-.tarjeta-aviso:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1) !important;
-}
+/* ---- Galería ---- */
 
 .tarjeta-galeria {
     aspect-ratio: 1 / 1;
     overflow: hidden;
-    border-radius: .5rem;
-    background: #e9ecef;
+    border-radius: var(--radio);
+    background: var(--marfil);
 }
 
 .tarjeta-galeria img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform .2s ease;
+    transition: transform .25s ease;
 }
 
 .tarjeta-galeria:hover img {
-    transform: scale(1.06);
-}
-
-/* ---- Cabecera destacada ---- */
-
-.hero-inicio {
-    background: linear-gradient(160deg, var(--azul-oscuro) 0%, var(--azul) 100%);
-    color: #fff;
-    padding: 4rem 0 3.5rem;
-}
-
-.hero-antetitulo {
-    font-size: .78rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--dorado);
-    margin-bottom: .6rem;
-}
-
-.hero-titulo {
-    font-size: clamp(1.75rem, 4.5vw, 2.9rem);
-    font-weight: 700;
-    margin-bottom: .5rem;
-}
-
-.hero-subtitulo {
-    color: rgba(255, 255, 255, .75);
-    margin-bottom: 0;
+    transform: scale(1.05);
 }
 
 /* ---- Listas con icono ---- */
@@ -160,14 +562,26 @@
 .lista-contacto li,
 .lista-pie li {
     display: flex;
-    gap: .6rem;
-    margin-bottom: .55rem;
+    gap: .75rem;
+    margin-bottom: .7rem;
 }
 
 .lista-contacto li i,
 .lista-pie li i {
     flex-shrink: 0;
-    margin-top: .15rem;
+    margin-top: .1rem;
+}
+
+.lista-contacto li > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-top: -.3rem;
+    border-radius: .5rem;
+    background: rgba(30, 77, 139, .07);
+    color: var(--azul);
 }
 
 .lista-contacto a {
@@ -176,14 +590,16 @@
 }
 
 .lista-contacto a:hover {
+    color: var(--azul);
     text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
 /* ---- Pie ---- */
 
 .pie-sitio {
     background: var(--azul-oscuro);
-    color: rgba(255, 255, 255, .82);
+    color: rgba(255, 255, 255, .72);
 }
 
 .pie-sitio a {
@@ -194,36 +610,48 @@
 .pie-sitio a:hover {
     color: #fff;
     text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.pie-sitio .pie-nombre {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    color: #fff;
+    letter-spacing: -.01em;
+}
+
+.pie-sitio .pie-etiqueta {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .5);
 }
 
 .enlace-red {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.15rem;
-    height: 2.15rem;
+    width: 2.4rem;
+    height: 2.4rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .15);
     font-size: 1.05rem;
+    transition: border-color .15s ease, color .15s ease;
 }
 
-.enlace-red:hover {
-    background: var(--dorado);
-    color: var(--azul-oscuro) !important;
+.pie-sitio a.enlace-red:hover {
+    border-color: var(--dorado);
+    color: var(--dorado);
+    text-decoration: none;
 }
 
 .pie-legal {
-    background: rgba(0, 0, 0, .25);
-    color: rgba(255, 255, 255, .6);
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    color: rgba(255, 255, 255, .5);
 }
 
 /* ---- Páginas de contenido ---- */
-
-.titulo-pagina {
-    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
-    font-weight: 700;
-    color: var(--azul-oscuro);
-}
 
 .contenido-editorial {
     line-height: 1.75;
@@ -232,24 +660,31 @@
 .contenido-editorial > :first-child { margin-top: 0; }
 .contenido-editorial > :last-child  { margin-bottom: 0; }
 
-.contenido-editorial h2 { font-size: 1.4rem;  margin-top: 2rem; }
-.contenido-editorial h3 { font-size: 1.15rem; margin-top: 1.5rem; }
+.contenido-editorial h2 { font-size: 1.5rem;  margin-top: 2rem; }
+.contenido-editorial h3 { font-size: 1.2rem;  margin-top: 1.5rem; }
 
 .contenido-editorial blockquote {
     border-left: 3px solid var(--dorado);
     padding-left: 1rem;
     margin: 1.25rem 0;
-    color: #6c757d;
+    font-family: var(--serif);
+    color: var(--tinta-suave);
 }
 
 .contenido-editorial a {
     color: var(--azul);
 }
 
+.contenido-editorial ul li::marker,
+.contenido-editorial ol li::marker {
+    color: var(--dorado);
+}
+
 .marco-mapa {
-    border: 1px solid rgba(0, 0, 0, .1);
-    border-radius: .5rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
     overflow: hidden;
+    background: var(--marfil);
 }
 
 /* ---- Formulario de contacto ---- */
@@ -264,51 +699,384 @@
 }
 
 .bloque-consentimiento {
-    background: rgba(30, 77, 139, .04);
-    border: 1px solid rgba(30, 77, 139, .12);
-    border-radius: .5rem;
+    background: var(--marfil);
+    border: 1px solid var(--borde);
+    border-radius: .6rem;
     padding: 1rem 1.1rem;
 }
 
-/* ---- Horarios ---- */
+/* ---- Horarios ----
+   Pestañas por día (abre en el de hoy) y, dentro de cada día, una tarjeta
+   por tipo: misas, confesiones y lo demás. Las sedes se eligen con fichas
+   que son enlaces normales (?centro=), así que el filtro funciona aunque no
+   cargue el JavaScript. */
 
-.lista-horarios li {
+.fichas-sede {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: baseline;
     gap: .5rem;
-    padding: .55rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, .06);
 }
 
-.lista-horarios li:last-child {
+.ficha-sede {
+    display: inline-block;
+    border: 1px solid var(--borde);
+    background: var(--crema);
+    color: var(--tinta-suave);
+    border-radius: 999px;
+    padding: .4rem .95rem;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+}
+
+.ficha-sede:hover {
+    color: var(--tinta);
+    border-color: #cfc4ab;
+}
+
+.ficha-sede.activa {
+    background: var(--azul-oscuro);
+    border-color: var(--azul-oscuro);
+    color: #fff;
+}
+
+.pestanas-dias-marco {
+    overflow-x: auto;
+    margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -.5);
+    padding-inline: calc(var(--bs-gutter-x, 1.5rem) * .5);
+    scrollbar-width: none;
+}
+
+.pestanas-dias {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: .15rem;
+    background: var(--marfil);
+    border-radius: .6rem;
+    padding: .25rem;
+}
+
+.pestanas-dias .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    white-space: nowrap;
+    color: var(--tinta-suave);
+    font-size: .9rem;
+    font-weight: 500;
+    border-radius: .45rem;
+    padding: .45rem .85rem;
+}
+
+.pestanas-dias .nav-link:hover {
+    color: var(--tinta);
+}
+
+.pestanas-dias .nav-link.active {
+    background: #fff;
+    color: var(--tinta);
+    box-shadow: 0 1px 3px rgba(22, 35, 58, .12);
+}
+
+.punto-hoy {
+    width: .4rem;
+    height: .4rem;
+    border-radius: 50%;
+    background: var(--dorado);
+}
+
+.grupo-horario {
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.25rem;
+}
+
+.grupo-horario-titulo {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: var(--sans) !important;
+    font-size: .92rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    margin-bottom: .5rem;
+}
+
+.grupo-horario-titulo i { color: var(--azul); }
+
+.grupo-horario-titulo .cuenta {
+    margin-left: auto;
+    font-size: .78rem;
+    font-weight: 400;
+    color: var(--tinta-suave);
+}
+
+.renglon-horario {
+    display: flex;
+    gap: 1rem;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--borde);
+}
+
+.renglon-horario:last-child {
     border-bottom: 0;
     padding-bottom: 0;
 }
 
-.horario-grupo-titulo {
-    font-weight: 600;
-    font-size: .78rem;
-    letter-spacing: .03em;
-    color: var(--azul-oscuro);
-    opacity: .75;
+.renglon-horario .hora {
+    flex-shrink: 0;
+    width: 6.6rem;
+    white-space: nowrap;
+    font-family: var(--serif);
+    font-size: 1.12rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
 }
 
-.lista-horarios .dia {
-    font-weight: 600;
-    text-transform: capitalize;
+.renglon-horario .que {
+    display: block;
+    font-size: .92rem;
+    line-height: 1.35;
 }
 
-.lista-horarios .hora {
-    color: var(--azul);
-    font-weight: 600;
-}
-
-.lista-horarios .detalle {
-    flex-basis: 100%;
+.renglon-horario .donde {
+    display: block;
     font-size: .82rem;
-    color: #6c757d;
+    color: var(--tinta-suave);
+    line-height: 1.4;
+}
+
+.grupo-horario-vacio {
+    color: var(--tinta-suave);
+    font-size: .88rem;
+    margin: .75rem 0 0;
+}
+
+/* ---- Sacramentos ----
+   Renglones grandes, como acordeón cerrado, con la oficina al lado. Cada
+   renglón lleva a la ficha completa del sacramento. */
+
+.lista-sacramentos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--borde);
+}
+
+.lista-sacramentos li {
+    border-bottom: 1px solid var(--borde);
+}
+
+.lista-sacramentos a {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem .25rem;
+    color: var(--tinta);
+    text-decoration: none;
+}
+
+.lista-sacramentos a:hover .nombre {
+    color: var(--azul);
+}
+
+.lista-sacramentos .nombre {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    line-height: 1.2;
+    transition: color .15s ease;
+}
+
+.lista-sacramentos .aportacion {
+    font-size: .78rem;
+    color: var(--tinta-suave);
+    margin-left: .6rem;
+    white-space: nowrap;
+}
+
+.lista-sacramentos .resumen {
+    display: block;
+    margin-top: .3rem;
+    font-size: .9rem;
+    color: var(--tinta-suave);
+    line-height: 1.5;
+}
+
+.lista-sacramentos .bi-chevron-right {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--tinta-suave);
+    transition: transform .15s ease;
+}
+
+.lista-sacramentos a:hover .bi-chevron-right {
+    transform: translateX(3px);
+    color: var(--azul);
+}
+
+.tarjeta-oficina {
+    position: sticky;
+    top: 5.5rem;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.5rem;
+}
+
+.tarjeta-oficina .icono {
+    font-size: 1.5rem;
+    color: var(--dorado);
+}
+
+.tarjeta-oficina h2 {
+    font-size: 1.5rem;
+    margin: .75rem 0 1rem;
+}
+
+.tarjeta-oficina .horario-oficina {
+    font-size: .9rem;
+    line-height: 1.7;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--borde);
+}
+
+/* ---- Pastorales: rejilla tipo "bento" ----
+   Una tarjeta por Comisión con sus pastorales dentro; las que tienen más
+   pastorales ocupan dos columnas. Al pasar el ratón se levanta y toma un filo
+   dorado. El componente original traía además un punteado de fondo de 4 px,
+   que se quitó: con la escala de Windows al 125 % se veía como una
+   cuadrícula de rayas sobre la tarjeta. */
+
+.bento {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: dense;
+}
+
+@media (min-width: 768px) {
+    .bento { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .bento-tarjeta.ancha { grid-column: span 2; }
+}
+
+.bento-tarjeta {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.25rem;
+    overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.bento-tarjeta:hover,
+.bento-tarjeta.destacada {
+    transform: translateY(-2px);
+    border-color: rgba(201, 162, 39, .5);
+    box-shadow: 0 6px 20px -12px rgba(22, 35, 58, .3);
+}
+
+.bento-tarjeta.destacada {
+    background: linear-gradient(135deg, #fff 30%, #fbf5e2 100%);
+}
+
+.bento-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.bento-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .5rem;
+    background: rgba(30, 77, 139, .08);
+    color: var(--azul);
+    font-size: 1.05rem;
+    transition: background .25s ease;
+}
+
+.bento-tarjeta:hover .bento-icono {
+    background: rgba(201, 162, 39, .2);
+}
+
+.bento-cuenta {
+    font-size: .74rem;
+    font-weight: 500;
+    color: var(--tinta-suave);
+    background: var(--marfil);
+    border-radius: .5rem;
+    padding: .2rem .55rem;
+}
+
+.bento-titulo {
+    font-size: 1.25rem !important;
+    margin: 0;
+}
+
+.bento-titulo a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.bento-titulo a:hover {
+    color: var(--azul);
+}
+
+.bento-responsable,
+.bento-descripcion {
+    font-size: .86rem;
+    color: var(--tinta-suave);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.bento-lista {
+    list-style: none;
+    margin: .25rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: .65rem 1.25rem;
+}
+
+@media (min-width: 576px) {
+    .bento-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.bento-lista a {
+    display: block;
+    color: var(--tinta);
+    text-decoration: none;
+    font-size: .92rem;
+    line-height: 1.35;
+}
+
+.bento-lista a:hover .nombre {
+    color: var(--azul);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.bento-lista .detalle {
+    display: block;
+    font-size: .78rem;
+    color: var(--tinta-suave);
+}
+
+.bento-pie {
+    margin-top: auto;
+    padding-top: .5rem;
 }
 
 /* ---- Calendario de eventos ---- */
@@ -601,11 +1369,17 @@
     .mini-dia { font-size: .6rem; line-height: 1.25rem; }
 }
 
+/* Bloque oscuro con el mes arriba y el día en serif. Las vistas le ponen el
+   color del evento en style="border-color", que aquí queda como filete
+   inferior: se sigue distinguiendo de qué pastoral es sin teñir el bloque. */
 .fecha-destacada {
     flex-shrink: 0;
-    width: 56px;
-    height: 56px;
-    border: 2px solid var(--azul);
+    width: 3.5rem;
+    height: 4rem;
+    background: var(--azul-oscuro);
+    color: #fff;
+    border: 0 solid var(--dorado);
+    border-bottom-width: 3px;
     border-radius: .5rem;
     display: flex;
     flex-direction: column;
@@ -615,14 +1389,17 @@
 }
 
 .fecha-destacada .dia {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--azul-oscuro);
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 450;
+    color: #fff;
 }
 
 .fecha-destacada .mes {
-    font-size: .65rem;
-    color: #6c757d;
+    order: -1;
+    font-size: .66rem;
+    letter-spacing: .1em;
+    color: rgba(255, 255, 255, .75);
 }
 
 /* ---- Organigrama ---- */
@@ -861,4 +1638,546 @@ button:focus-visible {
 .lightbox-cerrar:focus-visible,
 .lightbox-nav:focus-visible {
     outline-offset: 3px;
+}
+
+/* ---- Sin JavaScript ----
+   Las pestañas de Horarios necesitan el script de Bootstrap. Si no carga, se
+   esconden los botones y se ven todos los días uno debajo de otro, cada uno
+   con su nombre como título. */
+
+.solo-sin-js { display: none; }
+
+html:not(.js) .solo-sin-js { display: block; }
+html:not(.js) .pestanas-dias-marco { display: none; }
+html:not(.js) .tab-content > .tab-pane { display: block; opacity: 1; margin-bottom: 2rem; }
+
+/* Título de una tarjeta enlazada que no es un encabezado (va dentro de un <a>). */
+.titulo-tarjeta {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    line-height: 1.25;
+    letter-spacing: -.01em;
+    color: var(--tinta);
+}
+
+.min-w-0 { min-width: 0; }
+
+/* ============================================================
+   Portada por franjas (la estructura de la propuesta)
+   ============================================================ */
+
+html {
+    scroll-padding-top: 5rem;   /* la barra fija no tapa el título al saltar a #horarios */
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+}
+
+.solo-con-js { display: none !important; }
+html.js .solo-con-js { display: flex !important; }
+
+.franja {
+    padding: 5rem 0;
+}
+
+@media (min-width: 768px) {
+    .franja { padding: 7rem 0; }
+}
+
+.franja-blanca {
+    background: #fff;
+    border-top: 1px solid var(--borde);
+}
+
+.franja-marfil {
+    background: rgba(241, 236, 224, .5);
+    border-top: 1px solid var(--borde);
+    border-bottom: 1px solid var(--borde);
+}
+
+.franja-blanca .grupo-horario {
+    background: var(--crema);
+}
+
+.renglon-horario[hidden] { display: none; }
+.renglon-horario.ultimo-visible { border-bottom: 0; padding-bottom: 0; }
+
+/* ---- Franjas oscuras: fiesta patronal y quiénes somos ---- */
+
+.franja-noche,
+.franja-fiesta {
+    background: var(--azul-oscuro);
+    color: #fff;
+}
+
+.franja-fiesta {
+    position: relative;
+    overflow: hidden;
+    padding: 4rem 0;
+}
+
+@media (min-width: 768px) {
+    .franja-fiesta { padding: 5rem 0; }
+}
+
+.franja-fiesta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(60rem 30rem at 85% 120%, rgba(201, 162, 39, .35), transparent 60%);
+}
+
+.franja-fiesta .container { position: relative; }
+
+:is(.franja-noche, .franja-fiesta) .antetitulo {
+    color: var(--dorado) !important;
+}
+
+:is(.franja-noche, .franja-fiesta) :is(h2, h3).titulo-seccion {
+    color: #fff;
+}
+
+:is(.franja-noche, .franja-fiesta) .encabezado-seccion p,
+.fiesta-texto {
+    color: rgba(255, 255, 255, .75);
+    line-height: 1.7;
+    max-width: 36rem;
+}
+
+.fiesta-cifra {
+    flex: 1;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, .05);
+    border-radius: var(--radio);
+    padding: 1.25rem;
+    backdrop-filter: blur(4px);
+}
+
+.fiesta-cifra .numero {
+    display: block;
+    font-family: var(--serif);
+    font-size: clamp(3rem, 6vw, 3.75rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.fiesta-cifra .etiqueta {
+    display: block;
+    margin-top: .4rem;
+    font-size: .88rem;
+    color: rgba(255, 255, 255, .7);
+}
+
+.cita-noche {
+    font-family: var(--serif);
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .9);
+}
+
+.cita-noche > :last-child { margin-bottom: 0; }
+
+.franja-noche .etiqueta-noche {
+    margin: 5rem 0 1.5rem;
+    font-family: var(--sans);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .6);
+}
+
+.sedes-noche {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .sedes-noche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.sedes-noche li {
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .05);
+    border-radius: var(--radio);
+    padding: 1.5rem;
+}
+
+.sedes-noche .tipo {
+    display: block;
+    margin-top: 1rem;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .5);
+}
+
+.sedes-noche .nombre {
+    display: block;
+    margin-top: .25rem;
+    font-family: var(--serif);
+    font-size: 1.25rem;
+}
+
+.sedes-noche .zona {
+    display: flex;
+    gap: .4rem;
+    margin-top: .75rem;
+    font-size: .88rem;
+    color: rgba(255, 255, 255, .7);
+}
+
+.enlace-claro {
+    color: rgba(255, 255, 255, .85);
+}
+
+.enlace-claro:hover {
+    color: #fff;
+}
+
+/* ---- Sacramentos en acordeón ---- */
+
+.acordeon-sacramentos {
+    border-top: 1px solid var(--borde);
+}
+
+.sacramento {
+    border-bottom: 1px solid var(--borde);
+}
+
+.sacramento-boton {
+    display: flex;
+    align-items: baseline;
+    gap: .75rem;
+    width: 100%;
+    padding: 1.25rem 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    color: var(--tinta);
+}
+
+.sacramento-boton .nombre {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    line-height: 1.2;
+    transition: color .15s ease;
+}
+
+.sacramento-boton:hover .nombre { color: var(--azul); }
+
+.sacramento-boton .aportacion {
+    font-family: var(--sans);
+    font-size: .78rem;
+    color: var(--tinta-suave);
+    white-space: nowrap;
+}
+
+.sacramento-boton .bi-chevron-down {
+    align-self: center;
+    color: var(--tinta-suave);
+    transition: transform .2s ease;
+}
+
+.sacramento-boton:not(.collapsed) .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.sacramento-cuerpo {
+    padding-bottom: 1.5rem;
+    font-size: .92rem;
+}
+
+.sacramento-resumen {
+    color: var(--tinta-suave);
+    line-height: 1.7;
+    max-width: 65ch;
+    margin-bottom: 1.25rem;
+}
+
+.sacramento-etiqueta {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    margin-bottom: .5rem;
+}
+
+.lista-dorada {
+    line-height: 1.5;
+}
+
+.lista-dorada :is(ul, ol) {
+    padding-left: 1.1rem;
+    margin-bottom: 0;
+}
+
+.lista-dorada li { margin-bottom: .4rem; }
+.lista-dorada li::marker { color: var(--dorado); }
+.lista-dorada > :last-child { margin-bottom: 0; }
+
+html:not(.js) .acordeon-sacramentos .collapse { display: block; }
+
+.oficina-horas {
+    margin: 0;
+    font-size: .9rem;
+}
+
+.oficina-horas > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--borde);
+}
+
+.oficina-horas > div:last-child { border-bottom: 0; }
+.oficina-horas dt { font-weight: 400; color: var(--tinta-suave); }
+.oficina-horas dd { margin: 0; text-align: right; }
+
+/* ---- Bento de la portada ---- */
+
+.bento-meta {
+    margin-left: .5rem;
+    font-family: var(--sans);
+    font-size: .74rem;
+    font-weight: 400;
+    color: var(--tinta-suave);
+    letter-spacing: 0;
+}
+
+.bento-participar {
+    font-size: .8rem;
+    color: var(--azul);
+    text-decoration: none;
+    transition: opacity .2s ease;
+}
+
+.bento-participar:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (min-width: 768px) {
+    .bento-participar { opacity: 0; }
+    .bento-tarjeta:hover .bento-participar,
+    .bento-participar:focus-visible { opacity: 1; }
+}
+
+/* ---- Agenda en rejilla ---- */
+
+.agenda-rejilla {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+    background: var(--borde);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    overflow: hidden;
+}
+
+@media (min-width: 576px) {
+    .agenda-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 992px) {
+    .agenda-rejilla { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.agenda-rejilla li { background: #fff; }
+.agenda-rejilla li.destacado { background: #fbf6e6; }
+
+.agenda-rejilla a {
+    display: flex;
+    gap: 1rem;
+    height: 100%;
+    padding: 1.25rem;
+    color: var(--tinta);
+    text-decoration: none;
+    transition: background .15s ease;
+}
+
+.agenda-rejilla a:hover { background: rgba(201, 162, 39, .06); }
+
+.agenda-rejilla .cuando {
+    display: block;
+    font-size: .78rem;
+    color: var(--tinta-suave);
+}
+
+.agenda-rejilla .titulo {
+    display: block;
+    margin-top: .25rem;
+    line-height: 1.35;
+}
+
+.agenda-rejilla .sede {
+    display: block;
+    margin-top: .4rem;
+    font-size: .78rem;
+    color: var(--tinta-suave);
+}
+
+.fecha-destacada.dorada {
+    background: var(--dorado);
+    border-color: var(--dorado) !important;
+}
+
+.fecha-destacada.dorada .dia,
+.fecha-destacada.dorada .mes {
+    color: var(--azul-oscuro);
+}
+
+/* ---- Bloques del panel (evangelio, cursos, avisos, Facebook) ---- */
+
+.bloque-panel + .bloque-panel {
+    margin-top: 4.5rem;
+    padding-top: 4.5rem;
+    border-top: 1px solid var(--borde);
+}
+
+/* ---- Contacto ---- */
+
+.datos-contacto {
+    list-style: none;
+    margin: 2.5rem 0 0;
+    padding: 0;
+}
+
+.datos-contacto li {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.datos-contacto .icono {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: .5rem;
+    background: rgba(30, 77, 139, .08);
+    color: var(--azul);
+}
+
+.datos-contacto .etiqueta {
+    display: block;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+.datos-contacto a {
+    color: var(--tinta);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.datos-contacto a:hover {
+    color: var(--azul);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.mapa-contacto {
+    height: 100%;
+    min-height: 20rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: var(--marfil);
+}
+
+.mapa-contacto iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 20rem;
+    border: 0;
+}
+
+/* ---- Evangelio del día ----
+   Dos tarjetas, evangelio y reflexión. Plegadas enseñan unas siete líneas
+   que se desvanecen; "Leer completo" las abre. El pliegue solo existe con
+   JavaScript (html.js), que además lo quita si el texto es corto. */
+
+.franja-evangelio {
+    border-top: 1px solid var(--borde);
+    padding-bottom: 4rem;
+}
+
+@media (min-width: 768px) {
+    .franja-evangelio { padding-bottom: 5rem; }
+}
+
+.lectura {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.5rem;
+}
+
+@media (min-width: 576px) {
+    .lectura { padding: 2rem; }
+}
+
+.lectura .lectura-titulo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: 1.35rem;
+    margin-bottom: 1rem;
+}
+
+.lectura-titulo i {
+    color: var(--dorado);
+    font-size: 1.1rem;
+}
+
+.lectura-texto {
+    font-family: var(--serif);
+    font-size: 1.08rem;
+    line-height: 1.75;
+}
+
+html.js .lectura.plegada .lectura-texto {
+    max-height: 13.2rem;   /* unas siete líneas */
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+            mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+.lectura-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: 1rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: .9rem;
+    font-weight: 500;
+    color: var(--azul);
+}
+
+.lectura-boton:hover span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.lectura-boton i {
+    transition: transform .2s ease;
+}
+
+.lectura-boton[aria-expanded="true"] i {
+    transform: rotate(180deg);
 }

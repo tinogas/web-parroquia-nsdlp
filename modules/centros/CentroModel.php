@@ -37,6 +37,45 @@ class CentroModel extends Model
         );
     }
 
+    /** Activos con todos sus datos (dirección incluida), para el sitio público. */
+    public function activosCompletos(): array
+    {
+        return $this->fetchAll(
+            "SELECT * FROM centros WHERE activo = 1
+             ORDER BY FIELD(tipo, 'sede','centro'), orden, nombre"
+        );
+    }
+
+    /**
+     * Nombre corto de cada sede, para las fichas del filtro de horarios y el
+     * lema de la portada: "Villa Bonita", "San Pío", "Jesús el Señor". La sede
+     * parroquial se conoce por su colonia, que es el lugar que más se repite
+     * en sus horarios; un centro, por su nombre hasta el primer " de " ("San
+     * Pío de Pietrelcina" → "San Pío"). Así no hay que capturar un nombre más.
+     *
+     * @return array<int, string> id del centro => nombre corto
+     */
+    public static function nombresCortos(array $centros, array $horarios): array
+    {
+        $cortos = [];
+        foreach ($centros as $centro) {
+            $id = (int) $centro['id'];
+            if ($centro['tipo'] === 'sede') {
+                $lugares = [];
+                foreach ($horarios as $h) {
+                    if ((int) $h['centro_id'] === $id && $h['lugar']) {
+                        $lugares[$h['lugar']] = ($lugares[$h['lugar']] ?? 0) + 1;
+                    }
+                }
+                arsort($lugares);
+                $cortos[$id] = (string) (array_key_first($lugares) ?? $centro['nombre']);
+            } else {
+                $cortos[$id] = explode(' de ', $centro['nombre'], 2)[0];
+            }
+        }
+        return $cortos;
+    }
+
     public function crear(array $datos): int
     {
         $this->execute(

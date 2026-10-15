@@ -155,6 +155,22 @@ class HorarioModel extends Model
     }
 
     /**
+     * Los mismos de vigentesPorTipo(), en una sola lista de domingo a sábado y
+     * de la mañana a la noche: es como los recorre la semana en pestañas de
+     * la portada y de la página de Horarios.
+     */
+    public function vigentesDeLaSemana(): array
+    {
+        $horarios = [];
+        foreach ($this->vigentesPorTipo(null) as $delTipo) {
+            array_push($horarios, ...$delTipo);
+        }
+        usort($horarios, static fn (array $a, array $b): int
+            => [(int) $a['dia_semana'], $a['hora']] <=> [(int) $b['dia_semana'], $b['hora']]);
+        return $horarios;
+    }
+
+    /**
      * Las próximas misas a partir de ahora, para destacar en la portada.
      *
      * El orden por día-de-la-semana-que-se-repite con "si ya pasó hoy, es en

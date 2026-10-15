@@ -27,7 +27,7 @@ $secciones = [
 $moduloActual = $_GET['modulo'] ?? 'inicio';
 ?>
 <header>
-<nav class="navbar navbar-expand-lg navbar-dark barra-sitio sticky-top">
+<nav class="navbar navbar-expand-xl navbar-dark barra-sitio sticky-top">
     <div class="container">
 
         <a class="navbar-brand d-flex align-items-center gap-2" href="<?= e(url_publica('inicio')) ?>">
@@ -49,7 +49,7 @@ $moduloActual = $_GET['modulo'] ?? 'inicio';
         </button>
 
         <div class="collapse navbar-collapse" id="menuSitio">
-            <ul class="navbar-nav ms-auto align-items-lg-center">
+            <ul class="navbar-nav ms-auto align-items-xl-center">
                 <li class="nav-item">
                     <a class="nav-link <?= $moduloActual === 'inicio' ? 'active' : '' ?>"
                        href="<?= e(url_publica('inicio')) ?>">Inicio</a>
@@ -77,7 +77,7 @@ $moduloActual = $_GET['modulo'] ?? 'inicio';
                 <?php endif; ?>
 
                 <?php if (Router::existeRutaPublica('contacto')): ?>
-                <li class="nav-item ms-lg-2">
+                <li class="nav-item ms-xl-2 mt-2 mt-xl-0">
                     <a class="btn btn-sm btn-dorado" href="<?= e(url_publica('contacto')) ?>">
                         <i class="bi bi-geo-alt me-1"></i>Contacto
                     </a>

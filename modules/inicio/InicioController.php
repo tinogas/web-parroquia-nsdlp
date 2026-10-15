@@ -7,26 +7,60 @@ require_once BASE_PATH . '/modules/carrusel/CarruselModel.php';
 require_once BASE_PATH . '/modules/avisos/AvisoModel.php';
 require_once BASE_PATH . '/modules/eventos/EventoModel.php';
 require_once BASE_PATH . '/modules/cursos/CursoModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
+require_once BASE_PATH . '/modules/sacramentos/SacramentoModel.php';
+require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 
 class InicioController extends ControllerPublico
 {
+    /**
+     * La portada sigue, sección por sección, la propuesta de rediseño: la
+     * cabecera editorial con las próximas misas, los horarios de la semana,
+     * la fiesta patronal cuando se acerca, sacramentos, pastorales, la agenda,
+     * quiénes somos y contacto. Antes de los horarios va el evangelio del día
+     * con la reflexión del párroco, y entre la agenda y quiénes somos, lo
+     * demás que publica el panel y la propuesta no tenía: avisos, cursos y
+     * Facebook.
+     *
+     * Las secciones van a todo el ancho, con su propio fondo, así que la
+     * vista no se mete en el contenedor del layout (sinContenedor).
+     */
     public function index(): void
     {
+        $bloques       = (new BloqueModel())->porZona('inicio');
+        $diapositivas  = (new CarruselModel())->activas();
+        $horarios      = (new HorarioModel())->vigentesDeLaSemana();
+        $centros       = (new CentroModel())->activosCompletos();
+        $cortos        = CentroModel::nombresCortos($centros, $horarios);
+        $proximasMisas = $this->conCuando((new HorarioModel())->proximasMisas(3));
+        $eventos       = new EventoModel();
+
         $this->render('inicio/publico/index', [
             'metaTitulo'      => '',
             'metaDescripcion' => Config::get(
                 'meta_descripcion',
                 'Horarios de misas, sacramentos, pastorales y avisos de la Parroquia Nuestra Señora de la Paz.'
             ),
-            'urlCanonica'    => url_publica('inicio'),
-            'hero'           => $this->hero(),
-            'bloques'        => (new BloqueModel())->porZona('inicio'),
-            'evangelioHoy'   => (new EvangelioModel())->deHoy(),
-            'proximasMisas'  => (new HorarioModel())->proximasMisas(3),
-            'avisosRecientes' => (new AvisoModel())->recientes(3),
-            'proximosEventos' => (new EventoModel())->proximos(3),
-            'proximosCursos'  => (new CursoModel())->proximos(3),
-            'jsonLd'          => $this->datosEstructurados(),
+            'urlCanonica'      => url_publica('inicio'),
+            'sinContenedor'    => true,
+            'hero'             => $diapositivas
+                ? $this->heroCarrusel($diapositivas)
+                : $this->heroEditorial($bloques, $centros, $cortos, $proximasMisas),
+            'portadaEditorial' => !$diapositivas,
+            'bloques'          => $bloques,
+            'bloquesNosotros'  => (new BloqueModel())->porZona('nosotros'),
+            'horarios'         => $horarios,
+            'centros'          => $centros,
+            'nombresCortos'    => $cortos,
+            'proximasMisas'    => $proximasMisas,
+            'fiesta'           => $eventos->fiestaPatronalProxima(),
+            'sacramentos'      => (new SacramentoModel())->activos(),
+            'pastorales'       => (new PastoralModel())->activasAgrupadas(),
+            'agenda'           => $eventos->proximos(9),
+            'evangelioHoy'     => (new EvangelioModel())->deHoy(),
+            'avisosRecientes'  => (new AvisoModel())->recientes(3),
+            'proximosCursos'   => (new CursoModel())->proximos(3),
+            'jsonLd'           => $this->datosEstructurados(),
         ]);
     }
 
@@ -86,22 +120,97 @@ class InicioController extends ControllerPublico
         return $datos;
     }
 
-    private function hero(): string
+    /**
+     * A cada misa le pone 'cuando': "En 25 min", "Hoy", "Mañana" o el nombre
+     * del día. proximasMisas() ya las trae en orden a partir de ahora.
+     */
+    private function conCuando(array $misas): array
     {
-        $diapositivas = (new CarruselModel())->activas();
-        return $diapositivas ? $this->heroCarrusel($diapositivas) : $this->heroEstatico();
+        $ahora   = new DateTimeImmutable();
+        $diaHoy  = (int) $ahora->format('w');
+        $minHoy  = (int) $ahora->format('G') * 60 + (int) $ahora->format('i');
+
+        foreach ($misas as &$misa) {
+            [$h, $m]   = array_map('intval', explode(':', $misa['hora']));
+            $diasHasta = ((int) $misa['dia_semana'] - $diaHoy + 7) % 7;
+            $faltan    = $diasHasta * 1440 + $h * 60 + $m - $minHoy;
+            if ($faltan < 0) {
+                $faltan += 7 * 1440;   // Ya pasó hoy: es la de la semana entrante.
+            }
+
+            $misa['cuando'] = match (true) {
+                $faltan < 60                       => 'En ' . max(1, $faltan) . ' min',
+                $faltan < 1440 && $diasHasta === 0 => 'Hoy',
+                $diasHasta === 1                   => 'Mañana',
+                default                            => ucfirst(nombre_dia((int) $misa['dia_semana'])),
+            };
+        }
+        unset($misa);
+
+        return $misas;
     }
 
-    /** Sin diapositivas cargadas, la portada muestra el saludo de siempre. */
-    private function heroEstatico(): string
+    /**
+     * Portada editorial, como en la propuesta: ilustración apaisada que se
+     * funde con el fondo; debajo, el lema a la izquierda y el título, la
+     * presentación y los dos botones a la derecha; al pie, las próximas misas.
+     *
+     * La ilustración es provisional: al cambiar assets/img/portada.svg por una
+     * foto del templo, la portada la toma sin tocar código. La presentación
+     * sale del bloque "Presentación" del panel si se captura; mientras esté
+     * vacío, va el texto de la propuesta.
+     */
+    private function heroEditorial(array $bloques, array $centros, array $cortos, array $proximasMisas): string
     {
+        $numeros = [1 => 'una', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 5 => 'cinco', 6 => 'seis'];
+        $nombres = array_map(static fn (array $c): string => $cortos[(int) $c['id']], $centros);
+        $ultimo  = array_pop($nombres);
+        $sedes   = $nombres ? implode(', ', $nombres) . ' y ' . $ultimo : (string) $ultimo;
+
+        // La parroquia pertenece a la Arquidiócesis de Hermosillo; no hay un
+        // campo de configuración para la arquidiócesis, solo para el decanato.
+        $lema = implode(' · ', array_filter([rtrim(Config::get('parroquia_diocesis'), '. '), 'Arquidiócesis de Hermosillo'])) . '.';
+        if (count($centros) > 1) {
+            $lema .= ' Una parroquia, ' . ($numeros[count($centros)] ?? count($centros)) . ' sedes: ' . $sedes . '.';
+        }
+
+        $presentacion = $bloques['inicio_intro']['contenido'] ?? '';
+
         ob_start(); ?>
-        <section class="hero-inicio">
-            <div class="container text-center">
-                <p class="hero-antetitulo">Bienvenidos</p>
-                <h1 class="hero-titulo"><?= e(Config::get('parroquia_nombre', APP_NAME)) ?></h1>
-                <?php if (Config::tiene('parroquia_diocesis')): ?>
-                <p class="hero-subtitulo"><?= e(Config::get('parroquia_diocesis')) ?></p>
+        <section class="portada-editorial">
+            <div class="portada-imagen aparece">
+                <img src="<?= e(url_activo('assets/img/portada.svg')) ?>"
+                     alt="Ilustración del templo al atardecer, con el Cerro de la Campana al fondo"
+                     width="1800" height="800" decoding="async">
+            </div>
+            <div class="container portada-texto">
+                <div class="row g-4">
+                    <div class="col-lg-4 aparece aparece-2">
+                        <p class="portada-lema"><?= e($lema) ?></p>
+                    </div>
+                    <div class="col-lg-6 offset-lg-2 aparece aparece-3">
+                        <h1 class="portada-titulo">Una comunidad en camino hacia la santidad</h1>
+                        <?php if ($presentacion !== ''): ?>
+                        <?php /* Contenido ya saneado con lista blanca al guardarse. */ ?>
+                        <div class="portada-descripcion contenido-editorial"><?= $presentacion ?></div>
+                        <?php else: ?>
+                        <p class="portada-descripcion">
+                            Bienvenidos, hermanos. Aquí encuentras los horarios de misa y confesiones, lo que
+                            necesitas para cada sacramento y cómo sumarte a alguna de nuestras pastorales.
+                        </p>
+                        <?php endif; ?>
+                        <div class="portada-acciones">
+                            <a href="#horarios" class="btn btn-primary btn-lg px-4 fs-6">Ver horarios de misa</a>
+                            <a href="#sacramentos" class="enlace-flecha">
+                                Requisitos de sacramentos <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <?php if ($proximasMisas): ?>
+                <div class="mt-5 aparece aparece-3">
+                    <?php require BASE_PATH . '/modules/inicio/views/publico/proximas_misas.php'; ?>
+                </div>
                 <?php endif; ?>
             </div>
         </section>

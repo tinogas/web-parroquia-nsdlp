@@ -17,12 +17,17 @@ $redes = array_filter([
         <div class="row g-4">
 
             <div class="col-lg-4">
-                <h2 class="h6 text-uppercase text-dorado mb-3">
-                    <?= e(Config::get('parroquia_nombre', APP_NAME)) ?>
-                </h2>
-                <?php if (Config::tiene('parroquia_diocesis')): ?>
-                <p class="small text-white-50 mb-3"><?= e(Config::get('parroquia_diocesis')) ?></p>
-                <?php endif; ?>
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <?php if (Config::tiene('logo')): ?>
+                    <img src="<?= e(url_activo(Config::get('logo'))) ?>" alt="" height="44" class="flex-shrink-0">
+                    <?php endif; ?>
+                    <div>
+                        <p class="pie-nombre mb-1"><?= e(Config::get('parroquia_nombre', APP_NAME)) ?></p>
+                        <?php if (Config::tiene('parroquia_diocesis')): ?>
+                        <p class="small mb-0"><?= e(Config::get('parroquia_diocesis')) ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
 
                 <?php if ($redes): ?>
                 <div class="d-flex gap-2">
@@ -37,7 +42,7 @@ $redes = array_filter([
             </div>
 
             <div class="col-sm-6 col-lg-4">
-                <h2 class="h6 text-uppercase text-white-50 mb-3">Dónde estamos</h2>
+                <h2 class="pie-etiqueta mb-3">Dónde estamos</h2>
                 <ul class="list-unstyled small mb-0 lista-pie">
                     <?php if (Config::tiene('direccion')): ?>
                     <li>
@@ -69,9 +74,9 @@ $redes = array_filter([
             </div>
 
             <div class="col-sm-6 col-lg-4">
-                <h2 class="h6 text-uppercase text-white-50 mb-3">Oficina parroquial</h2>
+                <h2 class="pie-etiqueta mb-3">Oficina parroquial</h2>
                 <?php if (Config::tiene('horario_oficina')): ?>
-                <p class="small mb-0"><?= nl2br(e(Config::get('horario_oficina'))) ?></p>
+                <p class="small mb-0 lh-lg"><?= nl2br(e(Config::get('horario_oficina'))) ?></p>
                 <?php else: ?>
                 <p class="small text-white-50 fst-italic mb-0">Horario pendiente de capturar.</p>
                 <?php endif; ?>
