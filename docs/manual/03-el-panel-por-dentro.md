@@ -1,7 +1,10 @@
 # 3. El panel por dentro
 
 Todas las pantallas del panel están armadas igual: una barra arriba, un menú a
-la izquierda y el trabajo en medio. Este capítulo explica esas tres partes y,
+la izquierda y el trabajo en medio. Las dos barras van en el mismo azul noche
+del sitio público, y el trabajo sobre un fondo marfil claro, en tarjetas
+blancas con un borde fino. En el menú lateral, la sección en la que estás se
+marca con un filo dorado a la izquierda y su icono en dorado. Este capítulo explica esas tres partes y,
 al final, cómo funciona cualquier listado y cualquier formulario, que es lo que
 se repite en los veintitantos módulos que vienen después.
 
@@ -113,20 +116,22 @@ Casi todos los módulos abren con una tabla, y todas las tablas funcionan igual:
 - **Arriba a la derecha, el botón azul** para dar de alta algo nuevo —«Nuevo
   aviso», «Nuevo evento»—. Si no lo ves, tu cuenta puede consultar pero no
   crear.
-- **Los filtros**, en una fila de botones: *Todos*, *Borradores*, *De la
-  pastoral*, *En la página*. Se combinan con el selector de **Pastoral** de la
+- **Los filtros**, en una tira de botones sobre fondo marfil: *Todos*,
+  *Borradores*, *De la pastoral*, *En la página*. El elegido se ve en blanco,
+  como una pestaña; en el celular, si no caben, la tira se recorre de lado. Se combinan con el selector de **Pastoral** de la
   derecha, así que «solo las mías, en borrador» es una consulta normal.
 - **La tabla**, con lo más importante en las primeras columnas. En una pantalla
   angosta o en un celular, las columnas menos importantes se esconden solas; no
   se pierde nada, se ven al entrar al registro.
-- **Las insignias de estado**, que dicen de un vistazo en qué escalón va cada
-  cosa: *De la pastoral* cuando se publicó solo hacia dentro, *En la página*
+- **Las insignias de estado**, pequeñas etiquetas de color suave que dicen de
+  un vistazo en qué escalón va cada cosa: *De la pastoral* cuando se publicó solo hacia dentro, *En la página*
   cuando ya se ve en el sitio, y nada de eso cuando sigue en borrador. A veces
   se les suma *Destacado* o *Vencido* —esta última, cuando ya pasó su fecha de
   «visible hasta» y por eso dejó de mostrarse—.
-- **Los botones de cada renglón**, a la derecha: el ojo para leer, la flecha
-  para abrirlo en el sitio —solo si ya está publicado—, el lápiz para editar y
-  el bote de basura para borrar. Aparecen según lo que tu cuenta pueda hacer.
+- **Los botones de cada renglón**, a la derecha, como iconos sin recuadro que
+  se resaltan al pasar el ratón: el ojo para leer, la flecha para abrirlo en el
+  sitio —solo si ya está publicado—, el lápiz para editar y el bote de basura,
+  en rojo, para borrar. Aparecen según lo que tu cuenta pueda hacer.
 - **La paginación**, abajo, cuando hay más de una página.
 
 ## Cómo funciona cualquier formulario

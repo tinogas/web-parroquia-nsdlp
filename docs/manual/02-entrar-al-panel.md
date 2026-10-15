@@ -22,7 +22,8 @@ sin volver a preguntarte nada.
 
 ![Pantalla de acceso](img/acceso-login.webp)
 
-Pide dos cosas:
+Una caja blanca sobre la misma ilustración del templo al atardecer que abre la
+portada del sitio. Pide dos cosas:
 
 - **Correo electrónico.** El de tu cuenta del panel, que es el que te dieron al
   darte de alta. Suele ser tu correo de la parroquia
@@ -91,13 +92,14 @@ Está siempre, en todas las pantallas del panel, y tiene cinco cosas:
 
 1. **El botón de las tres rayas**, que esconde y muestra el menú lateral. Útil
    en pantallas chicas o cuando quieres ver una tabla ancha completa.
-2. **El nombre de la parroquia**, que regresa a tu pantalla de inicio desde
-   donde estés.
+2. **El escudo y el nombre de la parroquia**, con la palabra *Panel* encima en
+   dorado, que regresan a tu pantalla de inicio desde donde estés. En el
+   celular queda solo el escudo con *Panel*.
 3. **Ver el sitio**, que abre la página pública en una pestaña nueva. Es la
    forma de comprobar cómo quedó lo que acabas de publicar sin perder lo que
    estás haciendo.
 4. **La campana**, con lo que tienes sin leer. Se explica en el capítulo 3.
-5. **Tu nombre y tu foto**, que despliegan tu menú.
+5. **Tu nombre y tu foto**, en un botón redondeado, que despliegan tu menú.
 
 ## Tu menú
 

@@ -149,6 +149,18 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   de teléfono del panel y del sitio piden diez dígitos —escritos como se quiera— o el
   número de otro país con su `+` delante, y lo explican debajo del campo. Ninguno de los
   teléfonos ya guardados quedó fuera de la regla.
+- **El sitio y el panel cambiaron de diseño.** Se probó primero como propuesta aparte, en
+  React, y se trasladó a las plantillas PHP sin tocar el panel ni la base. El sitio
+  conserva la paleta —azul, dorado y azul noche— sobre fondo marfil, con títulos en
+  Fraunces y texto en Inter, servidas desde `assets/fonts`. La portada pasó a franjas:
+  cabecera con ilustración y las próximas misas, evangelio y reflexión en dos columnas
+  plegables, la semana de horarios en pestañas con filtro por sede —la misma sección que
+  la página de Horarios—, la fiesta patronal con cuenta regresiva cuando se publica,
+  sacramentos en acordeón, pastorales por comisión, agenda, quiénes somos y contacto. El
+  panel tomó la misma identidad sin mover un solo botón: barras en azul noche, tarjetas
+  con filete, iconos discretos en las tablas y filtros segmentados. De paso, las hojas de
+  estilo se versionan por la fecha del archivo (`url_activo_versionado()`), porque con
+  solo `APP_VERSION` el navegador se quedaba con estilos viejos sobre páginas nuevas.
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y
@@ -164,7 +176,7 @@ calificaciones sobre el catálogo de cursos) sigue fuera de este alcance. Ver
 | Acceso a datos | PDO con sentencias preparadas |
 | Framework | Ninguno — arquitectura MVC propia |
 | Dependencias PHP | Ninguna. Sin Composer, sin `vendor/` |
-| Frontend | Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 por CDN, JavaScript vanilla. Leaflet 1.9.4 y OpenStreetMap solo en el mapa de MESC |
+| Frontend | Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 por CDN, JavaScript vanilla. Fuentes Fraunces e Inter servidas desde `assets/fonts` (SIL OFL). Leaflet 1.9.4 y OpenStreetMap solo en el mapa de MESC |
 | Servidor | Apache con `mod_rewrite` (XAMPP en local, cPanel en producción) |
 
 La decisión de no usar framework ni dependencias es deliberada: el sitio debe poder

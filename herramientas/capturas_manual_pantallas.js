@@ -60,7 +60,7 @@ const TAPAR_INICIO = [[NOMBRES_CUMPLEANEROS, EJEMPLOS_NOMBRES]];
 const FOTOS_INICIO = ['.card .d-flex.flex-wrap.gap-3 img'];
 
 /** El nombre de quien tiene la sesión abierta, arriba a la derecha. */
-const NOMBRE_EN_LA_BARRA = '.navbar .btn-outline-light span';
+const NOMBRE_EN_LA_BARRA = '.navbar .boton-usuario span';
 
 /** El «Hola, Fulano» con el que abre la pantalla de inicio. */
 const SALUDO_DEL_PANEL = 'h1.h4.fw-bold';
@@ -104,7 +104,7 @@ const PASSWORD_PERFILES = process.env.MANUAL_PASSWORD_PERFILES
  * siguientes no salgan con la sesión prestada.
  */
 const usarComo = (usuarioId) => async (page) => {
-    await page.click('.navbar .btn-outline-light.dropdown-toggle');
+    await page.click('.navbar .boton-usuario.dropdown-toggle');
     await page.waitForSelector('.dropdown-menu.show');
     await page.click('[data-bs-target="#modalUsarComo"]');
     await page.waitForSelector('#modalUsarComo.show');
@@ -152,6 +152,14 @@ module.exports = [
         // en localhost el iframe queda en blanco.
         sustituir: [['iframe[title="Publicaciones recientes en Facebook"]',
             'Aquí aparecen las últimas publicaciones de la página de Facebook de la parroquia.']],
+    },
+    {
+        id: 'publico-inicio-horarios',
+        titulo: 'Los horarios de la semana en la portada',
+        url: '/',
+        sesion: 'publico',
+        espera: '#horarios',
+        recorte: '#horarios',
     },
     {
         id: 'publico-menu',
@@ -304,7 +312,7 @@ module.exports = [
         titulo: 'El modal para cambiar de perfil sin cerrar sesión',
         url: '/admin/panel',
         sesion: 'publico',
-        espera: '.navbar .btn-outline-light',
+        espera: '.navbar .boton-usuario',
         tapar: TAPAR_INICIO.concat([
             [NOMBRE_EN_LA_BARRA, EJEMPLOS_NOMBRES[0]],
             [SALUDO_DEL_PANEL,   'Hola, ' + EJEMPLOS_NOMBRES[0]],
@@ -313,7 +321,7 @@ module.exports = [
         // El modal se dibuja fuera de la barra, así que la captura es de la
         // ventana entera y no un recorte —igual que acceso-menu-usuario—.
         antes: async (page) => {
-            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.click('.navbar .boton-usuario.dropdown-toggle');
             await page.waitForSelector('.dropdown-menu.show');
             await page.click('[data-bs-target="#modalCambiarPerfil"]');
             await page.waitForSelector('#modalCambiarPerfil.show');
@@ -364,13 +372,13 @@ module.exports = [
         id: 'acceso-menu-usuario',
         titulo: 'El menú de tu nombre, desplegado',
         url: '/admin/panel',
-        espera: '.navbar .btn-outline-light',
+        espera: '.navbar .boton-usuario',
         tapar: TAPAR_INICIO,
         fotos: FOTOS_INICIO,
         // El desplegable se dibuja fuera de la barra, así que la captura es de
         // la ventana entera y no un recorte.
         antes: async (page) => {
-            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.click('.navbar .boton-usuario.dropdown-toggle');
             await page.waitForSelector('.dropdown-menu.show');
         },
     },
@@ -803,12 +811,12 @@ module.exports = [
         id: 'roles-usar-como',
         titulo: 'Usar como…',
         url: '/admin/panel',
-        espera: '.navbar .btn-outline-light',
+        espera: '.navbar .boton-usuario',
         // La tarjeta de cumpleaños se ve de fondo, tras el modal.
         tapar: TAPAR_INICIO,
         fotos: FOTOS_INICIO,
         antes: async (page) => {
-            await page.click('.navbar .btn-outline-light.dropdown-toggle');
+            await page.click('.navbar .boton-usuario.dropdown-toggle');
             await page.waitForSelector('.dropdown-menu.show');
             await page.click('[data-bs-target="#modalUsarComo"]');
             await page.waitForSelector('#modalUsarComo.show');

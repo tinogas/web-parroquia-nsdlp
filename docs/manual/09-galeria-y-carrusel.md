@@ -55,8 +55,9 @@ quien sube las fotos declara que ese permiso existe.
 ![Las diapositivas de la portada](img/carrusel-lista.webp)
 
 Son las imágenes grandes del encabezado de la portada. Si no hay ninguna
-visible, la portada dibuja en su lugar el nombre de la parroquia sobre el fondo
-azul —que es lo que se ve hoy—; en cuanto hay una, empiezan a pasar solas.
+visible, la portada dibuja en su lugar la ilustración del templo al atardecer
+con el lema y la presentación —que es lo que se ve hoy—; en cuanto hay una,
+empiezan a pasar solas, y las próximas misas bajan justo debajo del carrusel.
 
 Cada diapositiva lleva:
 

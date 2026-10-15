@@ -44,7 +44,11 @@ Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
 - **Comisión padre.** Con qué comisión se agrupa. Vacío, la pastoral queda
   suelta.
 - **Descripción breve**, la línea de la tarjeta del listado público, y el
-  **contenido**, el texto largo de su página.
+  **contenido**, el texto largo de su página. En una comisión, la descripción
+  breve es la que sale en su tarjeta de la portada; si se deja vacía, la
+  portada pone un texto propio para las comisiones de siempre.
+- **Reunión: Día y Hora.** Salen junto al nombre de la pastoral en las
+  tarjetas de la portada y del listado público.
 
 ### Quién la lleva y cómo se le escribe
 

@@ -11,9 +11,16 @@ en el sitio, pero cada uno para una cosa distinta:
 
 ![Los textos del sitio](img/bloques-lista.webp)
 
-Son los textos sueltos que el sitio tiene repartidos: la bienvenida del párroco
-en la portada, la historia de la parroquia, la misión, la visión, las ligas de
+Son los textos sueltos que el sitio tiene repartidos: la presentación de la
+portada, la historia de la parroquia, la misión, la visión, las ligas de
 interés, la introducción de la página de sacramentos.
+
+Dos de la portada cambiaron con el rediseño del sitio:
+
+- **Presentación** es el texto que va debajo del lema, en la cabecera de la
+  portada. Mientras esté vacío, sale un texto de bienvenida fijo.
+- **Bienvenida** ya no se muestra en ninguna parte. Si se quiere un saludo del
+  párroco en la portada, se escribe en **Presentación**.
 
 **Aquí no se crean ni se borran**: la lista viene dada, porque cada uno tiene
 su hueco reservado en una página concreta. Lo que se hace es **editarlos**. Al
@@ -50,8 +57,11 @@ reglamento, la convocatoria de una peregrinación. Cada página tiene:
 ![El evangelio del día](img/evangelio-lista.webp)
 
 La lectura del día y, si da tiempo, la reflexión del párroco. Cuando hay una
-entrada publicada para hoy, aparece en la portada; si no, la portada
-sencillamente no dibuja esa sección.
+entrada publicada para hoy, aparece en la portada, justo antes de los horarios,
+en dos columnas: el evangelio a la izquierda y la reflexión a la derecha. Si los
+textos son largos, cada columna enseña sus primeras líneas y un botón **Leer
+completo**. Si no hay entrada para hoy, la portada sencillamente no dibuja esa
+sección.
 
 Cada entrada tiene:
 
@@ -59,7 +69,8 @@ Cada entrada tiene:
   actualiza en vez de crear otra**, así que no hay manera de acabar con dos
   evangelios del mismo día.
 - **Evangelio.** La cita y el texto. No hace falta escribir «EVANGELIO» arriba:
-  la portada pone esa etiqueta sola.
+  la portada pone esa etiqueta sola. Lo mismo con la reflexión: escribir
+  «REFLEXIÓN:» al principio hace que se lea dos veces.
 - **Reflexión.** Opcional, y a propósito: hay días en que no da tiempo de
   escribirla, y el evangelio debe poder salir igual.
 - **Publicado.** Mientras esté apagado, no aparece en el sitio. Es lo que

@@ -18,12 +18,13 @@ posada— no es un horario, es un evento (capítulo 6).
 ![El formulario de un horario](img/horarios-form.webp)
 
 - **Tipo.** *Misa*, *Confesión*, *Adoración eucarística*, *Oficina parroquial*
-  u *Otro*. En la página pública los horarios se agrupan por este campo, con
-  las misas arriba.
-- **Día de la semana.**
-- **Sede o centro.** En cuál de los templos. El sitio los agrupa también por
-  esto, y es lo que hace funcionar el filtro «Ver horarios de» de la página
-  pública.
+  u *Otro*. En el sitio, cada día tiene tres tarjetas según este campo:
+  *Misas*, *Confesiones* y *Oración y grupos*, donde caen los demás tipos.
+- **Día de la semana.** Es la pestaña del sitio en la que aparece.
+- **Sede o centro.** En cuál de los templos. Es lo que hace funcionar las
+  fichas de sede —*Villa Bonita*, *San Pío*, *Jesús el Señor*— de la portada y
+  de la página de horarios. Un horario sin sede sale con su **Lugar**, o como
+  «En las comunidades», y solo con la ficha *Todas las sedes*.
 - **Hora** y **Hora de término.** La segunda es opcional; se usa para lo que
   dura un rato, como la adoración o la oficina.
 - **Lugar** y **Nota**, los dos en texto libre: «capilla del Santísimo»,
@@ -78,6 +79,9 @@ El catálogo de los lugares de la parroquia. Cada uno tiene:
 Es pequeño —tres o cuatro renglones— pero lo usa medio sistema:
 
 - **Los horarios** se agrupan por sede, y el sitio permite filtrar por ella.
+  El nombre corto de cada ficha sale solo: la sede parroquial se conoce por el
+  lugar que más se repite en sus horarios (*Villa Bonita*), y cada centro, por
+  su nombre hasta el primer «de» (*San Pío de Pietrelcina* → *San Pío*).
 - **Los eventos y los cursos** guardan en qué sede ocurren.
 - **Las cuentas de usuario** se acotan por sede: es la mitad del alcance que
   explica el capítulo 4, y es lo que distingue a las tres coordinadoras de
