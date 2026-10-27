@@ -10,7 +10,6 @@ $whatsapp = Config::get('whatsapp');
 <div class="row g-4 g-lg-5">
     <div class="col-lg-7">
         <div class="encabezado-seccion">
-            <span class="antetitulo">Sacramentos</span>
             <h1 class="titulo-pagina mb-3">Lo que necesitas para cada sacramento</h1>
             <?php if (!empty($bloques['sacramentos_intro']['contenido'])): ?>
             <div class="contenido-editorial text-tinta-suave">
@@ -46,7 +45,6 @@ $whatsapp = Config::get('whatsapp');
 
     <aside class="col-lg-4 offset-lg-1">
         <div class="tarjeta-oficina">
-            <i class="bi bi-file-earmark-text icono" aria-hidden="true"></i>
             <h2>Oficina parroquial</h2>
             <?php if (Config::tiene('horario_oficina')): ?>
             <p class="horario-oficina"><?= nl2br(e(Config::get('horario_oficina'))) ?></p>

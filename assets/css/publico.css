@@ -3,9 +3,11 @@
    ============================================================
    Diseño editorial: fondo marfil, títulos en serif (Fraunces) y texto en
    Inter, sobre la misma paleta de siempre —azul, dorado y azul noche—. Las
-   tarjetas pasaron de sombra a filete fino, que es lo que le da el aire de
-   impreso. Las dos fuentes se sirven desde assets/fonts (licencia SIL OFL),
-   sin pedir nada a Google: el sitio no depende de un tercero para verse bien.
+   superficies se separan por un paso de tono (blanco sobre marfil, marfil
+   sobre blanco), sin filetes ni sombras: solo lleva sombra lo que de verdad
+   flota, como la barra fija o el lightbox. Las dos fuentes se sirven desde
+   assets/fonts (licencia SIL OFL), sin pedir nada a Google: el sitio no
+   depende de un tercero para verse bien.
 */
 
 @font-face {
@@ -57,6 +59,16 @@
     --serif:        'Fraunces', Georgia, 'Times New Roman', serif;
     --sans:         'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+    /* La escala de letra: seis pasos y nada en medio. Antes había quince
+       tamaños sueltos (de 11 a 50 px) y la portada no tenía jerarquía; ningún
+       texto que se lea baja de la nota, 14 px. */
+    --fs-portada:   clamp(2rem, 5vw, 4.5rem);
+    --fs-titulo:    clamp(1.75rem, 3.2vw, 2.5rem);
+    --fs-subtitulo: 1.375rem;
+    --fs-entrada:   1.125rem;
+    --fs-cuerpo:    1rem;
+    --fs-nota:      .875rem;
+
     /* Bootstrap toma de aquí la letra, los grises y los filetes de todo. */
     --bs-body-font-family:   var(--sans);
     --bs-body-color:         var(--tinta);
@@ -70,7 +82,7 @@
 .sitio-publico {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100svh;
     background: var(--crema);
     color: var(--tinta);
     font-family: var(--sans);
@@ -91,11 +103,12 @@
 .text-tinta-suave { color: var(--tinta-suave) !important; }
 
 /* ---- Tipografía ----
-   Todo título va en serif salvo los que llevan text-uppercase, que en este
-   sitio son siempre etiquetas pequeñas ("PRÓXIMAS MISAS") y se quedan en sans
-   con más tracking: son el antetítulo de la sección, no un título. Va con
-   :where() para que el ámbito (el contenido y la portada, no el pie oscuro)
-   no sume especificidad y cualquier clase de componente pueda corregirlo. */
+   Todo título va en serif salvo los que llevan text-uppercase, que en las
+   páginas interiores siguen siendo etiquetas pequeñas ("FICHA") y se quedan
+   en sans. En la portada ya no hay antetítulos: lo que decía la etiqueta
+   sobre cada título lo dice ahora el título mismo. Va con :where() para que
+   el ámbito (el contenido y la portada, no el pie oscuro) no sume
+   especificidad y cualquier clase de componente pueda corregirlo. */
 
 :where(.sitio-publico main, .portada-editorial) :is(h1, h2, h3, h4, .h1, .h2, .h3, .h4, .h5):not(.text-uppercase) {
     font-family: var(--serif);
@@ -108,24 +121,17 @@
     font-weight: 600 !important;
 }
 
-:where(.sitio-publico main) :is(h2, h3, h4, h5, h6, p).text-uppercase,
-.antetitulo {
+:where(.sitio-publico main) :is(h2, h3, h4, h5, h6, p).text-uppercase {
     font-family: var(--sans);
-    font-size: .74rem;
+    font-size: var(--fs-nota);
     font-weight: 600;
-    letter-spacing: .18em;
+    letter-spacing: .08em;
     color: var(--azul) !important;
-}
-
-.antetitulo {
-    display: block;
-    text-transform: uppercase;
-    margin-bottom: .6rem;
 }
 
 .titulo-pagina {
     font-family: var(--serif);
-    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-size: var(--fs-titulo);
     font-weight: 450 !important;
     letter-spacing: -.015em;
     line-height: 1.1;
@@ -135,22 +141,22 @@
 
 .titulo-seccion {
     font-family: var(--serif);
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-size: var(--fs-titulo);
     font-weight: 450;
-    letter-spacing: -.015em;
-    line-height: 1.15;
+    letter-spacing: -.02em;
+    line-height: 1.1;
     text-wrap: balance;
-    margin-bottom: .75rem;
+    margin-bottom: 1rem;
 }
 
 .encabezado-seccion {
     max-width: 42rem;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .encabezado-seccion p {
-    color: var(--tinta-suave);
-    line-height: 1.7;
+    font-size: var(--fs-entrada);
+    line-height: 1.6;
     margin-bottom: 0;
 }
 
@@ -158,7 +164,7 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    font-size: .9rem;
+    font-size: var(--fs-cuerpo);
     font-weight: 500;
     color: var(--azul);
     text-decoration: none;
@@ -172,38 +178,47 @@
 
 /* ---- Tarjetas, insignias, botones y campos ----
    Las vistas usan "card border-0 shadow-sm" en todas partes; en lugar de
-   tocar cada una, aquí se cambia lo que significa una tarjeta en el sitio. */
+   tocar cada una, aquí se cambia lo que significa una tarjeta en el sitio:
+   una superficie blanca sobre el marfil, sin filete ni sombra. Sobre una
+   franja blanca se invierte y la tarjeta va en marfil. */
 
 .sitio-publico .card {
     background: #fff;
-    border: 1px solid var(--borde) !important;
+    border: 0 !important;
     border-radius: var(--radio);
     box-shadow: none !important;
 }
 
+.franja-blanca .card { background: var(--crema); }
+
 .sitio-publico .card-img-top {
-    border-top-left-radius: calc(var(--radio) - 1px);
-    border-top-right-radius: calc(var(--radio) - 1px);
+    border-top-left-radius: var(--radio);
+    border-top-right-radius: var(--radio);
 }
 
 .tarjeta-aviso,
 .sitio-publico a.card {
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    transition: transform .2s ease, background-color .2s ease;
 }
 
 .tarjeta-aviso:hover,
 .sitio-publico a.card:hover {
     transform: translateY(-2px);
-    border-color: rgba(201, 162, 39, .55) !important;
-    box-shadow: 0 6px 20px -10px rgba(22, 35, 58, .25) !important;
+    background: var(--marfil);
+}
+
+.sitio-publico .badge {
+    font-size: var(--fs-nota);
+    font-weight: 500;
 }
 
 .sitio-publico .badge.bg-secondary-subtle {
     background: var(--marfil) !important;
     color: var(--tinta-suave) !important;
-    font-weight: 500;
     border-radius: .5rem;
 }
+
+.franja-blanca .badge.bg-secondary-subtle { background: #fff !important; }
 
 .sitio-publico .btn {
     border-radius: .5rem;
@@ -219,16 +234,17 @@
     --bs-btn-active-border-color: #143559;
 }
 
+/* El botón secundario es una superficie en marfil, no un contorno. */
 .sitio-publico .btn-outline-primary {
     --bs-btn-color: var(--azul);
-    --bs-btn-border-color: var(--borde);
-    --bs-btn-bg: #fff;
+    --bs-btn-border-color: var(--marfil);
+    --bs-btn-bg: var(--marfil);
     --bs-btn-hover-color: var(--tinta);
-    --bs-btn-hover-bg: var(--marfil);
-    --bs-btn-hover-border-color: var(--borde);
+    --bs-btn-hover-bg: #e8e0cd;
+    --bs-btn-hover-border-color: #e8e0cd;
     --bs-btn-active-color: var(--tinta);
-    --bs-btn-active-bg: var(--marfil);
-    --bs-btn-active-border-color: var(--borde);
+    --bs-btn-active-bg: #e8e0cd;
+    --bs-btn-active-border-color: #e8e0cd;
 }
 
 .btn-dorado {
@@ -260,7 +276,7 @@
 
 .sitio-publico .alert-light {
     background: #fff;
-    border-color: var(--borde) !important;
+    border: 0 !important;
     border-radius: var(--radio);
 }
 
@@ -283,22 +299,20 @@
 }
 
 .barra-sitio .marca-linea1 {
-    font-size: .66rem;
-    letter-spacing: .18em;
-    text-transform: uppercase;
+    font-size: var(--fs-nota);
     color: var(--dorado);
 }
 
 .barra-sitio .marca-linea2 {
     font-family: var(--serif);
-    font-size: 1.02rem;
+    font-size: var(--fs-cuerpo);
     font-weight: 450;
 }
 
 .barra-sitio .nav-link {
     color: rgba(255, 255, 255, .8);
     white-space: nowrap;
-    font-size: .9rem;
+    font-size: var(--fs-nota);
     padding: .45rem .75rem !important;
     border-radius: .4rem;
     transition: background .15s ease, color .15s ease;
@@ -319,12 +333,11 @@
    (navbar-expand-xl); por debajo va el menú plegable. Entre 1200 y 1400 los
    enlaces se aprietan un poco para no partirse en dos renglones. */
 @media (min-width: 1200px) and (max-width: 1399.98px) {
-    .barra-sitio .nav-link { padding: .45rem .5rem !important; font-size: .86rem; }
+    .barra-sitio .nav-link { padding: .45rem .5rem !important; }
 }
 
 @media (max-width: 1199.98px) {
     .barra-sitio .navbar-collapse {
-        border-top: 1px solid rgba(255, 255, 255, .1);
         margin-top: .5rem;
         padding: .5rem 0 .75rem;
     }
@@ -332,9 +345,10 @@
 }
 
 /* ---- Portada editorial ----
-   Ilustración (o foto) apaisada arriba, que se funde con el fondo, y debajo
-   el texto en dos columnas: el lema a la izquierda y el título a la
-   derecha. Es el "Editorial Image Hero" de la propuesta de rediseño. */
+   Ilustración (o foto) apaisada arriba y, debajo, el título a todo el ancho
+   y en grande —en dos renglones como mucho, a cualquier ancho—; después,
+   en dos columnas, el lema a la izquierda y la bienvenida a la derecha. Es
+   el "Editorial Image Hero" de la propuesta de rediseño. */
 
 .portada-editorial {
     position: relative;
@@ -363,30 +377,34 @@
 }
 
 .portada-texto {
-    padding-top: 2.25rem;
+    padding-top: 2.5rem;
     padding-bottom: 1rem;
 }
 
+@media (min-width: 992px) {
+    .portada-texto { padding-top: 3.5rem; }
+}
+
 .portada-lema {
-    color: var(--tinta-suave);
+    font-size: var(--fs-entrada);
     line-height: 1.6;
-    max-width: 21rem;
+    max-width: 24rem;
     margin: 0;
 }
 
 .portada-editorial .portada-titulo {
     font-family: var(--serif);
     font-weight: 400 !important;
-    font-size: clamp(2rem, 4.4vw, 3.1rem);
-    line-height: 1.08;
-    letter-spacing: -.02em;
+    font-size: var(--fs-portada);
+    line-height: 1.02;
+    letter-spacing: -.03em;
     text-wrap: balance;
-    margin-bottom: 1.25rem;
+    margin-bottom: 2rem;
 }
 
 .portada-descripcion {
-    color: var(--tinta-suave);
-    line-height: 1.7;
+    font-size: var(--fs-entrada);
+    line-height: 1.6;
     max-width: 36rem;
 }
 
@@ -418,7 +436,6 @@
 
 .misas-proximas {
     background: #fff;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
     padding: 1rem;
 }
@@ -427,22 +444,18 @@
     .misas-proximas { padding: 1.25rem; }
 }
 
-.misas-proximas-cabecera {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    font-size: .88rem;
-    color: var(--tinta-suave);
-    margin-bottom: .85rem;
+/* El título del recuadro es un título de verdad, en serif, y no una
+   etiqueta chica sobre las horas. La zona horaria va al pie, como nota. */
+.misas-proximas .misas-proximas-titulo {
+    font-size: var(--fs-subtitulo);
+    margin: 0 0 1rem;
 }
 
-.misas-proximas .misas-proximas-titulo {
-    font-family: var(--sans);
-    font-size: .88rem;
-    font-weight: 400;
-    letter-spacing: 0;
+.misas-proximas-nota {
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
-    margin: 0;
+    text-align: right;
+    margin: .75rem 0 0;
 }
 
 .misas-proximas-lista {
@@ -454,16 +467,7 @@
 }
 
 @media (min-width: 768px) {
-    .misas-proximas .misas-proximas-titulo {
-    font-family: var(--sans);
-    font-size: .88rem;
-    font-weight: 400;
-    letter-spacing: 0;
-    color: var(--tinta-suave);
-    margin: 0;
-}
-
-.misas-proximas-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .misas-proximas-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .misa-proxima {
@@ -472,28 +476,23 @@
     padding: .9rem 1rem;
 }
 
-.misa-proxima .cuando {
-    font-size: .7rem;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--tinta-suave);
-}
-
 .misa-proxima .hora {
     display: block;
     font-family: var(--serif);
-    font-size: 1.6rem;
-    line-height: 1.2;
-    margin-top: .15rem;
+    font-size: var(--fs-titulo);
+    line-height: 1.15;
 }
 
 .misa-proxima .lugar {
-    display: flex;
-    gap: .35rem;
-    align-items: baseline;
-    font-size: .85rem;
+    display: block;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
-    margin-top: .2rem;
+    margin-top: .3rem;
+}
+
+.misa-proxima .cuando {
+    font-weight: 600;
+    color: var(--tinta);
 }
 
 .misa-proxima.primera {
@@ -502,13 +501,13 @@
 }
 
 .misa-proxima.primera .cuando { color: var(--dorado); }
-.misa-proxima.primera .lugar  { color: rgba(255, 255, 255, .75); }
+.misa-proxima.primera .lugar  { color: rgba(255, 255, 255, .8); }
 
 /* ---- Bloques de la portada ---- */
 
 .evangelio-dia .contenido-editorial {
     font-family: var(--serif);
-    font-size: 1.12rem;
+    font-size: var(--fs-entrada);
     line-height: 1.75;
 }
 
@@ -615,17 +614,15 @@
 
 .pie-sitio .pie-nombre {
     font-family: var(--serif);
-    font-size: 1.2rem;
+    font-size: var(--fs-subtitulo);
     color: #fff;
     letter-spacing: -.01em;
 }
 
 .pie-sitio .pie-etiqueta {
-    font-size: .72rem;
+    font-size: var(--fs-cuerpo);
     font-weight: 600;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, .5);
+    color: #fff;
 }
 
 .enlace-red {
@@ -635,20 +632,21 @@
     width: 2.4rem;
     height: 2.4rem;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, .15);
-    font-size: 1.05rem;
-    transition: border-color .15s ease, color .15s ease;
+    background: rgba(255, 255, 255, .08);
+    font-size: var(--fs-cuerpo);
+    transition: background-color .15s ease, color .15s ease;
 }
 
 .pie-sitio a.enlace-red:hover {
-    border-color: var(--dorado);
+    background: rgba(255, 255, 255, .16);
     color: var(--dorado);
     text-decoration: none;
 }
 
+/* Un tono más oscuro que el pie, en vez de una raya encima. */
 .pie-legal {
-    border-top: 1px solid rgba(255, 255, 255, .1);
-    color: rgba(255, 255, 255, .5);
+    background: rgba(0, 0, 0, .18);
+    color: rgba(255, 255, 255, .6);
 }
 
 /* ---- Páginas de contenido ---- */
@@ -681,7 +679,6 @@
 }
 
 .marco-mapa {
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
     overflow: hidden;
     background: var(--marfil);
@@ -700,7 +697,6 @@
 
 .bloque-consentimiento {
     background: var(--marfil);
-    border: 1px solid var(--borde);
     border-radius: .6rem;
     padding: 1rem 1.1rem;
 }
@@ -719,32 +715,23 @@
 
 .ficha-sede {
     display: inline-block;
-    border: 1px solid var(--borde);
-    background: var(--crema);
-    color: var(--tinta-suave);
+    border: 0;
+    background: var(--marfil);
+    color: var(--tinta);
     border-radius: 999px;
-    padding: .4rem .95rem;
-    font-size: .88rem;
+    padding: .45rem 1rem;
+    font-size: var(--fs-nota);
     text-decoration: none;
-    transition: color .15s ease, border-color .15s ease;
+    transition: background-color .15s ease, color .15s ease;
 }
 
 .ficha-sede:hover {
-    color: var(--tinta);
-    border-color: #cfc4ab;
+    background: #e8e0cd;
 }
 
 .ficha-sede.activa {
     background: var(--azul-oscuro);
-    border-color: var(--azul-oscuro);
     color: #fff;
-}
-
-.pestanas-dias-marco {
-    overflow-x: auto;
-    margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -.5);
-    padding-inline: calc(var(--bs-gutter-x, 1.5rem) * .5);
-    scrollbar-width: none;
 }
 
 .pestanas-dias {
@@ -759,10 +746,11 @@
 .pestanas-dias .nav-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: .4rem;
     white-space: nowrap;
     color: var(--tinta-suave);
-    font-size: .9rem;
+    font-size: var(--fs-nota);
     font-weight: 500;
     border-radius: .45rem;
     padding: .45rem .85rem;
@@ -772,10 +760,31 @@
     color: var(--tinta);
 }
 
+/* El día elegido es una superficie blanca sobre el marfil, sin sombra.
+   En una franja blanca, donde el blanco no se distinguiría, va en azul. */
 .pestanas-dias .nav-link.active {
     background: #fff;
     color: var(--tinta);
-    box-shadow: 0 1px 3px rgba(22, 35, 58, .12);
+}
+
+.franja-blanca .pestanas-dias .nav-link.active {
+    background: var(--azul-oscuro);
+    color: #fff;
+}
+
+/* En el teléfono los siete días caben en una sola fila, a partes iguales,
+   en vez de salirse por la derecha. */
+@media (max-width: 575.98px) {
+    .pestanas-dias {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        width: 100%;
+    }
+    .pestanas-dias .nav-link {
+        width: 100%;
+        gap: .2rem;
+        padding: .5rem .1rem;
+    }
 }
 
 .punto-hoy {
@@ -788,40 +797,25 @@
 .grupo-horario {
     height: 100%;
     background: #fff;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
-    padding: 1.25rem;
+    padding: 1.25rem 1.5rem 1.5rem;
 }
 
 .grupo-horario-titulo {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    font-family: var(--sans) !important;
-    font-size: .92rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0 !important;
+    font-family: var(--serif) !important;
+    font-size: var(--fs-subtitulo) !important;
+    font-weight: 500 !important;
+    letter-spacing: -.01em !important;
     margin-bottom: .5rem;
-}
-
-.grupo-horario-titulo i { color: var(--azul); }
-
-.grupo-horario-titulo .cuenta {
-    margin-left: auto;
-    font-size: .78rem;
-    font-weight: 400;
-    color: var(--tinta-suave);
 }
 
 .renglon-horario {
     display: flex;
     gap: 1rem;
-    padding: .75rem 0;
-    border-bottom: 1px solid var(--borde);
+    padding: .7rem 0;
 }
 
 .renglon-horario:last-child {
-    border-bottom: 0;
     padding-bottom: 0;
 }
 
@@ -830,50 +824,53 @@
     width: 6.6rem;
     white-space: nowrap;
     font-family: var(--serif);
-    font-size: 1.12rem;
+    font-size: var(--fs-entrada);
     font-variant-numeric: tabular-nums;
     line-height: 1.35;
 }
 
 .renglon-horario .que {
     display: block;
-    font-size: .92rem;
+    font-size: var(--fs-cuerpo);
     line-height: 1.35;
 }
 
 .renglon-horario .donde {
     display: block;
-    font-size: .82rem;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
     line-height: 1.4;
 }
 
 .grupo-horario-vacio {
     color: var(--tinta-suave);
-    font-size: .88rem;
+    font-size: var(--fs-nota);
     margin: .75rem 0 0;
 }
 
 /* ---- Sacramentos ----
    Renglones grandes, como acordeón cerrado, con la oficina al lado. Cada
-   renglón lleva a la ficha completa del sacramento. */
+   renglón es una superficie blanca sobre el marfil, separada de la
+   siguiente por aire, y lleva a la ficha completa del sacramento. */
 
 .lista-sacramentos {
     list-style: none;
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--borde);
+    display: grid;
+    gap: .5rem;
 }
 
 .lista-sacramentos li {
-    border-bottom: 1px solid var(--borde);
+    background: #fff;
+    border-radius: var(--radio);
 }
 
 .lista-sacramentos a {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1.25rem .25rem;
+    padding: 1.25rem 1.5rem;
     color: var(--tinta);
     text-decoration: none;
 }
@@ -884,13 +881,13 @@
 
 .lista-sacramentos .nombre {
     font-family: var(--serif);
-    font-size: 1.4rem;
+    font-size: var(--fs-subtitulo);
     line-height: 1.2;
     transition: color .15s ease;
 }
 
 .lista-sacramentos .aportacion {
-    font-size: .78rem;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
     margin-left: .6rem;
     white-space: nowrap;
@@ -899,8 +896,7 @@
 .lista-sacramentos .resumen {
     display: block;
     margin-top: .3rem;
-    font-size: .9rem;
-    color: var(--tinta-suave);
+    font-size: var(--fs-cuerpo);
     line-height: 1.5;
 }
 
@@ -920,35 +916,27 @@
     position: sticky;
     top: 5.5rem;
     background: #fff;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
-    padding: 1.5rem;
+    padding: 1.75rem;
 }
 
-.tarjeta-oficina .icono {
-    font-size: 1.5rem;
-    color: var(--dorado);
-}
-
-.tarjeta-oficina h2 {
-    font-size: 1.5rem;
-    margin: .75rem 0 1rem;
+.tarjeta-oficina :is(h2, h3) {
+    font-size: var(--fs-subtitulo);
+    margin: 0 0 1rem;
 }
 
 .tarjeta-oficina .horario-oficina {
-    font-size: .9rem;
+    font-size: var(--fs-cuerpo);
     line-height: 1.7;
-    padding-bottom: 1rem;
     margin-bottom: 1rem;
-    border-bottom: 1px solid var(--borde);
 }
 
-/* ---- Pastorales: rejilla tipo "bento" ----
+/* ---- Pastorales: rejilla tipo "bento" (página de Pastorales) ----
    Una tarjeta por Comisión con sus pastorales dentro; las que tienen más
-   pastorales ocupan dos columnas. Al pasar el ratón se levanta y toma un filo
-   dorado. El componente original traía además un punteado de fondo de 4 px,
-   que se quitó: con la escala de Windows al 125 % se veía como una
-   cuadrícula de rayas sobre la tarjeta. */
+   pastorales ocupan dos columnas. Al pasar el ratón se levanta. El
+   componente original traía además un punteado de fondo de 4 px, que se
+   quitó: con la escala de Windows al 125 % se veía como una cuadrícula de
+   rayas sobre la tarjeta. La portada ya no la usa: ahí va .comisiones. */
 
 .bento {
     display: grid;
@@ -969,22 +957,18 @@
     flex-direction: column;
     gap: .75rem;
     background: #fff;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
     padding: 1.25rem;
     overflow: hidden;
-    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    transition: transform .25s ease;
 }
 
-.bento-tarjeta:hover,
-.bento-tarjeta.destacada {
+.bento-tarjeta:hover {
     transform: translateY(-2px);
-    border-color: rgba(201, 162, 39, .5);
-    box-shadow: 0 6px 20px -12px rgba(22, 35, 58, .3);
 }
 
 .bento-tarjeta.destacada {
-    background: linear-gradient(135deg, #fff 30%, #fbf5e2 100%);
+    background: #fbf6e6;
 }
 
 .bento-cabecera {
@@ -1077,6 +1061,79 @@
 .bento-pie {
     margin-top: auto;
     padding-top: .5rem;
+}
+
+/* ---- Pastorales en la portada: las comisiones como lista ----
+   Sin tarjetas ni iconos: el nombre de cada Comisión en serif grande, su
+   frase y debajo sus grupos con el día en que se reúnen. Dos columnas en
+   escritorio, separadas por aire. */
+
+.comisiones {
+    display: grid;
+    gap: 5.5rem 4rem;
+}
+
+@media (min-width: 992px) {
+    .comisiones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.comision-titulo {
+    font-size: var(--fs-titulo) !important;
+    line-height: 1.1;
+    margin: 0 0 .75rem;
+}
+
+.comision-titulo a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.comision-titulo a:hover {
+    color: var(--azul);
+}
+
+.comision-frase {
+    font-size: var(--fs-entrada);
+    line-height: 1.55;
+    max-width: 34rem;
+    margin: 0;
+}
+
+.comision-grupos {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: .9rem 2rem;
+}
+
+@media (min-width: 576px) {
+    .comision-grupos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.comision-grupos a {
+    display: block;
+    color: var(--tinta);
+    text-decoration: none;
+    line-height: 1.35;
+}
+
+.comision-grupos a:hover .nombre {
+    color: var(--azul);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.comision-grupos .detalle {
+    display: block;
+    font-size: var(--fs-nota);
+    color: var(--tinta-suave);
+}
+
+/* En el teléfono, 16 px de margen a cada lado en vez de los 12 de
+   Bootstrap: con 12 el texto se siente pegado a la orilla. */
+@media (max-width: 575.98px) {
+    .sitio-publico .container { --bs-gutter-x: 2rem; }
 }
 
 /* ---- Calendario de eventos ---- */
@@ -1397,8 +1454,7 @@
 
 .fecha-destacada .mes {
     order: -1;
-    font-size: .66rem;
-    letter-spacing: .1em;
+    font-size: var(--fs-nota);
     color: rgba(255, 255, 255, .75);
 }
 
@@ -1685,15 +1741,13 @@ html.js .solo-con-js { display: flex !important; }
     .franja { padding: 7rem 0; }
 }
 
+/* Cada franja se distingue de la vecina por su fondo, no por un filete. */
 .franja-blanca {
     background: #fff;
-    border-top: 1px solid var(--borde);
 }
 
 .franja-marfil {
-    background: rgba(241, 236, 224, .5);
-    border-top: 1px solid var(--borde);
-    border-bottom: 1px solid var(--borde);
+    background: var(--marfil);
 }
 
 .franja-blanca .grupo-horario {
@@ -1701,7 +1755,7 @@ html.js .solo-con-js { display: flex !important; }
 }
 
 .renglon-horario[hidden] { display: none; }
-.renglon-horario.ultimo-visible { border-bottom: 0; padding-bottom: 0; }
+.renglon-horario.ultimo-visible { padding-bottom: 0; }
 
 /* ---- Franjas oscuras: fiesta patronal y quiénes somos ---- */
 
@@ -1721,45 +1775,30 @@ html.js .solo-con-js { display: flex !important; }
     .franja-fiesta { padding: 5rem 0; }
 }
 
-.franja-fiesta::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(60rem 30rem at 85% 120%, rgba(201, 162, 39, .35), transparent 60%);
-}
-
-.franja-fiesta .container { position: relative; }
-
-:is(.franja-noche, .franja-fiesta) .antetitulo {
-    color: var(--dorado) !important;
-}
-
 :is(.franja-noche, .franja-fiesta) :is(h2, h3).titulo-seccion {
     color: #fff;
 }
 
 :is(.franja-noche, .franja-fiesta) .encabezado-seccion p,
 .fiesta-texto {
-    color: rgba(255, 255, 255, .75);
-    line-height: 1.7;
+    color: rgba(255, 255, 255, .85);
+    font-size: var(--fs-entrada);
+    line-height: 1.6;
     max-width: 36rem;
 }
 
 .fiesta-cifra {
     flex: 1;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, .05);
+    background: rgba(255, 255, 255, .07);
     border-radius: var(--radio);
     padding: 1.25rem;
-    backdrop-filter: blur(4px);
 }
 
 .fiesta-cifra .numero {
     display: block;
     font-family: var(--serif);
-    font-size: clamp(3rem, 6vw, 3.75rem);
+    font-size: var(--fs-portada);
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
@@ -1767,70 +1806,72 @@ html.js .solo-con-js { display: flex !important; }
 .fiesta-cifra .etiqueta {
     display: block;
     margin-top: .4rem;
-    font-size: .88rem;
-    color: rgba(255, 255, 255, .7);
+    font-size: var(--fs-nota);
+    color: rgba(255, 255, 255, .75);
+}
+
+/* Misión y visión: un título corto en dorado y la frase debajo, a tamaño
+   de entrada larga y no de titular (son párrafos de cuarenta palabras). */
+.franja-noche .subtitulo-noche {
+    font-size: var(--fs-subtitulo) !important;
+    color: var(--dorado) !important;
+    margin-bottom: .75rem;
 }
 
 .cita-noche {
     font-family: var(--serif);
-    font-size: clamp(1.2rem, 2vw, 1.5rem);
-    line-height: 1.6;
-    color: rgba(255, 255, 255, .9);
+    font-size: var(--fs-subtitulo);
+    line-height: 1.5;
+    color: #fff;
 }
 
 .cita-noche > :last-child { margin-bottom: 0; }
 
-.franja-noche .etiqueta-noche {
-    margin: 5rem 0 1.5rem;
-    font-family: var(--sans);
-    font-size: .8rem;
-    font-weight: 600;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, .6);
+.sedes-noche-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin: 5rem 0 2rem;
 }
 
+.sedes-noche-cabecera .subtitulo-noche { margin: 0; }
+
+/* Las sedes, sin caja ni icono encima: el nombre grande en serif, qué es y
+   dónde está. Las separa el aire, en tres columnas. */
 .sedes-noche {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 1rem;
+    gap: 2rem;
 }
 
 @media (min-width: 768px) {
     .sedes-noche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-.sedes-noche li {
-    border: 1px solid rgba(255, 255, 255, .1);
-    background: rgba(255, 255, 255, .05);
-    border-radius: var(--radio);
-    padding: 1.5rem;
+.sedes-noche .nombre {
+    display: block;
+    font-family: var(--serif);
+    font-size: var(--fs-subtitulo);
+    line-height: 1.25;
 }
 
 .sedes-noche .tipo {
     display: block;
-    margin-top: 1rem;
-    font-size: .72rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, .5);
-}
-
-.sedes-noche .nombre {
-    display: block;
-    margin-top: .25rem;
-    font-family: var(--serif);
-    font-size: 1.25rem;
+    margin-top: .35rem;
+    font-size: var(--fs-nota);
+    color: var(--dorado);
 }
 
 .sedes-noche .zona {
     display: flex;
     gap: .4rem;
-    margin-top: .75rem;
-    font-size: .88rem;
-    color: rgba(255, 255, 255, .7);
+    margin-top: .5rem;
+    font-size: var(--fs-cuerpo);
+    color: rgba(255, 255, 255, .8);
 }
 
 .enlace-claro {
@@ -1841,14 +1882,19 @@ html.js .solo-con-js { display: flex !important; }
     color: #fff;
 }
 
-/* ---- Sacramentos en acordeón ---- */
+/* ---- Sacramentos en acordeón ----
+   Cada sacramento es una superficie blanca sobre el marfil; el aire entre
+   una y otra hace el trabajo que antes hacían los filetes. */
 
 .acordeon-sacramentos {
-    border-top: 1px solid var(--borde);
+    display: grid;
+    gap: .5rem;
 }
 
 .sacramento {
-    border-bottom: 1px solid var(--borde);
+    background: #fff;
+    border-radius: var(--radio);
+    padding: 0 1.5rem;
 }
 
 .sacramento-boton {
@@ -1865,7 +1911,7 @@ html.js .solo-con-js { display: flex !important; }
 
 .sacramento-boton .nombre {
     font-family: var(--serif);
-    font-size: 1.3rem;
+    font-size: var(--fs-subtitulo);
     line-height: 1.2;
     transition: color .15s ease;
 }
@@ -1874,7 +1920,7 @@ html.js .solo-con-js { display: flex !important; }
 
 .sacramento-boton .aportacion {
     font-family: var(--sans);
-    font-size: .78rem;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
     white-space: nowrap;
 }
@@ -1885,28 +1931,32 @@ html.js .solo-con-js { display: flex !important; }
     transition: transform .2s ease;
 }
 
+/* En el teléfono la aportación baja a su propio renglón: a media línea del
+   nombre, el título cambiaba de letra a la mitad. */
+@media (max-width: 575.98px) {
+    .sacramento-boton { flex-wrap: wrap; row-gap: .25rem; }
+    .sacramento-boton .bi-chevron-down { order: 2; }
+    .sacramento-boton .aportacion { order: 3; flex-basis: 100%; }
+}
+
 .sacramento-boton:not(.collapsed) .bi-chevron-down {
     transform: rotate(180deg);
 }
 
 .sacramento-cuerpo {
     padding-bottom: 1.5rem;
-    font-size: .92rem;
+    font-size: var(--fs-cuerpo);
 }
 
 .sacramento-resumen {
-    color: var(--tinta-suave);
-    line-height: 1.7;
+    line-height: 1.65;
     max-width: 65ch;
     margin-bottom: 1.25rem;
 }
 
 .sacramento-etiqueta {
-    font-size: .72rem;
+    font-size: var(--fs-cuerpo);
     font-weight: 600;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--tinta-suave);
     margin-bottom: .5rem;
 }
 
@@ -1927,34 +1977,32 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 
 .oficina-horas {
     margin: 0;
-    font-size: .9rem;
+    font-size: var(--fs-cuerpo);
 }
 
 .oficina-horas > div {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: .75rem 0;
-    border-bottom: 1px solid var(--borde);
+    padding: .4rem 0;
 }
 
-.oficina-horas > div:last-child { border-bottom: 0; }
 .oficina-horas dt { font-weight: 400; color: var(--tinta-suave); }
 .oficina-horas dd { margin: 0; text-align: right; }
 
-/* ---- Bento de la portada ---- */
+/* ---- Bento (página de Pastorales) ---- */
 
 .bento-meta {
     margin-left: .5rem;
     font-family: var(--sans);
-    font-size: .74rem;
+    font-size: var(--fs-nota);
     font-weight: 400;
     color: var(--tinta-suave);
     letter-spacing: 0;
 }
 
 .bento-participar {
-    font-size: .8rem;
+    font-size: var(--fs-nota);
     color: var(--azul);
     text-decoration: none;
     transition: opacity .2s ease;
@@ -1968,19 +2016,19 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
     .bento-participar:focus-visible { opacity: 1; }
 }
 
-/* ---- Agenda en rejilla ---- */
+/* ---- Agenda en rejilla ----
+   Cada evento, una superficie blanca; los separa el aire, no una cuadrícula
+   de filetes. */
 
 .agenda-rejilla {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 1px;
-    background: var(--borde);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    overflow: hidden;
+    gap: .5rem;
 }
+
+.agenda-rejilla li { border-radius: var(--radio); overflow: hidden; }
 
 @media (min-width: 576px) {
     .agenda-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2007,20 +2055,21 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 
 .agenda-rejilla .cuando {
     display: block;
-    font-size: .78rem;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
 }
 
 .agenda-rejilla .titulo {
     display: block;
     margin-top: .25rem;
+    font-size: var(--fs-entrada);
     line-height: 1.35;
 }
 
 .agenda-rejilla .sede {
     display: block;
     margin-top: .4rem;
-    font-size: .78rem;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
 }
 
@@ -2037,9 +2086,7 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 /* ---- Bloques del panel (evangelio, cursos, avisos, Facebook) ---- */
 
 .bloque-panel + .bloque-panel {
-    margin-top: 4.5rem;
-    padding-top: 4.5rem;
-    border-top: 1px solid var(--borde);
+    margin-top: 7rem;
 }
 
 /* ---- Contacto ---- */
@@ -2070,9 +2117,7 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 
 .datos-contacto .etiqueta {
     display: block;
-    font-size: .72rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+    font-size: var(--fs-nota);
     color: var(--tinta-suave);
 }
 
@@ -2091,10 +2136,21 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 .mapa-contacto {
     height: 100%;
     min-height: 20rem;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
     overflow: hidden;
     background: var(--marfil);
+}
+
+.ligas-interes ul {
+    list-style: none;
+    padding: 0;
+}
+
+.ligas-interes li { margin-bottom: .6rem; }
+
+.ligas-interes a {
+    font-size: var(--fs-entrada);
+    text-underline-offset: 4px;
 }
 
 .mapa-contacto iframe {
@@ -2111,7 +2167,6 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
    JavaScript (html.js), que además lo quita si el texto es corto. */
 
 .franja-evangelio {
-    border-top: 1px solid var(--borde);
     padding-bottom: 4rem;
 }
 
@@ -2121,7 +2176,6 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
 
 .lectura {
     background: #fff;
-    border: 1px solid var(--borde);
     border-radius: var(--radio);
     padding: 1.5rem;
 }
@@ -2134,26 +2188,26 @@ html:not(.js) .acordeon-sacramentos .collapse { display: block; }
     display: flex;
     align-items: center;
     gap: .6rem;
-    font-size: 1.35rem;
+    font-size: var(--fs-subtitulo);
     margin-bottom: 1rem;
 }
 
 .lectura-titulo i {
     color: var(--dorado);
-    font-size: 1.1rem;
+    font-size: var(--fs-entrada);
 }
 
 .lectura-texto {
     font-family: var(--serif);
-    font-size: 1.08rem;
+    font-size: var(--fs-entrada);
     line-height: 1.75;
 }
 
+/* Plegada enseña siete renglones justos, cortados en limpio: sin el
+   desvanecido de antes, que era un degradado sobre el texto. */
 html.js .lectura.plegada .lectura-texto {
-    max-height: 13.2rem;   /* unas siete líneas */
+    max-height: calc(7 * 1.75em);
     overflow: hidden;
-    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-            mask-image: linear-gradient(to bottom, #000 55%, transparent);
 }
 
 .lectura-boton {
@@ -2164,7 +2218,7 @@ html.js .lectura.plegada .lectura-texto {
     padding: 0;
     border: 0;
     background: none;
-    font-size: .9rem;
+    font-size: var(--fs-cuerpo);
     font-weight: 500;
     color: var(--azul);
 }

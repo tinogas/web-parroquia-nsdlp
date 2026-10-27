@@ -40,8 +40,7 @@ foreach ($comisiones as $i => $grupo) {
 ?>
 
 <div class="encabezado-seccion">
-    <span class="antetitulo">Pastorales</span>
-    <h1 class="titulo-pagina mb-3">Hay un lugar para ti</h1>
+    <h1 class="titulo-pagina mb-3">Hay una pastoral para ti</h1>
     <?php if (!empty($bloques['pastorales_intro']['contenido'])): ?>
     <div class="contenido-editorial text-tinta-suave">
         <?= $bloques['pastorales_intro']['contenido'] ?>

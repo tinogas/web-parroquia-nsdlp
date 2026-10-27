@@ -53,8 +53,7 @@ $lecturas = array_filter([
 <section id="evangelio" class="franja franja-evangelio" aria-labelledby="evangelio-titulo">
     <div class="container">
         <div class="encabezado-seccion">
-            <span class="antetitulo">Evangelio del día</span>
-            <h2 id="evangelio-titulo" class="titulo-seccion"><?= e(mb_strtoupper(mb_substr($fechaEvangelio, 0, 1)) . mb_substr($fechaEvangelio, 1)) ?></h2>
+            <h2 id="evangelio-titulo" class="titulo-seccion">Evangelio del <?= e($fechaEvangelio) ?></h2>
         </div>
         <div class="row g-4 align-items-start <?= $hayReflexion ? '' : 'justify-content-center' ?>">
             <?php foreach ($lecturas as [$clave, $titulo, $icono, $html]): ?>
@@ -113,10 +112,7 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
     <div class="container">
         <div class="row g-4 g-lg-5 align-items-center">
             <div class="col-lg-7">
-                <p class="antetitulo d-flex align-items-center gap-2 mb-0">
-                    <i class="bi bi-calendar-heart" aria-hidden="true"></i>Fiesta patronal <?= e(date('Y', strtotime($diaFiesta))) ?>
-                </p>
-                <h2 id="fiesta-titulo" class="titulo-seccion mt-3"><?= e($advocacion) ?></h2>
+                <h2 id="fiesta-titulo" class="titulo-seccion">Fiesta patronal de <?= e($advocacion) ?></h2>
                 <p class="fiesta-texto">
                     <?php if ($novena): ?>
                     <?php
@@ -161,7 +157,6 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
         <div class="row g-4 g-lg-5">
             <div class="col-lg-7">
                 <div class="encabezado-seccion">
-                    <span class="antetitulo">Sacramentos</span>
                     <h2 class="titulo-seccion">Lo que necesitas para cada sacramento</h2>
                     <p>Requisitos y documentos para tramitarlos en nuestra parroquia. Todo trámite se asienta en la oficina parroquial.</p>
                 </div>
@@ -225,8 +220,7 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
 
             <aside class="col-lg-4 offset-lg-1">
                 <div class="tarjeta-oficina">
-                    <i class="bi bi-file-earmark-text icono" aria-hidden="true"></i>
-                    <h3 class="h2">Oficina parroquial</h3>
+                    <h3>Oficina parroquial</h3>
                     <?php if ($oficinaEnPares): ?>
                     <dl class="oficina-horas">
                         <?php foreach (array_chunk($renglonesOficina, 2) as [$dias, $horas]): ?>
@@ -257,10 +251,11 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
 
 
 <?php /* ================================================================
-         PASTORALES — bento: una tarjeta por Comisión con sus pastorales.
-         La descripción de cada Comisión viene de su ficha (descripción
-         corta); para las que no la tienen capturada, y para el lema, se
-         usa el texto de la propuesta.
+         PASTORALES — las comisiones como lista a dos columnas, cada una con
+         sus pastorales debajo. La descripción de cada Comisión viene de su
+         ficha (descripción corta); para las que no la tienen capturada, y
+         para el verbo que la abre ("Servir."), se usa el texto de la
+         propuesta.
          ================================================================ */ ?>
 <?php if ($pastorales['comisiones'] || $pastorales['sueltas']): ?>
 <?php
@@ -279,45 +274,32 @@ $reunion = static function (array $p): string {
         $p['hora_reunion'] ? hora_corta($p['hora_reunion']) : '',
     ]));
 };
-$masGrande = null;
-foreach ($pastorales['comisiones'] as $i => $grupo) {
-    if ($masGrande === null || count($grupo['hijas']) > count($pastorales['comisiones'][$masGrande]['hijas'])) {
-        $masGrande = $i;
-    }
-}
 ?>
 <section id="pastorales" class="franja franja-marfil">
     <div class="container">
         <div class="encabezado-seccion mb-5">
-            <span class="antetitulo">Pastorales</span>
-            <h2 class="titulo-seccion">Hay un lugar para ti</h2>
+            <h2 class="titulo-seccion">Hay una pastoral para ti</h2>
             <p>Las pastorales se agrupan en comisiones. Escríbenos y te ponemos en contacto con quien coordina el grupo que te interesa.</p>
         </div>
 
-        <div class="bento">
-            <?php foreach ($pastorales['comisiones'] as $i => $grupo): ?>
+        <div class="comisiones">
+            <?php foreach ($pastorales['comisiones'] as $grupo): ?>
             <?php
             $padre = $grupo['padre'];
             $hijas = $grupo['hijas'];
             [$lema, $descripcionPropuesta] = $textosComision[$padre['slug']] ?? ['', ''];
             $descripcion = $padre['descripcion_corta'] ?: $descripcionPropuesta;
+            $frase = trim(($lema !== '' ? $lema . '. ' : '') . $descripcion);
             ?>
-            <div class="bento-tarjeta <?= count($hijas) >= 4 ? 'ancha' : '' ?> <?= $i === $masGrande ? 'destacada' : '' ?>">
-                <div class="bento-cabecera">
-                    <span class="bento-icono"><i class="bi <?= e($padre['icono'] ?: 'bi-people') ?>" aria-hidden="true"></i></span>
-                    <?php if ($lema !== ''): ?><span class="bento-cuenta"><?= e($lema) ?></span><?php endif; ?>
-                </div>
-                <div>
-                    <h3 class="bento-titulo">
-                        <a href="<?= e(url_publica('pastorales', ['slug' => $padre['slug']])) ?>"><?= e($padre['nombre']) ?></a>
-                        <span class="bento-meta"><?= count($hijas) ?> <?= count($hijas) === 1 ? 'grupo' : 'grupos' ?></span>
-                    </h3>
-                    <?php if ($descripcion): ?>
-                    <p class="bento-descripcion mt-1"><?= e($descripcion) ?></p>
-                    <?php endif; ?>
-                </div>
+            <article class="comision">
+                <h3 class="comision-titulo">
+                    <a href="<?= e(url_publica('pastorales', ['slug' => $padre['slug']])) ?>"><?= e($padre['nombre']) ?></a>
+                </h3>
+                <?php if ($frase !== ''): ?>
+                <p class="comision-frase"><?= e($frase) ?></p>
+                <?php endif; ?>
                 <?php if ($hijas): ?>
-                <ul class="bento-lista">
+                <ul class="comision-grupos">
                     <?php foreach ($hijas as $hija): ?>
                     <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
                     <li>
@@ -329,33 +311,26 @@ foreach ($pastorales['comisiones'] as $i => $grupo) {
                     <?php endforeach; ?>
                 </ul>
                 <?php endif; ?>
-                <div class="bento-pie text-end">
-                    <a href="#contacto" class="bento-participar">Quiero participar →</a>
-                </div>
-            </div>
+            </article>
             <?php endforeach; ?>
 
             <?php foreach ($pastorales['sueltas'] as $suelta): ?>
             <?php $cuando = $reunion($suelta); ?>
-            <div class="bento-tarjeta">
-                <div class="bento-cabecera">
-                    <span class="bento-icono"><i class="bi <?= e($suelta['icono'] ?: 'bi-people') ?>" aria-hidden="true"></i></span>
-                    <?php if ($cuando): ?><span class="bento-cuenta"><?= e($cuando) ?></span><?php endif; ?>
-                </div>
-                <div>
-                    <h3 class="bento-titulo">
-                        <a href="<?= e(url_publica('pastorales', ['slug' => $suelta['slug']])) ?>"><?= e($suelta['nombre']) ?></a>
-                    </h3>
-                    <?php if ($suelta['descripcion_corta']): ?>
-                    <p class="bento-descripcion mt-1"><?= e($suelta['descripcion_corta']) ?></p>
-                    <?php endif; ?>
-                </div>
-                <div class="bento-pie text-end">
-                    <a href="#contacto" class="bento-participar">Quiero participar →</a>
-                </div>
-            </div>
+            <article class="comision">
+                <h3 class="comision-titulo">
+                    <a href="<?= e(url_publica('pastorales', ['slug' => $suelta['slug']])) ?>"><?= e($suelta['nombre']) ?></a>
+                </h3>
+                <?php $frase = trim(($cuando ? $cuando . '. ' : '') . $suelta['descripcion_corta']); ?>
+                <?php if ($frase !== ''): ?>
+                <p class="comision-frase"><?= e($frase) ?></p>
+                <?php endif; ?>
+            </article>
             <?php endforeach; ?>
         </div>
+
+        <?php /* Una sola invitación para toda la franja: repetida al pie de
+                 cada comisión, quedaba pegada al título de la siguiente. */ ?>
+        <a href="#contacto" class="btn btn-primary btn-lg px-4 fs-6 mt-5">Quiero participar</a>
     </div>
 </section>
 <?php endif; ?>
@@ -373,8 +348,7 @@ $mesesCortos = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', '
 <section id="agenda" class="franja">
     <div class="container">
         <div class="encabezado-seccion mb-5">
-            <span class="antetitulo">Agenda parroquial</span>
-            <h2 class="titulo-seccion">Lo que viene</h2>
+            <h2 class="titulo-seccion">Lo que viene en la parroquia</h2>
             <p>
                 Celebraciones y actividades abiertas a toda la comunidad. La agenda completa, con las reuniones
                 de cada pastoral, sigue en <a href="<?= e(url_publica('eventos')) ?>">el calendario del sitio</a>.
@@ -395,7 +369,7 @@ $mesesCortos = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', '
                 <a href="<?= e(url_publica('eventos', ['slug' => $ev['slug']])) ?>">
                     <span class="fecha-destacada <?= $destacado ? 'dorada' : '' ?>">
                         <span class="dia"><?= (int) date('j', $inicio) ?></span>
-                        <span class="mes text-uppercase"><?= e($mesesCortos[(int) date('n', $inicio) - 1]) ?></span>
+                        <span class="mes"><?= e($mesesCortos[(int) date('n', $inicio) - 1]) ?></span>
                     </span>
                     <span class="min-w-0">
                         <span class="cuando">
@@ -439,10 +413,7 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
         <?php if (!empty($proximosCursos)): ?>
         <div class="bloque-panel">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div>
-                    <span class="antetitulo">Formación</span>
-                    <h2 class="titulo-seccion mb-0">Próximos cursos</h2>
-                </div>
+                <h2 class="titulo-seccion mb-0">Próximos cursos</h2>
                 <a href="<?= e(url_publica('cursos')) ?>" class="enlace-flecha">Ver todos los cursos <i class="bi bi-arrow-right"></i></a>
             </div>
             <div class="row g-3">
@@ -479,10 +450,7 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
         <?php if (!empty($avisosRecientes)): ?>
         <div class="bloque-panel">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div>
-                    <span class="antetitulo">Avisos</span>
-                    <h2 class="titulo-seccion mb-0">Lo más reciente</h2>
-                </div>
+                <h2 class="titulo-seccion mb-0">Avisos recientes</h2>
                 <a href="<?= e(url_publica('avisos')) ?>" class="enlace-flecha">Ver todos los avisos <i class="bi bi-arrow-right"></i></a>
             </div>
             <div class="row g-3">
@@ -504,7 +472,6 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
         <div class="row g-4 g-lg-5 bloque-panel">
             <?php if ($hayFacebook): ?>
             <div class="<?= $hayLigas ? 'col-lg-7' : 'col-lg-8 mx-auto' ?>">
-                <span class="antetitulo">Redes</span>
                 <h2 class="titulo-seccion mb-4">Lo último en Facebook</h2>
                 <?php
                 // Page Plugin oficial (un iframe, sin SDK), con la URL de Configuración → Redes sociales.
@@ -519,7 +486,7 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
                     'show_facepile'         => 'true',
                 ]);
                 ?>
-                <div class="card overflow-hidden" style="max-width:502px">
+                <div class="overflow-hidden rounded-3" style="max-width:502px">
                     <iframe src="<?= e($facebookSrc) ?>" width="100%" height="460"
                             style="border:none;overflow:hidden;display:block" scrolling="no" loading="lazy"
                             allowfullscreen="true" title="Publicaciones recientes en Facebook"></iframe>
@@ -528,11 +495,8 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
             <?php endif; ?>
             <?php if ($hayLigas): ?>
             <div class="<?= $hayFacebook ? 'col-lg-5' : 'col-lg-8 mx-auto' ?>">
-                <span class="antetitulo">Enlaces</span>
                 <h2 class="titulo-seccion mb-4"><?= e($bloques['ligas_interes']['titulo'] ?: 'Ligas de interés') ?></h2>
-                <div class="card">
-                    <div class="card-body p-4 contenido-editorial"><?= $bloques['ligas_interes']['contenido'] ?></div>
-                </div>
+                <div class="contenido-editorial ligas-interes"><?= $bloques['ligas_interes']['contenido'] ?></div>
             </div>
             <?php endif; ?>
         </div>
@@ -553,7 +517,6 @@ $vision = $bloquesNosotros['vision']['contenido'] ?? '';
 <section id="nosotros" class="franja franja-noche">
     <div class="container">
         <div class="encabezado-seccion">
-            <span class="antetitulo">Quiénes somos</span>
             <h2 class="titulo-seccion">Una Iglesia de comunión y participación</h2>
             <p><?= e($nombreSitio) ?>, <?= e(rtrim(Config::get('parroquia_diocesis'), '. ')) ?> de la Arquidiócesis de Hermosillo.</p>
         </div>
@@ -562,37 +525,42 @@ $vision = $bloquesNosotros['vision']['contenido'] ?? '';
         <div class="row g-4 g-lg-5 mt-2">
             <?php if ($mision !== ''): ?>
             <div class="col-lg-6">
-                <span class="antetitulo">Misión</span>
+                <h3 class="subtitulo-noche">Misión</h3>
                 <div class="cita-noche"><?= $mision ?></div>
             </div>
             <?php endif; ?>
             <?php if ($vision !== ''): ?>
             <div class="col-lg-6">
-                <span class="antetitulo">Visión</span>
+                <h3 class="subtitulo-noche">Visión</h3>
                 <div class="cita-noche"><?= $vision ?></div>
             </div>
             <?php endif; ?>
         </div>
         <?php endif; ?>
 
+        <?php $hayEquipo = Router::existeRutaPublica('nosotros'); ?>
+        <?php if ($centros || $hayEquipo): ?>
+        <?php /* El enlace al equipo va junto al título de las sedes: solo al
+                 final de la franja dejaba una banda oscura casi vacía. */ ?>
+        <div class="sedes-noche-cabecera">
+            <h3 class="subtitulo-noche"><?= $centros ? 'Nuestras sedes' : 'Nuestro equipo' ?></h3>
+            <?php if ($hayEquipo): ?>
+            <a href="<?= e(url_publica('nosotros')) ?>" class="enlace-flecha enlace-claro">Conoce a nuestro equipo pastoral <i class="bi bi-arrow-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
         <?php if ($centros): ?>
-        <h3 class="etiqueta-noche">Nuestras sedes</h3>
         <ul class="sedes-noche">
             <?php foreach ($centros as $centro): ?>
             <li>
-                <i class="bi bi-house-heart text-dorado fs-5" aria-hidden="true"></i>
-                <span class="tipo"><?= $centro['tipo'] === 'sede' ? 'Sede parroquial' : 'Centro' ?></span>
                 <span class="nombre"><?= e($centro['nombre']) ?></span>
+                <span class="tipo"><?= $centro['tipo'] === 'sede' ? 'Sede parroquial' : 'Centro' ?></span>
                 <?php if ($centro['direccion']): ?>
                 <span class="zona"><i class="bi bi-geo-alt" aria-hidden="true"></i><?= e($centro['direccion']) ?></span>
                 <?php endif; ?>
             </li>
             <?php endforeach; ?>
         </ul>
-        <?php endif; ?>
-
-        <?php if (Router::existeRutaPublica('nosotros')): ?>
-        <a href="<?= e(url_publica('nosotros')) ?>" class="enlace-flecha enlace-claro mt-5">Conoce a nuestro equipo pastoral <i class="bi bi-arrow-right"></i></a>
         <?php endif; ?>
     </div>
 </section>
@@ -621,7 +589,6 @@ $datosContacto = array_filter([
         <div class="row g-4 g-lg-5">
             <div class="col-lg-5">
                 <div class="encabezado-seccion">
-                    <span class="antetitulo">Contacto</span>
                     <h2 class="titulo-seccion">Ven a visitarnos</h2>
                     <p>Escríbenos o llámanos en horario de oficina; para cualquier trámite de sacramentos te atendemos en persona.</p>
                 </div>
