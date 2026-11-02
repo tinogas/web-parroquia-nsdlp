@@ -334,12 +334,31 @@ async function capturar(page, pantalla) {
     if (FORMATO === 'webp') { opciones.quality = 88; }
     if (pantalla.completa)  { opciones.fullPage = true; }
 
+    // WebP no admite imágenes de más de 16 383 píxeles por lado: una página
+    // completa más alta que eso a doble resolución sale como un archivo de
+    // 0 bytes, sin error. La portada pasó de ese alto en noviembre de 2026.
+    // En ese caso esa captura se toma a resolución normal.
+    const LIMITE_WEBP = 16383;
+    let ventanaAjustada = false;
+    if (pantalla.completa && FORMATO === 'webp') {
+        const alto = await page.evaluate(() => document.documentElement.scrollHeight);
+        if (alto * VENTANA.deviceScaleFactor > LIMITE_WEBP) {
+            await page.setViewport({ ...VENTANA, deviceScaleFactor: 1 });
+            ventanaAjustada = true;
+        }
+    }
+
     if (pantalla.recorte) {
         const elemento = await page.$(pantalla.recorte);
         if (!elemento) { throw new Error('No se encontró el recorte ' + pantalla.recorte); }
         await elemento.screenshot(opciones);
     } else {
         await page.screenshot(opciones);
+    }
+
+    if (ventanaAjustada) { await page.setViewport(VENTANA); }
+    if (fs.statSync(destino).size === 0) {
+        throw new Error('La captura salió vacía: ' + destino);
     }
 
     // Para deshacer lo que la pantalla haya dejado montado —una impersonación,

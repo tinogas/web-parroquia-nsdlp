@@ -46,17 +46,30 @@ sencillamente no aparece, sin dejar hueco. De arriba abajo:
 Campana al fondo. Debajo, a todo lo ancho y en letra grande, el lema *Una
 comunidad en camino hacia la santidad*, y bajo él dos columnas: a la izquierda
 el decanato, la arquidiócesis y las sedes de la parroquia («Una parroquia, tres
-sedes: Villa Bonita, San Pío y Jesús el Señor»); a la derecha una presentación
+sedes: Villa Bonita, San Pío y Jesús el Señor»); en medio una presentación
 breve y dos botones, **Ver horarios de misa** y **Requisitos de sacramentos**,
-que bajan a esas franjas de la misma portada.
+que bajan a esas franjas de la misma portada; y a la derecha el recuadro de
+**Avisos**.
+
+![El recuadro de avisos en la cabecera de la portada](img/publico-inicio-avisos.webp)
+
+**El recuadro de avisos.** Los cuatro avisos más recientes que estén publicados
+en el sitio y vigentes, cada uno con una miniatura de su imagen como referencia
+—o el ícono de su tipo, si no tiene—, su fecha y su título. Al tocar cualquiera
+se abre el aviso completo, y arriba del recuadro está **Ver todos**. Es lo
+primero que se lee al entrar, así que es el lugar de lo urgente: un cambio de
+horario, una misa especial. Cuando no hay ningún aviso vigente, el recuadro no
+aparece y la cabecera vuelve a sus dos columnas. En el celular, el recuadro
+baja debajo de los botones.
 
 La presentación de esa cabecera es la del bloque **Presentación**: mientras esté
 vacío, sale un texto de bienvenida fijo. En cuanto se sube al menos una
 diapositiva al carrusel, ese espacio se convierte en un carrusel de fotos que
-van pasando solas, y las próximas misas bajan justo debajo.
+van pasando solas, y las próximas misas y el recuadro de avisos bajan justo
+debajo, lado a lado.
 
-> **Se llena desde:** Contenido → Textos del sitio (Presentación) y Comunicación →
-> Carrusel. Las sedes, desde Parroquia → Sede y centros.
+> **Se llena desde:** Contenido → Textos del sitio (Presentación), Comunicación →
+> Avisos y Comunicación → Carrusel. Las sedes, desde Parroquia → Sede y centros.
 
 **Próximas misas.** Al pie de la cabecera, las tres siguientes, calculadas desde
 los horarios cargados y siempre en hora de Hermosillo —lo dice una nota al
@@ -120,12 +133,12 @@ uno con su día en un recuadro, el horario y la sede. Los de la fiesta patronal
 
 > **Se llena desde:** Comunicación → Eventos.
 
-**Cursos, avisos y Facebook.** Los **Próximos cursos**, los tres **Avisos
-recientes** publicados en el sitio, las publicaciones recientes de la página de
-Facebook de la parroquia —tal cual las muestra Facebook, sin copiar nada a
-mano— y las **Ligas de interés**.
+**Cursos y Facebook.** Los **Próximos cursos**, las publicaciones recientes de
+la página de Facebook de la parroquia —tal cual las muestra Facebook, sin
+copiar nada a mano— y las **Ligas de interés**. Los avisos ya no van aquí:
+subieron al recuadro de la cabecera.
 
-> **Se llena desde:** Comunicación → Cursos, Comunicación → Avisos,
+> **Se llena desde:** Comunicación → Cursos,
 > Administración → Configuración (la dirección de Facebook) y Contenido →
 > Textos del sitio (Ligas de interés).
 
@@ -272,7 +285,9 @@ correo ni se pierden.
 
 Los avisos publicados, en tarjetas, del más reciente al más viejo, con su
 imagen, su tipo, su fecha y las primeras líneas. Al entrar a uno se lee
-completo.
+completo, y su imagen se ve **entera, sin recortar**: nunca más alta que la
+pantalla, así que un cartel vertical cabe completo. Al tocarla se abre en su
+tamaño original. Los más recientes salen también en el recuadro de la portada.
 
 Aquí hay algo importante que el capítulo de Avisos explica a fondo: **no todo
 aviso llega a esta página**. Una pastoral puede publicar un aviso solo hacia

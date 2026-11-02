@@ -8,6 +8,41 @@ distinta:
 - **Menú del sitio**: qué va en el menú de arriba, en qué orden y con qué nombre.
 - **Evangelio del día**: la lectura y la reflexión de cada día.
 
+## El editor de texto
+
+Los textos largos del panel —páginas, textos del sitio, avisos, eventos,
+cursos, sacramentos, la ficha de las pastorales y el evangelio— se escriben
+con el mismo editor. Su barra tiene, de izquierda a derecha:
+
+- **Negrita, cursiva y subrayado.**
+- **Título, subtítulo y párrafo normal**, para darle orden a un texto largo.
+- **Lista con puntos y lista numerada.**
+- **Insertar enlace** (primero se selecciona el texto) y **quitar enlace**.
+- **Insertar imagen.**
+- **Quitar el formato**, para dejar un pedazo como texto simple.
+
+Al pegar texto copiado de Word o de otra página se pega solo el texto, sin sus
+colores ni tipos de letra: el sitio usa los suyos.
+
+### Insertar una imagen
+
+1. Pon el cursor donde quieres la imagen.
+2. Toca el botón **Insertar imagen** (el del cuadrito con montaña) y elige la
+   foto de tu computadora o de tu celular.
+3. El panel pide una **descripción corta**. Es opcional, pero conviene: es lo
+   que escucha quien usa un lector de pantalla y lo que se muestra si la imagen
+   no carga. Algo como «Cartel de la kermés 2026».
+4. La imagen se sube y aparece en el texto. Sigue escribiendo debajo.
+5. **Guarda** el formulario, como siempre.
+
+Se aceptan JPG, PNG, WebP y GIF de hasta **4 MB**; si la foto es más ancha de
+1600 puntos, el sistema la reduce sola. En el sitio la imagen se ve completa,
+centrada, sin pasar del ancho del texto ni del alto de la pantalla. Para
+quitarla, se selecciona dentro del editor y se borra como cualquier texto.
+
+> **Si el botón no hace nada,** recarga la página del formulario: el navegador
+> guarda una copia del editor y a veces tarda en enterarse de que cambió.
+
 ## Textos del sitio
 
 ![Los textos del sitio](img/bloques-lista.webp)

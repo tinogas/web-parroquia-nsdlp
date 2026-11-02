@@ -59,7 +59,8 @@ aparece.
   del contenido, así que no es obligatorio pero casi siempre queda mejor
   escribirlo.
 - **Contenido.** El aviso completo, con el editor de texto: negritas, listas,
-  enlaces.
+  enlaces y también imágenes dentro del texto, con el botón **Insertar imagen**
+  (ver el capítulo 19).
 
 ### Lo que decide dónde aparece
 
@@ -91,8 +92,12 @@ aparece.
 
 ### Lo demás
 
-- **Imagen.** La foto de la tarjeta, en el listado del sitio y en el tablón del
-  panel. Si no pones ninguna, se dibuja un fondo con el título.
+- **Imagen.** La foto del aviso. Sale en la tarjeta del listado del sitio, en
+  el tablón del panel y, en miniatura, en el recuadro de avisos de la portada.
+  Al abrir el aviso se ve **completa, sin recortar** y sin pasar del alto de la
+  pantalla, así que sirve igual un cartel vertical que una foto apaisada. Si no
+  pones ninguna, la tarjeta dibuja un fondo con el título y la miniatura de la
+  portada, el ícono del tipo de aviso.
 - **Boletín en PDF.** Solo para los de tipo boletín: el archivo que la gente
   descarga. Al editar aparece un enlace para verlo y una palomita para
   quitarlo.
@@ -112,12 +117,17 @@ Según el escalón:
   la pastoral es una **comisión**, les llega también a las pastorales que
   agrupa.
 - **En la página:** además de lo anterior, sale en la sección Avisos del sitio
-  y, si es de los más recientes, en la portada.
+  y, si está entre los cuatro más recientes, en el **recuadro de avisos de la
+  cabecera de la portada**, lo primero que se ve al entrar. Ahí se queda
+  mientras esté vigente: al pasar su fecha «visible hasta» se retira solo.
+
+![El recuadro de avisos en la cabecera de la portada](img/publico-inicio-avisos.webp)
 
 ## Leer un aviso
 
-Desde el listado, el botón del ojo abre el aviso completo, con su imagen, su
-estado y, si ya está en el sitio, un enlace para verlo ahí. Abrirlo es lo que
+Desde el listado, el botón del ojo abre el aviso completo, con su imagen
+entera —igual que la ve el visitante; al tocarla se abre en tamaño original—,
+su estado y, si ya está en el sitio, un enlace para verlo ahí. Abrirlo es lo que
 lo marca como leído para ti: baja tu contador de la campana y no vuelve a
 subir.
 

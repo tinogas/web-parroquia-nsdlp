@@ -28,7 +28,7 @@ $iconosTipo = [
             <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>" class="aviso-mini">
                 <?php if (!empty($aviso['imagen'])): ?>
                 <img src="<?= e(url_activo($aviso['imagen'])) ?>" alt="" class="aviso-mini-foto"
-                     width="64" height="64" loading="lazy" decoding="async">
+                     width="64" height="64" decoding="async">
                 <?php else: ?>
                 <span class="aviso-mini-foto aviso-mini-icono" aria-hidden="true">
                     <i class="bi <?= e($iconosTipo[$aviso['tipo']] ?? 'bi-megaphone') ?>"></i>

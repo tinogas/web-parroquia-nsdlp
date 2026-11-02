@@ -162,6 +162,25 @@ module.exports = [
         recorte: '#horarios',
     },
     {
+        // La cabecera con el recuadro de avisos (lema, presentación y avisos
+        // con su miniatura). Las columnas entran con una animación de
+        // aparición: se dejan ya en su sitio antes de disparar.
+        id: 'publico-inicio-avisos',
+        titulo: 'El recuadro de avisos en la cabecera de la portada',
+        url: '/',
+        sesion: 'publico',
+        espera: '.portada-texto',
+        recorte: '.portada-texto',
+        antes: async (page) => {
+            await page.evaluate(() => document.querySelectorAll('.aparece').forEach((e) => {
+                e.style.animation = 'none';
+                e.style.opacity = '1';
+                e.style.transform = 'none';
+                e.style.filter = 'none';
+            }));
+        },
+    },
+    {
         id: 'publico-menu',
         titulo: 'Menú del sitio',
         url: '/',
