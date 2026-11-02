@@ -418,6 +418,106 @@
     margin-top: 1.75rem;
 }
 
+/* ---- Recuadro de avisos en la cabecera de la portada ----
+   Cada aviso en un renglón: miniatura de su foto (o el ícono de su tipo),
+   fecha y título. El renglón entero es el enlace al aviso. */
+
+.avisos-portada {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.25rem 1.25rem .75rem;
+    box-shadow: 0 10px 30px -22px rgba(22, 35, 58, .45);
+}
+
+.avisos-portada-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: .75rem;
+    border-bottom: 2px solid var(--dorado);
+}
+
+.avisos-portada-titulo {
+    font-size: var(--fs-subtitulo) !important;
+    margin: 0;
+}
+
+.avisos-portada-titulo .bi {
+    color: var(--dorado);
+    font-size: .9em;
+    margin-right: .25rem;
+}
+
+.avisos-portada-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.avisos-portada-lista li + li {
+    border-top: 1px solid var(--borde);
+}
+
+.aviso-mini {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    padding: .75rem .25rem;
+    color: var(--tinta);
+    text-decoration: none;
+    border-radius: .5rem;
+    transition: background-color .15s ease;
+}
+
+.aviso-mini:hover,
+.aviso-mini:focus-visible {
+    background: var(--crema);
+}
+
+.aviso-mini:hover .aviso-mini-titulo {
+    color: var(--azul);
+}
+
+.aviso-mini-foto {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    border-radius: .5rem;
+    object-fit: cover;
+    background: var(--marfil);
+}
+
+.aviso-mini-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dorado);
+    font-size: 1.5rem;
+}
+
+.aviso-mini-texto {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+}
+
+.aviso-mini-fecha {
+    font-size: var(--fs-nota);
+    color: var(--tinta-suave);
+}
+
+.aviso-mini-titulo {
+    font-weight: 600;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 /* Entrada suave, la misma de la propuesta: sube 12 px y se desenfoca menos. */
 @media (prefers-reduced-motion: no-preference) {
     .aparece {

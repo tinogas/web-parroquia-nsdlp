@@ -27,10 +27,21 @@ $renglonesOficina = array_values(array_filter(array_map('trim', preg_split('/\R/
 $oficinaEnPares   = $renglonesOficina && count($renglonesOficina) % 2 === 0;
 ?>
 
-<?php if (!$portadaEditorial && !empty($proximasMisas)): ?>
-<?php /* Con carrusel, las próximas misas no caben en la cabecera: van aquí. */ ?>
+<?php if (!$portadaEditorial && (!empty($proximasMisas) || !empty($avisosPortada))): ?>
+<?php /* Con carrusel, las próximas misas y el recuadro de avisos no caben en la cabecera: van aquí, lado a lado. */ ?>
 <div class="container pt-5">
-    <?php require BASE_PATH . '/modules/inicio/views/publico/proximas_misas.php'; ?>
+    <div class="row g-4">
+        <?php if (!empty($proximasMisas)): ?>
+        <div class="<?= !empty($avisosPortada) ? 'col-lg-8' : 'col-12' ?>">
+            <?php require BASE_PATH . '/modules/inicio/views/publico/proximas_misas.php'; ?>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($avisosPortada)): ?>
+        <div class="<?= !empty($proximasMisas) ? 'col-lg-4' : 'col-lg-6' ?>">
+            <?php require BASE_PATH . '/modules/inicio/views/publico/avisos_portada.php'; ?>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>
 
@@ -398,15 +409,15 @@ $mesesCortos = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', '
 
 
 <?php /* ================================================================
-         LO QUE PUBLICA EL PANEL — cursos, avisos y Facebook. No estaban
-         en la propuesta; van aquí, entre la agenda y quiénes somos, con el
-         mismo aire que el resto.
+         LO QUE PUBLICA EL PANEL — cursos y Facebook. No estaban en la
+         propuesta; van aquí, entre la agenda y quiénes somos, con el mismo
+         aire que el resto. Los avisos subieron a la cabecera.
          ================================================================ */ ?>
 <?php
 $hayFacebook = Config::tiene('facebook');
 $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
 ?>
-<?php if (!empty($proximosCursos) || !empty($avisosRecientes) || $hayFacebook || $hayLigas): ?>
+<?php if (!empty($proximosCursos) || $hayFacebook || $hayLigas): ?>
 <section class="franja franja-blanca">
     <div class="container">
 
@@ -439,27 +450,6 @@ $hayLigas    = !empty($bloques['ligas_interes']['contenido']);
                             <?php if ($curso['fecha_inicio']): ?>
                             <span class="small text-muted d-block"><i class="bi bi-calendar3 me-1"></i>Inicia el <?= e(fecha_larga($curso['fecha_inicio'])) ?></span>
                             <?php endif; ?>
-                        </div>
-                    </a>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if (!empty($avisosRecientes)): ?>
-        <div class="bloque-panel">
-            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <h2 class="titulo-seccion mb-0">Avisos recientes</h2>
-                <a href="<?= e(url_publica('avisos')) ?>" class="enlace-flecha">Ver todos los avisos <i class="bi bi-arrow-right"></i></a>
-            </div>
-            <div class="row g-3">
-                <?php foreach ($avisosRecientes as $aviso): ?>
-                <div class="col-md-4">
-                    <a href="<?= e(url_publica('avisos', ['slug' => $aviso['slug']])) ?>" class="card h-100 text-decoration-none">
-                        <div class="card-body p-4">
-                            <span class="d-block small text-muted mb-2"><?= e(fecha_larga($aviso['fecha_publicacion'])) ?></span>
-                            <span class="titulo-tarjeta d-block"><?= e($aviso['titulo']) ?></span>
                         </div>
                     </a>
                 </div>

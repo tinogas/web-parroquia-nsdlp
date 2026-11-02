@@ -34,6 +34,9 @@ class InicioController extends ControllerPublico
         $cortos        = CentroModel::nombresCortos($centros, $horarios);
         $proximasMisas = $this->conCuando((new HorarioModel())->proximasMisas(3));
         $eventos       = new EventoModel();
+        // Los avisos van arriba, en un recuadro de la cabecera: es lo primero
+        // que la parroquia quiere que se lea al entrar.
+        $avisosPortada = (new AvisoModel())->recientes(4);
 
         $this->render('inicio/publico/index', [
             'metaTitulo'      => '',
@@ -45,7 +48,7 @@ class InicioController extends ControllerPublico
             'sinContenedor'    => true,
             'hero'             => $diapositivas
                 ? $this->heroCarrusel($diapositivas)
-                : $this->heroEditorial($bloques, $centros, $cortos, $proximasMisas),
+                : $this->heroEditorial($bloques, $centros, $cortos, $proximasMisas, $avisosPortada),
             'portadaEditorial' => !$diapositivas,
             'bloques'          => $bloques,
             'bloquesNosotros'  => (new BloqueModel())->porZona('nosotros'),
@@ -58,7 +61,7 @@ class InicioController extends ControllerPublico
             'pastorales'       => (new PastoralModel())->activasAgrupadas(),
             'agenda'           => $eventos->proximos(9),
             'evangelioHoy'     => (new EvangelioModel())->deHoy(),
-            'avisosRecientes'  => (new AvisoModel())->recientes(3),
+            'avisosPortada'    => $avisosPortada,
             'proximosCursos'   => (new CursoModel())->proximos(3),
             'jsonLd'           => $this->datosEstructurados(),
         ]);
@@ -160,7 +163,7 @@ class InicioController extends ControllerPublico
      * sale del bloque "Presentación" del panel si se captura; mientras esté
      * vacío, va el texto de la propuesta.
      */
-    private function heroEditorial(array $bloques, array $centros, array $cortos, array $proximasMisas): string
+    private function heroEditorial(array $bloques, array $centros, array $cortos, array $proximasMisas, array $avisosPortada): string
     {
         $numeros = [1 => 'una', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 5 => 'cinco', 6 => 'seis'];
         $nombres = array_map(static fn (array $c): string => $cortos[(int) $c['id']], $centros);
@@ -175,6 +178,11 @@ class InicioController extends ControllerPublico
         }
 
         $presentacion = $bloques['inicio_intro']['contenido'] ?? '';
+        // El editor deja un «<br>» al vaciar el campo: sin texto real, cuenta
+        // como vacío y sale el saludo fijo en lugar de un hueco.
+        if (trim(html_entity_decode(strip_tags($presentacion))) === '') {
+            $presentacion = '';
+        }
 
         ob_start(); ?>
         <section class="portada-editorial">
@@ -185,11 +193,17 @@ class InicioController extends ControllerPublico
             </div>
             <div class="container portada-texto">
                 <h1 class="portada-titulo aparece aparece-2">Una comunidad en camino hacia la santidad</h1>
+                <?php
+                // Con avisos vigentes la cabecera se parte en tres: lema,
+                // presentación y el recuadro de avisos. Sin avisos queda como
+                // siempre, en dos, sin un recuadro vacío.
+                $conAvisos = !empty($avisosPortada);
+                ?>
                 <div class="row g-4">
-                    <div class="col-lg-4 aparece aparece-2">
+                    <div class="<?= $conAvisos ? 'col-lg-3' : 'col-lg-4' ?> aparece aparece-2">
                         <p class="portada-lema"><?= e($lema) ?></p>
                     </div>
-                    <div class="col-lg-7 offset-lg-1 aparece aparece-3">
+                    <div class="<?= $conAvisos ? 'col-md-7 col-lg-5' : 'col-lg-7 offset-lg-1' ?> aparece aparece-3">
                         <?php if ($presentacion !== ''): ?>
                         <?php /* Contenido ya saneado con lista blanca al guardarse. */ ?>
                         <div class="portada-descripcion contenido-editorial"><?= $presentacion ?></div>
@@ -206,6 +220,11 @@ class InicioController extends ControllerPublico
                             </a>
                         </div>
                     </div>
+                    <?php if ($conAvisos): ?>
+                    <div class="col-md-5 col-lg-4 aparece aparece-3">
+                        <?php require BASE_PATH . '/modules/inicio/views/publico/avisos_portada.php'; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <?php if ($proximasMisas): ?>
                 <div class="mt-5 aparece aparece-3">
