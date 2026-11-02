@@ -16,7 +16,7 @@
     },
     {
       "imagen": "avisos-form",
-      "texto": "Con el botón azul, Nuevo aviso, se abre el formulario. A la izquierda va lo que se lee: el título, que es obligatorio; un resumen de dos renglones; y el contenido completo, con negritas, listas y enlaces.",
+      "texto": "Con el botón azul, Nuevo aviso, se abre el formulario. A la izquierda va lo que se lee: el título, que es obligatorio; un resumen de dos renglones; y el contenido completo, con negritas, listas, enlaces y hasta imágenes dentro del texto.",
       "foco": [0.21, 0.12, 0.72, 0.6]
     },
     {
@@ -44,7 +44,7 @@
     },
     {
       "imagen": "avisos-form",
-      "texto": "Antes de guardar, puedes añadir una imagen para la tarjeta, el PDF si es boletín, y marcarlo como destacado. Conviene usar el destacado con cuentagotas: si todo está destacado, nada lo está.",
+      "texto": "Antes de guardar, puedes añadir una imagen, el PDF si es boletín, y marcarlo como destacado. La imagen sale en la tarjeta, en miniatura en la portada y completa, sin recortar, al abrir el aviso. Y el destacado, con cuentagotas: si todo está destacado, nada lo está.",
       "foco": [0.72, 0.44, 0.98, 0.7]
     },
     {
@@ -52,8 +52,13 @@
       "texto": "Al publicar para la pastoral, a cada miembro le aparece en su pantalla de inicio, marcado como nuevo, y le suena la campana hasta que lo abra. Si la pastoral es una comisión, les llega también a las pastorales que agrupa."
     },
     {
+      "imagen": "publico-inicio-avisos",
+      "texto": "Y si lo publicas en la página, además sale en la sección Avisos del sitio y, si está entre los cuatro más recientes, en el recuadro de avisos de la cabecera de la portada, lo primero que se ve al entrar. Al pasar su fecha de visible hasta, se retira solo.",
+      "foco": [0.66, 0.22, 1, 0.67]
+    },
+    {
       "imagen": "publico-avisos",
-      "texto": "Y si lo publicas en la página, además sale en la sección Avisos del sitio y, si es de los más recientes, en la portada."
+      "texto": "Ahí, cada aviso tiene su tarjeta, y al abrirlo se lee completo, con su imagen entera. Desde el panel, el botón del ojo lo muestra igual que lo ve el visitante."
     },
     {
       "imagen": "panel-listado",

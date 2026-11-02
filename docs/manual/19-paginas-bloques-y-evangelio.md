@@ -26,6 +26,8 @@ colores ni tipos de letra: el sitio usa los suyos.
 
 ### Insertar una imagen
 
+![El editor con una imagen insertada](img/editor-imagen.webp)
+
 1. Pon el cursor donde quieres la imagen.
 2. Toca el botón **Insertar imagen** (el del cuadrito con montaña) y elige la
    foto de tu computadora o de tu celular.
@@ -94,6 +96,8 @@ avisos ni eventos. Para lo que cambia cada semana —noticias, anuncios— está
 **Avisos**, que sale en el recuadro de la portada y se retira solo al vencer.
 
 ## Menú del sitio
+
+![Menú del sitio](img/menu-sitio.webp)
 
 Todo lo que va en el menú de arriba del sitio, entre **Inicio** (siempre
 primero) y **Contacto** (siempre al final, en el botón dorado), en una sola

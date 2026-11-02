@@ -1,12 +1,12 @@
 {
   "capitulo": 19,
   "titulo": "Páginas, bloques y evangelio del día",
-  "subtitulo": "Tres formas de escribir en el sitio",
-  "intro": "Capítulo diecinueve: páginas, bloques y evangelio del día. En este video verás los tres módulos de la sección Contenido y para qué sirve cada uno.",
+  "subtitulo": "Textos, páginas, menú y evangelio",
+  "intro": "Capítulo diecinueve: páginas, bloques y evangelio del día. En este video verás los módulos de la sección Contenido, el editor de texto y para qué sirve cada cosa.",
   "escenas": [
     {
       "imagen": "panel-menu",
-      "texto": "La sección Contenido del menú tiene tres módulos. Los tres escriben texto en el sitio, pero cada uno para una cosa distinta: los textos del sitio, las páginas y el evangelio del día."
+      "texto": "La sección Contenido del menú tiene cuatro módulos, cada uno para una cosa distinta: los textos del sitio, las páginas, el menú del sitio y el evangelio del día."
     },
     {
       "imagen": "bloques-lista",
@@ -22,19 +22,19 @@
       "texto": "Así, la misión y la visión que se editan en el panel son las que se leen en la página Quiénes somos."
     },
     {
-      "imagen": "publico-inicio-completa",
+      "imagen": "publico-inicio-avisos",
       "texto": "Dos textos de la portada cambiaron con el rediseño del sitio. Presentación es el que va debajo del lema, en la cabecera de la portada. Mientras esté vacío, sale un texto de bienvenida fijo.",
-      "foco": [0.03, 0.08, 0.9, 0.126]
+      "foco": [0, 0.04, 0.7, 0.56]
     },
     {
-      "imagen": "publico-inicio-completa",
+      "imagen": "publico-inicio-avisos",
       "texto": "Bienvenida, en cambio, ya no se muestra en ninguna parte. Si quieres un saludo del párroco en la portada, escríbelo en Presentación.",
-      "foco": [0.42, 0.098, 0.88, 0.127]
+      "foco": [0.24, 0.2, 0.68, 0.56]
     },
     {
       "imagen": "bloques-lista",
       "texto": "Cada texto tiene su título, su contenido, con el editor de texto, y un interruptor de activo. Apagado, la sección simplemente no se dibuja en el sitio, sin dejar un hueco vacío.",
-      "foco": [0.21, 0.66, 0.98, 1.0]
+      "foco": [0.21, 0.66, 0.98, 1]
     },
     {
       "imagen": "bloques-lista",
@@ -56,8 +56,28 @@
       "foco": [0.5, 0.2, 0.98, 0.36]
     },
     {
-      "imagen": "publico-menu",
-      "texto": "Por último, con la palomita Mostrar en el menú, la página aparece en el menú del sitio, después de las secciones fijas."
+      "imagen": "editor-imagen",
+      "texto": "Los textos largos del panel se escriben con el mismo editor: páginas, textos del sitio, avisos, eventos, cursos, sacramentos y el evangelio. Su barra tiene negrita, cursiva y subrayado, título y subtítulo, listas, enlaces, y el botón Insertar imagen.",
+      "foco": [0.22, 0.36, 0.72, 0.46]
+    },
+    {
+      "imagen": "editor-imagen",
+      "texto": "Para poner una imagen, deja el cursor donde la quieres, toca Insertar imagen y elige la foto. El panel te pide una descripción corta, que es lo que escucha quien usa un lector de pantalla. La imagen se sube y aparece en el texto; luego guardas el formulario como siempre.",
+      "foco": [0.22, 0.36, 0.72, 0.9]
+    },
+    {
+      "imagen": "editor-imagen",
+      "texto": "Se aceptan fotos JPG, PNG, WebP y GIF de hasta cuatro megas, y si es muy ancha, el sistema la reduce sola. En el sitio se ve completa y centrada. Y si un día el botón no responde, recarga la página: el navegador guarda una copia del editor y a veces tarda en enterarse de que cambió.",
+      "foco": [0.22, 0.36, 0.72, 0.9]
+    },
+    {
+      "imagen": "menu-sitio",
+      "texto": "Con la palomita Mostrar en el menú, una página entra al final del menú del sitio. Y en Contenido, Menú del sitio, se decide todo lo que va arriba: las secciones fijas y las páginas, en una sola lista."
+    },
+    {
+      "imagen": "menu-sitio",
+      "texto": "Cada renglón tiene su interruptor para mostrarlo u ocultarlo, flechas para subirlo o bajarlo, y un campo para cambiarle el nombre; vacío, se usa el de siempre. Inicio va siempre primero y Contacto siempre al final. Nada cambia en el sitio hasta que tocas Guardar menú.",
+      "foco": [0.2, 0.16, 1, 0.9]
     },
     {
       "imagen": "evangelio-lista",
@@ -76,12 +96,12 @@
     {
       "imagen": "publico-inicio-completa",
       "texto": "Cuando hay una entrada publicada para hoy, aparece en la portada, justo antes de los horarios, en dos columnas: el evangelio a la izquierda y la reflexión a la derecha.",
-      "foco": [0.0, 0.125, 1.0, 0.2]
+      "foco": [0, 0.162, 1, 0.233]
     },
     {
       "imagen": "publico-inicio-completa",
       "texto": "Si los textos son largos, cada columna enseña sus primeras líneas y un botón Leer completo. Y si no hay entrada para hoy, la portada sencillamente no dibuja esa sección.",
-      "foco": [0.0, 0.15, 1.0, 0.22]
+      "foco": [0, 0.175, 1, 0.233]
     },
     {
       "imagen": "evangelio-lista",

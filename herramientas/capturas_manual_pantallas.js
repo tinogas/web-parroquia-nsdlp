@@ -783,6 +783,39 @@ module.exports = [
         espera: '.sidebar-link',
     },
     {
+        // El editor de una página nueva con un ejemplo armado solo en el DOM:
+        // un título, un párrafo y una imagen ya insertada, como queda después
+        // de usar «Insertar imagen». No se guarda ni se sube nada; la imagen
+        // es la ilustración de la portada, que vive en el repositorio.
+        id: 'editor-imagen',
+        titulo: 'El editor de texto con una imagen insertada',
+        url: '/admin/paginas/nueva',
+        espera: '.editor-area',
+        antes: async (page) => {
+            await page.evaluate(() => {
+                // La raíz del sitio, con o sin subcarpeta: lo que va antes de /admin/.
+                const base = location.href.split('/admin/')[0];
+                document.querySelector('#titulo').value = 'Kermés parroquial 2026';
+                document.querySelector('.editor-area').innerHTML =
+                    '<p>Te esperamos el sábado en el atrio, después de la misa de 7.</p>'
+                    + '<figure><img src="' + base + '/assets/img/portada.svg" alt="Ilustración del templo"></figure>'
+                    + '<p>Habrá antojitos, juegos y la rifa de fin de año.</p>';
+                const boton = document.querySelector('[data-comando="insertImage"]');
+                if (boton) { boton.classList.add('activo'); }
+            });
+            await page.waitForFunction(() => {
+                const img = document.querySelector('.editor-area img');
+                return img && img.complete && img.naturalWidth > 0;
+            }, { timeout: 10000 });
+        },
+    },
+    {
+        id: 'menu-sitio',
+        titulo: 'Menú del sitio: qué va, en qué orden y con qué nombre',
+        url: '/admin/menu',
+        espera: '#tablaMenu',
+    },
+    {
         id: 'evangelio-lista',
         titulo: 'El evangelio del día',
         url: '/admin/evangelio',

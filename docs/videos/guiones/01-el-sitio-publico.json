@@ -10,26 +10,31 @@
     },
     {
       "imagen": "publico-menu",
-      "texto": "Arriba, en todas las páginas, va el menú, con Contacto en dorado porque es lo que más se busca. Solo se dibujan las secciones que existen, y en un teléfono el menú se recoge en el botón de las tres rayas."
+      "texto": "Arriba, en todas las páginas, va el menú, con Contacto en dorado porque es lo que más se busca. Qué secciones lleva, en qué orden y con qué nombre se decide en el panel, en Contenido, Menú del sitio. En un teléfono, el menú se recoge en el botón de las tres rayas."
     },
     {
       "imagen": "publico-inicio-completa",
-      "texto": "Así es la portada, de arriba abajo: la cabecera y las próximas misas, los horarios de la semana, los requisitos de cada sacramento, las pastorales agrupadas por comisión, quiénes somos y, al final, el contacto. Cada franja aparece solo si tiene algo que mostrar."
+      "texto": "Así es la portada, de arriba abajo: la cabecera con los avisos y las próximas misas, el evangelio del día, los horarios de la semana, los requisitos de cada sacramento, las pastorales agrupadas por comisión, quiénes somos y, al final, el contacto. Cada franja aparece solo si tiene algo que mostrar."
     },
     {
-      "imagen": "publico-inicio-completa",
+      "imagen": "publico-inicio-avisos",
       "texto": "Bajo el lema va una presentación breve, que es el texto del bloque Presentación; si se suben fotos al carrusel, en su lugar pasan las fotos. Ojo: el bloque Bienvenida ya no sale en la portada, así que un saludo del párroco se escribe en Presentación.",
-      "foco": [0.4, 0.1, 0.92, 0.13]
+      "foco": [0.24, 0.2, 0.68, 0.56]
     },
     {
-      "imagen": "publico-inicio-completa",
+      "imagen": "publico-inicio-avisos",
+      "texto": "A la derecha de la cabecera va el recuadro de avisos: los cuatro más recientes que estén vigentes, cada uno con una miniatura de su imagen, su fecha y su título. Al tocar uno se abre completo. Es lo primero que se lee al entrar, y cuando no hay avisos vigentes, el recuadro no aparece.",
+      "foco": [0.66, 0.22, 1, 0.67]
+    },
+    {
+      "imagen": "publico-inicio-avisos",
       "texto": "Luego, las tres misas más próximas, calculadas de los horarios y siempre en hora de Hermosillo; la primera va resaltada. Si el párroco publicó el evangelio del día, aparece justo después, con su reflexión al lado y un botón para leerlo completo.",
-      "foco": [0.05, 0.128, 0.95, 0.162]
+      "foco": [0, 0.68, 1, 1]
     },
     {
       "imagen": "publico-nosotros",
       "texto": "Quiénes somos presenta la misión y la visión de la parroquia, el equipo pastoral y el organigrama. Ojo: del equipo sale toda persona activa, no una selección; para que alguien deje de aparecer, hay que marcar su ficha como inactiva. Su contacto no se publica nunca.",
-      "foco": [0.05, 0.6, 0.6, 1.0]
+      "foco": [0.05, 0.6, 0.6, 1]
     },
     {
       "imagen": "publico-horarios",
@@ -50,7 +55,7 @@
     },
     {
       "imagen": "publico-avisos",
-      "texto": "Avisos muestra los publicados en el sitio, del más reciente al más viejo. Ojo: no todo aviso llega aquí. Una pastoral puede publicar un aviso solo para su propia gente, y ese se queda en el panel."
+      "texto": "Avisos muestra los publicados en el sitio, del más reciente al más viejo. Al abrir uno, su imagen se ve completa, sin recortar, aunque sea un cartel vertical. Ojo: no todo aviso llega aquí. Una pastoral puede publicar un aviso solo para su propia gente, y ese se queda en el panel."
     },
     {
       "imagen": "publico-eventos",
@@ -72,7 +77,7 @@
     {
       "imagen": "publico-cursos",
       "texto": "Al pie de cada página van los datos de la oficina y, en la última línea, dos enlaces discretos: el aviso de privacidad, y Acceso, la puerta del panel. No está en el menú a propósito: el visitante no tiene por qué encontrarla.",
-      "foco": [0.6, 0.62, 1.0, 1.0]
+      "foco": [0.6, 0.62, 1, 1]
     },
     {
       "imagen": "publico-inicio",
