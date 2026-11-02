@@ -1,0 +1,64 @@
+{
+  "capitulo": 2,
+  "titulo": "Entrar al panel",
+  "subtitulo": "Dónde está la puerta y qué hacer si no te deja pasar",
+  "intro": "Capítulo dos: entrar al panel. En este video verás dónde está la puerta, qué hacer si no te deja pasar y cómo salir sin dejar tu sesión abierta.",
+  "escenas": [
+    {
+      "imagen": "publico-galeria",
+      "texto": "El panel es donde el equipo trabaja. Está detrás de una contraseña y no se anuncia en el menú del sitio. Para llegar, baja hasta el final de cualquier página: en la última línea del pie está el enlace Acceso.",
+      "foco": [0.7, 0.9, 0.98, 1.0]
+    },
+    {
+      "imagen": "acceso-login",
+      "texto": "La otra forma es escribir la dirección de la parroquia con diagonal admin al final; guárdala en tus favoritos, porque es la que usarás todos los días. Las dos terminan en esta pantalla, y si ya habías entrado, te mandan directo a tu inicio."
+    },
+    {
+      "imagen": "acceso-login",
+      "texto": "Pide dos cosas: el correo de tu cuenta, el que te dieron al darte de alta, y tu contraseña, de al menos ocho caracteres. Nada más. El enlace de abajo, Volver al sitio, regresa a la página pública.",
+      "foco": [0.36, 0.42, 0.64, 0.78]
+    },
+    {
+      "imagen": "acceso-error",
+      "texto": "Si algo no coincide, el mensaje siempre es el mismo, «Correo o contraseña incorrectos», aunque solo hayas fallado la contraseña. Es a propósito: así el sistema no le confirma a nadie qué correos tienen cuenta en la parroquia.",
+      "foco": [0.36, 0.37, 0.64, 0.56]
+    },
+    {
+      "imagen": "acceso-error",
+      "texto": "Las causas más comunes son tres: un espacio de más al copiar y pegar el correo; las mayúsculas, que en la contraseña sí cuentan y en el correo no; y una cuenta desactivada, que no entra aunque la contraseña sea la correcta.",
+      "foco": [0.36, 0.46, 0.64, 0.68]
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Si olvidaste tu contraseña, no hay un enlace que te mande un correo. Te la repone quien administra las cuentas: tu coordinación general, si eres coordinador o consulta de una pastoral, y si no, el administrador. Conviene que después cambies la que te den."
+    },
+    {
+      "imagen": "acceso-elegir-perfil",
+      "texto": "Hay quien hace dos cosas en la parroquia: coordina una pastoral y, además, pertenece a otra donde solo consulta. Eso no son dos cuentas ni dos contraseñas, sino una cuenta con un perfil adicional."
+    },
+    {
+      "imagen": "acceso-elegir-perfil",
+      "texto": "En ese caso, después de la contraseña aparece esta pantalla, que pregunta con cuál perfil entras. Durante esa sesión puedes hacer lo del perfil que elegiste, ni más ni menos.",
+      "foco": [0.36, 0.44, 0.64, 0.72]
+    },
+    {
+      "imagen": "acceso-barra-superior",
+      "texto": "Ya dentro, la barra de arriba está en todas las pantallas: las tres rayas esconden el menú lateral, el escudo te regresa a tu inicio, Ver el sitio abre la página pública en otra pestaña, y luego vienen la campana y tu nombre."
+    },
+    {
+      "imagen": "acceso-menu-usuario",
+      "texto": "Tu nombre abre tu menú, que empieza recordándote tu correo y tu rol: lo primero que hay que mirar cuando algo no aparece donde lo esperabas. Debajo están Usar como, que solo tiene el administrador, y Cerrar sesión.",
+      "foco": [0.8, 0.05, 1.0, 0.25]
+    },
+    {
+      "imagen": "acceso-cambiar-perfil",
+      "texto": "Quien tiene perfiles adicionales ve además Cambiar de perfil, que abre una ventana con sus otros perfiles y un botón Usar junto a cada uno. El cambio es inmediato, no vuelve a pedir contraseña y queda en la bitácora, igual que un inicio de sesión.",
+      "foco": [0.3, 0.37, 0.7, 0.63]
+    },
+    {
+      "imagen": "acceso-menu-usuario",
+      "texto": "Y toma en serio cerrar sesión, sobre todo en la computadora de la oficina: mientras tu sesión siga abierta, quien se siente después trabaja con tu nombre, y lo que haga queda registrado como hecho por ti. Cerrar el navegador la cierra; cerrar la pestaña, no.",
+      "foco": [0.82, 0.12, 0.99, 0.25]
+    }
+  ]
+}

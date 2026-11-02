@@ -1,0 +1,112 @@
+{
+  "capitulo": 3,
+  "titulo": "El panel por dentro",
+  "subtitulo": "Lo que se repite en todas las pantallas del panel",
+  "intro": "Capítulo tres: el panel por dentro. En este video verás lo que se repite en todas sus pantallas: el inicio, el menú, la campana, los listados y los formularios.",
+  "escenas": [
+    {
+      "imagen": "panel-inicio",
+      "texto": "Todas las pantallas del panel están armadas igual: una barra arriba, un menú a la izquierda y el trabajo en medio. En el menú, la sección en la que estás se marca con un filo dorado."
+    },
+    {
+      "imagen": "panel-inicio",
+      "texto": "Tu pantalla de inicio está armada con lo tuyo. Arriba, el saludo y tu rol: si algo no aparece donde lo esperabas, lo primero es mirar con qué rol entraste.",
+      "foco": [
+        0.2,
+        0.1,
+        0.6,
+        0.2
+      ]
+    },
+    {
+      "imagen": "panel-inicio",
+      "texto": "Debajo, los cumpleaños del mes y lo que tus pastorales anunciaron hacia dentro. Lo que llegó desde tu ingreso anterior lleva la marca Nuevo, así que si entras dos veces el mismo día, la segunda ya no la verás.",
+      "foco": [
+        0.22,
+        0.22,
+        0.82,
+        0.35
+      ]
+    },
+    {
+      "imagen": "panel-accesos",
+      "texto": "Después, los accesos rápidos a los módulos que tienes permitidos, para llegar de un clic sin pasar por el menú. Y al final, las pastorales que administras, cada una con enlace a su panel propio."
+    },
+    {
+      "imagen": "panel-menu",
+      "texto": "El menú lateral está agrupado por temas, siempre en el mismo orden: Contenido, Parroquia, Pastorales, Trámites, Comunicación y Administración. El administrador tiene todas las entradas."
+    },
+    {
+      "imagen": "panel-menu-coordinador",
+      "texto": "Tu menú probablemente es más corto, porque cada entrada se dibuja solo si tu cuenta tiene permiso para esa pantalla. Si no está, no es que esté escondida: tu cuenta no la tiene. Así lo ve una coordinación general."
+    },
+    {
+      "imagen": "panel-campana",
+      "texto": "Los módulos de pastoral piden algo más que el permiso: administrar esa pastoral en concreto. Por eso la coordinadora de Coros no ve Catequesis. Y Avisos y Mensajes pueden traer una insignia roja con lo que tienes sin leer.",
+      "foco": [
+        0.0,
+        0.2,
+        0.38,
+        0.75
+      ]
+    },
+    {
+      "imagen": "panel-campana",
+      "texto": "Es el mismo número de la campana, arriba a la derecha, que suma los mensajes del formulario de contacto y los avisos hacia dentro que te tocan. Al pulsarla se despliega la lista.",
+      "foco": [
+        0.54,
+        0.0,
+        0.82,
+        0.22
+      ]
+    },
+    {
+      "imagen": "panel-campana",
+      "texto": "Tres detalles. La campana solo anuncia lo que puedes abrir: esta coordinación no atiende los mensajes de contacto, así que solo ve avisos. Un aviso deja de contar cuando tú lo abres, no otra persona. Y uno vencido deja de contar aunque nunca lo hayas abierto."
+    },
+    {
+      "imagen": "panel-listado",
+      "texto": "Casi todos los módulos abren con un listado, y todos funcionan igual. Arriba a la derecha, el botón azul para crear; si no lo ves, tu cuenta puede consultar, pero no crear. Debajo, los filtros, que se combinan con el selector de pastoral.",
+      "foco": [
+        0.21,
+        0.08,
+        0.98,
+        0.3
+      ]
+    },
+    {
+      "imagen": "panel-listado",
+      "texto": "Las insignias de la tabla dicen en qué escalón va cada cosa: De la pastoral, si se publicó solo hacia dentro; En la página, si ya se ve en el sitio; y ninguna, si sigue en borrador. Vencido indica que ya pasó su fecha y dejó de mostrarse.",
+      "foco": [
+        0.5,
+        0.36,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "imagen": "panel-listado",
+      "texto": "A la derecha, los botones de cada renglón: el ojo para leer, la flecha para verlo en el sitio si ya está publicado, el lápiz para editar y el bote de basura para borrar. Aparecen según lo que tu cuenta pueda hacer.",
+      "foco": [
+        0.86,
+        0.38,
+        0.99,
+        0.62
+      ]
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "En los formularios, si algo falta o no cuadra, se te avisa al guardar y no se pierde lo que ya escribiste. Borrar siempre pregunta antes, y unas pocas acciones delicadas, como borrar una pastoral, piden al administrador volver a escribir su contraseña."
+    },
+    {
+      "imagen": "auditoria-lista",
+      "texto": "Por último, el sistema lleva una bitácora de quién hizo qué: cada alta, cada cambio y cada borrado, con la cuenta y la fecha. No es para vigilar, sino para saber quién despublicó un aviso sin discutir. El administrador la consulta en Administración, Auditoría.",
+      "foco": [
+        0.2,
+        0.08,
+        0.7,
+        0.2
+      ]
+    }
+  ]
+}

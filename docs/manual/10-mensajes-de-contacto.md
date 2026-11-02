@@ -54,11 +54,11 @@ solo cuando de verdad se cerró.
 
 ## Sobre borrarlos
 
-Los mensajes se pueden eliminar, y **conviene hacerlo**: son datos personales
-de alguien que escribió para preguntar algo, y una vez resuelto no hay razón
-para conservarlos indefinidamente.
+Hoy **el panel no tiene botón para borrar un mensaje**: ni el listado ni la
+vista de un mensaje lo ofrecen. Y el sistema tampoco los borra solo: no hay una
+limpieza automática por antigüedad, así que se quedan guardados.
 
-El sistema **no los borra solo**. No hay una limpieza automática por
-antigüedad, así que la única depuración que va a ocurrir es la que alguien haga
-a mano cada cierto tiempo. Es la misma advertencia que el capítulo 7 hace sobre
-las inscripciones a cursos.
+Conviene tenerlo presente, porque son datos personales de alguien que escribió
+para preguntar algo, y una vez resuelto no hay razón para conservarlos
+indefinidamente. Si hace falta depurarlos, hoy hay que pedírselo a quien
+administra el sistema.

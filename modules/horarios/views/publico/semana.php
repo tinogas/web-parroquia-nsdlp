@@ -2,7 +2,9 @@
 /**
  * La semana de horarios, como en la propuesta de rediseño: encabezado con
  * las fichas de sede a la derecha, pestañas por día (abre en el de hoy) y,
- * en cada día, tres tarjetas: misas, confesiones y oración y grupos.
+ * en cada día, tres columnas: misas, confesiones y oración y grupos. Sin
+ * icono encima de cada una: el título basta, y tres tarjetas iguales con su
+ * icono son justo la plantilla que el sitio quiere evitar.
  *
  * La usan la portada (franja #horarios) y la página de Horarios. Espera:
  *   $horarios       vigentes de toda la semana (HorarioModel::vigentesDeLaSemana)
@@ -20,9 +22,9 @@ $sedeInicial  = $semana['sede'] ?? null;
 $centrosPorId = array_column($centros, null, 'id');
 
 $columnas = [
-    ['Misas',            ['misa'],                         'bi-house-heart'],
-    ['Confesiones',      ['confesion'],                    'bi-chat-heart'],
-    ['Oración y grupos', ['adoracion', 'otro', 'oficina'], 'bi-stars'],
+    ['Misas',            ['misa']],
+    ['Confesiones',      ['confesion']],
+    ['Oración y grupos', ['adoracion', 'otro', 'oficina']],
 ];
 
 $porDia = array_fill(0, 7, []);
@@ -44,7 +46,6 @@ $queEs = static function (array $h): string {
 ?>
 <div class="d-flex flex-column flex-lg-row justify-content-lg-between align-items-lg-end gap-4">
     <div class="encabezado-seccion mb-0">
-        <span class="antetitulo">Horarios</span>
         <<?= $nivelTitulo ?> class="<?= $nivelTitulo === 'h1' ? 'titulo-pagina mb-3' : 'titulo-seccion' ?>">Misas, confesiones y oración</<?= $nivelTitulo ?>>
         <?= $semana['intro'] ?? '' ?>
     </div>
@@ -89,14 +90,11 @@ $queEs = static function (array $h): string {
          aria-labelledby="pestana-dia-<?= $d ?>" tabindex="0">
         <h3 class="solo-sin-js titulo-seccion text-capitalize"><?= e(nombre_dia($d)) ?></h3>
         <div class="row g-4">
-            <?php foreach ($columnas as [$titulo, $tipos, $icono]): ?>
+            <?php foreach ($columnas as [$titulo, $tipos]): ?>
             <?php $lista = array_values(array_filter($porDia[$d], static fn (array $h): bool => in_array($h['tipo'], $tipos, true))); ?>
             <div class="col-md-4">
                 <div class="grupo-horario" data-nombre="<?= e(mb_strtolower($titulo)) ?>">
-                    <h4 class="grupo-horario-titulo">
-                        <i class="bi <?= e($icono) ?>" aria-hidden="true"></i><?= e($titulo) ?>
-                        <span class="cuenta"><?= $lista ? count($lista) : '' ?></span>
-                    </h4>
+                    <h4 class="grupo-horario-titulo"><?= e($titulo) ?></h4>
                     <ul class="list-unstyled mb-0">
                         <?php foreach ($lista as $h): ?>
                         <?php

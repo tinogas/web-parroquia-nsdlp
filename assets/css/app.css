@@ -1408,6 +1408,63 @@ a.evento-linea:hover {
     background: var(--marfil);
 }
 
+/* ---- Abrir y cerrar los menús desplegables ----
+   La transición «Menu dropdown» de transitions.dev: el menú crece desde
+   el botón que lo abre y se encoge un poco al irse. Bootstrap lo esconde
+   con display:none, que no se anima; aquí se queda siempre en
+   display:block y se oculta con visibility. Las clases .is-open /
+   .is-closing las pone assets/js/app.js. */
+:root {
+    --dropdown-open-dur: 250ms;
+    --dropdown-close-dur: 150ms;
+    --dropdown-pre-scale: 0.97;
+    --dropdown-closing-scale: 0.99;
+    --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-dropdown {
+    transform-origin: top left;
+    transform: scale(var(--dropdown-pre-scale));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform var(--dropdown-open-dur) var(--dropdown-ease),
+        opacity   var(--dropdown-open-dur) var(--dropdown-ease);
+    will-change: transform, opacity;
+}
+.t-dropdown[data-origin="top-right"]     { transform-origin: top right; }
+.t-dropdown[data-origin="top-center"]    { transform-origin: top center; }
+.t-dropdown[data-origin="bottom-left"]   { transform-origin: bottom left; }
+.t-dropdown[data-origin="bottom-center"] { transform-origin: bottom center; }
+.t-dropdown[data-origin="bottom-right"]  { transform-origin: bottom right; }
+
+.t-dropdown.is-open {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+.t-dropdown.is-closing {
+    transform: scale(var(--dropdown-closing-scale));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform var(--dropdown-close-dur) var(--dropdown-ease),
+        opacity   var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+.dropdown-menu.t-dropdown {
+    display: block;
+    visibility: hidden;
+}
+.dropdown-menu.t-dropdown.is-open,
+.dropdown-menu.t-dropdown.is-closing {
+    visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-dropdown { transition: none !important; }
+}
+
 .modal-content {
     border: 0;
     border-radius: 1rem;

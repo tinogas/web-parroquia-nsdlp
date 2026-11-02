@@ -1,0 +1,94 @@
+{
+  "capitulo": 11,
+  "titulo": "Horarios y sedes",
+  "subtitulo": "Lo que se repite cada semana, y dónde ocurre",
+  "intro": "Capítulo once: horarios y sedes. En este video verás cómo se capturan las misas y demás horarios de cada semana, y por qué el catálogo de sedes importa más de lo que parece.",
+  "escenas": [
+    {
+      "imagen": "horarios-lista",
+      "texto": "La parroquia no es un solo templo: tiene su sede y varios centros, cada uno con sus misas. Los horarios están en el menú, en Parroquia, Horarios."
+    },
+    {
+      "imagen": "horarios-lista",
+      "texto": "Aquí va lo que se repite todas las semanas: las misas, las confesiones, la adoración, el horario de oficina. Lo que ocurre una sola vez, como un retiro o una posada, no es un horario: es un evento.",
+      "foco": [0.21, 0.22, 0.98, 0.7]
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "En el formulario, el tipo puede ser misa, confesión, adoración eucarística, oficina parroquial u otro. El día de la semana es la pestaña del sitio en la que aparece.",
+      "foco": [0.22, 0.22, 0.72, 0.34]
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "La sede o centro dice en cuál de los templos es. Es lo que hace funcionar las fichas de sede de la portada y de la página de horarios. Un horario sin sede sale solo con la ficha Todas las sedes.",
+      "foco": [0.22, 0.34, 0.72, 0.47]
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "La hora de término es opcional: sirve para lo que dura un rato, como la adoración o la oficina. El lugar y la nota son texto libre, como capilla del Santísimo, o excepto el primer viernes.",
+      "foco": [0.22, 0.48, 0.72, 0.84]
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "Tiene coro marca qué misas llevan coro, para que el módulo de Coros pueda asignarles personal y encargado. Ya no hace falta escribir «con coro» en la nota.",
+      "foco": [0.22, 0.83, 0.72, 0.93]
+    },
+    {
+      "imagen": "publico-horarios",
+      "texto": "En el sitio, cada día tiene tres columnas según el tipo: misas, confesiones, y oración y grupos, donde caen los demás. Y arriba están las fichas de sede, que funcionan gracias al campo sede o centro."
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "A la derecha está la vigencia, con dos fechas: desde y hasta. En blanco, el horario vale todo el año, que es lo normal. Se llenan para lo de temporada: la Cuaresma, las misas de verano, la novena de la fiesta patronal.",
+      "foco": [0.73, 0.2, 0.98, 0.6]
+    },
+    {
+      "imagen": "horarios-lista",
+      "texto": "Fuera de esas fechas, el horario deja de mostrarse solo, y vuelve al año siguiente si se cambian las fechas. Es la alternativa a acordarse de dar de baja y de alta cada año.",
+      "foco": [0.6, 0.36, 0.98, 0.7]
+    },
+    {
+      "imagen": "horarios-lista",
+      "texto": "El listado se puede filtrar por sede o centro, como los demás catálogos de la parroquia. Y el botón Imprimir horarios abre, en una pestaña aparte, una hoja lista para imprimir o guardar como PDF.",
+      "foco": [0.21, 0.08, 0.98, 0.22]
+    },
+    {
+      "imagen": "horarios-imprimir",
+      "texto": "La hoja lleva arriba el nombre de la parroquia, una sola vez, y debajo, una tras otra, cada sede con sus horarios vigentes hoy: misas, confesiones, adoración, oficina y otro, cada tipo por separado."
+    },
+    {
+      "imagen": "horarios-imprimir",
+      "texto": "El lugar, la capilla o el sitio dentro de la sede, se muestra una sola vez, bajo su nombre. Solo vuelve a aparecer en un renglón cuando ese horario es en un lugar distinto.",
+      "foco": [0.24, 0.66, 0.76, 0.8]
+    },
+    {
+      "imagen": "centros-lista",
+      "texto": "En Parroquia, Sede y centros, está el catálogo de los lugares de la parroquia. Cada uno tiene nombre y tipo: la sede es la parroquia, y los centros, las comunidades que dependen de ella."
+    },
+    {
+      "imagen": "centros-lista",
+      "texto": "Además lleva dirección, teléfono, una descripción, el orden en que se listan, y Activo, el interruptor que lo saca de circulación sin borrarlo.",
+      "foco": [0.21, 0.08, 0.98, 0.4]
+    },
+    {
+      "imagen": "centros-lista",
+      "texto": "Es un catálogo pequeño, pero lo usa medio sistema. Los horarios se agrupan por sede. Los eventos y los cursos guardan en qué sede ocurren. Y las personas del equipo se marcan en la sede donde sirven.",
+      "foco": [0.21, 0.08, 0.7, 0.4]
+    },
+    {
+      "imagen": "publico-horarios",
+      "texto": "El nombre corto de cada ficha sale solo: la sede parroquial toma el lugar que más se repite en sus horarios, Villa Bonita, y cada centro, su nombre hasta el primer «de», como San Pío.",
+      "foco": [0.6, 0.17, 0.9, 0.28]
+    },
+    {
+      "imagen": "centros-lista",
+      "texto": "Las cuentas de usuario también se acotan por sede: así se distingue a las tres coordinadoras de catequesis sin duplicar la pastoral.",
+      "foco": [0.21, 0.1, 0.6, 0.4]
+    },
+    {
+      "imagen": "centros-lista",
+      "texto": "Por eso conviene no borrar un centro que ya está en uso. Si deja de haber actividad ahí, se apaga con Activo, y todo lo que cuelga de él se queda coherente.",
+      "foco": [0.6, 0.08, 0.98, 0.4]
+    }
+  ]
+}

@@ -101,9 +101,12 @@ la multiplicación de las dos: *sus pastorales* × *sus sedes*.
   parroquia. Por eso el rol *Coordinador* pide una sede —dejarlo sin ninguna lo
   convertiría en general sin querer— y *Coordinador general* admite varias o
   ninguna.
-- **Marcar una Comisión** alcanza también a las pastorales que agrupa: quien
-  coordina la Comisión Litúrgica recibe lo que publican MESC, Proclamadores y
-  Coros hacia dentro.
+- **Las Comisiones no se marcan aquí.** En la lista solo salen las pastorales
+  que tienen trabajo propio, y el alcance **no se hereda** de una Comisión a las
+  que agrupa: quien coordina MESC y Proclamadores lleva marcadas las dos. Lo que
+  sí corre por la jerarquía es la **lectura**, y va hacia abajo: lo que la
+  Comisión Litúrgica publica hacia dentro lo leen también MESC, Proclamadores y
+  Coros.
 
 Ese cruce es lo que distingue a las tres coordinadoras de catequesis sin tener
 que duplicar la pastoral en el catálogo, y también lo que evita el problema

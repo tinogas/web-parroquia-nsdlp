@@ -1,0 +1,41 @@
+{
+  "capitulo": 16,
+  "titulo": "Catequesis",
+  "subtitulo": "Catequistas y ciclos de catecismo, año tras año",
+  "intro": "Capítulo dieciséis: catequesis. En este video verás cómo se lleva quién da clase, de qué grado y en qué ciclo.",
+  "escenas": [
+    {
+      "imagen": "catequesis-catequistas",
+      "texto": "El módulo de Catequesis está en Pastorales, Catequesis, y abre con el catálogo de quienes dan catecismo. Como en MESC, cada catequista se elige del equipo pastoral: su nombre y su teléfono vienen de su ficha y no se vuelven a escribir."
+    },
+    {
+      "imagen": "catequesis-catequistas",
+      "texto": "El grado que da cada quien, de Kínder a Confirmación, pasando por Comunión y los cursos misioneros, se asigna en cada periodo, como dice el subtítulo. Y cada catequista se puede poner activo o inactivo.",
+      "foco": [0.21, 0.1, 0.66, 0.45]
+    },
+    {
+      "imagen": "catequesis-catequistas",
+      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos: es la forma de mandar el aviso de la junta de catequistas sin teclearlo doce veces.",
+      "foco": [0.22, 0.2, 0.75, 0.45]
+    },
+    {
+      "imagen": "catequesis-periodos",
+      "texto": "En Periodos, cada periodo es un ciclo de catecismo, normalmente de agosto a junio. Tiene su nombre, sus fechas de vigencia y su estado, y guarda qué catequistas dieron clase en él."
+    },
+    {
+      "imagen": "catequesis-periodos",
+      "texto": "Eso es lo que hace útil el módulo con el tiempo: los catequistas cambian cada año, y el periodo conserva quién estuvo en cada ciclo. Al abrir un periodo se ve su lista, con el grado de cada quien, y se le agregan o quitan catequistas.",
+      "foco": [0.21, 0.28, 0.98, 0.5]
+    },
+    {
+      "imagen": "catequesis-periodos",
+      "texto": "Las otras dos pantallas, Actividades y Documentos, son las mismas que tiene cualquier pastoral desde su panel básico: el tablero de lo que la pastoral organiza, y los archivos que se descargan desde su página.",
+      "foco": [0.21, 0.1, 0.6, 0.4]
+    },
+    {
+      "imagen": "pastorales-panel",
+      "texto": "No son tablas aparte, así que un documento se captura una sola vez y se ve igual desde aquí que desde Parroquia, Pastorales, Panel básico. Catequesis llegó a tener dos listas de documentos, ciegas la una a la otra; hoy es una sola.",
+      "foco": [0.21, 0.08, 0.72, 0.7]
+    }
+  ]
+}

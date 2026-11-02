@@ -119,12 +119,22 @@ class ProclamadoresModel extends Model
     // ── Turnos ───────────────────────────────────────────────────────────
 
     /** Turnos del mes, con los nombres de sus proclamadores ya concatenados, para el calendario. */
-    public function turnosDelMes(int $anio, int $mes, int $pastoralId): array
+    public function turnosDelMes(int $anio, int $mes, int $pastoralId, ?int $proclamadorId = null): array
     {
         $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
         $siguienteAnio = $mes === 12 ? $anio + 1 : $anio;
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
+
+        // Con $proclamadorId, solo sus turnos: su calendario personal. Los
+        // nombres siguen saliendo todos, para que vea con quién le toca.
+        $params = [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId];
+        $soloProclamador = '';
+        if ($proclamadorId !== null) {
+            $soloProclamador = ' AND EXISTS (SELECT 1 FROM proclamadores_turno_proclamadores f
+                                              WHERE f.turno_id = t.id AND f.proclamador_id = :proclamador)';
+            $params[':proclamador'] = $proclamadorId;
+        }
 
         return $this->fetchAll(
             "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
@@ -134,9 +144,9 @@ class ProclamadoresModel extends Model
                       WHERE tp.turno_id = t.id) AS proclamadores_nombres
                FROM proclamadores_turnos t
                LEFT JOIN colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral{$soloProclamador}
               ORDER BY t.fecha, t.hora",
-            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
+            $params
         );
     }
 

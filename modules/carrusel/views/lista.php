@@ -13,7 +13,7 @@
     <div class="card-body text-center py-5">
         <div class="display-6 text-body-tertiary mb-2"><i class="bi bi-images"></i></div>
         <p class="text-muted mb-0">
-            Todavía no hay diapositivas. Mientras tanto, la portada muestra el saludo de bienvenida.
+            Todavía no hay diapositivas. Mientras tanto, la portada muestra la ilustración del templo con el lema y la presentación.
         </p>
     </div>
 </div>

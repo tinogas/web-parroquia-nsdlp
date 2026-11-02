@@ -18,6 +18,7 @@
  * Variables esperadas:
  *   $nombreMes  string, "Agosto 2026"
  *   $semanas    array, cuadrícula de MescController::construirCalendarioTurnos()
+ *   $ministro   ?array, si la hoja es solo de esa persona (filtro del calendario)
  *   $urlVolver  string
  */
 if (!function_exists('mesc_imprimir_texto_legible')) {
@@ -51,7 +52,7 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
 
     <p class="ti-parroquia"><?= e(APP_NAME) ?></p>
     <div class="ti-titulo">
-        <span class="ti-titulo-izq">Calendario MESC</span>
+        <span class="ti-titulo-izq">Calendario MESC<?= $ministro ? ' · ' . e($ministro['nombre']) : '' ?></span>
         <span class="ti-titulo-der"><?= e($nombreMes) ?></span>
     </div>
 

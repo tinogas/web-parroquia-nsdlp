@@ -29,11 +29,13 @@ renglón tiene tres botones:
 > parroquia es lo que convierte esta lista en un respaldo de verdad.
 
 > **Restaurar reemplaza todo lo que hay hoy.** Lo capturado después de esa
-> fecha desaparece. Por eso el panel pide **confirmar la contraseña del
-> administrador** antes de hacerlo, y por eso, antes de tocar nada, **genera
-> solo un respaldo del estado actual**: si la restauración no era lo que se
-> quería, hay por dónde volver. Esa copia aparece en la lista marcada como
-> *Restauración*.
+> fecha desaparece. Por eso el botón **Restaurar** no hace nada hasta que se
+> marca la casilla *«Entiendo que esto reemplaza todos los datos actuales y
+> quiero continuar»*, y por eso, antes de tocar nada, **genera solo un respaldo
+> del estado actual**: si la restauración no era lo que se quería, hay por dónde
+> volver. Esa copia aparece en la lista como un respaldo más, con la fecha y la
+> hora de ese momento; junto a ella queda un renglón de tipo *Restauración* que
+> anota qué respaldo se restauró y si terminó bien.
 
 Un respaldo antes de cada cambio grande —una carga masiva, una limpieza de
 datos, un cambio de servidor— es la costumbre que conviene tener.
@@ -46,10 +48,12 @@ Registra **quién hizo qué, y cuándo**: cada alta, cada cambio, cada borrado, 
 también las consultas de datos personales —quién abrió una inscripción, quién
 entró a los mensajes de contacto—.
 
-Se puede filtrar por **usuario**, por **tipo de acción** y por **módulo**, que
-es como se responden las preguntas que de verdad se hacen: «¿quién despublicó
+Se puede filtrar por **usuario**, por **tipo de acción**, por **tabla** —el
+dato que se tocó: avisos, eventos, inscripciones…— y por fechas, **desde** y
+**hasta**, que es como se responden las preguntas que de verdad se hacen: «¿quién despublicó
 el aviso?», «¿quién borró esa foto?», «¿alguien entró a las inscripciones el
-mes pasado?».
+mes pasado?». Lo filtrado se puede bajar a una hoja de cálculo con **Exportar
+CSV**, arriba a la derecha.
 
 Dos cosas que conviene saber:
 

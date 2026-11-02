@@ -1,0 +1,92 @@
+{
+  "capitulo": 19,
+  "titulo": "Páginas, bloques y evangelio del día",
+  "subtitulo": "Tres formas de escribir en el sitio",
+  "intro": "Capítulo diecinueve: páginas, bloques y evangelio del día. En este video verás los tres módulos de la sección Contenido y para qué sirve cada uno.",
+  "escenas": [
+    {
+      "imagen": "panel-menu",
+      "texto": "La sección Contenido del menú tiene tres módulos. Los tres escriben texto en el sitio, pero cada uno para una cosa distinta: los textos del sitio, las páginas y el evangelio del día."
+    },
+    {
+      "imagen": "bloques-lista",
+      "texto": "Los textos del sitio, o bloques, son los párrafos que ya tienen su hueco hecho. Por ejemplo, la presentación de la portada, la historia de la parroquia, la misión, la visión, las ligas de interés o la introducción de sacramentos."
+    },
+    {
+      "imagen": "bloques-lista",
+      "texto": "Aquí no se crean ni se borran: la lista viene dada, porque cada uno tiene su hueco reservado en una página concreta. Lo que se hace es editarlos, y al abrir uno, el panel te dice dónde aparece.",
+      "foco": [0.21, 0.08, 0.98, 0.45]
+    },
+    {
+      "imagen": "publico-nosotros",
+      "texto": "Así, la misión y la visión que se editan en el panel son las que se leen en la página Quiénes somos."
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Dos textos de la portada cambiaron con el rediseño del sitio. Presentación es el que va debajo del lema, en la cabecera de la portada. Mientras esté vacío, sale un texto de bienvenida fijo.",
+      "foco": [0.03, 0.08, 0.9, 0.126]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Bienvenida, en cambio, ya no se muestra en ninguna parte. Si quieres un saludo del párroco en la portada, escríbelo en Presentación.",
+      "foco": [0.42, 0.098, 0.88, 0.127]
+    },
+    {
+      "imagen": "bloques-lista",
+      "texto": "Cada texto tiene su título, su contenido, con el editor de texto, y un interruptor de activo. Apagado, la sección simplemente no se dibuja en el sitio, sin dejar un hueco vacío.",
+      "foco": [0.21, 0.66, 0.98, 1.0]
+    },
+    {
+      "imagen": "bloques-lista",
+      "texto": "El listado muestra además la última edición de cada texto, que es la forma rápida de ver qué lleva años sin tocarse.",
+      "foco": [0.7, 0.24, 0.98, 0.68]
+    },
+    {
+      "imagen": "paginas-lista",
+      "texto": "Las páginas son para lo que no cabe en ningún módulo: la historia larga de la parroquia, un reglamento, la convocatoria de una peregrinación. Son secciones nuevas, cada una con su propia dirección."
+    },
+    {
+      "imagen": "paginas-lista",
+      "texto": "Cada página tiene su título, su contenido y su dirección, que es la parte final del enlace. Se genera sola a partir del título y se puede corregir, pero conviene dejarla quieta una vez publicada: si alguien ya la compartió, cambiarla rompe ese enlace.",
+      "foco": [0.21, 0.2, 0.6, 0.36]
+    },
+    {
+      "imagen": "paginas-lista",
+      "texto": "También lleva un resumen para buscadores, de dos líneas, que es lo que Google muestra debajo del título. Y tiene su orden y la casilla Publicada: mientras no esté publicada, su dirección responde como no encontrada.",
+      "foco": [0.5, 0.2, 0.98, 0.36]
+    },
+    {
+      "imagen": "publico-menu",
+      "texto": "Por último, con la palomita Mostrar en el menú, la página aparece en el menú del sitio, después de las secciones fijas."
+    },
+    {
+      "imagen": "evangelio-lista",
+      "texto": "El evangelio del día es la lectura de cada día y, si da tiempo, la reflexión del párroco. Hay una entrada por día: si ya existe una para esa fecha, se actualiza en vez de crear otra."
+    },
+    {
+      "imagen": "evangelio-lista",
+      "texto": "En el evangelio va la cita y el texto. No hace falta escribir Evangelio arriba: la portada pone esa etiqueta sola. Lo mismo con la reflexión: escribir Reflexión al principio hace que se lea dos veces.",
+      "foco": [0.21, 0.22, 0.66, 0.58]
+    },
+    {
+      "imagen": "evangelio-lista",
+      "texto": "La reflexión es opcional, y a propósito: hay días en que no da tiempo de escribirla, y el evangelio debe poder salir igual. Y mientras Publicado esté apagado, la entrada no aparece en el sitio.",
+      "foco": [0.64, 0.2, 0.98, 0.58]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Cuando hay una entrada publicada para hoy, aparece en la portada, justo antes de los horarios, en dos columnas: el evangelio a la izquierda y la reflexión a la derecha.",
+      "foco": [0.0, 0.125, 1.0, 0.2]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Si los textos son largos, cada columna enseña sus primeras líneas y un botón Leer completo. Y si no hay entrada para hoy, la portada sencillamente no dibuja esa sección.",
+      "foco": [0.0, 0.15, 1.0, 0.22]
+    },
+    {
+      "imagen": "evangelio-lista",
+      "texto": "Y como la portada solo enseña la de hoy, puedes dejar preparadas las entradas de varios días y que vayan saliendo, cada una en su fecha.",
+      "foco": [0.21, 0.2, 0.98, 0.58]
+    }
+  ]
+}

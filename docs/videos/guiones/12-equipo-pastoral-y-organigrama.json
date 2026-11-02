@@ -1,0 +1,91 @@
+{
+  "capitulo": 12,
+  "titulo": "Equipo pastoral y organigrama",
+  "subtitulo": "Quién es quién en la parroquia, escrito una sola vez",
+  "intro": "Capítulo doce: equipo pastoral y organigrama. En este video verás el catálogo de personas del que beben los demás módulos, el directorio para imprimir y el árbol de la parroquia.",
+  "escenas": [
+    {
+      "imagen": "personas-lista",
+      "texto": "El equipo pastoral es el catálogo de personas de la parroquia, y el módulo del que más cosas dependen. Se llega desde el menú, en Parroquia, Equipo pastoral, y tiene un buscador por nombre o cargo y filtros por pastoral y por sede."
+    },
+    {
+      "imagen": "personas-lista",
+      "texto": "De estas fichas salen quién aparece en Quiénes somos, quién coordina cada pastoral, quién es instructor de un curso y quién es ministro de MESC, catequista, proclamador o corista.",
+      "foco": [0.21, 0.45, 0.72, 1.0]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "También de quién es cada cuenta del panel: al dar de alta un usuario se elige a una persona del equipo, y de su ficha vienen su nombre, su teléfono y su foto. Así, un nombre se corrige en un sitio y se corrige en todos.",
+      "foco": [0.22, 0.04, 0.72, 0.18]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "Con el botón Nueva persona se abre la ficha. El nombre va completo y de verdad, porque es el que se verá en todas partes. El tipo, de párroco a personal de oficina, es lo que agrupa las fichas en Quiénes somos.",
+      "foco": [0.22, 0.12, 0.72, 0.27]
+    },
+    {
+      "imagen": "panel-inicio",
+      "texto": "La fecha de nacimiento es la que alimenta los cumpleaños que avisa cada mes la pantalla de inicio. Solo se usa puertas adentro: no se publica en el sitio.",
+      "foco": [0.21, 0.08, 0.84, 0.38]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "Del correo y el teléfono, solo se publica el correo institucional. El teléfono es para uso del equipo: de ahí salen los botones de WhatsApp de los listados, y nunca aparece en el sitio.",
+      "foco": [0.22, 0.27, 0.72, 0.42]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "La semblanza es un párrafo breve para Quiénes somos. Más abajo, en listas de palomitas, se marcan sus sedes o centros y sus pastorales, y se puede pertenecer a varias de cada una.",
+      "foco": [0.22, 0.55, 0.72, 0.97]
+    },
+    {
+      "imagen": "pastorales-mapa-imprimir",
+      "texto": "La ficha guarda también su pareja, que se elige de la misma lista y vale en toda la parroquia. Es lo que permite que en Matrimonios, AMA, JECSA y Raíces coordine un matrimonio y no una persona suelta.",
+      "foco": [0.13, 0.75, 0.78, 0.89]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "A la derecha están el interruptor Activo y, aparte, Incluir en el directorio telefónico. Esa casilla no es para todo el equipo: es para altos mandos y cargos importantes, a quienes tenga sentido imprimir con su teléfono.",
+      "foco": [0.72, 0.29, 0.98, 0.56]
+    },
+    {
+      "imagen": "publico-nosotros",
+      "texto": "Ojo con esto: dar de alta a alguien aquí lo publica en el sitio. Toda persona activa aparece en Quiénes somos con su nombre, su cargo, su foto y su semblanza.",
+      "foco": [0.05, 0.5, 0.6, 0.9]
+    },
+    {
+      "imagen": "personas-lista",
+      "texto": "Para que deje de aparecer alguien que dejó su encargo, se marca su ficha como inactiva. No hace falta borrarla, y conviene no hacerlo: su nombre puede estar todavía colgando del organigrama o de un catálogo.",
+      "foco": [0.62, 0.42, 0.99, 1.0]
+    },
+    {
+      "imagen": "personas-lista",
+      "texto": "Desde el listado, el botón Imprimir directorio abre en otra pestaña una hoja lista para imprimir o guardar como PDF, solo con quienes tienen marcada la casilla del directorio.",
+      "foco": [0.21, 0.1, 0.55, 0.4]
+    },
+    {
+      "imagen": "personas-directorio-imprimir",
+      "texto": "Lleva el cargo, la sede y el teléfono de cada quien. Por eso, a diferencia del organigrama, esta hoja no es pública: los teléfonos nunca se publican en el sitio.",
+      "foco": [0.2, 0.0, 0.8, 0.1]
+    },
+    {
+      "imagen": "personas-directorio-imprimir",
+      "texto": "Va agrupada por pastoral: cada comisión encabeza su bloque, con sus dimensiones debajo, y en cada una va primero quien coordina, luego los encargados y al final el resto."
+    },
+    {
+      "imagen": "organigrama-lista",
+      "texto": "El organigrama, en Parroquia, Organigrama, es el árbol de quién depende de quién. Se arma con nodos: cada uno lleva un título, que es lo que se dibuja en la cajita, y de qué nodo depende. Si eso se deja vacío, el nodo queda en la raíz.",
+      "foco": [0.21, 0.08, 0.65, 0.62]
+    },
+    {
+      "imagen": "organigrama-lista",
+      "texto": "Cada nodo puede ligarse además a una pastoral o a una persona, las dos opcionales. Si las eliges, el organigrama muestra el nombre al día, sin volver aquí cuando haya un relevo.",
+      "foco": [0.24, 0.3, 0.62, 0.95]
+    },
+    {
+      "imagen": "publico-nosotros",
+      "texto": "En el sitio, el organigrama sale al final de Quiénes somos, con un botón que abre su versión para imprimir, en forma de árbol, la que se usa cuando hace falta en papel.",
+      "foco": [0.05, 0.1, 0.65, 0.72]
+    }
+  ]
+}

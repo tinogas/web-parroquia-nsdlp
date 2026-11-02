@@ -19,6 +19,13 @@ versionan** —se rehacen con ese comando—, así que las correcciones van siem
 a los `.md`: editar el Word a mano funciona una vez, hasta que alguien vuelva a
 generar y lo pise.
 
+## Videos
+
+Cada capítulo tiene además su video narrado y subtitulado, hecho con las
+mismas capturas. Sus guiones y cómo se arman están en
+[`docs/videos/`](../videos/README.md). Cuando se corrige un capítulo, conviene
+revisar si su guion dice lo mismo.
+
 ## Capítulos
 
 El orden es el del número en el nombre del archivo.

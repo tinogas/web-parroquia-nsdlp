@@ -94,6 +94,12 @@ cuenta; al pulsarla se despliega la lista, separada en sus dos grupos, y cada
 renglón lleva directo a lo suyo. Si son más de cinco, el último renglón dice
 cuántos faltan y lleva al listado completo.
 
+La lista se despliega creciendo desde la campana y se recoge igual al cerrarla,
+con una transición breve; lo mismo hace el menú de tu nombre. Si en tu equipo
+está activada la opción de **reducir el movimiento** —en Windows, en
+Accesibilidad; en el teléfono, en sus ajustes—, los dos menús aparecen y
+desaparecen sin animación.
+
 En la captura de arriba solo aparece el grupo de **avisos**: es la campana de
 una coordinación general, que no atiende los mensajes de contacto. Y eso lleva
 a los tres detalles que conviene saber:
@@ -136,19 +142,22 @@ Casi todos los módulos abren con una tabla, y todas las tablas funcionan igual:
 
 ## Cómo funciona cualquier formulario
 
-- Los campos obligatorios están marcados; si falta alguno, al guardar aparece
-  un aviso en rojo arriba y **no se pierde lo que ya habías escrito**.
+- Si falta un campo obligatorio, el formulario no se envía y el navegador
+  señala cuál es; si algo más no cuadra, al guardar aparece un aviso en rojo
+  arriba y **no se pierde lo que ya habías escrito**.
 - Al guardar bien, vuelves al listado con un aviso verde. Los avisos se cierran
   solos con su tachita y no vuelven a aparecer al recargar.
 - **Borrar siempre pregunta antes**, en una ventanita de confirmación. Y unas
-  pocas acciones delicadas —restaurar un respaldo, por ejemplo— además piden al
-  administrador **volver a escribir su contraseña**: no es desconfianza, es que
-  son cosas que no se pueden deshacer.
+  pocas acciones delicadas además piden una confirmación más fuerte: borrar
+  una pastoral, o activarla o quitarla del menú, piden al administrador
+  **volver a escribir su contraseña**, y restaurar un respaldo pide marcar una
+  casilla que dice que se entiende lo que va a pasar. No es desconfianza: son
+  cosas que no se pueden deshacer o que cambian lo que ve todo el mundo.
 
 ## Lo que queda registrado
 
 El sistema lleva una bitácora de quién hizo qué: cada alta, cada cambio y cada
 borrado quedan anotados con la cuenta que lo hizo y la fecha. No es para
 vigilar a nadie; es para poder responder «¿quién despublicó el aviso?» sin que
-sea una discusión. El administrador la consulta en Administración → Bitácora, y
+sea una discusión. El administrador la consulta en Administración → Auditoría, y
 se explica en el capítulo 22.

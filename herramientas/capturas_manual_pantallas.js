@@ -537,6 +537,10 @@ module.exports = [
         titulo: 'La galería en el panel',
         url: '/admin/galeria',
         espera: '.sidebar-link',
+        // El panel enseña también las fotos ocultas, que lo están justamente
+        // porque no se pueden publicar —hay menores reconocibles en alguna—.
+        // Lo que la pantalla explica son las tarjetas, no las fotos.
+        fotos: ['.card-img-top'],
     },
     {
         id: 'galeria-subir',
@@ -794,6 +798,16 @@ module.exports = [
         titulo: 'Los respaldos de la base',
         url: '/admin/respaldos',
         espera: '.sidebar-link',
+        // A 1280 la tabla se corta justo antes de Estado y de los botones
+        // Descargar, Restaurar y Eliminar, que es de lo que habla el capítulo:
+        // esta se toma más ancha, y la ventana vuelve a su tamaño al terminar.
+        antes: async (page) => {
+            await page.setViewport({ width: 1600, height: 900, deviceScaleFactor: 2 });
+            await new Promise((listo) => setTimeout(listo, 300));
+        },
+        despues: async (page) => {
+            await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 2 });
+        },
     },
 
     // ------------------------------------------------------------

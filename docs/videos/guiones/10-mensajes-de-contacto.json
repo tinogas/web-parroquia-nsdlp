@@ -1,0 +1,100 @@
+{
+  "capitulo": 10,
+  "titulo": "Mensajes de contacto",
+  "subtitulo": "El buzón es el panel: si nadie entra, nadie contesta",
+  "intro": "Capítulo diez: mensajes de contacto. En este video verás adónde llega lo que la gente escribe desde el sitio, y cómo se atiende para que nadie se quede sin respuesta.",
+  "escenas": [
+    {
+      "imagen": "publico-contacto",
+      "texto": "Todo empieza en el sitio: lo que la gente escribe en el formulario de la página de Contacto llega al panel, a Comunicación, Mensajes. El formulario obliga a dejar al menos un correo o un teléfono, así que siempre hay por dónde contestar.",
+      "foco": [
+        0.43,
+        0.28,
+        0.94,
+        0.62
+      ]
+    },
+    {
+      "imagen": "mensajes-lista",
+      "texto": "No se reenvía a ningún correo: el buzón es esta pantalla, y si nadie entra, nadie contesta. Solo la ven el Administrador y Secretaría; ni siquiera el Editor entra aquí, porque guarda datos personales de gente de fuera de la parroquia."
+    },
+    {
+      "imagen": "mensajes-lista",
+      "texto": "Hay dos filtros, todos y sin leer, y una tabla con quién escribe, el asunto y cuándo llegó. Los que nadie ha abierto vienen en negrita y con un punto de color: son los mismos que cuenta la campana de la barra.",
+      "foco": [
+        0.21,
+        0.08,
+        0.98,
+        0.46
+      ]
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "Con Ver se abre el mensaje: a la izquierda, tal como lo escribió la persona; a la derecha, tres cosas.",
+      "foco": [
+        0.21,
+        0.08,
+        0.72,
+        0.35
+      ]
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "Primero, los datos de contacto: su nombre y la forma de responderle. El correo es un enlace que abre el programa de correo, y el teléfono, uno que marca desde el celular.",
+      "foco": [
+        0.72,
+        0.22,
+        0.98,
+        0.43
+      ]
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "Después, el botón verde, Marcar como atendido. No le manda nada a quien escribió: es para el equipo, y deja registrado quién lo atendió. Eso evita que dos personas contesten lo mismo, o que nadie conteste creyendo que ya lo hizo otro.",
+      "foco": [
+        0.72,
+        0.43,
+        0.98,
+        0.5
+      ]
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "Y la nota interna, un renglón para dejar dicho lo que pasó; por ejemplo: se llamó el martes, sin respuesta. Solo la ve el equipo del panel: nunca aparece en el sitio ni se le manda a quien escribió.",
+      "foco": [
+        0.72,
+        0.5,
+        0.98,
+        0.84
+      ]
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "No hay reglas del sistema, pero sí una forma que funciona. Se abre el mensaje, que así deja de contar en la campana. Se responde por donde la persona dejó su dato. Se apunta en la nota qué se hizo. Y se marca como atendido."
+    },
+    {
+      "imagen": "mensajes-ver",
+      "texto": "Ojo: un mensaje abierto pero no atendido es el caso peligroso. Ya no aparece como sin leer, y todavía no ha respondido nadie. Por eso conviene marcarlo atendido solo cuando de verdad se cerró.",
+      "foco": [
+        0.72,
+        0.43,
+        0.98,
+        0.5
+      ]
+    },
+    {
+      "imagen": "mensajes-lista",
+      "texto": "Y sobre borrarlos: hoy el panel no tiene botón para eliminar un mensaje, ni en el listado ni al abrirlo. Conviene tenerlo presente, porque son datos personales de alguien que escribió para preguntar algo."
+    },
+    {
+      "imagen": "mensajes-lista",
+      "texto": "El sistema tampoco los borra solo: no hay una limpieza automática por antigüedad. Si hace falta depurarlos, hoy hay que pedírselo a quien administra el sistema.",
+      "foco": [
+        0.21,
+        0.2,
+        0.98,
+        0.46
+      ]
+    }
+  ]
+}

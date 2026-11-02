@@ -1,0 +1,88 @@
+{
+  "capitulo": 15,
+  "titulo": "MESC",
+  "subtitulo": "Quién sirve en cada misa y a quién se le lleva la comunión",
+  "intro": "Capítulo quince: MESC, Ministros Extraordinarios de la Sagrada Comunión. En este video verás cómo se organiza quién sirve en cada misa y a quién se le lleva la comunión a su casa.",
+  "escenas": [
+    {
+      "imagen": "mesc-visitas",
+      "texto": "MESC es el primero de los cuatro módulos que tienen pastorales concretas, y está en Pastorales, MESC. Lleva dos cosas a la vez: quiénes son los ministros y cuándo sirve cada uno, y a quién se le lleva la comunión a su casa."
+    },
+    {
+      "imagen": "mesc-visitas",
+      "texto": "Solo entran quienes administran esta pastoral. El permiso de ver MESC lo tienen todos los coordinadores, pero no basta: hay que administrar esta pastoral en concreto. El capítulo cuatro lo explica.",
+      "foco": [0.0, 0.55, 0.3, 1.0]
+    },
+    {
+      "imagen": "mesc-visitas",
+      "texto": "El módulo abre con Visitas a enfermos, la pantalla más delicada de todo el sistema. Lo dice su propio subtítulo: datos de salud, visibles solo aquí.",
+      "foco": [0.21, 0.1, 0.65, 0.45]
+    },
+    {
+      "imagen": "mesc-visitas",
+      "texto": "Cada visita guarda a quién se visita, su teléfono, su dirección y, si se capturó, su ubicación en el mapa, que es lo que marca el pin azul.",
+      "foco": [0.5, 0.2, 0.98, 0.7]
+    },
+    {
+      "imagen": "mesc-visitas",
+      "texto": "Arriba se filtra entre Activas y Dadas de baja. Cuando alguien mejora o fallece, la visita se da de baja, no se borra.",
+      "foco": [0.21, 0.15, 0.6, 0.45]
+    },
+    {
+      "imagen": "mesc-visitas",
+      "texto": "Esta lista no sale del panel. No se publica ni se manda por WhatsApp, y solo sale de ahí en la ruta exportada, que se ve más adelante. Es la información de salud y el domicilio de personas mayores o enfermas de la parroquia: de todo lo que guarda el sistema, es lo que más cuidado merece."
+    },
+    {
+      "imagen": "mesc-ministros",
+      "texto": "En Ministros está el catálogo de quiénes son ministros. Cada uno se da de alta eligiéndolo del equipo pastoral: así, su nombre y su teléfono vienen de su ficha y se mantienen al día solos."
+    },
+    {
+      "imagen": "mesc-ministros",
+      "texto": "Queda un campo de nombre corto, cómo se le llama en el rol, y se puede escribir un nombre libre si esa persona todavía no está en el equipo. El interruptor Activo saca a alguien del rol sin borrar su historial.",
+      "foco": [0.55, 0.38, 0.98, 0.8]
+    },
+    {
+      "imagen": "mesc-ministros",
+      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos del capítulo trece: escribes el recordatorio una vez y cada botón abre la conversación con el texto ya puesto.",
+      "foco": [0.22, 0.2, 0.75, 0.4]
+    },
+    {
+      "imagen": "mesc-turnos",
+      "texto": "El calendario de turnos dice quién sirve en cada misa. Se ve por meses, con las flechas para moverse, y cada turno dice la hora y el servicio. Su color es el color litúrgico del día."
+    },
+    {
+      "imagen": "mesc-turnos",
+      "texto": "Arriba hay tres botones: Nuevo turno, para agregar uno; Colores litúrgicos, el catálogo de referencia, verde, morado, blanco y rojo, con el que se etiquetan los turnos según el tiempo o la fiesta; y el de imprimir.",
+      "foco": [0.5, 0.12, 0.98, 0.46]
+    },
+    {
+      "imagen": "mesc-turnos",
+      "texto": "Imprimir o Descargar PDF saca la hoja del mes, la que se pega en la sacristía. Es la razón de que este calendario exista: el rol se consulta en papel.",
+      "foco": [0.5, 0.1, 0.75, 0.39]
+    },
+    {
+      "imagen": "mesc-turnos",
+      "texto": "Encima del mes está Ver los turnos de. Si eliges un ministro, el calendario deja solo sus turnos y dice cuántos tiene ese mes. El filtro se mantiene al cambiar de mes, y la hoja de imprimir sale con su nombre: así cada quien puede tener su propio calendario.",
+      "foco": [0.22, 0.33, 0.62, 0.42]
+    },
+    {
+      "imagen": "mesc-turnos",
+      "texto": "En la parte de arriba aparece además el recordatorio que la coordinación quiso dejar por escrito: si alguien no puede, consigue el cambio con un compañero y avisa a la coordinación.",
+      "foco": [0.21, 0.2, 0.98, 0.31]
+    },
+    {
+      "imagen": "mesc-rutas",
+      "texto": "Por último, las rutas de visita. Una ruta es un recorrido: el orden en que se visita a varias personas en una misma salida."
+    },
+    {
+      "imagen": "mesc-rutas",
+      "texto": "Se crean desde Generar ruta: le pones nombre y marcas las visitas que va a incluir, de entre las activas. Si no hay ninguna visita activa, el sistema lo dice y no deja generar una ruta vacía.",
+      "foco": [0.6, 0.1, 0.98, 0.39]
+    },
+    {
+      "imagen": "mesc-rutas",
+      "texto": "Una vez creada, se puede reordenar, porque el orden es el del recorrido, y exportar: eso es lo que se le pasa a quien va a hacer la vuelta. Ese archivo lleva los mismos datos delicados que la lista, así que se entrega solo a quien hace el recorrido.",
+      "foco": [0.21, 0.18, 0.98, 0.38]
+    }
+  ]
+}

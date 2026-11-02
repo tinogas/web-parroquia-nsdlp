@@ -10,7 +10,8 @@ pública y su panel de trabajo.
 ![Las pastorales, agrupadas por comisión](img/pastorales-lista.webp)
 
 Las pastorales **se agrupan por comisión** —Litúrgica, Profética, De la
-Familia, De la Comunicación, Pastoral de la Salud—, igual que en el sitio. Cada
+Familia, De la Comunicación, Pastoral Social, Piedad Popular, Asuntos
+Económicos—, igual que en el sitio. Cada
 tarjeta lleva el nombre, quién coordina y dos botones: **Panel básico** y
 **Editar**.
 
@@ -60,8 +61,8 @@ Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
   página. **El correo es de la pastoral, no de quien la coordina**: se escribe
   a mano a propósito, para que sobreviva a los relevos en vez de publicar el
   correo personal de quien esté al frente hoy.
-- **Reunión**: día, hora y lugar. Es lo que la gente busca cuando quiere
-  acercarse.
+- **Reunión**: el lugar, junto al día y la hora de arriba. Es lo que la gente
+  busca cuando quiere acercarse.
 - **Acepta voluntarios**, una palomita que lo dice en su página.
 - **Orden**, para colocarla dentro de su comisión.
 - **Documentos**, que se suben aquí y se descargan desde su página.

@@ -173,7 +173,10 @@ class ProclamadoresController extends Controller
         $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
         $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
+        $proclamador = $this->proclamadorPedido($pastoralId);
+        $filtro      = $proclamador ? ['proclamador' => (int) $proclamador['id']] : [];
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $proclamador ? (int) $proclamador['id'] : null);
 
         $this->render('proclamadores/turnos', [
             'titulo'          => 'Calendario de turnos',
@@ -181,9 +184,13 @@ class ProclamadoresController extends Controller
             'mes'             => $mes,
             'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
             'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
-            'urlMesAnterior'  => url_admin('proclamadores', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
-            'urlMesSiguiente' => url_admin('proclamadores', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
-            'urlImprimir'     => url_admin('proclamadores', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes]),
+            'proclamadores'   => $this->modelo->proclamadores($pastoralId),
+            'proclamador'     => $proclamador,
+            'totalTurnos'     => count($turnosDelMes),
+            'urlMesAnterior'  => url_admin('proclamadores', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior] + $filtro),
+            'urlMesSiguiente' => url_admin('proclamadores', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente] + $filtro),
+            'urlImprimir'     => url_admin('proclamadores', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes] + $filtro),
+            'urlSinFiltro'    => url_admin('proclamadores', 'turnos', ['anio' => $anio, 'mes' => $mes]),
         ]);
     }
 
@@ -205,12 +212,16 @@ class ProclamadoresController extends Controller
 
         [$anio, $mes] = $this->anioMesPedidos();
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
+        $proclamador = $this->proclamadorPedido($pastoralId);
+        $filtro      = $proclamador ? ['proclamador' => (int) $proclamador['id']] : [];
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $proclamador ? (int) $proclamador['id'] : null);
 
         $this->renderSinLayout('proclamadores/turnos_imprimir', [
-            'nombreMes' => $this->nombreMes($mes) . ' ' . $anio,
-            'semanas'   => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
-            'urlVolver' => url_admin('proclamadores', 'turnos', ['anio' => $anio, 'mes' => $mes]),
+            'nombreMes'   => $this->nombreMes($mes) . ' ' . $anio,
+            'semanas'     => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
+            'proclamador' => $proclamador,
+            'urlVolver'   => url_admin('proclamadores', 'turnos', ['anio' => $anio, 'mes' => $mes] + $filtro),
         ]);
     }
 
@@ -660,6 +671,21 @@ class ProclamadoresController extends Controller
         if ($mes < 1 || $mes > 12)        { $mes  = (int) date('n'); }
         if ($anio < 2000 || $anio > 2100) { $anio = (int) date('Y'); }
         return [$anio, $mes];
+    }
+
+    /**
+     * El proclamador del filtro del calendario (?proclamador=id), o null si no
+     * se pidió o no es de esta pastoral. Mismo criterio que
+     * MescController::ministroPedido().
+     */
+    private function proclamadorPedido(int $pastoralId): ?array
+    {
+        $id = $this->getInt('proclamador');
+        if ($id <= 0) {
+            return null;
+        }
+        $proclamador = $this->modelo->proclamadorPorId($id);
+        return $proclamador && (int) $proclamador['pastoral_id'] === $pastoralId ? $proclamador : null;
     }
 
     /** Cuadrícula del mes en semanas de 7 casillas, calcada de MescController. */

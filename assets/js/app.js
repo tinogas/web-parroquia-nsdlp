@@ -33,6 +33,50 @@
         });
     }
 
+    // ---- Abrir y cerrar los menús desplegables con transición ----
+    // El CSS está en app.css («Abrir y cerrar los menús desplegables»).
+    // Bootstrap sigue mandando: aquí solo se escuchan sus eventos para poner
+    // .is-open / .is-closing. Dentro de la .navbar, Bootstrap coloca el menú
+    // con el atributo data-bs-popper y se lo quita al cerrar; sin devolvérselo
+    // mientras se desvanece, el menú saltaría a otro lado a media salida.
+    var cierreMs = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--dropdown-close-dur')
+    ) || 150;
+
+    var menuDe = function (evento) {
+        var menu = evento.target.parentElement &&
+                   evento.target.parentElement.querySelector(':scope > .t-dropdown');
+        return menu || null;
+    };
+
+    document.addEventListener('shown.bs.dropdown', function (evento) {
+        var menu = menuDe(evento);
+        if (!menu) { return; }
+        clearTimeout(menu._cierre);
+        menu.classList.remove('is-closing');
+        menu.classList.add('is-open');
+    });
+
+    document.addEventListener('hide.bs.dropdown', function (evento) {
+        var menu = menuDe(evento);
+        if (menu) { menu._popper = menu.getAttribute('data-bs-popper'); }
+    });
+
+    document.addEventListener('hidden.bs.dropdown', function (evento) {
+        var menu = menuDe(evento);
+        if (!menu) { return; }
+        if (menu._popper) { menu.setAttribute('data-bs-popper', menu._popper); }
+        menu.classList.remove('is-open');
+        menu.classList.add('is-closing');
+        clearTimeout(menu._cierre);
+        menu._cierre = setTimeout(function () {
+            menu.classList.remove('is-closing');
+            if (!menu.classList.contains('is-open')) {
+                menu.removeAttribute('data-bs-popper');
+            }
+        }, cierreMs);
+    });
+
     // ---- Abrir la pestaña indicada en la dirección ----
     // Tras guardar, el controlador redirige a …/configuracion#contacto para
     // devolver al usuario a la sección donde estaba.

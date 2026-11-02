@@ -184,12 +184,12 @@ class InicioController extends ControllerPublico
                      width="1800" height="800" decoding="async">
             </div>
             <div class="container portada-texto">
+                <h1 class="portada-titulo aparece aparece-2">Una comunidad en camino hacia la santidad</h1>
                 <div class="row g-4">
                     <div class="col-lg-4 aparece aparece-2">
                         <p class="portada-lema"><?= e($lema) ?></p>
                     </div>
-                    <div class="col-lg-6 offset-lg-2 aparece aparece-3">
-                        <h1 class="portada-titulo">Una comunidad en camino hacia la santidad</h1>
+                    <div class="col-lg-7 offset-lg-1 aparece aparece-3">
                         <?php if ($presentacion !== ''): ?>
                         <?php /* Contenido ya saneado con lista blanca al guardarse. */ ?>
                         <div class="portada-descripcion contenido-editorial"><?= $presentacion ?></div>

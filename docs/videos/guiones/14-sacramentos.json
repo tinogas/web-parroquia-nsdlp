@@ -1,0 +1,41 @@
+{
+  "capitulo": 14,
+  "titulo": "Sacramentos",
+  "subtitulo": "Lo que hace falta para cada sacramento, publicado en el sitio",
+  "intro": "Capítulo catorce: sacramentos. En este video verás cómo se mantiene lo que el sitio dice de cada sacramento, y por qué vale la pena tenerlo al día.",
+  "escenas": [
+    {
+      "imagen": "sacramentos-lista",
+      "texto": "En Parroquia, Sacramentos, está la sección del sitio que dice qué hace falta para bautizar, para casarse o para confirmar. Es el módulo más pequeño del panel: se llena una vez y se corrige cuando cambia un requisito."
+    },
+    {
+      "imagen": "sacramentos-lista",
+      "texto": "La lista viene ya con los sacramentos cargados. Aquí no se dan de alta ni se borran: se editan, con el botón Editar de cada renglón.",
+      "foco": [0.21, 0.08, 0.98, 0.8]
+    },
+    {
+      "imagen": "sacramentos-lista",
+      "texto": "Cada uno tiene su nombre, una descripción breve y sus requisitos: pláticas, padrinos, edad. Y los documentos a presentar, la lista de papeles, que es lo que más se consulta y lo que evita el viaje en balde a la oficina.",
+      "foco": [0.21, 0.2, 0.6, 0.75]
+    },
+    {
+      "imagen": "sacramentos-lista",
+      "texto": "Lleva además la aportación, en texto libre; un orden, para colocarlo en la página; y el interruptor Visible en el sitio, que lo muestra o lo esconde.",
+      "foco": [0.6, 0.15, 0.98, 0.6]
+    },
+    {
+      "imagen": "publico-sacramentos",
+      "texto": "Los tres textos largos se escriben con el editor, así que admiten listas y negritas. Una lista de documentos numerada se lee mucho mejor que un párrafo corrido.",
+      "foco": [0.05, 0.36, 0.58, 0.92]
+    },
+    {
+      "imagen": "publico-sacramentos",
+      "texto": "Conviene tenerlo claro, porque a veces se pregunta: el sitio no recibe solicitudes de sacramentos. Hubo un formulario y se retiró por decisión de la parroquia. Los trámites se hacen en la oficina.",
+      "foco": [0.66, 0.15, 0.95, 0.65]
+    },
+    {
+      "imagen": "publico-sacramentos",
+      "texto": "Lo que esta sección hace, y hace bien, es que quien llegue a la oficina llegue sabiendo qué llevar. Por eso vale la pena tener los requisitos al día: cada corrección aquí son varias vueltas que alguien se ahorra."
+    }
+  ]
+}

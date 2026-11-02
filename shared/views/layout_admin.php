@@ -106,7 +106,8 @@
                 </span>
             </button>
 
-            <div class="dropdown-menu dropdown-menu-end shadow" style="min-width:20rem;max-width:24rem">
+            <div class="dropdown-menu dropdown-menu-end shadow t-dropdown" data-origin="top-right"
+                 style="min-width:20rem;max-width:24rem">
                 <?php if (!$sinLeerTotal): ?>
                 <span class="dropdown-item-text text-muted small mb-0">
                     <i class="bi bi-check2-circle me-1"></i>Nada sin leer.
@@ -196,7 +197,7 @@
                      class="rounded-circle" style="width:26px;height:26px;object-fit:cover">
                 <span class="d-none d-sm-inline"><?= e($usuario['nombre'] ?? '') ?></span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end t-dropdown" data-origin="top-right">
                 <li><span class="dropdown-item-text text-muted small"><?= e($usuario['email'] ?? '') ?></span></li>
                 <li><span class="dropdown-item-text text-muted small"><?= e(Auth::nombreRol()) ?></span></li>
                 <?php if (!empty($usuario['perfil_nombre'])): ?>

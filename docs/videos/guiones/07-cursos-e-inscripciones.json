@@ -1,0 +1,95 @@
+{
+  "capitulo": 7,
+  "titulo": "Cursos e inscripciones",
+  "subtitulo": "Un curso recibe gente, y esa gente deja sus datos",
+  "intro": "Capítulo siete: cursos e inscripciones. En este video verás cómo se arma un curso que recibe gente desde el sitio, y cómo se atienden y se cuidan esas inscripciones.",
+  "escenas": [
+    {
+      "imagen": "cursos-lista",
+      "texto": "Un curso es una formación con fechas, cupo y gente apuntada, como el taller de catequistas o la preparación para el bautismo. A diferencia de los demás módulos, recibe inscripciones desde el sitio. Está en Comunicación, Cursos."
+    },
+    {
+      "imagen": "cursos-lista",
+      "texto": "El listado tiene los filtros de siempre: estado, pastoral y sede. Cada renglón dice el título del curso, su modalidad, cuándo inicia y en qué escalón está.",
+      "foco": [0.21, 0.2, 0.98, 0.68]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "Con Nuevo curso se abre el formulario más largo del panel, partido en bloques. El primero dice de qué se trata: el título, una línea con a quién va dirigido, la descripción y los objetivos.",
+      "foco": [0.21, 0.08, 0.72, 0.42]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "Luego, cómo se da: la modalidad, presencial, en línea o mixta, y el instructor, que se elige del equipo pastoral en vez de escribirse a mano, así que su nombre se mantiene al día solo.",
+      "foco": [0.72, 0.19, 0.98, 0.38]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "En fechas y lugar, el inicio y el fin llevan solo la fecha, y el horario se escribe libre, como sábados de diez a doce: un curso rara vez cabe en una hora exacta.",
+      "foco": [0.72, 0.4, 0.98, 0.56]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "El bloque de inscripciones decide si el curso recibe gente o solo se anuncia. Con Recibir inscripciones apagado, se publica como información, sin formulario en el sitio. El cupo dice cuántos lugares hay; vacío, es sin límite.",
+      "foco": [0.72, 0.57, 0.98, 0.74]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "Ojo: cuando el cupo se llena, las inscripciones que sigan llegando entran solas como lista de espera. No se pierden ni se rechazan: quedan apuntadas para cuando alguien cancele.",
+      "foco": [0.72, 0.59, 0.98, 0.65]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "Y en los cursos de niños y adolescentes, no olvides encender Normalmente lo toman menores: así el formulario del sitio pide también los datos del tutor.",
+      "foco": [0.72, 0.66, 0.98, 0.73]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "La publicación son los mismos tres escalones de los avisos, con el mismo significado: borrador, para la pastoral y en la página.",
+      "foco": [0.72, 0.79, 0.98, 0.95]
+    },
+    {
+      "imagen": "cursos-form",
+      "texto": "Las sesiones del temario solo aparecen cuando el curso ya está guardado, debajo de la descripción. Así que el orden es: llenar el curso, guardar, y entonces capturar el temario.",
+      "foco": [0.21, 0.18, 0.72, 0.42]
+    },
+    {
+      "imagen": "publico-cursos",
+      "texto": "Publicado en la página, el curso sale en el sitio con su tarjeta. El campo orden decide su lugar en la lista: los de número más bajo salen primero.",
+      "foco": [0.05, 0.18, 0.4, 0.56]
+    },
+    {
+      "imagen": "inscripciones-lista",
+      "texto": "La otra mitad está en Trámites, Inscripciones. Cada inscripción que llega del sitio trae un folio, que es lo que se le dice a la persona por teléfono. No se manda ningún correo: se atiende desde aquí.",
+      "foco": [0.21, 0.22, 0.75, 0.42]
+    },
+    {
+      "imagen": "inscripciones-lista",
+      "texto": "Arriba se filtra por curso y por estado. Los estados son cuatro: pendiente, que nadie ha revisado; confirmada, que tiene su lugar; lista de espera, que entra si alguien cancela; y cancelada, que se dio de baja.",
+      "foco": [0.21, 0.19, 0.94, 0.28]
+    },
+    {
+      "imagen": "inscripciones-ver",
+      "texto": "Con Ver se abre el expediente: el folio, cuándo llegó y los datos de quien se inscribe. Si es menor, aparece marcado, con una segunda tarjeta para su tutor.",
+      "foco": [0.21, 0.08, 0.72, 0.5]
+    },
+    {
+      "imagen": "inscripciones-ver",
+      "texto": "A la derecha se cambia el estado y se guarda con Actualizar estado: es lo que se hace al confirmarle el lugar a alguien, o al darlo de baja.",
+      "foco": [0.72, 0.22, 0.98, 0.47]
+    },
+    {
+      "imagen": "inscripciones-lista",
+      "texto": "Estos datos, con los mensajes de contacto, son los únicos datos personales de fuera que guarda el sistema, algunos de menores. La parroquia pone tres reglas. Primera: no salen del panel; el listado no es para pasarlo por WhatsApp."
+    },
+    {
+      "imagen": "inscripciones-lista",
+      "texto": "Segunda: el archivo exportado es el eslabón débil. Exportar CSV saca lo filtrado a un archivo que se abre en Excel y que, en una computadora compartida, queda al alcance de cualquiera. Se exporta para algo concreto y se borra al terminar.",
+      "foco": [0.86, 0.12, 0.98, 0.18]
+    },
+    {
+      "imagen": "inscripciones-ver",
+      "texto": "Tercera: solo quien tiene que verlos. Por eso Secretaría es un rol aparte, y ni el Editor los ve. Y el sistema no deja inscribirse a nadie sin aceptar el aviso de privacidad, y guarda a qué versión dijo que sí."
+    }
+  ]
+}

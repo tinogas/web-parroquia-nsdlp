@@ -16,8 +16,8 @@ eucarística también puede llevar coro—, y a cada uno se le asigna:
 
 - Un **encargado**, elegido del equipo pastoral. Mientras no haya, el renglón
   dice *Sin encargado*.
-- Sus **integrantes**, con el número de quienes cantan ahí y un **+** para
-  agregar a alguien.
+- Sus **integrantes**, con el número de quienes cantan ahí y un **+** que
+  despliega la lista.
 
 Eso tiene una consecuencia práctica: **si un horario no aparece aquí, revisa
 su casilla "Tiene coro" en Horarios.** Se marca ahí y el coro aparece solo —

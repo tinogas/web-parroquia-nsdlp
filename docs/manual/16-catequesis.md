@@ -11,9 +11,10 @@ qué ciclo**.
 
 El catálogo de quienes dan catecismo. Como en MESC, cada catequista **se elige
 del equipo pastoral**: nombre y teléfono vienen de su ficha y no se vuelven a
-escribir. A cada quien se le marca el **grado** que atiende —de Kinder a
-Confirmación, pasando por Comunión y los cursos misioneros—, y se le puede
-poner activo o inactivo.
+escribir. Se le puede poner activo o inactivo. El **grado** que atiende —de
+Kinder a Confirmación, pasando por Comunión y los cursos misioneros— **no se
+marca aquí sino en cada periodo**, porque puede cambiar de un ciclo a otro: se
+asigna al agregar a la persona al periodo, como se explica más abajo.
 
 Cada renglón trae su botón de **WhatsApp** y arriba está el cuadro de **Mensaje
 para todos**: es la forma de mandar el aviso de la junta de catequistas sin

@@ -73,5 +73,6 @@ Cada entrada tiene:
   «REFLEXIÓN:» al principio hace que se lea dos veces.
 - **Reflexión.** Opcional, y a propósito: hay días en que no da tiempo de
   escribirla, y el evangelio debe poder salir igual.
-- **Publicado.** Mientras esté apagado, no aparece en el sitio. Es lo que
-  permite dejar preparadas las entradas de varios días y que vayan saliendo.
+- **Publicado.** Mientras esté apagado, no aparece en el sitio. La portada
+  enseña solo la entrada **de hoy**, así que se pueden dejar preparadas y
+  publicadas las de varios días: cada una sale sola en su fecha.
