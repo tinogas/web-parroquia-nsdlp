@@ -497,7 +497,10 @@ class MescController extends Controller
         $mesSiguiente  = $mes === 12 ? 1 : $mes + 1;
         $anioSiguiente = $mes === 12 ? $anio + 1 : $anio;
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
+        $ministro = $this->ministroPedido($pastoralId);
+        $filtro   = $ministro ? ['ministro' => (int) $ministro['id']] : [];
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $ministro ? (int) $ministro['id'] : null);
 
         $this->render('mesc/turnos', [
             'titulo'          => 'Calendario de turnos',
@@ -505,9 +508,13 @@ class MescController extends Controller
             'mes'             => $mes,
             'nombreMes'       => $this->nombreMes($mes) . ' ' . $anio,
             'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
-            'urlMesAnterior'  => url_admin('mesc', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior]),
-            'urlMesSiguiente' => url_admin('mesc', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente]),
-            'urlImprimir'     => url_admin('mesc', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes]),
+            'ministros'       => $this->modelo->ministros($pastoralId),
+            'ministro'        => $ministro,
+            'totalTurnos'     => count($turnosDelMes),
+            'urlMesAnterior'  => url_admin('mesc', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior] + $filtro),
+            'urlMesSiguiente' => url_admin('mesc', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente] + $filtro),
+            'urlImprimir'     => url_admin('mesc', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes] + $filtro),
+            'urlSinFiltro'    => url_admin('mesc', 'turnos', ['anio' => $anio, 'mes' => $mes]),
         ]);
     }
 
@@ -536,12 +543,16 @@ class MescController extends Controller
         if ($mes < 1 || $mes > 12) { $mes = (int) date('n'); }
         if ($anio < 2000 || $anio > 2100) { $anio = (int) date('Y'); }
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId);
+        $ministro = $this->ministroPedido($pastoralId);
+        $filtro   = $ministro ? ['ministro' => (int) $ministro['id']] : [];
+
+        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $ministro ? (int) $ministro['id'] : null);
 
         $this->renderSinLayout('mesc/turnos_imprimir', [
             'nombreMes'  => $this->nombreMes($mes) . ' ' . $anio,
             'semanas'    => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
-            'urlVolver'  => url_admin('mesc', 'turnos', ['anio' => $anio, 'mes' => $mes]),
+            'ministro'   => $ministro,
+            'urlVolver'  => url_admin('mesc', 'turnos', ['anio' => $anio, 'mes' => $mes] + $filtro),
         ]);
     }
 
@@ -790,6 +801,21 @@ class MescController extends Controller
         return '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">'
              . '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>'
              . '<script src="' . e(url_activo('assets/js/mapa_mesc.js')) . '?v=' . e(APP_VERSION) . '"></script>';
+    }
+
+    /**
+     * El ministro del filtro del calendario (?ministro=id), o null si no se
+     * pidió o no es de esta pastoral: un id ajeno se ignora en silencio y se
+     * ve el calendario completo, en vez de un mes vacío que parecería real.
+     */
+    private function ministroPedido(int $pastoralId): ?array
+    {
+        $id = $this->getInt('ministro');
+        if ($id <= 0) {
+            return null;
+        }
+        $ministro = $this->modelo->ministroPorId($id);
+        return $ministro && (int) $ministro['pastoral_id'] === $pastoralId ? $ministro : null;
     }
 
     /** Cuadrícula del mes en semanas de 7 casillas, análoga a EventoPublicoController pero sobre fecha DATE. */

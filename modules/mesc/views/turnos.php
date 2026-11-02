@@ -46,6 +46,38 @@ if (!function_exists('mesc_texto_legible')) {
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-3 p-md-4">
+        <?php /* Filtro por persona: deja en el calendario solo sus turnos, y la
+                 hoja de imprimir hereda el filtro, para darle a cada quien la
+                 suya. Viaja en la URL igual que el mes. */ ?>
+        <form method="GET" action="<?= e(url_admin('mesc', 'turnos')) ?>"
+              class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <?php if (!URLS_AMIGABLES): ?>
+            <input type="hidden" name="area" value="admin">
+            <input type="hidden" name="modulo" value="mesc">
+            <input type="hidden" name="accion" value="turnos">
+            <?php endif; ?>
+            <input type="hidden" name="anio" value="<?= (int) $anio ?>">
+            <input type="hidden" name="mes" value="<?= (int) $mes ?>">
+            <label for="filtro-ministro" class="small fw-semibold mb-0">Ver los turnos de</label>
+            <select name="ministro" id="filtro-ministro" class="form-select form-select-sm w-auto"
+                    onchange="this.form.submit()">
+                <option value="">Todos los ministros</option>
+                <?php foreach ($ministros as $persona): ?>
+                <option value="<?= (int) $persona['id'] ?>"
+                        <?= $ministro && (int) $ministro['id'] === (int) $persona['id'] ? 'selected' : '' ?>>
+                    <?= e($persona['nombre']) ?><?= $persona['activo'] ? '' : ' (inactivo)' ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Ver</button></noscript>
+            <?php if ($ministro): ?>
+            <span class="small text-muted">
+                <?= $totalTurnos === 1 ? '1 turno' : (int) $totalTurnos . ' turnos' ?> este mes
+            </span>
+            <a href="<?= e($urlSinFiltro) ?>" class="small">Ver a todos</a>
+            <?php endif; ?>
+        </form>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
             <a href="<?= e($urlMesAnterior) ?>" class="btn btn-sm btn-outline-secondary" aria-label="Mes anterior">
                 <i class="bi bi-chevron-left"></i>

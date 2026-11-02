@@ -266,13 +266,26 @@ class MescModel extends Model
 
     // ── Turnos ───────────────────────────────────────────────────────────
 
-    /** Turnos del mes de la pastoral, con los nombres de sus ministros ya concatenados, para el calendario. */
-    public function turnosDelMes(int $anio, int $mes, int $pastoralId): array
+    /**
+     * Turnos del mes de la pastoral, con los nombres de sus ministros ya
+     * concatenados, para el calendario. Con $ministroId, solo los turnos donde
+     * sirve ese ministro (su calendario personal); los nombres siguen saliendo
+     * todos, para que vea con quién le toca.
+     */
+    public function turnosDelMes(int $anio, int $mes, int $pastoralId, ?int $ministroId = null): array
     {
         $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
         $siguienteAnio = $mes === 12 ? $anio + 1 : $anio;
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
+
+        $params = [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId];
+        $soloMinistro = '';
+        if ($ministroId !== null) {
+            $soloMinistro = ' AND EXISTS (SELECT 1 FROM mesc_turno_ministros f
+                                           WHERE f.turno_id = t.id AND f.ministro_id = :ministro)';
+            $params[':ministro'] = $ministroId;
+        }
 
         return $this->fetchAll(
             "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
@@ -281,9 +294,9 @@ class MescModel extends Model
                       WHERE tm.turno_id = t.id) AS ministros_nombres
                FROM mesc_turnos t
                LEFT JOIN colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral{$soloMinistro}
               ORDER BY t.fecha, t.hora",
-            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
+            $params
         );
     }
 

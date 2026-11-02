@@ -16,6 +16,7 @@
  * Variables esperadas:
  *   $nombreMes  string, "Septiembre 2026"
  *   $semanas    array, cuadrícula de ProclamadoresController::construirCalendarioTurnos()
+ *   $proclamador ?array, si la hoja es solo de esa persona (filtro del calendario)
  *   $urlVolver  string
  */
 if (!function_exists('proclamadores_imprimir_texto_legible')) {
@@ -49,7 +50,7 @@ if (!function_exists('proclamadores_imprimir_texto_legible')) {
 
     <p class="ti-parroquia"><?= e(APP_NAME) ?></p>
     <div class="ti-titulo">
-        <span class="ti-titulo-izq">Calendario de proclamadores</span>
+        <span class="ti-titulo-izq">Calendario de proclamadores<?= $proclamador ? ' · ' . e($proclamador['nombre']) : '' ?></span>
         <span class="ti-titulo-der"><?= e($nombreMes) ?></span>
     </div>
 
