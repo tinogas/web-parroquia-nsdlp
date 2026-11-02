@@ -1,10 +1,11 @@
 # 19. Páginas, bloques y evangelio del día
 
-Los tres módulos de la sección **Contenido** del menú. Los tres escriben texto
-en el sitio, pero cada uno para una cosa distinta:
+Los módulos de la sección **Contenido** del menú. Cada uno para una cosa
+distinta:
 
 - **Textos del sitio** (bloques): los párrafos que ya tienen su hueco hecho.
 - **Páginas**: secciones nuevas, con su propia dirección.
+- **Menú del sitio**: qué va en el menú de arriba, en qué orden y con qué nombre.
 - **Evangelio del día**: la lectura y la reflexión de cada día.
 
 ## Textos del sitio
@@ -49,8 +50,35 @@ reglamento, la convocatoria de una peregrinación. Cada página tiene:
   título.
 - **Orden** y **Publicada**. Mientras no esté publicada, su dirección responde
   «no encontrada».
-- **Mostrar en el menú.** Con esta palomita, la página aparece en el menú del
-  sitio, después de las secciones fijas.
+- **Mostrar en el menú.** Con esta palomita, la página entra al final del menú
+  del sitio. Su lugar y el nombre con que aparece se cambian en **Menú del
+  sitio**.
+
+Una página es texto fijo: se alimenta abriéndola y editándola. No toma sola
+avisos ni eventos. Para lo que cambia cada semana —noticias, anuncios— está
+**Avisos**, que sale en el recuadro de la portada y se retira solo al vencer.
+
+## Menú del sitio
+
+Todo lo que va en el menú de arriba del sitio, entre **Inicio** (siempre
+primero) y **Contacto** (siempre al final, en el botón dorado), en una sola
+lista: las secciones fijas —Quiénes somos, Horarios, Sacramentos, Pastorales,
+Cursos, Avisos, Eventos, Galería— y todas las páginas.
+
+- **Mostrar.** Apagado, la entrada desaparece del menú. La sección sigue
+  existiendo y su dirección sigue funcionando: solo deja de estar en el menú.
+- **Flechas.** Suben o bajan la entrada. Una página puede ir en cualquier
+  lugar, también entre las secciones fijas.
+- **Nombre en el menú.** Vacío, se usa el de siempre. Sirve para llamar a
+  «Quiénes somos», por ejemplo, «Nuestra parroquia».
+- **Guardar menú.** Nada cambia en el sitio hasta guardar.
+
+Dos avisos de la propia pantalla: una página **sin publicar** no aparece
+aunque esté marcada, y **Cursos** tampoco si está apagada en Configuración →
+Secciones del sitio.
+
+No tiene relación con **Textos del sitio**: cambiar el título de un texto no
+cambia el menú.
 
 ## Evangelio del día
 

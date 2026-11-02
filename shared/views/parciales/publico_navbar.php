@@ -2,28 +2,13 @@
 /**
  * Menú del sitio.
  *
- * Declara todas las secciones previstas, pero solo dibuja las que ya tienen
- * módulo publicado (Router::existeRutaPublica). Así el menú se completa solo
- * conforme avanzan las etapas, sin dejar enlaces rotos mientras tanto.
- *
- * 'cursos' además respeta configuracion.cursos_activo: a diferencia de
- * existeRutaPublica (un interruptor de código, permanente una vez conectado
- * el módulo), este es un interruptor del panel (Configuración → Secciones
- * del sitio) para ocultar la sección aunque el módulo siga funcionando.
- *
- * Después de las secciones fijas van las páginas libres marcadas con «Mostrar
- * en el menú» (paginas_del_menu()), en el orden que se les haya puesto.
+ * Inicio primero y Contacto al final, en el botón dorado, son fijos. Lo de en
+ * medio —las secciones fijas y las páginas libres— sale de menu_del_sitio()
+ * (core/helpers.php), que se administra en Contenido → Menú del sitio: qué
+ * se muestra, en qué orden y con qué nombre. Esa función ya descarta las
+ * secciones cuyo módulo no existe, Cursos si está apagado en Configuración
+ * y las páginas sin publicar.
  */
-$secciones = [
-    'nosotros'    => ['Quiénes somos', 'bi-people'],
-    'horarios'    => ['Horarios',      'bi-clock'],
-    'sacramentos' => ['Sacramentos',   'bi-droplet'],
-    'pastorales'  => ['Pastorales',    'bi-hand-thumbs-up'],
-    'cursos'      => ['Cursos',        'bi-mortarboard'],
-    'avisos'      => ['Avisos',        'bi-megaphone'],
-    'eventos'     => ['Eventos',       'bi-calendar-event'],
-    'galeria'     => ['Galería',       'bi-images'],
-];
 $moduloActual = $_GET['modulo'] ?? 'inicio';
 ?>
 <header>
@@ -55,26 +40,20 @@ $moduloActual = $_GET['modulo'] ?? 'inicio';
                        href="<?= e(url_publica('inicio')) ?>">Inicio</a>
                 </li>
 
-                <?php foreach ($secciones as $modulo => [$etiqueta, $icono]): ?>
-                    <?php if (Router::existeRutaPublica($modulo) && ($modulo !== 'cursos' || Config::get('cursos_activo', '1') === '1')): ?>
+                <?php foreach (menu_del_sitio() as $entrada): ?>
+                    <?php if ($entrada['tipo'] === 'seccion'): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= $moduloActual === $modulo ? 'active' : '' ?>"
-                           href="<?= e(url_publica($modulo)) ?>"><?= e($etiqueta) ?></a>
+                        <a class="nav-link <?= $moduloActual === $entrada['modulo'] ? 'active' : '' ?>"
+                           href="<?= e(url_publica($entrada['modulo'])) ?>"><?= e($entrada['etiqueta']) ?></a>
+                    </li>
+                    <?php else: ?>
+                    <li class="nav-item">
+                        <?php /* El router deja $_GET['slug'] tanto en /mi-pagina como en /pagina/mi-pagina. */ ?>
+                        <a class="nav-link <?= $moduloActual === 'pagina' && ($_GET['slug'] ?? '') === $entrada['slug'] ? 'active' : '' ?>"
+                           href="<?= e(url_publica('pagina', ['slug' => $entrada['slug']])) ?>"><?= e($entrada['etiqueta']) ?></a>
                     </li>
                     <?php endif; ?>
                 <?php endforeach; ?>
-
-                <?php if (Router::existeRutaPublica('pagina')): ?>
-                    <?php foreach (paginas_del_menu() as $paginaMenu): ?>
-                    <li class="nav-item">
-                        <?php /* El router deja $_GET['slug'] tanto en /mi-pagina como en /pagina/mi-pagina. */ ?>
-                        <a class="nav-link <?= ($_GET['slug'] ?? '') === $paginaMenu['slug'] ? 'active' : '' ?>"
-                           href="<?= e(url_publica('pagina', ['slug' => $paginaMenu['slug']])) ?>">
-                            <?= e($paginaMenu['titulo']) ?>
-                        </a>
-                    </li>
-                    <?php endforeach; ?>
-                <?php endif; ?>
 
                 <?php if (Router::existeRutaPublica('contacto')): ?>
                 <li class="nav-item ms-xl-2 mt-2 mt-xl-0">

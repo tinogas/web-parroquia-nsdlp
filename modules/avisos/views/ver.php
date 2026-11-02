@@ -36,8 +36,11 @@ $estado = estado_publicacion($aviso);
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
             <?php if ($aviso['imagen']): ?>
-            <img src="<?= e(url_activo($aviso['imagen'])) ?>" class="card-img-top" alt=""
-                 style="max-height:320px;object-fit:cover">
+            <?php /* Completa, sin recortar, como se ve en el sitio; al tocarla se abre en su tamaño original. */ ?>
+            <a href="<?= e(url_activo($aviso['imagen'])) ?>" target="_blank" rel="noopener"
+               class="imagen-completa rounded-top" title="Ver la imagen en tamaño completo">
+                <img src="<?= e(url_activo($aviso['imagen'])) ?>" alt="Imagen del aviso: <?= e($aviso['titulo']) ?>">
+            </a>
             <?php endif; ?>
             <div class="card-body p-4">
                 <?php if ($aviso['resumen']): ?>

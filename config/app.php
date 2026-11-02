@@ -274,6 +274,9 @@ define('PERMISOS', [
         'agenda.ver',
         'bloques.ver', 'bloques.editar',
         'paginas.ver', 'paginas.editar',
+        // El menú del sitio va con las páginas: quien crea una página decide
+        // también dónde se ve. Ver modules/menu/.
+        'menu.ver', 'menu.editar',
         'evangelio.ver', 'evangelio.editar',
         'horarios.ver', 'horarios.editar',
         'centros.ver', 'centros.editar',

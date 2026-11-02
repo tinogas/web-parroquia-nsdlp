@@ -1,6 +1,7 @@
 <?php
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/paginas/PaginaModel.php';
+require_once BASE_PATH . '/modules/menu/MenuModel.php';
 
 class PaginaController extends Controller
 {
@@ -106,6 +107,10 @@ class PaginaController extends Controller
             $this->auditoria('crear', 'paginas', $id, $slug);
             Session::flash('success', 'Página creada.');
         }
+
+        // «Mostrar en el menú» también vive en Contenido → Menú del sitio: si la
+        // página es nueva en el menú, entra al final y desde ahí se acomoda.
+        (new MenuModel())->sincronizarPagina($id, (bool) $datos['en_menu']);
 
         $this->redirect(url_admin('paginas'));
     }

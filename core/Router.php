@@ -37,6 +37,8 @@ class Router
         'configuracion' => ['clase' => 'ConfiguracionController', 'archivo' => 'modules/configuracion/ConfiguracionController.php'],
         'bloques'       => ['clase' => 'BloqueController',        'archivo' => 'modules/bloques/BloqueController.php'],
         'paginas'       => ['clase' => 'PaginaController',        'archivo' => 'modules/paginas/PaginaController.php'],
+        'menu'          => ['clase' => 'MenuController',          'archivo' => 'modules/menu/MenuController.php'],
+        'medios'        => ['clase' => 'MediosController',        'archivo' => 'modules/medios/MediosController.php'],
         'evangelio'     => ['clase' => 'EvangelioController',     'archivo' => 'modules/evangelio/EvangelioController.php'],
         'mensajes'      => ['clase' => 'MensajeController',       'archivo' => 'modules/contacto/MensajeController.php'],
         'horarios'      => ['clase' => 'HorarioController',       'archivo' => 'modules/horarios/HorarioController.php'],

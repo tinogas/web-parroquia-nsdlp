@@ -418,6 +418,33 @@
     margin-top: 1.75rem;
 }
 
+/* ---- Imagen del aviso abierto ----
+   Completa y sin recortar, centrada sobre marfil, y nunca más alta que la
+   pantalla: los carteles verticales se ven enteros sin desplazarse. */
+
+.aviso-imagen {
+    display: flex;
+    justify-content: center;
+    background: var(--marfil);
+    border-radius: var(--radio);
+    padding: .75rem;
+}
+
+.aviso-imagen a {
+    display: block;
+    cursor: zoom-in;
+}
+
+.aviso-imagen img {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: .5rem;
+}
+
 /* ---- Recuadro de avisos en la cabecera de la portada ----
    Cada aviso en un renglón: miniatura de su foto (o el ícono de su tipo),
    fecha y título. El renglón entero es el enlace al aviso. */
@@ -760,6 +787,29 @@
 
 .contenido-editorial h2 { font-size: 1.5rem;  margin-top: 2rem; }
 .contenido-editorial h3 { font-size: 1.2rem;  margin-top: 1.5rem; }
+
+/* Imágenes dentro del texto (páginas, avisos, textos del sitio): completas,
+   centradas, sin pasar del ancho del texto ni del alto de la pantalla. */
+.contenido-editorial figure {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.contenido-editorial img {
+    display: inline-block;
+    max-width: 100%;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: .5rem;
+}
+
+.contenido-editorial figcaption {
+    font-size: var(--fs-nota);
+    color: var(--tinta-suave);
+    margin-top: .5rem;
+}
 
 .contenido-editorial blockquote {
     border-left: 3px solid var(--dorado);

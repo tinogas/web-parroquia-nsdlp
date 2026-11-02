@@ -490,6 +490,92 @@ if (!function_exists('e')) {
     }
 
     /**
+     * Las secciones fijas que el menú puede mostrar, con su nombre de siempre,
+     * en el orden de siempre. Inicio y Contacto no están: son fijos.
+     * Es el catálogo de Contenido → Menú del sitio y el respaldo del menú
+     * cuando la tabla menu_sitio aún no existe.
+     */
+    function secciones_del_menu(): array
+    {
+        return [
+            'nosotros'    => 'Quiénes somos',
+            'horarios'    => 'Horarios',
+            'sacramentos' => 'Sacramentos',
+            'pastorales'  => 'Pastorales',
+            'cursos'      => 'Cursos',
+            'avisos'      => 'Avisos',
+            'eventos'     => 'Eventos',
+            'galeria'     => 'Galería',
+        ];
+    }
+
+    /**
+     * Las entradas del menú del sitio entre Inicio y Contacto, ya en orden y
+     * solo las que se deben dibujar:
+     *   ['tipo' => 'seccion', 'modulo' => 'horarios', 'etiqueta' => 'Horarios']
+     *   ['tipo' => 'pagina',  'slug' => 'reglamento',  'etiqueta' => 'Reglamento']
+     *
+     * Sale de la tabla menu_sitio (Contenido → Menú del sitio). Una sección se
+     * dibuja si está visible y su módulo público existe; Cursos además respeta
+     * su interruptor de Configuración. Una página, si está visible y publicada.
+     *
+     * Si la tabla todavía no existe —la migración no se ha aplicado en ese
+     * servidor— cae al menú de siempre: secciones fijas y luego las páginas
+     * con «Mostrar en el menú». Así el sitio nunca se queda sin menú.
+     */
+    function menu_del_sitio(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $secciones = secciones_del_menu();
+        $seccionDibujable = static fn (string $modulo): bool =>
+            isset($secciones[$modulo])
+            && Router::existeRutaPublica($modulo)
+            && ($modulo !== 'cursos' || Config::get('cursos_activo', '1') === '1');
+
+        $cache = [];
+        try {
+            $filas = Database::getInstance()->query(
+                'SELECT m.clave, m.etiqueta, p.slug, p.titulo
+                   FROM menu_sitio m
+                   LEFT JOIN paginas p ON p.id = m.pagina_id
+                  WHERE m.visible = 1
+                    AND (m.clave IS NOT NULL OR (p.id IS NOT NULL AND p.publicada = 1))
+                  ORDER BY m.orden, m.id'
+            )->fetchAll();
+
+            foreach ($filas as $fila) {
+                if ($fila['clave'] !== null) {
+                    if ($seccionDibujable($fila['clave'])) {
+                        $cache[] = ['tipo' => 'seccion', 'modulo' => $fila['clave'],
+                                    'etiqueta' => $fila['etiqueta'] ?: $secciones[$fila['clave']]];
+                    }
+                } elseif (Router::existeRutaPublica('pagina')) {
+                    $cache[] = ['tipo' => 'pagina', 'slug' => $fila['slug'],
+                                'etiqueta' => $fila['etiqueta'] ?: $fila['titulo']];
+                }
+            }
+        } catch (PDOException $e) {
+            // Sin la tabla menu_sitio: el menú de antes de la migración.
+            foreach ($secciones as $modulo => $etiqueta) {
+                if ($seccionDibujable($modulo)) {
+                    $cache[] = ['tipo' => 'seccion', 'modulo' => $modulo, 'etiqueta' => $etiqueta];
+                }
+            }
+            if (Router::existeRutaPublica('pagina')) {
+                foreach (paginas_del_menu() as $pagina) {
+                    $cache[] = ['tipo' => 'pagina', 'slug' => $pagina['slug'], 'etiqueta' => $pagina['titulo']];
+                }
+            }
+        }
+
+        return $cache;
+    }
+
+    /**
      * Cruz latina (la de Cristo: travesaño en el tercio superior, no un "+"
      * centrado) como SVG inline. Bootstrap Icons 1.11 no trae ningún ícono
      * de temática religiosa —ni "cross" ni "church"—, así que en vez de

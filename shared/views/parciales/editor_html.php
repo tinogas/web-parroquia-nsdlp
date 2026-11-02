@@ -30,6 +30,7 @@ $eh_botones = [
     ['insertOrderedList',    'bi-list-ol',          'Lista numerada'],
     ['|',                    '',                    ''],
     ['createLink',           'bi-link-45deg',       'Insertar enlace'],
+    ['insertImage',          'bi-image',            'Insertar imagen'],
     ['unlink',               'bi-link-break',       'Quitar enlace'],
     ['removeFormat',         'bi-eraser',           'Quitar el formato'],
 ];
@@ -37,7 +38,8 @@ $eh_botones = [
 <div class="mb-3">
     <label for="<?= e($eh_id) ?>" class="form-label fw-semibold"><?= e($eh_etiqueta) ?></label>
 
-    <div class="editor-html" data-editor>
+    <?php /* data-subir-imagen: adónde sube el botón «Insertar imagen» (modules/medios). */ ?>
+    <div class="editor-html" data-editor data-subir-imagen="<?= e(url_post('admin', 'medios', 'imagen')) ?>">
         <div class="editor-barra" role="toolbar" aria-label="Herramientas de formato">
             <?php foreach ($eh_botones as [$comando, $icono, $titulo]): ?>
                 <?php if ($comando === '|'): ?>
@@ -61,6 +63,6 @@ $eh_botones = [
 
     <div class="form-text">
         <?= $eh_ayuda !== '' ? e($eh_ayuda) . ' ' : '' ?>
-        Se admiten negritas, cursivas, listas, títulos y enlaces. El resto del formato se descarta al guardar.
+        Se admiten negritas, cursivas, listas, títulos, enlaces e imágenes (JPG, PNG, WebP o GIF de hasta 4 MB). El resto del formato se descarta al guardar.
     </div>
 </div>

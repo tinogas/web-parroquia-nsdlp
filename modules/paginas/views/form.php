@@ -81,6 +81,7 @@ $protegida = !$esNueva && in_array($pagina['slug'], PaginaModel::PROTEGIDAS, tru
                         <label for="orden" class="form-label fw-semibold">Orden</label>
                         <input type="number" name="orden" id="orden" class="form-control"
                                value="<?= (int) ($esNueva ? 0 : $pagina['orden']) ?>" min="0" max="999">
+                        <div class="form-text">Solo para la lista de páginas del panel. El lugar en el menú se acomoda en Contenido → Menú del sitio.</div>
                     </div>
 
                     <div class="form-check form-switch mb-2">
@@ -96,6 +97,7 @@ $protegida = !$esNueva && in_array($pagina['slug'], PaginaModel::PROTEGIDAS, tru
                                name="en_menu" id="en_menu" value="1"
                                <?= !$esNueva && $pagina['en_menu'] ? 'checked' : '' ?>>
                         <label class="form-check-label fw-semibold" for="en_menu">Mostrar en el menú</label>
+                        <div class="form-text">Una página nueva en el menú entra al final; su lugar y su nombre se cambian en Contenido → Menú del sitio.</div>
                     </div>
 
                 </div>

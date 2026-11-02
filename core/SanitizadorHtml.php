@@ -185,6 +185,9 @@ class SanitizadorHtml
         }
 
         // Relativas del propio sitio
-        return (bool) preg_match('#^[a-z0-9/._\-~?=&%#+]+$#i', $url);
+        // Delimitador «/» y no «#»: con «#» la clase de caracteres (que lleva
+        // un «#» para las anclas) cortaba el patrón, preg_match fallaba y TODA
+        // dirección relativa se descartaba —enlaces internos e imágenes subidas.
+        return (bool) preg_match('/^[a-z0-9\/._\-~?=&%#+]+$/i', $url);
     }
 }

@@ -50,6 +50,9 @@
                     document.execCommand('formatBlock', false, comando);
                 } else if (comando === 'createLink') {
                     insertarEnlace(area);
+                } else if (comando === 'insertImage') {
+                    elegirImagen(caja, area, sincronizar);
+                    return;   // la subida es asíncrona: sincroniza al terminar
                 } else {
                     document.execCommand(comando, false, null);
                 }
@@ -103,6 +106,85 @@
         }
 
         document.execCommand('createLink', false, url);
+    }
+
+    /**
+     * «Insertar imagen»: abre el selector de archivos, sube la foto a
+     * modules/medios (la misma validación que el resto del panel) y la coloca
+     * donde estaba el cursor, dentro de un <figure>. Se pide una descripción
+     * corta para el texto alternativo, que es lo que oye quien usa lector de
+     * pantalla. Si la subida falla, se avisa y no se toca el texto.
+     */
+    function elegirImagen(caja, area, sincronizar) {
+        var destino = caja.dataset.subirImagen;
+        var formulario = caja.closest('form');
+        var token = formulario ? formulario.querySelector('input[name="_csrf"]') : null;
+        if (!destino || !token) {
+            alert('No se pueden subir imágenes desde esta pantalla.');
+            return;
+        }
+
+        // Recordar dónde estaba el cursor: el selector de archivos se lo lleva.
+        var seleccion = window.getSelection();
+        var rango = seleccion && seleccion.rangeCount && area.contains(seleccion.anchorNode)
+            ? seleccion.getRangeAt(0).cloneRange() : null;
+
+        var selector = document.createElement('input');
+        selector.type = 'file';
+        selector.accept = 'image/jpeg,image/png,image/webp,image/gif';
+        selector.addEventListener('change', function () {
+            var archivo = selector.files && selector.files[0];
+            if (!archivo) {
+                return;
+            }
+            if (archivo.size > 4 * 1024 * 1024) {
+                alert('La imagen pesa más de 4 MB. Redúcela e inténtalo de nuevo.');
+                return;
+            }
+            var descripcion = window.prompt('Describe la imagen en pocas palabras (opcional):', '') || '';
+
+            var datos = new FormData();
+            datos.append('imagen', archivo);
+            datos.append('_csrf', token.value);
+
+            caja.classList.add('subiendo');
+            fetch(destino, { method: 'POST', body: datos, credentials: 'same-origin' })
+                .then(function (respuesta) {
+                    return respuesta.json().catch(function () {
+                        return { error: 'El servidor no respondió como se esperaba.' };
+                    });
+                })
+                .then(function (resultado) {
+                    if (!resultado || !resultado.url) {
+                        alert('No se pudo subir la imagen: ' + ((resultado && resultado.error) || 'error desconocido.'));
+                        return;
+                    }
+                    var figura = document.createElement('figure');
+                    var imagen = document.createElement('img');
+                    imagen.src = resultado.url;
+                    imagen.alt = descripcion.trim();
+                    figura.appendChild(imagen);
+                    var despues = document.createElement('p');
+                    despues.appendChild(document.createElement('br'));
+
+                    if (rango) {
+                        rango.collapse(false);
+                        rango.insertNode(despues);
+                        rango.insertNode(figura);
+                    } else {
+                        area.appendChild(figura);
+                        area.appendChild(despues);
+                    }
+                    sincronizar();
+                })
+                .catch(function () {
+                    alert('No se pudo subir la imagen: revisa tu conexión e inténtalo de nuevo.');
+                })
+                .then(function () {
+                    caja.classList.remove('subiendo');
+                });
+        });
+        selector.click();
     }
 
     /** Resalta los botones cuyo formato está activo donde está el cursor. */

@@ -225,6 +225,29 @@ CREATE TABLE IF NOT EXISTS paginas (
     KEY idx_pag_menu (en_menu, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Menú del sitio: un renglón por entrada —sección fija (clave = módulo
+-- público) o página libre (pagina_id)— con su orden, si se muestra y un
+-- nombre opcional. Inicio y Contacto no están: son fijos. Se administra en
+-- Contenido → Menú del sitio. Ver docs/migraciones/2026-11-02-menu-del-sitio.sql
+CREATE TABLE IF NOT EXISTS menu_sitio (
+    id         SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    clave      VARCHAR(30)       NULL,
+    pagina_id  SMALLINT UNSIGNED NULL,
+    etiqueta   VARCHAR(60)       NULL,
+    visible    TINYINT(1)        NOT NULL DEFAULT 1,
+    orden      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at DATETIME          NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_menu_clave (clave),
+    UNIQUE KEY uq_menu_pagina (pagina_id),
+    KEY idx_menu_orden (orden),
+    CONSTRAINT fk_menu_pagina FOREIGN KEY (pagina_id) REFERENCES paginas (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO menu_sitio (clave, orden) VALUES
+    ('nosotros', 10), ('horarios', 20), ('sacramentos', 30), ('pastorales', 40),
+    ('cursos', 50), ('avisos', 60), ('eventos', 70), ('galeria', 80);
+
 -- El evangelio del día y la reflexión del párroco, por separado. Una fila por
 -- fecha (UNIQUE), para que "el de hoy" sea un WHERE fecha = CURDATE() trivial
 -- y no puedan quedar dos capturados el mismo día por accidente.

@@ -27,7 +27,7 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         </a>
         <?php endif; ?>
 
-        <?php if (Auth::tienePermiso('bloques.ver') || Auth::tienePermiso('paginas.ver') || Auth::tienePermiso('evangelio.ver')): ?>
+        <?php if (Auth::tienePermiso('bloques.ver') || Auth::tienePermiso('paginas.ver') || Auth::tienePermiso('menu.ver') || Auth::tienePermiso('evangelio.ver')): ?>
         <div class="sidebar-section mt-2">Contenido</div>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('bloques.ver')): ?>
@@ -38,6 +38,11 @@ $activo = static fn (string $modulo): string => $moduloActual === $modulo ? 'act
         <?php if (Auth::tienePermiso('paginas.ver')): ?>
         <a href="<?= e(url_admin('paginas')) ?>" class="sidebar-link <?= $activo('paginas') ?>">
             <i class="bi bi-file-earmark-text"></i> Páginas
+        </a>
+        <?php endif; ?>
+        <?php if (Auth::tienePermiso('menu.ver')): ?>
+        <a href="<?= e(url_admin('menu')) ?>" class="sidebar-link <?= $activo('menu') ?>">
+            <i class="bi bi-list-ul"></i> Menú del sitio
         </a>
         <?php endif; ?>
         <?php if (Auth::tienePermiso('evangelio.ver')): ?>
