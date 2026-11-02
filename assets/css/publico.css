@@ -1063,14 +1063,25 @@
     padding-top: .5rem;
 }
 
-/* ---- Pastorales en la portada: las comisiones como lista ----
-   Sin tarjetas ni iconos: el nombre de cada Comisión en serif grande, su
-   frase y debajo sus grupos con el día en que se reúnen. Dos columnas en
-   escritorio, separadas por aire. */
+/* ---- Pastorales en la portada: una tarjeta blanca por Comisión ----
+   El nombre de cada Comisión en serif grande, su frase y debajo sus grupos
+   con el día en que se reúnen, dentro de un cuadro blanco que la separa del
+   fondo marfil de la franja. Dos columnas en escritorio. */
 
 .comisiones {
     display: grid;
-    gap: 5.5rem 4rem;
+    gap: 1.5rem;
+}
+
+.comision {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 2rem;
+}
+
+@media (min-width: 768px) {
+    .comision { padding: 2.5rem; }
 }
 
 @media (min-width: 992px) {

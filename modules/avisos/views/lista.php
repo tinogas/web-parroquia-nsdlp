@@ -91,7 +91,7 @@ $porPastoral = $filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [];
                     <td class="d-none d-md-table-cell">
                         <?= badge_escalon($aviso) ?>
                         <?php if ($aviso['vigente_hasta'] && $aviso['vigente_hasta'] < date('Y-m-d')): ?>
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis" title="Ya pasó su fecha 'Visible hasta'; no se muestra en el sitio.">Vencido</span>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis" title="Ya pasó su fecha «Visible hasta»; no se muestra en el sitio.">Vencido</span>
                         <?php endif; ?>
                     </td>
                     <td class="text-end text-nowrap">

@@ -113,7 +113,7 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
     <div class="ti-aviso">
         <p class="ti-aviso-titulo">==== Aviso ====</p>
         <p class="ti-aviso-texto">
-            En caso de necesidad, consiga entre los compañeros un Cambio de Turno, y dé aviso a la
+            En caso de necesidad, consiga entre los compañeros un cambio de turno, y dé aviso a la
             Coordinación para evitar malentendidos. Gracias por su colaboración.
         </p>
     </div>

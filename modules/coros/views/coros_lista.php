@@ -208,7 +208,7 @@ foreach ($horarios as $horario):
                     </div>
                     <?php endforeach; ?>
                     <div class="form-text">
-                        Solo aparece quien está activo en el catálogo; tras el guión, su voz y su
+                        Solo aparece quien está activo en el catálogo; tras el guion, su voz y su
                         instrumento, que es con lo que se reparte lo que se canta.
                     </div>
                     <?php endif; ?>

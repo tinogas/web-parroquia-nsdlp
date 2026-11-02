@@ -264,7 +264,7 @@ $textosComision = [
     'profetica'          => ['Anunciar',    'El anuncio de la fe: catequesis de niños y jóvenes y animación misionera.'],
     'pastoral-social'    => ['Servir',      'La caridad hecha obra: enfermos, despensas, desayunador y cuidado de la creación.'],
     'de-la-familia'      => ['Acompañar',   'Grupos para cada etapa de la vida: matrimonios, adolescentes, jóvenes y adultos mayores.'],
-    'piedad-popular-2'   => ['Orar',        'La oración del pueblo: el rosario, la reparación y los encuentros comunitarios.'],
+    'piedad-popular'     => ['Orar',        'La oración del pueblo: el rosario, la reparación y los encuentros comunitarios.'],
     'de-la-comunicacion' => ['Comunicar',   'Redes, página web y cultura digital al servicio de la parroquia.'],
     'asuntos-economicos' => ['Administrar', ''],
 ];
