@@ -11,6 +11,10 @@ el panorama completo y un mapa de dónde está cada cosa.
 - **[`BASE-DE-DATOS.md`](BASE-DE-DATOS.md)** — cada tabla, columna por columna.
 - **[`DESPLIEGUE.md`](DESPLIEGUE.md)** — checklist de salida a producción y lo que falta
   resolver que no depende del código.
+- **[`manual/`](manual/README.md)** — el manual de usuario para el equipo parroquial, en
+  veintitrés capítulos con capturas; se entrega en Word y PDF.
+- **[`videos/`](videos/README.md)** — un video narrado y subtitulado por capítulo del
+  manual, armado desde guiones con las mismas capturas.
 
 ## En una frase
 

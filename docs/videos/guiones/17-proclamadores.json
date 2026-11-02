@@ -1,0 +1,50 @@
+{
+  "capitulo": 17,
+  "titulo": "Proclamadores",
+  "subtitulo": "Quién proclama la Palabra en cada misa",
+  "intro": "Capítulo diecisiete: proclamadores. En este video verás el catálogo de quienes proclaman la Palabra y su calendario de turnos.",
+  "escenas": [
+    {
+      "imagen": "proclamadores-lista",
+      "texto": "Proclamadores es la pastoral que proclama la Palabra en las misas. Su módulo está en Pastorales, Proclamadores, tiene cinco pantallas y abre por la que más se consulta."
+    },
+    {
+      "imagen": "proclamadores-lista",
+      "texto": "Esta pastoral se llamó Lectores y después Liturgia. El nombre cambió en todo el panel, pero su dirección pública sigue diciendo liturgia, porque cambiarla rompería los enlaces que la gente tiene guardados. Si ves liturgia en una dirección, es esto.",
+      "foco": [0.21, 0.1, 0.6, 0.4]
+    },
+    {
+      "imagen": "proclamadores-lista",
+      "texto": "Esta lista de quienes proclaman va primero a propósito: es el dato con el que se arma un turno. Cada persona se elige del equipo pastoral y lleva marcado qué prefiere hacer: monitor, lectura o salmo cantado. Se puede marcar más de una.",
+      "foco": [0.22, 0.45, 0.72, 0.95]
+    },
+    {
+      "imagen": "proclamadores-lista",
+      "texto": "Quien arma el rol mira esta lista antes de repartir el mes: el salmo cantado no lo hace cualquiera, y el monitor tampoco. Como en los demás catálogos, cada renglón trae su WhatsApp, y arriba está el Mensaje para todos.",
+      "foco": [0.48, 0.5, 0.98, 0.95]
+    },
+    {
+      "imagen": "proclamadores-turnos",
+      "texto": "El calendario de turnos dice quién proclama en cada misa, mes a mes. Funciona igual que el de MESC: turnos con su hora y su servicio, colores litúrgicos y un botón para imprimir o descargar en PDF la hoja del mes."
+    },
+    {
+      "imagen": "proclamadores-turnos",
+      "texto": "Con Ver los turnos de eliges a un proclamador, y el calendario y la hoja de imprimir muestran solo sus turnos.",
+      "foco": [0.22, 0.28, 0.6, 0.36]
+    },
+    {
+      "imagen": "proclamadores-turnos",
+      "texto": "Los colores litúrgicos tienen su propia pantalla: es el mismo catálogo de referencia que usa MESC, verde, morado, blanco y rojo, con el que se etiquetan los turnos según el tiempo o la fiesta del día.",
+      "foco": [0.5, 0.15, 0.8, 0.3]
+    },
+    {
+      "imagen": "proclamadores-turnos",
+      "texto": "Actividades y Documentos son, igual que en Catequesis, las del panel básico de la pastoral, no tablas aparte. Un documento capturado aquí se ve desde el módulo y desde el panel básico, porque es el mismo.",
+      "foco": [0.21, 0.15, 0.6, 0.3]
+    },
+    {
+      "imagen": "proclamadores-lista",
+      "texto": "Lo que no tiene: a diferencia de MESC, este módulo no lleva visitas a enfermos ni rutas, porque no le aplican. Son dos pastorales parecidas en la forma, un catálogo de gente y un rol de turnos, y distintas en lo que hacen."
+    }
+  ]
+}

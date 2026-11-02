@@ -16,7 +16,7 @@ acaban:
 Las fotos se ven en cuadrícula, cada una con sus etiquetas. Arriba, los filtros
 *Todas*, *Publicadas* y *Ocultas*, y el botón azul **Subir fotografías**.
 
-Cada foto lleva hasta cuatro etiquetas, y conviene leerlas juntas:
+Cada foto lleva tres etiquetas, y conviene leerlas juntas:
 
 | Etiqueta | Qué dice |
 |---|---|
@@ -24,9 +24,10 @@ Cada foto lleva hasta cuatro etiquetas, y conviene leerlas juntas:
 | **Autorizada** / **Sin autorizar** | Si hay permiso de las personas que salen |
 | *(nombre de pastoral)* | De quién es la foto |
 
-Al hacer clic en una foto se abre su ficha, donde se le pone **título** y
-**texto alternativo** —la descripción que leen quienes usan lector de
-pantalla—, y se cambian los dos interruptores.
+Al hacer clic en una foto se ve a tamaño completo. Su ficha se abre con el
+botón **Editar** de la tarjeta: ahí se le pone **título**, **texto
+alternativo** —la descripción que leen quienes usan lector de pantalla— y
+**orden**, y se cambian los dos interruptores.
 
 ### Subir fotos
 
@@ -34,6 +35,10 @@ pantalla—, y se cambian los dos interruptores.
 
 Se pueden elegir **varias a la vez**, hasta 4 MB cada una, en JPG, PNG, WebP o
 GIF. Se indica de qué pastoral son y se sube el lote entero de una vez.
+
+**Las fotos se suben sin publicar**, aunque se marque la autorización: quedan
+como *Ocultas* para revisarlas, y se publican una por una desde su ficha, con
+el botón **Editar** del listado.
 
 ### La palomita que no hay que pasar por alto
 

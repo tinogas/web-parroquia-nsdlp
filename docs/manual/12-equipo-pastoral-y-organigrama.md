@@ -51,9 +51,11 @@ dice.
 - **Foto.**
 - **Su pareja.** Se elige de la misma lista. Vale en toda la parroquia: es lo
   que permite que en Matrimonios, AMA, JECSA y Raíces coordine un matrimonio y
-  no una persona suelta.
-- **Sede o centros** y **Pastorales**, en dos listas de palomitas. Se puede
-  pertenecer a varias de cada una.
+  no una persona suelta. Este campo **solo aparece al editar** una ficha ya
+  guardada: en una nueva todavía no hay a quién ligarla.
+- **Sede o centros**, **Pastoral (Comisión)** y **Dimensión**, en tres listas
+  de palomitas. Las dimensiones de una comisión se pueden marcar después de
+  marcar la comisión arriba. Se puede pertenecer a varias de cada una.
 - **Activa**, el interruptor de siempre.
 - **Incluir en el directorio telefónico.** Aparte de "Activa": no es para todo
   el equipo, es para altos mandos y cargos importantes del organigrama —a
@@ -84,7 +86,9 @@ Proclamadores…). Dentro de cada una, primero aparece quien la coordina —quie
 coordina la Comisión entera, y luego quien coordina cada dimensión en
 concreto—, después quien tiene "Encargado" o "Encargada" en su cargo, y al
 final el resto, por nombre. Quien está marcada para el directorio pero no
-pertenece a ninguna pastoral cae en un último grupo, "Sin pastoral asignada".
+pertenece a ninguna pastoral —el párroco, el vicario, el personal de oficina—
+va en el grupo "Sin pastoral asignada", que encabeza la hoja, antes de la
+primera Comisión.
 
 ## El organigrama
 

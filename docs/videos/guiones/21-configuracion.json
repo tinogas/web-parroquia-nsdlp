@@ -1,0 +1,76 @@
+{
+  "capitulo": 21,
+  "titulo": "Configuración",
+  "subtitulo": "Se captura una vez y aparece en todo el sitio",
+  "intro": "Capítulo veintiuno: configuración. En este video verás dónde se capturan los datos que el sitio repite en todas partes.",
+  "escenas": [
+    {
+      "imagen": "configuracion-form",
+      "texto": "El nombre de la parroquia, el escudo, la dirección, los teléfonos, las redes: son datos que el sitio repite en todas partes. Se capturan una vez aquí y se actualizan solos en el pie, en la página de Contacto y dondequiera que aparezcan."
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "Está en Administración, Configuración, y solo la ve el administrador. La pantalla está partida en seis bloques, y cada uno se guarda por separado.",
+      "foco": [0.21, 0.07, 0.65, 0.33]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "En Identidad van el nombre de la parroquia, su diócesis o decanato, y el logotipo, que es el escudo de la barra del sitio.",
+      "foco": [0.42, 0.14, 0.97, 0.5]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "También el icono del navegador, esa imagen diminuta que sale en la pestaña. Y el organigrama en imagen, para las parroquias que prefieren publicar el suyo como una sola figura, en vez de armarlo nodo por nodo.",
+      "foco": [0.42, 0.57, 0.97, 0.9]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "El bloque de Contacto y ubicación lleva la dirección, la ciudad, el código postal, el teléfono, el WhatsApp y el correo, más el horario de oficina y el mapa.",
+      "foco": [0.21, 0.12, 0.41, 0.33]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Es el bloque que más se nota: lo que escribas ahí es lo que aparece en el pie de todas las páginas.",
+      "foco": [0.0, 0.96, 1.0, 1.0]
+    },
+    {
+      "imagen": "publico-contacto",
+      "texto": "Y también en la página de Contacto. Ese teléfono, además, es el número al que la gente llama.",
+      "foco": [0.05, 0.28, 0.43, 0.75]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "En Redes sociales van las direcciones de Facebook, Instagram y YouTube. Se dibujan como iconos en el pie, y las que se dejen en blanco no aparecen: no hay que inventar una cuenta que no existe.",
+      "foco": [0.0, 0.96, 0.4, 1.0]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "La de Facebook hace algo más: es la que alimenta el bloque Lo último en Facebook, en la portada.",
+      "foco": [0.0, 0.67, 0.5, 0.725]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "En Buscadores van la descripción del sitio, que es lo que Google enseña bajo el título, y la imagen al compartir. Esa es la que sale cuando alguien pega el enlace de la parroquia en WhatsApp o en Facebook.",
+      "foco": [0.21, 0.12, 0.41, 0.33]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "En Legal vive la versión del aviso de privacidad, que se muestra sin poder editarse desde esta pantalla. Y no es un descuido.",
+      "foco": [0.21, 0.15, 0.41, 0.33]
+    },
+    {
+      "imagen": "publico-contacto",
+      "texto": "Cada inscripción y cada mensaje guardan la versión del aviso que aceptó quien los mandó. Cambiar ese número sin publicar un aviso nuevo dejaría esos registros diciendo una mentira. Cuando el aviso cambie de verdad, pídeselo a quien lleva el sistema.",
+      "foco": [0.45, 0.86, 0.95, 1.0]
+    },
+    {
+      "imagen": "configuracion-form",
+      "texto": "Por último, Secciones del sitio: interruptores para partes opcionales del menú público. Hoy el que hay es Mostrar Cursos en el menú.",
+      "foco": [0.21, 0.18, 0.41, 0.33]
+    },
+    {
+      "imagen": "publico-menu",
+      "texto": "Apagarlo esconde la sección de Cursos del sitio sin borrar nada, ni tener que despublicar los cursos uno por uno. Es lo que se usa cuando no hay convocatorias abiertas."
+    }
+  ]
+}

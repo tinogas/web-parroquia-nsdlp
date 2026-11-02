@@ -1,0 +1,42 @@
+{
+  "capitulo": 0,
+  "titulo": "Introducción",
+  "subtitulo": "Qué explica este manual, para quién es y cómo leerlo",
+  "intro": "Presentación del manual de usuario del sitio y el panel de la Parroquia Nuestra Señora de la Paz. En este video verás para quién es el manual y cómo aprovecharlo.",
+  "escenas": [
+    {
+      "imagen": "publico-inicio",
+      "texto": "Este manual explica cómo se usa el sitio de la parroquia y su panel. Es para quien coordina una pastoral, atiende la oficina o publica avisos, y no pide saber de computación más allá de llenar un formulario."
+    },
+    {
+      "imagen": "publico-horarios",
+      "texto": "El sistema tiene dos caras. La primera es el sitio, que ve cualquiera que entre a la dirección de la parroquia, sin contraseña."
+    },
+    {
+      "imagen": "acceso-login",
+      "texto": "La segunda es el panel, que está detrás de una contraseña. Ahí el equipo captura lo que después aparece en el sitio.",
+      "foco": [0.33, 0.17, 0.67, 0.83]
+    },
+    {
+      "imagen": "panel-inicio",
+      "texto": "Casi todo el manual es del panel, pero conviene empezar por el capítulo uno, que enseña el sitio terminado: así sabrás dónde acaba lo que captures."
+    },
+    {
+      "imagen": "panel-menu",
+      "texto": "No todos ven lo mismo: el menú del panel se dibuja según lo que cada cuenta tiene permitido. El administrador lo ve completo."
+    },
+    {
+      "imagen": "panel-menu-coordinador",
+      "texto": "Una coordinadora de pastoral ve uno mucho más corto. Si no encuentras una pantalla de la que habla el manual, seguramente tu cuenta no la tiene; el capítulo cuatro explica por qué."
+    },
+    {
+      "imagen": "publico-pastorales",
+      "texto": "Las pantallas son del sistema real, con los teléfonos, los correos particulares y los datos de quien escribe o se inscribe cambiados por ejemplos. Lo demás es real, como quién coordina cada pastoral."
+    },
+    {
+      "imagen": "publico-inicio",
+      "texto": "Y las pantallas cambian con el tiempo. Si alguna no coincide con lo que tienes enfrente, avísale a quien lleva el sistema, para mantener el manual al día.",
+      "foco": [0.45, 0.12, 0.88, 0.68]
+    }
+  ]
+}

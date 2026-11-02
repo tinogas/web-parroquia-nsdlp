@@ -25,8 +25,9 @@ cuenta:
 - **Estado** y **último acceso**. Ese último dato es más útil de lo que parece:
   una cuenta que dice *Nunca* después de meses es una cuenta que alguien pidió
   y nadie usa.
-- Los botones de **Editar** y, para el administrador, el de entrar como esa
-  persona.
+- Los botones de **Editar** y de **Dar de baja**, el rojo, que pregunta antes
+  y cierra el acceso sin borrar la cuenta. Para entrar como esa persona no hay
+  botón en el renglón: es **Usar como…**, en el menú de tu nombre (capítulo 4).
 
 ## Dar de alta una cuenta
 
@@ -45,8 +46,10 @@ Después:
   blanco significa «no la cambies».
 - **Rol**, con la descripción de lo que ese rol puede hacer debajo del
   selector, para no tener que buscarla en ningún otro lado.
-- **Las dos listas de palomitas** —pastorales y sedes—, que solo aparecen para
-  los roles acotados. Recuerda la regla del capítulo 4: *Coordinador* pide una
+- **Las dos listas de palomitas** —pastorales y sedes—, que solo cuentan para
+  los roles acotados: con otro rol se ignoran al guardar. Si elegiste a una
+  persona del equipo, en su lugar sale un resumen, porque sus pastorales y sus
+  sedes se toman de su ficha. Recuerda la regla del capítulo 4: *Coordinador* pide una
   sede; *Coordinador general* admite varias o ninguna.
 - **Activo**, el interruptor que cierra el acceso sin borrar la cuenta.
 

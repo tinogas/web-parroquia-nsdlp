@@ -161,6 +161,17 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   con filete, iconos discretos en las tablas y filtros segmentados. De paso, las hojas de
   estilo se versionan por la fecha del archivo (`url_activo_versionado()`), porque con
   solo `APP_VERSION` el navegador se quedaba con estilos viejos sobre páginas nuevas.
+- **La portada, pulida.** Sin cambiar paleta, fuentes ni ilustración, se quitó lo que
+  delataba una plantilla: los antetítulos sobre cada título, las sombras en reposo, los
+  filetes y las tarjetas con icono. La tipografía quedó en seis tamaños; las pastorales de
+  la portada pasaron a una lista a dos columnas con un solo **Quiero participar**; en las
+  próximas misas la hora va primero, y los siete días de Horarios caben en un teléfono. En
+  el panel, la campana y el menú del usuario se despliegan con una transición breve que
+  respeta la preferencia de reducir el movimiento.
+- **El manual tiene videos.** Uno por capítulo, narrados con voz neuronal y con
+  subtítulos, armados por `herramientas/videos_manual.py` con las mismas capturas del
+  manual —ya con los datos personales tapados—. Se versionan los guiones, no los videos;
+  ver [`docs/videos/`](docs/videos/README.md).
 
 Falta el resto del contenido real y el despliegue a producción — ver
 [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). La fase 2 (aula virtual con tareas y

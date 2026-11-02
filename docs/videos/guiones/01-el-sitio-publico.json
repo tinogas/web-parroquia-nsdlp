@@ -1,0 +1,83 @@
+{
+  "capitulo": 1,
+  "titulo": "El sitio público",
+  "subtitulo": "Lo que ve cualquier visitante, página por página",
+  "intro": "Capítulo uno: el sitio público. En este video recorrerás las páginas que ve cualquier visitante y lo que conviene saber de cada una.",
+  "escenas": [
+    {
+      "imagen": "publico-inicio",
+      "texto": "El sitio es la cara que ve cualquiera: no pide contraseña y solo muestra lo publicado. Conviene conocerlo aunque tu trabajo sea capturar en el panel, porque cada pantalla del panel existe para llenar un pedazo de estas páginas."
+    },
+    {
+      "imagen": "publico-menu",
+      "texto": "Arriba, en todas las páginas, va el menú, con Contacto en dorado porque es lo que más se busca. Solo se dibujan las secciones que existen, y en un teléfono el menú se recoge en el botón de las tres rayas."
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Así es la portada, de arriba abajo: la cabecera y las próximas misas, los horarios de la semana, los requisitos de cada sacramento, las pastorales agrupadas por comisión, quiénes somos y, al final, el contacto. Cada franja aparece solo si tiene algo que mostrar."
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Bajo el lema va una presentación breve, que es el texto del bloque Presentación; si se suben fotos al carrusel, en su lugar pasan las fotos. Ojo: el bloque Bienvenida ya no sale en la portada, así que un saludo del párroco se escribe en Presentación.",
+      "foco": [0.4, 0.1, 0.92, 0.13]
+    },
+    {
+      "imagen": "publico-inicio-completa",
+      "texto": "Luego, las tres misas más próximas, calculadas de los horarios y siempre en hora de Hermosillo; la primera va resaltada. Si el párroco publicó el evangelio del día, aparece justo después, con su reflexión al lado y un botón para leerlo completo.",
+      "foco": [0.05, 0.128, 0.95, 0.162]
+    },
+    {
+      "imagen": "publico-nosotros",
+      "texto": "Quiénes somos presenta la misión y la visión de la parroquia, el equipo pastoral y el organigrama. Ojo: del equipo sale toda persona activa, no una selección; para que alguien deje de aparecer, hay que marcar su ficha como inactiva. Su contacto no se publica nunca.",
+      "foco": [0.05, 0.6, 0.6, 1.0]
+    },
+    {
+      "imagen": "publico-horarios",
+      "texto": "Horarios muestra la semana en pestañas, una por día, y abre en la de hoy, marcada con un punto dorado. Cada día tiene misas, confesiones, y oración y grupos, y las fichas de sede, arriba, filtran sin recargar la página."
+    },
+    {
+      "imagen": "publico-sacramentos",
+      "texto": "Sacramentos tiene un renglón por sacramento, y al tocar uno se abre su ficha, con requisitos y documentos. Es informativo: no hay solicitud en línea, porque los trámites se hacen en la oficina, y la página está para que cada quien sepa qué papeles llevar."
+    },
+    {
+      "imagen": "publico-pastorales",
+      "texto": "Pastorales tiene una tarjeta por comisión, con sus pastorales, quién las lleva y cuándo se reúnen. Ojo: en la página de cada pastoral, el correo es el de la pastoral, no el de quien la coordina; así sobrevive a los relevos."
+    },
+    {
+      "imagen": "publico-cursos",
+      "texto": "Cursos muestra los que tienen inscripción abierta. Al entrar a uno se ven sus detalles y, si acepta inscripciones, el formulario, que pide los datos del tutor cuando es un menor y no se envía sin aceptar el aviso de privacidad.",
+      "foco": [0.05, 0.12, 0.45, 0.56]
+    },
+    {
+      "imagen": "publico-avisos",
+      "texto": "Avisos muestra los publicados en el sitio, del más reciente al más viejo. Ojo: no todo aviso llega aquí. Una pastoral puede publicar un aviso solo para su propia gente, y ese se queda en el panel."
+    },
+    {
+      "imagen": "publico-eventos",
+      "texto": "Eventos es el calendario de la parroquia, con vistas de día, semana, mes y año, y flechas para moverse. Un evento de varios días se marca en todos sus días, y los próximos eventos publicados salen también en la portada."
+    },
+    {
+      "imagen": "publico-eventos",
+      "texto": "Ojo con la fiesta patronal: la franja de la portada con la cuenta regresiva aparece sola cuando faltan menos de dos meses, pero solo si la fiesta está publicada como evento, con fiesta patronal en el título. Si sigue en borrador, no sale.",
+      "foco": [0.2, 0.4, 0.8, 0.8]
+    },
+    {
+      "imagen": "publico-galeria",
+      "texto": "Galería muestra las fotografías publicadas. Al hacer clic en una se abre grande, sin recortar, y se pasa a la siguiente con las flechas."
+    },
+    {
+      "imagen": "publico-contacto",
+      "texto": "Contacto reúne la dirección, los teléfonos, el correo, el horario y un mapa, y un formulario que pide al menos un correo o un teléfono, para poder responder. Los mensajes no van a un buzón: llegan al panel, donde se leen y se marcan como atendidos."
+    },
+    {
+      "imagen": "publico-cursos",
+      "texto": "Al pie de cada página van los datos de la oficina y, en la última línea, dos enlaces discretos: el aviso de privacidad, y Acceso, la puerta del panel. No está en el menú a propósito: el visitante no tiene por qué encontrarla.",
+      "foco": [0.6, 0.62, 1.0, 1.0]
+    },
+    {
+      "imagen": "publico-inicio",
+      "texto": "Para terminar, lo que nunca aparece en el sitio: los borradores, lo que una pastoral publica solo para su gente y los datos personales. Del equipo pastoral solo salen el nombre, el cargo, la foto y la semblanza.",
+      "foco": [0.45, 0.12, 0.88, 0.68]
+    }
+  ]
+}

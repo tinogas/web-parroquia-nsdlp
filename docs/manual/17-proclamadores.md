@@ -36,8 +36,10 @@ Como en los demás catálogos, cada renglón trae su **WhatsApp** y arriba está
 ![Proclamadores — Calendario de turnos](img/proclamadores-turnos.webp)
 
 Quién proclama en cada misa, mes a mes, con el mismo funcionamiento que el de
-MESC: turnos con su hora y su servicio, colores litúrgicos, y el botón de
-**Imprimir / Descargar PDF** para la hoja del mes.
+MESC: turnos con su hora y su servicio, colores litúrgicos —en el botón
+**Colores**—, y el botón **Imprimir**, que abre la hoja del mes lista para
+imprimir o guardar en PDF. También tiene el filtro **Ver los turnos de**, para
+ver, y para imprimir, solo los turnos de un proclamador.
 
 ## Colores litúrgicos
 

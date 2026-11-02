@@ -22,10 +22,11 @@ capturó— su ubicación en el mapa, que es lo que marca el pin azul. Se filtra
 entre **Activas** y **Dadas de baja**: cuando alguien mejora o fallece, la
 visita se da de baja, no se borra.
 
-> Esta lista no sale del panel. No se publica, no se exporta y no se manda por
-> WhatsApp. Es la información de salud y el domicilio de personas mayores o
-> enfermas de la parroquia; de todo lo que guarda el sistema, esto es lo que
-> más cuidado merece.
+> Esta lista no sale del panel. No se publica y no se manda por WhatsApp, y la
+> única forma de sacarla es la **ruta exportada** que se explica más abajo, que
+> lleva solo las visitas de ese recorrido. Es la información de salud y el
+> domicilio de personas mayores o enfermas de la parroquia; de todo lo que
+> guarda el sistema, esto es lo que más cuidado merece.
 
 En la captura de arriba los nombres y las direcciones están sustituidos por
 ejemplos, por esa misma razón.
@@ -63,6 +64,12 @@ Arriba, tres botones:
   la sacristía, y la razón de que este calendario exista: el rol se consulta en
   papel.
 
+Encima del mes, **Ver los turnos de** deja en el calendario solo los turnos de
+un ministro, con el número de turnos que tiene ese mes. El filtro se mantiene
+al cambiar de mes y también vale para la hoja de imprimir, que sale con su nombre
+en el título: así se le puede dar a cada quien su propio calendario. **Ver a
+todos** quita el filtro.
+
 En la parte de arriba aparece además el recordatorio que la coordinación quiso
 dejar por escrito: si alguien no puede, **consigue el cambio con un compañero y
 avisa a la coordinación**.
@@ -77,7 +84,10 @@ misma salida.
 Se crean desde **Generar ruta**: se le pone nombre y se marcan las visitas que
 va a incluir, de entre las activas. Una vez creada, se puede **reordenar** —el
 orden es el del recorrido— y **exportarla**, que es lo que se le pasa a quien
-va a hacer la vuelta.
+va a hacer la vuelta: una hoja de cálculo (CSV) con el orden, el enfermo, su
+dirección y teléfono, quién pidió la visita y las notas. **Ese archivo lleva
+los mismos datos delicados que la lista**: se le entrega solo a quien va a
+hacer el recorrido, y se borra cuando ya no hace falta.
 
 Si no hay ninguna visita activa, el sistema lo dice y no deja generar una ruta
 vacía.

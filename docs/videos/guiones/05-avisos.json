@@ -1,0 +1,64 @@
+{
+  "capitulo": 5,
+  "titulo": "Avisos",
+  "subtitulo": "Publicar un aviso no es una sola cosa",
+  "intro": "Capítulo cinco: avisos. En este video verás cómo se escribe un aviso y, sobre todo, a quién le llega.",
+  "escenas": [
+    {
+      "imagen": "panel-listado",
+      "texto": "Un aviso es un texto que la parroquia o una pastoral quiere que alguien lea: el boletín de la semana, una convocatoria, la noticia de que abrieron las inscripciones. Se llega desde el menú, en Comunicación, Avisos.",
+      "foco": null
+    },
+    {
+      "imagen": "panel-listado",
+      "texto": "Arriba están los filtros: todos, borradores, de la pastoral y en la página, que se combinan con el selector de pastoral. Cada renglón dice el título, de qué pastoral es, el tipo, la fecha y en qué escalón va.",
+      "foco": [0.21, 0.22, 0.98, 0.6]
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "Con el botón azul, Nuevo aviso, se abre el formulario. A la izquierda va lo que se lee: el título, que es obligatorio; un resumen de dos renglones; y el contenido completo, con negritas, listas y enlaces.",
+      "foco": [0.21, 0.12, 0.72, 0.6]
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "A la derecha, lo que decide dónde aparece. La pastoral dice de quién es el aviso. Si la dejas en Contenido parroquial general, el aviso es de la parroquia, sin dueño.",
+      "foco": [0.72, 0.13, 0.98, 0.45]
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "El tipo no es solo una etiqueta. Noticia es lo ordinario. Boletín, además, admite adjuntar el PDF. Y Comunicado va dirigido a toda la parroquia: lo leen también las demás pastorales, con el nombre de quien lo publica.",
+      "foco": [0.72, 0.2, 0.98, 0.3]
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "Visible desde sirve para dejar preparado el boletín del domingo. Y Visible hasta es el campo que más trabajo ahorra: llegada esa fecha, el aviso deja de mostrarse solo, sin que nadie tenga que retirarlo.",
+      "foco": [0.72, 0.27, 0.98, 0.44]
+    },
+    {
+      "imagen": "avisos-escalon",
+      "texto": "Ahora lo más importante: los tres escalones de publicación. Borrador, que solo ves tú y quien administra esa pastoral. Publicado para la pastoral, que leen sus miembros desde su panel, pero que no sale en el sitio. Y publicado en la página, que además lo ve cualquiera en el sitio web."
+    },
+    {
+      "imagen": "avisos-escalon",
+      "texto": "Van en ese orden y son excluyentes. Si tu cuenta no puede publicar en el sitio, el tercer escalón no aparece, y el formulario te explica que hace falta que lo publique un editor."
+    },
+    {
+      "imagen": "avisos-form",
+      "texto": "Antes de guardar, puedes añadir una imagen para la tarjeta, el PDF si es boletín, y marcarlo como destacado. Conviene usar el destacado con cuentagotas: si todo está destacado, nada lo está.",
+      "foco": [0.72, 0.44, 0.98, 0.7]
+    },
+    {
+      "imagen": "panel-campana",
+      "texto": "Al publicar para la pastoral, a cada miembro le aparece en su pantalla de inicio, marcado como nuevo, y le suena la campana hasta que lo abra. Si la pastoral es una comisión, les llega también a las pastorales que agrupa."
+    },
+    {
+      "imagen": "publico-avisos",
+      "texto": "Y si lo publicas en la página, además sale en la sección Avisos del sitio y, si es de los más recientes, en la portada."
+    },
+    {
+      "imagen": "panel-listado",
+      "texto": "Para cambiar un aviso, usa el lápiz. Bajarlo a borrador lo retira del sitio sin borrarlo. El bote de basura sí lo borra, y pregunta antes. Si solo quieres que deje de verse, es mejor la fecha de visible hasta: el aviso sigue ahí para consultarlo después.",
+      "foco": [0.84, 0.38, 0.98, 0.88]
+    }
+  ]
+}

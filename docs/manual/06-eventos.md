@@ -63,7 +63,8 @@ uno.
 Los eventos **no tienen los tres escalones de los avisos**: llevan un solo
 interruptor, **Publicado**, con dos posiciones. Apagado es borrador —lo ve el
 equipo en la agenda interna, nadie más—; encendido sale en el calendario del
-sitio.
+sitio. **En un evento nuevo viene encendido**: si todavía no quieres que se vea,
+apágalo antes de guardar.
 
 Si tu cuenta no puede publicar, el interruptor no aparece: lo que captures
 queda en borrador hasta que alguien con permiso lo publique.
@@ -71,13 +72,13 @@ queda en borrador hasta que alguien con permiso lo publique.
 ## Dónde acaba
 
 - **En el sitio**, en la sección Eventos, con sus cuatro vistas —día, semana,
-  mes y año— y en la portada, en la franja **Lo que viene**.
+  mes y año— y en la portada, en la franja **Lo que viene en la parroquia**.
 - **La fiesta patronal tiene franja propia.** Cuando se publica el evento cuyo
   título dice «fiesta patronal» —el de la sede, no el de un centro— y faltan
   menos de dos meses, la portada muestra una franja con la cuenta regresiva.
   Si además están publicadas la novena y la kermés, con esas palabras en el
-  título, salen ahí mismo y en dorado en **Lo que viene**. Mientras sigan en
-  borrador, la portada no dice nada de la fiesta.
+  título, salen ahí mismo y en dorado en **Lo que viene en la parroquia**.
+  Mientras sigan en borrador, la portada no dice nada de la fiesta.
 - **En la agenda interna** del panel, publicado o no, junto a los cursos y
   junto a lo de las demás pastorales. Eso es el capítulo 8.
 

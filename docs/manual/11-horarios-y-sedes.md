@@ -18,7 +18,7 @@ posada— no es un horario, es un evento (capítulo 6).
 ![El formulario de un horario](img/horarios-form.webp)
 
 - **Tipo.** *Misa*, *Confesión*, *Adoración eucarística*, *Oficina parroquial*
-  u *Otro*. En el sitio, cada día tiene tres tarjetas según este campo:
+  u *Otro*. En el sitio, cada día tiene tres columnas según este campo:
   *Misas*, *Confesiones* y *Oración y grupos*, donde caen los demás tipos.
 - **Día de la semana.** Es la pestaña del sitio en la que aparece.
 - **Sede o centro.** En cuál de los templos. Es lo que hace funcionar las

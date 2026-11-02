@@ -1271,7 +1271,7 @@ INSERT IGNORE INTO configuracion (clave, valor, grupo) VALUES
 
 INSERT IGNORE INTO bloques_contenido (clave, zona, titulo, descripcion, orden) VALUES
     ('bienvenida_parroco', 'inicio',      'Bienvenida',
-     'Saludo del párroco. Aparece en la portada, debajo de la imagen principal.', 10),
+     'Saludo del párroco. Ya no se muestra en el sitio: el texto de la portada es el bloque Presentación.', 10),
     ('inicio_intro',       'inicio',      'Presentación',
      'Párrafo breve de presentación de la parroquia en la portada.', 20),
 

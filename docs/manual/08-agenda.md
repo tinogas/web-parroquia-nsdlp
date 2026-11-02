@@ -21,8 +21,8 @@ Dos cosas, y las dos son la razón de que exista:
 Eso último suele sorprender, y conviene decirlo con claridad: **el alcance
 decide qué puedes *tocar*, no qué puedes *mirar*.** En los listados de eventos
 y cursos cada quien trabaja sobre lo suyo; aquí se coordina, y para coordinar
-hay que ver el calendario completo. El lápiz para editar solo aparece sobre lo
-que sí es tuyo.
+hay que ver el calendario completo. Solo lo que sí es tuyo se abre al hacer
+clic: lo demás se ve, pero no lleva a ningún formulario.
 
 ## Cómo se lee
 
@@ -53,7 +53,7 @@ gente» y volver a la vista completa de un clic.
 
 ## Trabajar desde aquí
 
-Los dos botones de arriba a la derecha, **Nuevo evento** y **Nuevo curso**,
+Los dos botones de arriba, bajo el título, **Nuevo evento** y **Nuevo curso**,
 llevan a los formularios de los capítulos 6 y 7. Es el camino natural: se mira
 el mes, se ve el hueco, se captura ahí mismo.
 

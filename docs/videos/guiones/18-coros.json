@@ -1,0 +1,42 @@
+{
+  "capitulo": 18,
+  "titulo": "Coros",
+  "subtitulo": "Un coro por cada horario que lo lleva",
+  "intro": "Capítulo dieciocho: coros. En este video verás de dónde sale la lista de coros y cómo se lleva el catálogo de quienes cantan.",
+  "escenas": [
+    {
+      "imagen": "panel-menu",
+      "texto": "Coros es la pastoral de música, organizada de una forma propia: un coro por cada horario marcado como Tiene coro. Se llega desde el menú, en Pastorales, Coros."
+    },
+    {
+      "imagen": "coros-lista",
+      "texto": "Esta lista no se captura: sale de los horarios. Cada horario con coro aparece aquí como un renglón, con su día, su hora y su sede. No hace falta que sea una misa: una Adoración eucarística también puede llevar coro.",
+      "foco": [0.21, 0.24, 0.72, 0.68]
+    },
+    {
+      "imagen": "coros-lista",
+      "texto": "A cada coro se le asigna un encargado; mientras no haya, el renglón dice Sin encargado. Y sus integrantes: el número dice cuántos cantan ahí, y con el signo más que lo acompaña se despliega la lista completa.",
+      "foco": [0.6, 0.24, 0.98, 0.62]
+    },
+    {
+      "imagen": "horarios-form",
+      "texto": "Eso tiene una consecuencia práctica: si un horario no aparece en Coros, revisa su casilla Tiene coro en Parroquia, Horarios. Se marca ahí y el coro aparece solo. Ya no hace falta anotarlo a mano en la nota del horario.",
+      "foco": [0.22, 0.8, 0.72, 0.93]
+    },
+    {
+      "imagen": "coros-integrantes",
+      "texto": "En Integrantes está el catálogo de la pastoral: quién canta, y en qué misas. Cada persona se elige del equipo pastoral, como en los demás módulos, y puede estar en más de un coro.",
+      "foco": [0.22, 0.4, 0.7, 0.9]
+    },
+    {
+      "imagen": "coros-integrantes",
+      "texto": "Como en los otros catálogos, cada quien trae su botón de WhatsApp. Y arriba está el Mensaje para todos: lo escribes una vez, y cada botón abre la conversación con el texto ya puesto. Enviarlo sigue siendo un clic tuyo, uno por persona.",
+      "foco": [0.23, 0.15, 0.96, 0.38]
+    },
+    {
+      "imagen": "coros-lista",
+      "texto": "Arriba están también Actividades y Documentos, las dos pantallas de siempre, compartidas con el panel básico de la pastoral. Lo que se captura en una se ve en la otra.",
+      "foco": [0.62, 0.11, 0.98, 0.19]
+    }
+  ]
+}

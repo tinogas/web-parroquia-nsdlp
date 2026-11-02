@@ -65,3 +65,15 @@ __pycache__/
 # entregarlo:  python herramientas/manual_a_word.py --pdf
 docs/manual/Manual-de-usuario.docx
 docs/manual/Manual-de-usuario.pdf
+
+# Los videos del manual: los arma herramientas/videos_manual.py a partir de los
+# guiones de docs/videos/guiones/, que sí se versionan. Cada .mp4 pesa decenas
+# de megas y se rehace con un comando; los subtítulos salen con él. .voz/ es el
+# caché de la narración y .cuadricula/ la ayuda para ubicar los focos.
+docs/videos/*.mp4
+docs/videos/*.srt
+docs/videos/*.vtt
+docs/videos/*.wav
+docs/videos/.voz/
+docs/videos/.cuadricula/
+docs/videos/index.html

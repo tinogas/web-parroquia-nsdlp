@@ -1,0 +1,93 @@
+{
+  "capitulo": 20,
+  "titulo": "Usuarios",
+  "subtitulo": "Quién entra al panel, con qué rol y sobre qué pastorales",
+  "intro": "Capítulo veinte: usuarios. En este video verás cómo se dan de alta las cuentas del panel y cómo se mantienen al día.",
+  "escenas": [
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Las cuentas del panel dicen quién entra, con qué rol y sobre qué pastorales. Están en Administración, Usuarios. El capítulo cuatro explica qué significa cada rol; este, cómo se dan de alta y se mantienen."
+    },
+    {
+      "imagen": "panel-menu-coordinador",
+      "texto": "Esta pantalla la ve el administrador, y también el coordinador general, que la tiene en su menú. Pero él la ve acotada: solo las cuentas de su propia pastoral, y nunca las de un rol igual o superior al suyo."
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Arriba hay un buscador por nombre, correo, rol o pastoral. Y la tabla dice de cada cuenta quién es: su nombre y su correo, y su rol, con su cargo real debajo.",
+      "foco": [0.21, 0.11, 0.6, 0.33]
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Si la cuenta no está ligada a ninguna ficha del equipo pastoral, lo dice: Sin ficha en el equipo. Después vienen las pastorales que administra, agrupadas por comisión, y las sedes donde las administra.",
+      "foco": [0.45, 0.27, 0.72, 0.6]
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "El estado y el último acceso son más útiles de lo que parecen: una cuenta que dice Nunca después de meses es una cuenta que alguien pidió y nadie usa.",
+      "foco": [0.71, 0.27, 0.9, 0.6]
+    },
+    {
+      "imagen": "roles-usar-como",
+      "texto": "Además, en el menú de su nombre, el administrador tiene Usar como. Sirve para ver el panel tal como lo ve otra persona, con su cuenta, sin pedirle su contraseña."
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Para dar de alta una cuenta, el formulario empieza por lo más importante: elegir a la persona del equipo pastoral.",
+      "foco": [0.22, 0.07, 0.71, 0.17]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "De ahí vienen su nombre, su teléfono y su foto, y con eso la cuenta y la ficha quedan ligadas. Por eso ya no hay tres formas distintas de escribir el mismo nombre.",
+      "foco": [0.22, 0.09, 0.71, 0.2]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "Si quien va a entrar todavía no está en el equipo, primero se le hace su ficha, en Equipo pastoral, como explica el capítulo doce.",
+      "foco": [0.21, 0.05, 0.72, 0.4]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Luego, el rol. Debajo del selector aparece la descripción de lo que ese rol puede hacer, para no tener que buscarla en ningún otro lado.",
+      "foco": [0.5, 0.17, 0.71, 0.31]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "El correo es con el que va a entrar. Y la contraseña debe tener al menos ocho caracteres; al editar una cuenta, dejarla en blanco significa: no la cambies.",
+      "foco": [0.22, 0.31, 0.71, 0.42]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Las dos listas de palomitas, sedes y pastorales, son para los roles acotados. Recuerda la regla del capítulo cuatro: Coordinador pide una sede; Coordinador general admite varias o ninguna.",
+      "foco": [0.22, 0.42, 0.71, 0.6]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Y a la derecha, Activo: el interruptor que cierra el acceso sin borrar la cuenta. Cuando alguien deja su encargo, eso es lo que se hace, desactivar y no borrar: su rastro en la bitácora sigue teniendo sentido, y si vuelve, se reactiva.",
+      "foco": [0.73, 0.08, 0.98, 0.27]
+    },
+    {
+      "imagen": "acceso-elegir-perfil",
+      "texto": "Para quien hace dos cosas distintas en la parroquia, como coordinar una pastoral y en otra solo consultar, existen los perfiles adicionales de acceso. Así no hay que darle dos cuentas ni dos contraseñas."
+    },
+    {
+      "imagen": "acceso-elegir-perfil",
+      "texto": "Cada perfil se agrega abajo del formulario de la cuenta, con su propio rol y su propio alcance, y se guarda por separado. Quien tenga uno o más elegirá con cuál entra al iniciar sesión.",
+      "foco": [0.36, 0.44, 0.64, 0.72]
+    },
+    {
+      "imagen": "acceso-cambiar-perfil",
+      "texto": "Y podrá cambiarse sin cerrar sesión, desde el menú de su nombre, como explica el capítulo dos.",
+      "foco": [0.3, 0.37, 0.7, 0.63]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Si alguien olvidó su contraseña, se le pone una nueva desde aquí. No hay recuperación por correo, así que esta pantalla es el único camino.",
+      "foco": [0.22, 0.38, 0.5, 0.43]
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Por último, conviene revisar la lista de vez en cuando. Las cuentas que nunca se usaron, y las de quienes ya no están, son la forma más común de que un acceso se quede abierto sin que nadie se dé cuenta."
+    }
+  ]
+}

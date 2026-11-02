@@ -1,0 +1,74 @@
+{
+  "capitulo": 8,
+  "titulo": "Agenda",
+  "subtitulo": "El calendario del equipo: todo lo que hay, publicado o no",
+  "intro": "Capítulo ocho: agenda. En este video verás el calendario interno del equipo, y por qué ahí se ve todo aunque no todo se pueda tocar.",
+  "escenas": [
+    {
+      "imagen": "panel-menu",
+      "texto": "La agenda es el calendario del equipo. Está en el menú hasta arriba, justo debajo del Panel."
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "No es el calendario del sitio. Ese enseña lo publicado, y este enseña todo lo que hay, para que dos pastorales no acaben ocupando el mismo salón el mismo sábado."
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Se distingue en dos cosas. Primera: junta eventos y cursos, y los muestra estén publicados o no. Lo que todavía es borrador es justo lo que hay que coordinar: un retiro a medio planear ya ocupa el salón.",
+      "foco": [0.22, 0.55, 0.98, 1.0]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Segunda: todas las pastorales y todas las sedes se ven entre sí. Esta pantalla no recorta nada por el alcance de tu cuenta: el alcance decide qué puedes tocar, no qué puedes mirar.",
+      "foco": [0.21, 0.1, 0.8, 0.2]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "En los listados de eventos y cursos, cada quien trabaja sobre lo suyo. Aquí se coordina, y para coordinar hay que ver el calendario completo."
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Las cuatro vistas, día, semana, mes y año, se cambian con los botones de la izquierda, y las flechas de la derecha mueven al periodo anterior o al siguiente.",
+      "foco": [0.22, 0.4, 0.98, 0.56]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Junto al periodo se dice cuántos registros tiene. Son registros, no días ocupados: un curso de tres meses cuenta como uno, aunque se pinte en noventa casillas.",
+      "foco": [0.22, 0.48, 0.98, 0.56]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Los colores tienen su leyenda, a la derecha: azul para los eventos y dorado para los cursos. Un evento con color propio, elegido en su formulario, se dibuja con ese color.",
+      "foco": [0.82, 0.3, 0.98, 0.36]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Y los borradores van con el borde punteado: es la diferencia, a simple vista, entre lo que ya está anunciado y lo que todavía se está cocinando.",
+      "foco": [0.24, 0.78, 0.64, 0.95]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Arriba hay dos selectores, pastoral y sede, y el botón Filtrar. Aquí son una comodidad, no un permiso: sirven para quedarte con lo de una comunidad cuando el mes viene cargado, no para esconderte nada.",
+      "foco": [0.21, 0.27, 0.81, 0.36]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Debajo, junto a Mostrar, publicados y borradores son dos palomitas que ocultan y muestran sin recargar la página. Sirven para mirar la semana como la ve la gente, y volver a la vista completa de un clic.",
+      "foco": [0.21, 0.36, 0.46, 0.4]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Los dos botones de arriba, Nuevo evento y Nuevo curso, llevan a los formularios de los capítulos seis y siete. Es el camino natural: se mira el mes, se ve el hueco y se captura ahí mismo.",
+      "foco": [0.21, 0.18, 0.47, 0.25]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Al hacer clic en una casilla se abre el formulario de ese evento o curso. Pero solo son enlaces las casillas que puedes editar: lo de las demás pastorales se ve, pero no lleva a ninguna parte. Mirar todo, tocar lo tuyo.",
+      "foco": [0.34, 0.55, 0.98, 1.0]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Por último, debajo del calendario aparece a veces una nota con los cursos sin fecha de inicio. Como no caben en ninguna casilla, la agenda los enumera ahí, en vez de desaparecerlos en silencio, para que alguien les ponga fecha."
+    }
+  ]
+}

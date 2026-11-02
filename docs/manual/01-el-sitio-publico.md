@@ -43,37 +43,38 @@ un día no hay evangelio publicado o no hay eventos próximos, esa franja
 sencillamente no aparece, sin dejar hueco. De arriba abajo:
 
 **La cabecera.** Una ilustración del templo al atardecer, con el Cerro de la
-Campana al fondo, y debajo dos columnas: a la izquierda el decanato, la
-arquidiócesis y las sedes de la parroquia («Una parroquia, tres sedes: Villa
-Bonita, San Pío y Jesús el Señor»); a la derecha el lema, *Una comunidad en
-camino hacia la santidad*, una presentación breve y dos botones, **Ver horarios
-de misa** y **Requisitos de sacramentos**, que bajan a esas franjas de la misma
-portada.
+Campana al fondo. Debajo, a todo lo ancho y en letra grande, el lema *Una
+comunidad en camino hacia la santidad*, y bajo él dos columnas: a la izquierda
+el decanato, la arquidiócesis y las sedes de la parroquia («Una parroquia, tres
+sedes: Villa Bonita, San Pío y Jesús el Señor»); a la derecha una presentación
+breve y dos botones, **Ver horarios de misa** y **Requisitos de sacramentos**,
+que bajan a esas franjas de la misma portada.
 
 La presentación de esa cabecera es la del bloque **Presentación**: mientras esté
 vacío, sale un texto de bienvenida fijo. En cuanto se sube al menos una
 diapositiva al carrusel, ese espacio se convierte en un carrusel de fotos que
 van pasando solas, y las próximas misas bajan justo debajo.
 
-> **Se llena desde:** Contenido → Bloques (Presentación) y Comunicación →
-> Carrusel. Las sedes, desde Parroquia → Centros.
+> **Se llena desde:** Contenido → Textos del sitio (Presentación) y Comunicación →
+> Carrusel. Las sedes, desde Parroquia → Sede y centros.
 
 **Próximas misas.** Al pie de la cabecera, las tres siguientes, calculadas desde
-los horarios cargados y siempre en hora de Hermosillo. Cada una dice cuándo es
-—«En 25 min», «Hoy», «Mañana» o el día de la semana—, la hora y el lugar. La
+los horarios cargados y siempre en hora de Hermosillo —lo dice una nota al
+pie—. En cada una la hora va primero y en grande, y debajo, en un solo renglón,
+cuándo es —«En 25 min», «Hoy», «Mañana» o el día de la semana— y el lugar. La
 primera, la más próxima, va resaltada en azul.
 
 > **Se llena desde:** Parroquia → Horarios.
 
 **Evangelio del día.** Cuando el párroco publica la lectura del día, aparece en
 dos columnas: el **Evangelio** a la izquierda y su **Reflexión** a la derecha,
-con la fecha arriba. Para que la portada no se haga larguísima, cada columna
+bajo el título «Evangelio del» y la fecha. Para que la portada no se haga larguísima, cada columna
 muestra su título y las primeras líneas, que se desvanecen, y un botón **Leer
 completo** que la despliega; **Mostrar menos** la vuelve a recoger. Si un texto
 es corto, sale completo y sin botón. Si ese día no hay reflexión, el evangelio
 ocupa el centro él solo.
 
-> **Se llena desde:** Contenido → Evangelio.
+> **Se llena desde:** Contenido → Evangelio del día.
 
 **Horarios.** La semana completa de misas, confesiones y oración, en pestañas
 por día. Es la misma sección que la página de Horarios y se explica más abajo,
@@ -83,7 +84,7 @@ en su apartado.
 
 > **Se llena desde:** Parroquia → Horarios.
 
-**Fiesta patronal.** Una franja azul que aparece sola en las semanas previas a
+**Fiesta patronal de Nuestra Señora de la Paz.** Una franja azul que aparece sola en las semanas previas a
 la fiesta de Nuestra Señora de la Paz, con una cuenta regresiva —«38 días para
 la fiesta»—, las fechas de la novena y el aviso de la kermés. Se dibuja cuando
 **la fiesta está publicada como evento** y faltan menos de dos meses, y se va
@@ -94,7 +95,8 @@ fiesta sigue en borrador, la franja no aparece.
 
 > **Se llena desde:** Comunicación → Eventos.
 
-**Sacramentos.** Todos los sacramentos en una lista que se despliega: al tocar
+**Sacramentos.** Bajo el título «Lo que necesitas para cada sacramento», todos
+en una lista que se despliega: al tocar
 uno se abren un resumen, sus **requisitos** y sus **documentos**, la aportación
 y un enlace a su ficha completa. Al lado va la tarjeta de la **oficina
 parroquial**, con su horario y botones para llamar o escribir por WhatsApp.
@@ -102,34 +104,39 @@ parroquial**, con su horario y botones para llamar o escribir por WhatsApp.
 > **Se llena desde:** Parroquia → Sacramentos, y la oficina desde
 > Administración → Configuración.
 
-**Pastorales.** Una tarjeta por comisión, con su lema —Celebrar, Anunciar,
-Servir, Acompañar…—, cuántos grupos tiene, su descripción y la lista de sus
-pastorales con el día en que se reúnen. Cada nombre lleva a la página de esa
-pastoral, y **Quiero participar** baja al contacto.
+**Pastorales.** Bajo el título **Hay una pastoral para ti**, las comisiones en
+una lista a dos columnas, sin tarjetas: el nombre de cada una, una frase que
+empieza con su verbo —Celebrar, Anunciar, Servir, Acompañar…— seguido de su
+descripción, y debajo sus pastorales con el día en que se reúnen. Las
+pastorales que no pertenecen a ninguna comisión van al final, cada una con su
+día de reunión. Cada nombre lleva a la página de esa pastoral, y un solo botón
+**Quiero participar**, al pie de la franja, baja al contacto.
 
 > **Se llena desde:** Parroquia → Pastorales.
 
-**Lo que viene.** Los próximos eventos **publicados**, en una cuadrícula, cada
+**Lo que viene en la parroquia.** Los próximos eventos **publicados**, en una cuadrícula, cada
 uno con su día en un recuadro, el horario y la sede. Los de la fiesta patronal
 —novena, fiesta y kermés— van en dorado y con estrella.
 
 > **Se llena desde:** Comunicación → Eventos.
 
-**Cursos, avisos y Facebook.** Los próximos cursos, los tres avisos más
-recientes publicados en el sitio, las publicaciones recientes de la página de
+**Cursos, avisos y Facebook.** Los **Próximos cursos**, los tres **Avisos
+recientes** publicados en el sitio, las publicaciones recientes de la página de
 Facebook de la parroquia —tal cual las muestra Facebook, sin copiar nada a
 mano— y las **Ligas de interés**.
 
 > **Se llena desde:** Comunicación → Cursos, Comunicación → Avisos,
 > Administración → Configuración (la dirección de Facebook) y Contenido →
-> Bloques (Ligas de interés).
+> Textos del sitio (Ligas de interés).
 
-**Quiénes somos.** En azul noche, la misión y la visión de la parroquia y una
-tarjeta por sede con su dirección. Un enlace lleva a la página completa, con el
-equipo pastoral.
+**Quiénes somos.** En azul noche, bajo el título «Una Iglesia de comunión y
+participación», la misión y la visión de la parroquia y, en **Nuestras sedes**,
+cada sede con su nombre, si es sede parroquial o centro, y su dirección. Junto a
+ese título, el enlace **Conoce a nuestro equipo pastoral** lleva a la página
+completa.
 
-> **Se llena desde:** Contenido → Bloques (Misión y Visión) y Parroquia →
-> Centros.
+> **Se llena desde:** Contenido → Textos del sitio (Misión y Visión) y Parroquia →
+> Sede y centros.
 
 **Contacto.** La dirección —que abre Google Maps—, el teléfono, el WhatsApp, el
 correo y el horario de oficina, con el mapa al lado y los botones **Síguenos en
@@ -167,7 +174,7 @@ esta página; para que deje de aparecer hay que marcar su ficha como inactiva.
 Lo que nunca sale, de nadie, es su contacto: de la ficha se publican solo el
 nombre, el cargo, la foto y la semblanza.
 
-> **Se llena desde:** Contenido → Bloques (los tres textos), Parroquia →
+> **Se llena desde:** Contenido → Textos del sitio (los tres textos), Parroquia →
 > Equipo pastoral (las fichas) y Parroquia → Organigrama.
 
 ## Horarios
@@ -175,14 +182,14 @@ nombre, el cargo, la foto y la semblanza.
 ![Horarios de misas](img/publico-horarios.webp)
 
 La semana en **pestañas, una por día**, que se abre en el día de hoy —marcado
-con un punto dorado—. Cada día tiene tres tarjetas: **Misas**, **Confesiones**
-y **Oración y grupos** (rosarios, adoración, catequesis…), cada una con cuántos
-horarios trae. Cada renglón dice la hora, qué es —«Santa Misa», «Misa para
+con un punto dorado—; los siete días caben a lo ancho incluso en un teléfono.
+Cada día tiene tres columnas: **Misas**, **Confesiones** y **Oración y grupos**
+(rosarios, adoración, catequesis…). Cada renglón dice la hora, qué es —«Santa Misa», «Misa para
 niños»— y en qué sede, con la hora de término si se capturó.
 
 Arriba a la derecha están las **fichas de sede** —*Todas las sedes*, *Villa
 Bonita*, *San Pío*, *Jesús el Señor*— para quedarse con una sola sin recargar
-la página. Si en esa sede no hay nada ese día, la tarjeta lo dice: «Sin
+la página. Si en esa sede no hay nada ese día, la columna lo dice: «Sin
 confesiones este día en esta sede».
 
 Es exactamente la misma sección que aparece en la portada. Los enlaces viejos
@@ -193,7 +200,7 @@ Los horarios de temporada —San Pío cambia de hora en octubre y en junio— se
 muestran solos según la fecha, de acuerdo con la vigencia que se les capturó.
 
 > **Se llena desde:** Parroquia → Horarios, y las sedes desde Parroquia →
-> Centros.
+> Sede y centros.
 
 ## Sacramentos
 
@@ -210,13 +217,13 @@ los trámites se hacen en la oficina parroquial, y la página está para que qui
 llegue sepa de antemano qué papeles llevar.
 
 > **Se llena desde:** Parroquia → Sacramentos, y el texto de arriba desde
-> Contenido → Bloques.
+> Contenido → Textos del sitio.
 
 ## Pastorales
 
 ![Pastorales, agrupadas por comisión](img/publico-pastorales.webp)
 
-Todas las pastorales de la parroquia, bajo el título **Hay un lugar para ti**,
+Todas las pastorales de la parroquia, bajo el título **Hay una pastoral para ti**,
 con una tarjeta por comisión —Litúrgica, Profética, De la Familia, De la
 Comunicación, Pastoral Social…—. Cada tarjeta lleva quien coordina la comisión
 y, dentro, sus pastorales, cada una con quien la lleva y su día de reunión o

@@ -1,0 +1,144 @@
+{
+  "capitulo": 6,
+  "titulo": "Eventos",
+  "subtitulo": "Lo que pasa un día y a una hora",
+  "intro": "Capítulo seis: eventos. En este video verás cómo se captura un evento, cuándo sale en el sitio y dónde más aparece.",
+  "escenas": [
+    {
+      "imagen": "eventos-lista",
+      "texto": "Un evento es algo que pasa un día y a una hora: la posada, el retiro de Adviento, la reunión mensual de una pastoral. Se llega desde el menú, en Comunicación, Eventos."
+    },
+    {
+      "imagen": "eventos-lista",
+      "texto": "Este listado tiene más filtros que el de avisos, y todos se combinan: el estado, la pastoral, la sede, y el día, el mes y el año. Casi siempre se busca lo de este mes: se elige y se pulsa Filtrar.",
+      "foco": [
+        0.21,
+        0.2,
+        0.92,
+        0.45
+      ]
+    },
+    {
+      "imagen": "eventos-lista",
+      "texto": "Cada renglón dice el título, con su pastoral y su sede, la fecha con su hora, el lugar y el estado.",
+      "foco": [
+        0.21,
+        0.45,
+        0.98,
+        1.0
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Con el botón Nuevo evento se abre el formulario. El título es obligatorio. El inicio lleva fecha y hora, y es el único dato de tiempo que se exige. El fin es opcional: se deja en blanco si el evento es de un solo momento.",
+      "foco": [
+        0.22,
+        0.2,
+        0.72,
+        0.45
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Todo el día es para lo que no tiene hora, como una jornada o un día de campo: al marcarlo, el calendario deja de mostrar la hora. El lugar es texto libre, y no es la sede: dice dónde se junta la gente.",
+      "foco": [
+        0.22,
+        0.44,
+        0.72,
+        0.56
+      ]
+    },
+    {
+      "imagen": "agenda-semana",
+      "texto": "Un evento de varios días se marca en todos sus días. Si pones inicio el viernes y fin el domingo, aparece el viernes, el sábado y el domingo, no solo el primero. Es lo que se espera de un retiro o de un triduo.",
+      "foco": [
+        0.34,
+        0.6,
+        0.86,
+        1.0
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "A la derecha, la pastoral funciona igual que en avisos. La sede o centro dice en qué comunidad ocurre, y se puede dejar en Toda la parroquia. Es el dato que permite filtrar por comunidad el calendario del sitio.",
+      "foco": [
+        0.73,
+        0.44,
+        0.98,
+        0.64
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "El color en el calendario pinta su casilla, tanto en el sitio como en la agenda interna. Sirve para distinguir de un vistazo lo de una pastoral, o lo extraordinario de lo ordinario. Si no lo tocas, va el azul de la casa.",
+      "foco": [
+        0.73,
+        0.62,
+        0.98,
+        0.74
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Los eventos no tienen los tres escalones de los avisos: llevan un solo interruptor, Publicado. Apagado es borrador, y solo lo ve el equipo en la agenda interna. Encendido, sale en el calendario del sitio.",
+      "foco": [
+        0.73,
+        0.68,
+        0.98,
+        0.8
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Si tu cuenta no puede publicar, el interruptor no aparece: lo que captures queda en borrador hasta que alguien con permiso lo publique. Ojo: en un evento nuevo viene encendido; si todavía no quieres que se vea, apágalo antes de guardar.",
+      "foco": [
+        0.73,
+        0.7,
+        0.98,
+        0.88
+      ]
+    },
+    {
+      "imagen": "publico-eventos",
+      "texto": "Publicado, el evento sale en la sección Eventos del sitio, con sus cuatro vistas: día, semana, mes y año. Y también en la portada, en la franja Lo que viene en la parroquia.",
+      "foco": [
+        0.06,
+        0.24,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "imagen": "publico-inicio",
+      "texto": "La fiesta patronal tiene franja propia en la portada, con cuenta regresiva. Aparece cuando faltan menos de dos meses y está publicado el evento cuyo título dice fiesta patronal: el de la sede, no el de un centro."
+    },
+    {
+      "imagen": "publico-inicio",
+      "texto": "Si también están publicadas la novena y la kermés, con esas palabras en el título, salen en esa franja, y en dorado en Lo que viene en la parroquia. Mientras sigan en borrador, la portada no dice nada de la fiesta.",
+      "foco": [
+        0.45,
+        0.2,
+        0.85,
+        0.66
+      ]
+    },
+    {
+      "imagen": "agenda-mes",
+      "texto": "Publicado o no, el evento aparece también en la agenda interna del panel, junto a los cursos y a lo de las demás pastorales. La agenda tiene su propio capítulo, el ocho."
+    },
+    {
+      "imagen": "eventos-lista",
+      "texto": "Para cambiar un evento, usa el lápiz. Apagar Publicado lo retira del sitio sin borrarlo, y el bote de basura lo elimina, preguntando antes.",
+      "foco": [
+        0.84,
+        0.45,
+        0.98,
+        1.0
+      ]
+    },
+    {
+      "imagen": "horarios-lista",
+      "texto": "Y para lo que se repite todas las semanas, como la misa, la hora santa o el ensayo del coro, no se capturan eventos uno por uno: eso son horarios, y viven en Parroquia, Horarios. Es el capítulo once."
+    }
+  ]
+}

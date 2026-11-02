@@ -1,0 +1,71 @@
+{
+  "capitulo": 4,
+  "titulo": "Quién puede hacer qué",
+  "subtitulo": "Cada cuenta tiene un rol y un alcance, y no son lo mismo",
+  "intro": "Capítulo cuatro: quién puede hacer qué. En este video verás los seis roles del panel, cómo se marca sobre qué trabaja cada cuenta y a quién pedir lo que te falta.",
+  "escenas": [
+    {
+      "imagen": "usuarios-lista",
+      "texto": "¿Por qué yo no veo eso? Es la pregunta del primer día. La respuesta corta es que cada cuenta tiene un rol y un alcance: el rol dice qué puede hacer, y la pastoral y la sede dicen sobre qué."
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Por eso no hay un rol de coordinadora de catequesis. La coordinadora de catequesis en Jesús el Señor tiene el rol Coordinador, con la pastoral Catequesis y la sede Jesús el Señor marcadas en su cuenta.",
+      "foco": [0.45, 0.42, 0.73, 0.53]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Hay seis roles. El administrador lo puede todo: cuentas, configuración, respaldos y la bitácora, y es el único que puede entrar como otra persona. Conviene que sean pocos, idealmente dos, para que nunca uno solo tenga las llaves.",
+      "foco": [0.5, 0.18, 0.72, 0.31]
+    },
+    {
+      "imagen": "panel-menu",
+      "texto": "El editor maneja todo el contenido del sitio, de cualquier pastoral. Pero no toca cuentas ni configuración, y no ve datos personales: ni los mensajes de contacto ni las inscripciones a cursos."
+    },
+    {
+      "imagen": "pastorales-panel",
+      "texto": "El coordinador de pastoral lleva su pastoral en una sede: publica sus avisos, eventos y cursos, sube fotos y documentos, y entra al módulo propio de su pastoral, si lo tiene. No edita la ficha de la pastoral ni administra cuentas."
+    },
+    {
+      "imagen": "panel-menu-coordinador",
+      "texto": "El coordinador general hace lo mismo, pero en varias sedes o en toda la parroquia. Además edita la ficha de su pastoral y da de alta las cuentas de su propia pastoral, así que puede reponer una contraseña sin esperar al administrador."
+    },
+    {
+      "imagen": "inscripciones-lista",
+      "texto": "Consulta solo mira, sin cambiar nada: es el rol de quien pertenece a una pastoral y entra a enterarse. Y Secretaría es un rol aparte, solo para los mensajes y las inscripciones, porque ahí hay datos personales, algunos de menores."
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Debajo del rol, la cuenta lleva dos listas de palomitas: las sedes en las que trabaja y las pastorales que administra. Lo que alcanza es el cruce de las dos: sus pastorales, en sus sedes.",
+      "foco": [0.22, 0.42, 0.72, 0.53]
+    },
+    {
+      "imagen": "usuarios-lista",
+      "texto": "Sin sedes marcadas, la coordinación es general y vale en toda la parroquia. Por eso el rol Coordinador pide una sede, para no volverse general sin querer, y Coordinador general admite varias o ninguna.",
+      "foco": [0.58, 0.42, 0.72, 0.72]
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Ese cruce distingue a las tres coordinadoras de catequesis, una por sede, sin duplicar la pastoral. Y evita un problema de antes: quien administraba una sede heredaba todas sus pastorales, y la administradora de MESC había acabado pudiendo editar los cursos de catequesis.",
+      "foco": [0.22, 0.62, 0.72, 0.8]
+    },
+    {
+      "imagen": "acceso-elegir-perfil",
+      "texto": "Cuando alguien coordina una pastoral y, en otra, solo consulta, no hacen falta dos cuentas: para eso están los perfiles adicionales. Una cuenta, una contraseña, y al entrar se elige con cuál trabajar, cada uno con su propio rol y su propio alcance."
+    },
+    {
+      "imagen": "roles-usar-como",
+      "texto": "El administrador tiene además Usar como: elige una cuenta y ve el panel exactamente como lo ve esa persona, con su menú y sus permisos. Así resuelve un «no me aparece el botón» sin pedirle a nadie su contraseña.",
+      "foco": [0.3, 0.02, 0.7, 0.4]
+    },
+    {
+      "imagen": "auditoria-lista",
+      "texto": "Mientras dura, la pantalla lo advierte, y se sale con Volver a Admin desde el mismo menú. Todo lo que se haga en ese rato queda en la bitácora como lo que es: el administrador actuando como esa persona."
+    },
+    {
+      "imagen": "roles-usuario-form",
+      "texto": "Si te falta algo, pídelo a tu coordinación general si es de tu pastoral, y si no, al administrador. Pero antes de pedir un rol más alto, revisa el alcance: muchas veces solo faltaba una palomita en una sede.",
+      "foco": [0.22, 0.43, 0.62, 0.5]
+    }
+  ]
+}
