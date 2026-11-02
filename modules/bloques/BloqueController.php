@@ -42,8 +42,7 @@ class BloqueController extends Controller
             'titulo' => $bloque['titulo'] ?: $bloque['clave'],
             'bloque' => $bloque,
             // El editor solo se carga donde se usa, no en todo el panel.
-            'scriptExtra' => '<script src="' . e(url_activo('assets/js/editor.js'))
-                           . '?v=' . e(APP_VERSION) . '"></script>',
+            'scriptExtra' => '<script src="' . e(url_activo_versionado('assets/js/editor.js')) . '"></script>',
         ]);
     }
 

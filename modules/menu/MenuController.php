@@ -27,8 +27,7 @@ class MenuController extends Controller
             'entradas'      => $this->modelo->entradas(),
             'cursosApagado' => Config::get('cursos_activo', '1') !== '1',
             'puedeEditar'   => Auth::tienePermiso('menu.editar'),
-            'scriptExtra'   => '<script src="' . e(url_activo('assets/js/menu_sitio.js'))
-                             . '?v=' . e(APP_VERSION) . '"></script>',
+            'scriptExtra'   => '<script src="' . e(url_activo_versionado('assets/js/menu_sitio.js')) . '"></script>',
         ]);
     }
 

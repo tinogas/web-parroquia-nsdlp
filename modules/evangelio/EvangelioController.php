@@ -148,7 +148,6 @@ class EvangelioController extends Controller
 
     private function scriptEditor(): string
     {
-        return '<script src="' . e(url_activo('assets/js/editor.js'))
-             . '?v=' . e(APP_VERSION) . '"></script>';
+        return '<script src="' . e(url_activo_versionado('assets/js/editor.js')) . '"></script>';
     }
 }
