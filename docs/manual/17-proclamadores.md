@@ -29,7 +29,8 @@ Se puede marcar más de una. Quien arma el rol mira esta lista antes de repartir
 el mes: el salmo cantado no lo hace cualquiera, y el monitor tampoco.
 
 Como en los demás catálogos, cada renglón trae su **WhatsApp** y arriba está el
-**Mensaje para todos**.
+**Mensaje para todos**, con **Copiar y abrir grupo** si la pastoral guardó el
+enlace de su grupo (capítulo 13).
 
 ## Calendario de turnos
 

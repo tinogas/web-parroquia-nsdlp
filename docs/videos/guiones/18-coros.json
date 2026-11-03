@@ -30,8 +30,8 @@
     },
     {
       "imagen": "coros-integrantes",
-      "texto": "Como en los otros catálogos, cada quien trae su botón de WhatsApp. Y arriba está el Mensaje para todos: lo escribes una vez, y cada botón abre la conversación con el texto ya puesto. Enviarlo sigue siendo un clic tuyo, uno por persona.",
-      "foco": [0.23, 0.15, 0.96, 0.38]
+      "texto": "Como en los otros catálogos, cada quien trae su botón de WhatsApp. Y arriba está el Mensaje para todos: lo escribes una vez, y cada botón abre la conversación con el texto ya puesto. Enviarlo sigue siendo un clic tuyo, uno por persona. Y como casi ningún corista tiene el teléfono anotado, aquí lo más útil es Copiar y abrir grupo: copia el aviso y abre el grupo del coro para pegarlo.",
+      "foco": [0.23, 0.22, 0.96, 0.46]
     },
     {
       "imagen": "coros-lista",

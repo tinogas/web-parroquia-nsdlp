@@ -15,8 +15,8 @@
     },
     {
       "imagen": "catequesis-catequistas",
-      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos: es la forma de mandar el aviso de la junta de catequistas sin teclearlo doce veces.",
-      "foco": [0.22, 0.2, 0.75, 0.45]
+      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos: es la forma de mandar el aviso de la junta de catequistas sin teclearlo doce veces. Si los catequistas ya tienen su grupo de WhatsApp, Copiar y abrir grupo lo manda ahí: copia el mensaje, abre el grupo y solo hay que pegarlo.",
+      "foco": [0.22, 0.2, 0.97, 0.46]
     },
     {
       "imagen": "catequesis-periodos",

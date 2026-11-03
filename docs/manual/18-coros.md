@@ -35,7 +35,9 @@ coro.
 El listado se despliega con el **+** de cada coro, para poder ver la lista
 completa sin que la pantalla se haga interminable. Y como en los otros
 catálogos, cada quien trae su botón de **WhatsApp** y arriba está el **Mensaje
-para todos**.
+para todos**, con **Copiar y abrir grupo** si la pastoral guardó el enlace de
+su grupo (capítulo 13). Aquí es lo más útil: casi ningún corista tiene el
+teléfono anotado, pero el grupo del coro sí existe.
 
 ## Actividades y documentos
 

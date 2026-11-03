@@ -143,6 +143,11 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   teléfono, que era la mitad del problema. Son enlaces `wa.me`: abren WhatsApp, no mandan
   nada por su cuenta, así que no hay costo, ni trámite con Meta, ni una sola llamada
   saliente desde el servidor.
+- **Y al grupo de la pastoral.** Si la pastoral guarda en su ficha el enlace de su grupo de
+  WhatsApp, junto al mensaje aparece **Copiar y abrir grupo**: copia el aviso y abre el
+  grupo, donde se pega. WhatsApp no deja abrir un grupo con el texto ya escrito ni crearlo
+  sin la API de Meta, así que esto es lo más cerca que se puede llegar sin ella. El enlace
+  es interno: no se publica.
 - **Los teléfonos se validan al capturarlos.** No se validaban en ninguna parte: en el
   formulario de contacto bastaba con que el campo no estuviera vacío, y una extensión
   pegada al número se guardaba tal cual y luego no llevaba a nadie. Ahora los trece campos

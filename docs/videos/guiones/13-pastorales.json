@@ -42,6 +42,11 @@
       "texto": "El correo y el teléfono de contacto se publican en su página. Ojo: el correo es el de la pastoral, no el de quien la coordina. Se escribe a mano a propósito, para que sobreviva a los relevos."
     },
     {
+      "imagen": "pastorales-ficha-whatsapp",
+      "texto": "Debajo está el Grupo de WhatsApp. Es opcional: en WhatsApp, abres la información del grupo, eliges Invitar mediante enlace y copias el enlace. Lo pegas aquí, y la pastoral tiene su botón para escribirle al grupo. Este enlace no se publica en el sitio, porque con él cualquiera puede unirse.",
+      "foco": [0.72, 0.42, 0.97, 0.72]
+    },
+    {
       "imagen": "pastorales-panel",
       "texto": "Panel básico abre la pantalla de trabajo de la pastoral: la que permite operar a una pastoral nueva sin que nadie escriba una línea de código."
     },
@@ -62,8 +67,13 @@
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Encima de esa lista está el Mensaje para todos: escribes el aviso una vez, y cada botón de WhatsApp abre la conversación con el texto ya puesto. Si escribes la palabra nombre entre llaves, se cambia por el nombre de pila de cada quien.",
+      "texto": "Encima de esa lista está el Mensaje para todos: escribes el aviso una vez, y cada botón de WhatsApp abre la conversación con el texto ya puesto. Si escribes la palabra nombre entre llaves, se cambia por el nombre de pila de cada quien, con mayúscula o sin ella.",
       "foco": [0.22, 0.82, 0.82, 0.95]
+    },
+    {
+      "imagen": "pastorales-panel",
+      "texto": "Si la pastoral guardó el enlace de su grupo, debajo del cuadro aparece Copiar y abrir grupo. Con un clic copia el mensaje y abre el grupo, y ahí solo lo pegas y lo envías. Hay que pegarlo porque WhatsApp no deja abrir un grupo con el texto ya escrito. Y como en un grupo no hay un nombre que poner, el nombre entre llaves se quita.",
+      "foco": [0.22, 0.82, 0.82, 1.0]
     },
     {
       "imagen": "pastorales-panel",

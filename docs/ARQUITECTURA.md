@@ -1828,6 +1828,33 @@ borrador en `sessionStorage`. Se consideró una clave en `configuracion` y se de
 plantilla fija solo puede saludar, y el aviso de la reunión —que es lo que de verdad se
 manda a quince personas— cambia cada vez. Así además no toca la base de datos.
 
+La marca se reconoce como se teclee: `{nombre}`, `{Nombre}`, `{NOMBRE}` o `{ nombre }`. Al
+principio solo valía en minúsculas, y quien escribía «Hola {Nombre}» —lo natural al empezar
+una frase— veía llegar la marca tal cual al chat, sin pista de por qué.
+
+**Al grupo de la pastoral, copiar y abrir.** Muchas pastorales ya tienen su grupo de
+WhatsApp, y la parroquia pidió mandar el aviso ahí en vez de a cada quien. WhatsApp no tiene
+un enlace que abra un grupo con el texto ya escrito —`wa.me` solo sirve para chats de una
+persona—, y crear el grupo desde el sistema exige la misma Cloud API de arriba, con el
+añadido de que el grupo quedaría a nombre del número de empresa y no de quien coordina. Lo
+que sí existe es el **enlace de invitación** (`https://chat.whatsapp.com/CODIGO`), que abre
+el grupo. Cada pastoral puede guardarlo en su ficha (`pastorales.whatsapp_grupo`), y junto al
+cuadro aparece **Copiar y abrir grupo**: copia el mensaje al portapapeles y abre el grupo en
+el mismo clic, y ahí se pega. En un grupo no hay un nombre que poner, así que en esa copia
+`{nombre}` se quita junto con el espacio que lo precede («Hola {nombre}, mañana…» → «Hola,
+mañana…»). La copia usa `navigator.clipboard` y cae a `document.execCommand('copy')` donde
+no lo hay —el sitio servido por `http` fuera de `localhost`—; si las dos fallan, lo dice y
+pide copiarlo a mano.
+
+El enlace se guarda **limpio**: `whatsapp_grupo_enlace()` (`core/helpers.php`) acepta lo que
+se pega desde la app —con o sin `https://`, con el `?mode=…` que WhatsApp le añade al
+copiarlo, con `/invite/`— y devuelve la forma canónica, o `''` si no es un enlace de grupo;
+la ficha rechaza entonces el guardado, porque un número o un `wa.me` armarían un botón que
+no lleva al grupo. Y es un dato **interno**: con ese enlace cualquiera puede unirse, así que
+no se dibuja en el sitio público y el botón solo aparece con `personas.contactar`, igual que
+los individuales. Los cuatro módulos dedicados encuentran su pastoral por las constantes
+`PASTORAL_*` de `config/app.php`, las mismas con que ya resuelven su `pastoralId()`.
+
 **El permiso es propio: `personas.contactar`.** No sirve `personas.ver`, que no lo tiene
 ninguna coordinación; ni bastan `mesc.ver` y sus gemelos, que los lleva también Consulta —el
 integrante de a pie— y que ya dejan el teléfono a la vista en texto plano desde antes. El

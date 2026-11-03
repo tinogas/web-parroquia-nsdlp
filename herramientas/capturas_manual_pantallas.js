@@ -679,6 +679,24 @@ module.exports = [
         espera: '.sidebar-link',
     },
     {
+        // La ficha desplazada hasta el campo del grupo de WhatsApp, marcado.
+        // Sin recorte: el campo vive en la columna lateral del formulario, y
+        // recortar esa tarjeta daba una tira angosta con la barra de arriba
+        // encima. El enlace que se ve es de ejemplo: el real no se enseña,
+        // porque con él cualquiera puede unirse al grupo.
+        id: 'pastorales-ficha-whatsapp',
+        titulo: 'El enlace del grupo de WhatsApp en la ficha',
+        url: '/admin/pastorales/editar?id=18',
+        espera: '#whatsapp_grupo',
+        marcar: ['#whatsapp_grupo'],
+        antes: async (page) => {
+            await page.$eval('#whatsapp_grupo', (campo) => {
+                campo.value = 'https://chat.whatsapp.com/EjemploDeGrupo2026';
+                campo.scrollIntoView({ block: 'center' });
+            });
+        },
+    },
+    {
         id: 'pastorales-mapa-imprimir',
         titulo: 'El mapa de pastorales para imprimir',
         url: '/admin/pastorales/mapa_imprimir',

@@ -18,7 +18,9 @@ asigna al agregar a la persona al periodo, como se explica más abajo.
 
 Cada renglón trae su botón de **WhatsApp** y arriba está el cuadro de **Mensaje
 para todos**: es la forma de mandar el aviso de la junta de catequistas sin
-teclearlo doce veces.
+teclearlo doce veces. Y si los catequistas ya tienen su grupo de WhatsApp, con
+**Copiar y abrir grupo** el aviso va al grupo de una vez: se guarda el enlace
+del grupo en la ficha de la pastoral, como explica el capítulo 13.
 
 ## Periodos
 

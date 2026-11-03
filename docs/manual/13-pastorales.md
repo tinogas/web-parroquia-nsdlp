@@ -61,6 +61,19 @@ Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
   página. **El correo es de la pastoral, no de quien la coordina**: se escribe
   a mano a propósito, para que sobreviva a los relevos en vez de publicar el
   correo personal de quien esté al frente hoy.
+- **Grupo de WhatsApp.** Opcional. Es el enlace de invitación del grupo de la
+  pastoral: en WhatsApp, **Info del grupo → Invitar mediante enlace → Copiar
+  enlace**, y se pega aquí tal cual. Con él aparece el botón **Copiar y abrir
+  grupo** en el panel básico y en el listado del módulo de la pastoral. Solo
+  acepta enlaces que empiezan con `https://chat.whatsapp.com/`; un número de
+  teléfono no sirve.
+
+  ![El enlace del grupo de WhatsApp en la ficha](img/pastorales-ficha-whatsapp.webp)
+
+  > **Este enlace no se publica en el sitio**, y es a propósito: con él
+  > cualquiera puede unirse al grupo. Si llegara a circular, en WhatsApp se
+  > restablece (Info del grupo → Invitar mediante enlace → Restablecer enlace)
+  > y se pega aquí el nuevo.
 - **Reunión**: el lugar, junto al día y la hora de arriba. Es lo que la gente
   busca cuando quiere acercarse.
 - **Acepta voluntarios**, una palomita que lo dice en su página.
@@ -91,11 +104,33 @@ Cada renglón lleva su botón de **WhatsApp**.
 el aviso una vez —«recordatorio: reunión el jueves a las 7»— y cada botón de
 WhatsApp abre la conversación de esa persona **con el texto ya puesto**.
 Escribir `{nombre}` en el mensaje lo sustituye por el nombre de pila de cada
-quien.
+quien: «Hola {nombre}» le llega a Zulema como «Hola Zulema». Da igual si se
+escribe `{nombre}`, `{Nombre}` o `{NOMBRE}`.
 
 Dos cosas que conviene saber de ese cuadro: **enviar sigue siendo un clic tuyo,
 uno por persona** —el sistema no manda nada solo—, y **el texto no se guarda en
 ningún lado**: es un borrador del navegador, no un ajuste del sitio.
+
+**Copiar y abrir grupo.** Si la pastoral tiene guardado el enlace de su grupo de
+WhatsApp —en su ficha, ver arriba—, junto al cuadro aparece este botón verde.
+Con un clic **copia el mensaje y abre el grupo**; ahí solo hay que pegarlo
+(mantener presionado el cuadro de escribir → **Pegar**, o Ctrl+V en la
+computadora) y enviarlo. Debajo del botón aparece «Mensaje copiado. Pégalo en
+el grupo y envíalo» para confirmar que se copió.
+
+Hay que pegarlo porque WhatsApp no deja que un enlace abra un grupo con el texto
+ya escrito: eso solo lo permite con chats de una sola persona. Y como en un
+grupo no hay un nombre que poner, `{nombre}` se quita de esa copia: «Hola
+{nombre}, mañana hay junta» se pega como «Hola, mañana hay junta».
+
+Si la pastoral todavía no tiene el enlace, quien puede editar su ficha ve
+debajo del cuadro **Agrega el enlace del grupo de WhatsApp**, que lleva
+directo a ese campo.
+
+> El sistema **no crea grupos** ni agrega gente a ellos: eso se sigue haciendo
+> en WhatsApp. Crearlos desde aquí obligaría a contratar el servicio de empresa
+> de WhatsApp, con su costo y su trámite, y el grupo quedaría a nombre de ese
+> número y no de quien coordina.
 
 **Si la pastoral tiene módulo propio** —MESC, Catequesis, Proclamadores,
 Coros—, arriba aparece un aviso con el botón **Ir a turnos y catálogo**, que

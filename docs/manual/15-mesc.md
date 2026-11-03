@@ -43,7 +43,9 @@ está en el equipo.
 
 Cada renglón trae su botón de **WhatsApp**, y arriba el cuadro de **Mensaje
 para todos** que explica el capítulo 13: se escribe el recordatorio una vez y
-cada botón abre la conversación con el texto ya puesto.
+cada botón abre la conversación con el texto ya puesto. Si la ficha de la
+pastoral tiene el enlace de su grupo, ahí mismo está **Copiar y abrir grupo**,
+para mandar el aviso al grupo de ministros en vez de a cada uno.
 
 El interruptor **Activo** saca a alguien del rol sin borrar su historial.
 

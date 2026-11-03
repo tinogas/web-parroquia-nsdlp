@@ -83,7 +83,9 @@ quien: quién con quién es un dato de la parroquia y lo usan todas las pastoral
 `organigrama`, `horarios`, `pastorales` (con su jerarquía de Comisiones, su panel básico por
 pastoral, y un responsable que puede ser una persona o un matrimonio). En los listados de
 integrantes —los cuatro módulos dedicados y el panel básico— cada quien lleva su botón de
-WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos llevarán.
+WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos llevarán. Si
+la pastoral guardó en su ficha el enlace de su grupo de WhatsApp, junto al cuadro aparece
+además **Copiar y abrir grupo**, que copia ese mensaje y abre el grupo para pegarlo.
 
 **Comunicación** — `avisos`, `eventos`, `agenda` (calendario interno, ve borradores de
 toda la parroquia a propósito, para que nadie reserve el salón dos veces).

@@ -152,6 +152,13 @@ Al abrir WhatsApp, el número pasa al celular de quien escribe y la conversació
 fuera de este sistema: es contacto entre personas del equipo, no una base de datos que el
 panel exporte.
 
+El enlace de invitación al grupo de WhatsApp de cada pastoral (`pastorales.whatsapp_grupo`)
+se trata igual de reservado: con él cualquiera puede unirse al grupo y ver los números de
+quienes están ahí. Por eso no se publica en la página de la pastoral ni en ninguna parte
+del sitio, y el botón que lo usa solo lo ve quien tiene `personas.contactar`. Si el enlace
+llegara a circular, se revoca en WhatsApp (Info del grupo → Invitar mediante enlace →
+Restablecer enlace) y se pega el nuevo en la ficha.
+
 El rol de secretaría existe precisamente para esto: separar a quien administra trámites de
 quien edita la web. Un coordinador de pastoral juvenil publica avisos y sube fotos de sus
 actividades, pero no tiene por qué ver las actas de nacimiento de los niños de catequesis.

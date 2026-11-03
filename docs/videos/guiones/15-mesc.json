@@ -43,8 +43,8 @@
     },
     {
       "imagen": "mesc-ministros",
-      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos del capítulo trece: escribes el recordatorio una vez y cada botón abre la conversación con el texto ya puesto.",
-      "foco": [0.22, 0.2, 0.75, 0.4]
+      "texto": "Cada renglón trae su botón de WhatsApp, y arriba está el Mensaje para todos del capítulo trece: escribes el recordatorio una vez y cada botón abre la conversación con el texto ya puesto. Y con Copiar y abrir grupo, el aviso va al grupo de ministros de una vez.",
+      "foco": [0.22, 0.22, 0.97, 0.46]
     },
     {
       "imagen": "mesc-turnos",
