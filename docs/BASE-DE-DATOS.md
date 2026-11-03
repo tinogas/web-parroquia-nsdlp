@@ -397,9 +397,17 @@ muestra de cada fila.
 antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
 `responsable_nombre`, `responsable_persona_id`, `responsable_pareja_id`, `contacto_email`,
-`contacto_telefono`,
+`contacto_telefono`, `whatsapp_grupo`,
 `dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`,
 `visible_en_menu`.
+
+`whatsapp_grupo` (`VARCHAR(255)`, NULL) es el enlace de invitación al grupo de WhatsApp de
+la pastoral, guardado ya limpio como `https://chat.whatsapp.com/CODIGO`
+(`whatsapp_grupo_enlace()` en `core/helpers.php`). Es **interno**: no se publica en el
+sitio, porque con él cualquiera puede unirse. Activa el botón "Copiar y abrir grupo" junto al
+cuadro "Mensaje para todos" (`shared/views/parciales/mensaje_whatsapp.php`): WhatsApp no deja
+abrir un grupo con el texto ya escrito, así que se copia el mensaje y se pega allá.
+Migración: `docs/migraciones/2026-11-02-pastorales-grupo-whatsapp.sql`.
 
 `responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
 es el select del formulario: el responsable se elige del equipo pastoral. Con persona

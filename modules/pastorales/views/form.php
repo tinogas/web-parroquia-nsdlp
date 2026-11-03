@@ -258,6 +258,19 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                                value="<?= e($esNueva ? '' : (string) $pastoral['contacto_telefono']) ?>">
                         <div class="form-text">Se publica en la ficha de la pastoral. <?= e(TELEFONO_FORMATO) ?></div>
                     </div>
+                    <div class="mb-3">
+                        <label for="whatsapp_grupo" class="form-label fw-semibold">
+                            <i class="bi bi-whatsapp text-success"></i> Grupo de WhatsApp
+                        </label>
+                        <input type="url" name="whatsapp_grupo" id="whatsapp_grupo" class="form-control"
+                               maxlength="255" placeholder="https://chat.whatsapp.com/…"
+                               value="<?= e($esNueva ? '' : (string) ($pastoral['whatsapp_grupo'] ?? '')) ?>">
+                        <div class="form-text">
+                            Opcional. En WhatsApp: Info del grupo → Invitar mediante enlace → Copiar enlace.
+                            Activa el botón <strong>Copiar y abrir grupo</strong> en el listado de la pastoral.
+                            <strong>No se publica en el sitio</strong>: con este enlace cualquiera puede unirse.
+                        </div>
+                    </div>
                 </div>
             </div>
 

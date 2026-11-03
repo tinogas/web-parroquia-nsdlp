@@ -333,6 +333,24 @@ if (!function_exists('e')) {
              . ($mensaje !== '' ? '?text=' . rawurlencode($mensaje) : '');
     }
 
+    /**
+     * El enlace de invitación a un grupo de WhatsApp, limpio: acepta lo que se
+     * pega desde la app —con o sin https://, con el ?mode=… que WhatsApp le
+     * agrega al copiarlo— y devuelve https://chat.whatsapp.com/CODIGO.
+     *
+     * '' si no es un enlace de grupo. A un grupo no se le puede mandar el texto
+     * ya escrito como con wa.me: el botón que lo usa copia el mensaje y abre el
+     * grupo, y ahí se pega. Ver shared/views/parciales/mensaje_whatsapp.php.
+     */
+    function whatsapp_grupo_enlace(?string $enlace): string
+    {
+        $enlace = trim((string) $enlace);
+        if (preg_match('~^(?:https?://)?chat\.whatsapp\.com/(?:invite/)?([A-Za-z0-9]{10,40})/?(?:[?#].*)?$~i', $enlace, $m)) {
+            return 'https://chat.whatsapp.com/' . $m[1];
+        }
+        return '';
+    }
+
     /** Href de `tel:` en formato internacional, para que marque también desde fuera. */
     function tel_enlace(?string $telefono): string
     {

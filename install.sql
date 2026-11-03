@@ -630,6 +630,11 @@ CREATE TABLE IF NOT EXISTS pastorales (
     -- cada guardado. Sin cuenta vinculada, es un campo libre normal.
     contacto_email     VARCHAR(150) NULL,
     contacto_telefono  VARCHAR(20)  NULL,
+    -- Enlace de invitación al grupo de WhatsApp de la pastoral
+    -- (https://chat.whatsapp.com/…). Interno: no se publica en el sitio, porque
+    -- quien lo tiene puede unirse. Lo usa el botón "Copiar y abrir grupo" de
+    -- shared/views/parciales/mensaje_whatsapp.php.
+    whatsapp_grupo     VARCHAR(255) NULL,
     dia_reunion        VARCHAR(60)  NULL,
     hora_reunion       TIME         NULL,
     lugar_reunion      VARCHAR(140) NULL,

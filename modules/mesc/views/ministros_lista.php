@@ -19,7 +19,8 @@
         <p class="text-muted small mb-3">Todavía no hay ministros registrados.</p>
         <?php else: ?>
         <?php
-        $mw_lista = 'ministros';
+        $mw_lista    = 'ministros';
+        $mw_pastoral = PASTORAL_MESC;
         $mw_filas = $ministros;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
         ?>

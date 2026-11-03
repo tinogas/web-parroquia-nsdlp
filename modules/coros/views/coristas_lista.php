@@ -14,7 +14,8 @@
         <p class="text-muted small mb-3">Todavía no hay nadie en el catálogo.</p>
         <?php else: ?>
         <?php
-        $mw_lista = 'coristas';
+        $mw_lista    = 'coristas';
+        $mw_pastoral = PASTORAL_COROS;
         $mw_filas = $coristas;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
         ?>

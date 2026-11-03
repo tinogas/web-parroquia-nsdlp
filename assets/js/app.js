@@ -123,8 +123,12 @@
     // en la misma página que los enlaces .js-whatsapp. Inerte donde no lo hay.
     var cuadro  = document.getElementById('whatsappMensaje');
     var enlaces = document.querySelectorAll('a.js-whatsapp');
+    var grupo   = document.getElementById('whatsappGrupo');
 
-    if (cuadro && enlaces.length) {
+    // {nombre}, {Nombre}, {NOMBRE} o { nombre }: como se teclee.
+    var marcaNombre = /\{\s*nombre\s*\}/gi;
+
+    if (cuadro && (enlaces.length || grupo)) {
         var clave = 'wa:' + (cuadro.dataset.lista || location.pathname);
 
         // El borrador sobrevive a abrir un chat y volver, que es lo que se hace
@@ -143,8 +147,7 @@
                 }
                 // El nombre de pila, que es como se le habla a alguien.
                 var pila = (enlace.dataset.nombre || '').trim().split(/\s+/)[0] || '';
-                // {nombre}, {Nombre}, {NOMBRE} o { nombre }: como se teclee.
-                var suyo = texto.replace(/\{\s*nombre\s*\}/gi, pila).trim();
+                var suyo = texto.replace(marcaNombre, pila).trim();
                 enlace.href = enlace.dataset.base
                             + (suyo === '' ? '' : '?text=' + encodeURIComponent(suyo));
             });
@@ -164,5 +167,59 @@
                 enlace.title = 'Ya se abrió esta conversación. ' + enlace.title;
             });
         });
+
+        // ---- El grupo de la pastoral ----
+        // WhatsApp no deja abrir un grupo con el texto ya escrito (wa.me es
+        // solo para chats de una persona), así que se copia el mensaje y se
+        // abre el grupo: ahí se pega. En un grupo no hay un nombre que poner,
+        // así que {nombre} se quita: "Hola {nombre}, mañana…" → "Hola, mañana…".
+        if (grupo) {
+            var aviso = document.getElementById('whatsappAviso');
+            var avisar = function (texto) {
+                if (aviso) { aviso.textContent = texto; }
+            };
+
+            // Respaldo para cuando no hay navigator.clipboard (el sitio
+            // servido por http fuera de localhost, navegadores viejos).
+            var copiarALaAntigua = function (texto) {
+                var auxiliar = document.createElement('textarea');
+                auxiliar.value = texto;
+                auxiliar.setAttribute('readonly', '');
+                auxiliar.style.position = 'fixed';
+                auxiliar.style.opacity = '0';
+                document.body.appendChild(auxiliar);
+                auxiliar.select();
+                var ok = false;
+                try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                document.body.removeChild(auxiliar);
+                return ok;
+            };
+
+            grupo.addEventListener('click', function () {
+                // Sin preventDefault: el enlace abre el grupo en otra pestaña
+                // o en la app, y la copia ocurre en el mismo clic.
+                var texto = cuadro.value
+                    .replace(/[ \t]*\{\s*nombre\s*\}/gi, '')
+                    .replace(/[ \t]+([,.;:!?])/g, '$1')
+                    .trim();
+                if (texto === '') {
+                    avisar('Se abrió el grupo. No había mensaje que copiar.');
+                    return;
+                }
+                var listo = function () {
+                    avisar('Mensaje copiado. Pégalo en el grupo y envíalo.');
+                };
+                var fallo = function () {
+                    avisar('No se pudo copiar solo: selecciona el mensaje de arriba y cópialo a mano.');
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(texto).then(listo, function () {
+                        copiarALaAntigua(texto) ? listo() : fallo();
+                    });
+                } else {
+                    copiarALaAntigua(texto) ? listo() : fallo();
+                }
+            });
+        }
     }
 })();

@@ -212,6 +212,16 @@ class PastoralController extends Controller
             return;
         }
 
+        // El enlace del grupo se escribe pegado desde WhatsApp, que a veces le
+        // agrega ?mode=… al copiarlo; se guarda limpio. Cualquier otra cosa
+        // (un número, un wa.me) armaría un botón que no lleva al grupo.
+        $grupoWhatsapp = whatsapp_grupo_enlace($this->postStr('whatsapp_grupo'));
+        if ($this->postStr('whatsapp_grupo') !== '' && $grupoWhatsapp === '') {
+            Session::flash('error', 'El enlace del grupo de WhatsApp no es válido. Debe empezar con https://chat.whatsapp.com/');
+            $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
+            return;
+        }
+
         $slugPedido = $this->postStr('slug');
         $slug = $slugPedido !== ''
             ? Slug::unico($slugPedido, 'pastorales', $id ?: null)
@@ -301,6 +311,7 @@ class PastoralController extends Controller
             'responsable_pareja_id'   => $responsableParejaId,
             'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
+            'whatsapp_grupo'     => $grupoWhatsapp ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
             'hora_reunion'       => $this->postStr('hora_reunion') ?: null,
             'lugar_reunion'      => $this->postStr('lugar_reunion') ?: null,

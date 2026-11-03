@@ -63,12 +63,12 @@ class PastoralModel extends Model
             'INSERT INTO pastorales
                 (centro_id, pastoral_padre_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
                  responsable_nombre, responsable_persona_id, responsable_pareja_id,
-                 contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
+                 contacto_email, contacto_telefono, whatsapp_grupo, dia_reunion, hora_reunion, lugar_reunion,
                  acepta_voluntarios, orden, activa)
              VALUES
                 (:centro, :padre, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
                  :responsable, :responsablePersona, :responsablePareja,
-                 :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
+                 :email, :telefono, :grupoWhatsapp, :diaReunion, :horaReunion, :lugarReunion,
                  :voluntarios, :orden, :activa)',
             $this->parametros($datos)
         );
@@ -85,7 +85,8 @@ class PastoralModel extends Model
                     responsable_nombre = :responsable, responsable_persona_id = :responsablePersona,
                     responsable_pareja_id = :responsablePareja,
                     contacto_email = :email,
-                    contacto_telefono = :telefono, dia_reunion = :diaReunion,
+                    contacto_telefono = :telefono, whatsapp_grupo = :grupoWhatsapp,
+                    dia_reunion = :diaReunion,
                     hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
                     acepta_voluntarios = :voluntarios, orden = :orden, activa = :activa
               WHERE id = :id',
@@ -521,6 +522,7 @@ class PastoralModel extends Model
             ':responsablePareja'   => $datos['responsable_pareja_id'],
             ':email'       => $datos['contacto_email'],
             ':telefono'    => $datos['contacto_telefono'],
+            ':grupoWhatsapp' => $datos['whatsapp_grupo'],
             ':diaReunion'  => $datos['dia_reunion'],
             ':horaReunion' => $datos['hora_reunion'],
             ':lugarReunion'=> $datos['lugar_reunion'],

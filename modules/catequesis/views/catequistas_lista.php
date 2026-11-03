@@ -22,7 +22,8 @@
         <p class="text-muted small mb-3">Todavía no hay catequistas registrados.</p>
         <?php else: ?>
         <?php
-        $mw_lista = 'catequistas';
+        $mw_lista    = 'catequistas';
+        $mw_pastoral = PASTORAL_CATEQUESIS;
         $mw_filas = $catequistas;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
         ?>

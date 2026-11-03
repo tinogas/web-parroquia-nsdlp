@@ -14,7 +14,8 @@
         <p class="text-muted small mb-3">Todavía no hay proclamadores registrados.</p>
         <?php else: ?>
         <?php
-        $mw_lista = 'proclamadores';
+        $mw_lista    = 'proclamadores';
+        $mw_pastoral = PASTORAL_PROCLAMADORES;
         $mw_filas = $proclamadores;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
         ?>

@@ -172,6 +172,7 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
         <?php
         $mw_lista = 'pastoral' . (int) $pastoral['id'];
         $mw_filas = $personas;
+        $mw_pastoral = $pastoral;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
         ?>
         <ul class="list-group list-group-flush">
