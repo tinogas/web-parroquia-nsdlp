@@ -349,7 +349,7 @@ if (!function_exists('e')) {
      * aplica no se dibuja. Hoy es el caso común, no el raro: coristas y
      * proclamadores tienen el teléfono en NULL casi todos.
      *
-     * El nombre viaja en data-nombre y el número en el href; assets/js/whatsapp.js
+     * El nombre viaja en data-nombre y el número en el href; assets/js/app.js
      * los usa para meter el mensaje que se escribe una vez arriba del listado.
      */
     function boton_whatsapp(?string $telefono, string $nombre = '', string $clases = 'btn btn-sm btn-outline-success'): string

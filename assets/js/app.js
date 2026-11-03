@@ -143,7 +143,8 @@
                 }
                 // El nombre de pila, que es como se le habla a alguien.
                 var pila = (enlace.dataset.nombre || '').trim().split(/\s+/)[0] || '';
-                var suyo = texto.replace(/\{nombre\}/g, pila).trim();
+                // {nombre}, {Nombre}, {NOMBRE} o { nombre }: como se teclee.
+                var suyo = texto.replace(/\{\s*nombre\s*\}/gi, pila).trim();
                 enlace.href = enlace.dataset.base
                             + (suyo === '' ? '' : '?text=' + encodeURIComponent(suyo));
             });
