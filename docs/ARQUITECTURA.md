@@ -616,6 +616,35 @@ mes siguiente. Los estilos están en `app.css`, incluida una hoja de impresión 
 horizontal y deja que los títulos se partan, porque en papel no hay ratón para leer el
 título completo.
 
+### La lista de eventos a Excel, PDF y papel; el calendario a papel
+
+**Excel de verdad, no CSV.** Las demás exportaciones del panel (inscripciones, bitácora,
+rutas MESC) son CSV; esta se pidió «a Excel», y un CSV llega sin formato, con las fechas como
+texto y con el separador equivocado en un Excel en español. `core/Xlsx.php` escribe un
+`.xlsx` mínimo —una pestaña, encabezado fijo con autofiltro, anchos de columna, fechas y
+horas como valores— **sin librería**: el proyecto no usa Composer y el PHP de XAMPP trae
+`ZipArchive` apagado (`;extension=zip`), así que el zip se arma a mano con `gzdeflate()` y
+`crc32()`, que vienen siempre. Si algún día hace falta otra exportación a Excel, es esa clase.
+
+**El PDF lo hace el navegador**, como el organigrama, los horarios y los turnos MESC:
+`EventoController::imprimir()` sirve `eventos/lista_imprimir.php`, una página sin layout,
+partida por meses, que abre sola el diálogo de impresión; con `?pdf=1` lleva además el aviso
+de elegir «Guardar como PDF», y el `<title>` es el nombre sugerido del archivo.
+
+Las tres salidas —`index()`, `exportar()` e `imprimir()`— leen los filtros con el mismo
+`filtrosDeLista()`, así que **lo que se descarga es exactamente lo de la pantalla**, con su
+recorte por alcance, pero sin paginar (`EventoModel::listarTodos()`, en orden cronológico).
+Las dos salidas quedan en la bitácora como `exportar` sobre `eventos`.
+
+**Los calendarios internos** (Agenda y Eventos → Calendario, que comparten
+`modules/agenda/views/calendario.php`) ganaron un salto por **mes y año** —un formulario GET
+con `?anio=&mes=`, que `Calendario::fechaSolicitada()` ya entendía— y un botón **Imprimir**
+que imprime la página misma. La hoja de impresión en `app.css` va acotada con
+`body:has(.calendario-interno)`, y la orientación horizontal con una **página con nombre**
+(`page: calendario-apaisado`): un `@page { size: landscape }` suelto habría puesto en
+horizontal la impresión de todo el panel. Los filtros no se imprimen, así que un script los
+escribe junto al título en `beforeprint`.
+
 ### Coordinarse y administrar son dos pantallas, no una
 
 Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y

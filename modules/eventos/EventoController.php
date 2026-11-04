@@ -18,6 +18,117 @@ class EventoController extends Controller
     {
         $this->requirePermiso('eventos.ver');
 
+        $this->renderLista($this->filtrosDeLista());
+    }
+
+    /**
+     * La lista completa —todas las páginas, con los mismos filtros que hay en
+     * pantalla— como hoja de Excel. Ver core/Xlsx.php.
+     */
+    public function exportar(): void
+    {
+        $this->requirePermiso('eventos.ver');
+
+        require_once BASE_PATH . '/core/Xlsx.php';
+
+        $f       = $this->filtrosDeLista();
+        $eventos = $this->eventosDeLista($f);
+
+        $hoja = new Xlsx('Eventos', [
+            ['Fecha',    12, 'fecha'],
+            ['Hora',      9, 'hora'],
+            ['Termina',  12, 'fecha'],
+            ['Hora fin',  9, 'hora'],
+            ['Evento',   45, 'texto'],
+            ['Pastoral', 30, 'texto'],
+            ['Sede',     24, 'texto'],
+            ['Lugar',    28, 'texto'],
+            ['Estado',   11, 'texto'],
+            ['Capturó',  22, 'texto'],
+        ]);
+        foreach ($eventos as $ev) {
+            $ini = (string) $ev['fecha_inicio'];
+            $fin = $ev['fecha_fin'] ? (string) $ev['fecha_fin'] : '';
+            $hoja->fila([
+                substr($ini, 0, 10),
+                $ev['todo_el_dia'] ? 'Todo el día' : substr($ini, 11, 5),
+                // «Termina» solo cuando es otro día: si no, repetiría la fecha.
+                $fin !== '' && substr($fin, 0, 10) !== substr($ini, 0, 10) ? substr($fin, 0, 10) : '',
+                // 23:59 es «hasta que acabe el día» (agenda importada), no una hora.
+                $fin !== '' && !$ev['todo_el_dia'] && !in_array(substr($fin, 11, 5), ['00:00', '23:59'], true)
+                    ? substr($fin, 11, 5) : '',
+                $ev['titulo'],
+                $ev['pastoral_nombre'] ?? 'General',
+                $ev['centro_nombre'] ?? '',
+                $ev['lugar'] ?? '',
+                $ev['publicado'] ? 'Publicado' : 'Borrador',
+                $ev['autor'] ?? '',
+            ]);
+        }
+
+        $this->auditoria('exportar', 'eventos', 0, 'Excel, ' . count($eventos) . ' eventos');
+        $hoja->descargar($this->nombreDeArchivo($f) . '.xlsx');
+    }
+
+    /**
+     * La lista completa en hoja aparte, para imprimirla o guardarla como PDF
+     * con el propio navegador —como el calendario MESC, los horarios o el
+     * mapa de pastorales: sin librería de PDF—. Con ?pdf=1 la hoja lleva el
+     * aviso de elegir «Guardar como PDF» en el diálogo de impresión.
+     */
+    public function imprimir(): void
+    {
+        $this->requirePermiso('eventos.ver');
+
+        $f       = $this->filtrosDeLista();
+        $eventos = $this->eventosDeLista($f);
+        $esPdf   = $this->getStr('pdf') !== '';
+
+        $this->auditoria('exportar', 'eventos', 0, ($esPdf ? 'PDF, ' : 'Impresión, ') . count($eventos) . ' eventos');
+
+        $this->renderSinLayout('eventos/lista_imprimir', [
+            'eventos'   => $eventos,
+            'filtros'   => $this->descripcionDeFiltros($f),
+            'esPdf'     => $esPdf,
+            'archivo'   => $this->nombreDeArchivo($f),
+            'urlVolver' => url_admin('eventos', '', $this->parametrosDeLista($f)),
+        ]);
+    }
+
+    /** Los filtros puestos, en palabras, para el encabezado de la hoja impresa. */
+    private function descripcionDeFiltros(array $f): array
+    {
+        $filtros = [];
+        if ($f['filtro'] !== 'todos') {
+            $filtros[] = $f['filtro'] === 'publicados' ? 'Solo publicados' : 'Solo borradores';
+        }
+        if ($f['anio'] !== null || $f['mes'] !== null || $f['dia'] !== null) {
+            $filtros[] = 'Con fecha de inicio ' . $this->descripcionFecha($f['anio'], $f['mes'], $f['dia']);
+        }
+        if ($f['filtroPastoral'] === 'mias') {
+            $filtros[] = 'Solo mis pastorales';
+        } elseif ($f['filtroPastoral'] !== '') {
+            foreach ($f['pastorales'] as $p) {
+                if ((string) $p['id'] === $f['filtroPastoral']) { $filtros[] = 'Pastoral: ' . $p['nombre']; }
+            }
+        } elseif (!Auth::tieneAlcanceGlobal()) {
+            $filtros[] = 'Mis pastorales y las generales';
+        }
+        if ($f['filtroCentro'] !== '') {
+            foreach ($f['centros'] as $c) {
+                if ((string) $c['id'] === $f['filtroCentro']) { $filtros[] = 'Sede: ' . $c['nombre']; }
+            }
+        }
+        return $filtros;
+    }
+
+    /**
+     * Los filtros de la lista leídos de la URL y ya recortados al alcance de
+     * quien la mira. Los comparten la lista, la exportación y la impresión,
+     * para que lo que se descarga sea exactamente lo que hay en pantalla.
+     */
+    private function filtrosDeLista(): array
+    {
         $filtro = in_array($this->getStr('filtro'), ['publicados', 'borradores'], true)
             ? $this->getStr('filtro') : 'todos';
 
@@ -48,6 +159,45 @@ class EventoController extends Controller
             $dia = null;
         }
 
+        return compact('filtro', 'pastorales', 'centros', 'filtroPastoral', 'idsPastoral',
+                       'filtroCentro', 'idsCentro', 'anios', 'anio', 'mes', 'dia');
+    }
+
+    private function eventosDeLista(array $f): array
+    {
+        return $this->modelo->listarTodos(
+            $f['filtro'], $f['idsPastoral'], $f['idsCentro'], $f['anio'], $f['mes'], $f['dia']
+        );
+    }
+
+    /** Los filtros puestos, como parámetros de URL: los mismos que lleva la lista. */
+    private function parametrosDeLista(array $f): array
+    {
+        return array_filter([
+            'filtro'   => $f['filtro'] !== 'todos' ? $f['filtro'] : null,
+            'pastoral' => $f['filtroPastoral'] !== '' ? $f['filtroPastoral'] : null,
+            'centro'   => $f['filtroCentro'] !== '' ? $f['filtroCentro'] : null,
+            'anio'     => $f['anio'],
+            'mes'      => $f['mes'],
+            'dia'      => $f['dia'],
+        ], static fn ($v) => $v !== null);
+    }
+
+    /** «eventos-2027-borradores», «eventos-2026-03», «eventos»… */
+    private function nombreDeArchivo(array $f): string
+    {
+        $partes = ['eventos'];
+        if ($f['anio'] !== null) { $partes[] = (string) $f['anio']; }
+        if ($f['mes'] !== null)  { $partes[] = sprintf('%02d', $f['mes']); }
+        if ($f['dia'] !== null)  { $partes[] = sprintf('%02d', $f['dia']); }
+        if ($f['filtro'] !== 'todos') { $partes[] = $f['filtro']; }
+        return implode('-', $partes);
+    }
+
+    /** La lista en pantalla, paginada, con los filtros de filtrosDeLista(). */
+    private function renderLista(array $f): void
+    {
+        extract($f);
         $this->render('eventos/lista', [
             'titulo'  => 'Eventos',
             'listado' => $this->modelo->listar(

@@ -32,6 +32,17 @@ anterior o siguiente. Al lado del nombre del periodo se dice cuántos registros
 tiene: son registros, no días ocupados, así que un curso de tres meses cuenta
 como uno aunque se pinte en noventa casillas.
 
+**Saltar a otro mes o año.** Junto a las flechas hay dos selectores, **mes** y
+**año**. Al elegir uno, la agenda salta ahí directamente, en la misma vista y
+con los mismos filtros. Es lo cómodo para mirar, desde noviembre, cómo viene
+marzo del año que entra.
+
+**Imprimir.** El botón **Imprimir** de esa misma fila imprime el periodo que se
+ve —el mes, la semana, el año— en hoja horizontal y sin el menú ni los botones.
+En la ventana de impresión, eligiendo **«Guardar como PDF»** en Destino, queda
+como PDF. Si filtraste por pastoral o por sede, el filtro sale escrito junto al
+título.
+
 **Los colores.** La leyenda de la derecha lo resume: azul para los eventos,
 dorado para los cursos. Un evento al que se le puso color propio en su
 formulario se dibuja con ese color, que es para lo que sirve ese campo.

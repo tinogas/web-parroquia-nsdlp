@@ -38,7 +38,9 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   (borde punteado) y un filtro para quedarse solo con ellos. **Propuestas** pone en una
   tabla de pastorales por mes lo que cada una tiene en borrador para el año que viene, dice
   cuáles todavía no proponen nada y se imprime para la reunión de planeación. Proponer es
-  capturar el evento sin publicarlo, como antes.
+  capturar el evento sin publicarlo, como antes. La **lista** se descarga a Excel o se
+  imprime / guarda como PDF con los filtros puestos, y los calendarios internos saltan a
+  cualquier mes y año y se imprimen.
 - **Los roles se simplificaron y las cuentas salen del equipo pastoral**: se retiraron los
   seis roles con la pastoral en el nombre (Administrador MESC, Consulta Catequesis…) y
   quedan Administrador, Editor, Coordinador, Coordinador general, Consulta y Secretaría —el

@@ -1548,3 +1548,22 @@ a.propuesta:hover { background: color-mix(in srgb, var(--color) 22%, #fff); }
     .propuesta-titulo { white-space: normal; overflow: visible; overflow-wrap: break-word; }
     .propuesta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ── Calendario interno (Agenda y Eventos) en papel ──────────────────────────
+   El botón Imprimir imprime la página tal cual: aquí se quita todo lo que no
+   es el calendario —menú, barra, pestañas, filtros, botones— y la tarjeta
+   ocupa la hoja entera. Va acotado con :has() para no tocar otras páginas. */
+@media print {
+    body:has(.calendario-interno) :is(.sidebar, #sidebar, .topbar, nav.navbar, .nav-tabs, form, .btn, .btn-group, .alert) { display: none !important; }
+    body:has(.calendario-interno) .main-content { margin: 0 !important; padding: 0 !important; }
+    body:has(.calendario-interno) .calendario-interno { box-shadow: none !important; }
+    body:has(.calendario-interno) .calendario-interno > .card-body { padding: 0 !important; }
+    body:has(.calendario-interno) .calendario-controles { display: none !important; }
+    /* Papel blanco, pero los colores de cada evento sí: sin ellos no se distingue nada. */
+    body:has(.calendario-interno), body:has(.calendario-interno) .main-content { background: #fff !important; }
+    .calendario-interno * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body:has(.calendario-interno) .table-responsive { overflow: visible !important; }
+    /* Hoja apaisada solo para esta página: un @page suelto cambiaría la de todo el panel. */
+    body:has(.calendario-interno) .main-content { page: calendario-apaisado; }
+}
+@page calendario-apaisado { size: landscape; margin: 8mm; }

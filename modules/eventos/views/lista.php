@@ -114,6 +114,27 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
     </form>
 </div>
 
+<?php if ($listado['filas']): ?>
+<?php /* Llevan los mismos filtros que la pantalla, pero todas las páginas. */
+      $porTodo = $porEstado + $porFecha + $porAmbito; ?>
+<div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-3">
+    <span class="small text-muted me-1">
+        <?= (int) $listado['total'] === 1 ? 'El evento' : 'Los ' . (int) $listado['total'] . ' eventos' ?> de este filtro:
+    </span>
+    <a href="<?= e(url_admin('eventos', 'exportar', $porTodo)) ?>" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+    </a>
+    <a href="<?= e(url_admin('eventos', 'imprimir', $porTodo + ['pdf' => 1])) ?>" target="_blank" rel="noopener"
+       class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+    </a>
+    <a href="<?= e(url_admin('eventos', 'imprimir', $porTodo)) ?>" target="_blank" rel="noopener"
+       class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Imprimir
+    </a>
+</div>
+<?php endif; ?>
+
 <?php if ($porFecha): ?>
 <p class="small text-muted mb-3">
     <?= (int) $listado['total'] ?>

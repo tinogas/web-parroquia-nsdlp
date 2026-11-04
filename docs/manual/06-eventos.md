@@ -27,6 +27,28 @@ debajo—, la fecha con su hora, el lugar y el estado. A la derecha, el lápiz
 para editar y el bote para borrar. Con el botón azul **Nuevo evento** se crea
 uno.
 
+### Sacar la lista: Excel, PDF o papel
+
+Encima del listado, a la derecha, hay tres botones. Los tres llevan **los
+eventos del filtro que tienes puesto, todos**, no solo los quince de la página
+que estás viendo; y en orden de fecha, del primero al último.
+
+- **Excel** descarga una hoja (`eventos-2026-03.xlsx`, por ejemplo: el nombre
+  dice el filtro). Trae fecha, hora, cuándo termina, el evento, la pastoral, la
+  sede, el lugar, si está publicado y quién lo capturó. Las fechas son fechas de
+  verdad: en Excel se pueden ordenar y filtrar por mes, y la primera fila ya
+  viene con los filtros puestos.
+- **PDF** abre en otra pestaña una hoja lista para imprimir, partida por meses,
+  y enseguida la ventana de impresión. Ahí, en **Destino**, se elige
+  **«Guardar como PDF»** y se pulsa **Guardar**. El PDF lo hace el propio
+  navegador; no hay que instalar nada.
+- **Imprimir** abre esa misma hoja y la manda a la impresora.
+
+Arriba de la hoja se dice cuántos eventos son, qué filtros se usaron y la fecha
+en que se imprimió, para que el papel se entienda solo. Quien no tiene alcance
+sobre toda la parroquia saca lo mismo que ve en su lista: lo de sus pastorales y
+lo general.
+
 ## El calendario
 
 ![Los eventos en calendario](img/eventos-calendario.webp)
@@ -42,6 +64,16 @@ Encima están los filtros:
 - **Todos / Publicados / Borradores.** Con *Borradores* queda solo lo que
   todavía no se anuncia: lo que las pastorales tienen propuesto.
 - **Pastoral** y **Sede**, para quedarse con lo de una comunidad.
+
+Para ir lejos sin dar clic mes por mes, junto a las flechas están los
+selectores de **mes** y **año**: se elige, por ejemplo, *Marzo* y *2027*, y el
+calendario salta ahí sin perder la vista ni los filtros. (En la vista *Año* solo
+aparece el del año.)
+
+El botón **Imprimir** imprime —o guarda como PDF, eligiendo «Guardar como PDF»
+en Destino— el periodo que estás viendo, en hoja horizontal y sin el menú ni los
+botones. Los filtros que tenías puestos salen escritos junto al título, para que
+en el papel se sepa si es «solo borradores» o «solo Catequesis».
 
 Al pasar el ratón por una casilla se ve de qué pastoral es, y con un clic se
 abre su formulario. **Solo es enlace lo que puedes editar**: lo de las demás
