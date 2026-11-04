@@ -2,6 +2,8 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/eventos/EventoModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/modules/centros/CentroModel.php';
+require_once BASE_PATH . '/core/Calendario.php';
 
 class EventoController extends Controller
 {
@@ -70,6 +72,211 @@ class EventoController extends Controller
             'filtroCentro'    => $filtroCentro,
             'tieneAlcance'    => Auth::pastoralesPermitidas() !== [],
         ]);
+    }
+
+    // ── Calendario y propuestas ─────────────────────────────────────────────
+
+    /** Color de un evento sin color propio: el mismo azul del sitio y de la agenda. */
+    private const COLOR_EVENTO = '#1e4d8b';
+
+    /**
+     * Los eventos en calendario, con la misma cuadrícula que el sitio (día,
+     * semana, mes y año) pero con los borradores a la vista, con borde
+     * punteado. Es la Agenda recortada a eventos y con un filtro de estado
+     * de servidor: la Agenda junta cursos y solo deja ocultar borradores en
+     * pantalla, y aquí se quiere poder quedarse con «solo lo propuesto».
+     *
+     * Como la Agenda, no recorta por alcance: mirar el calendario completo es
+     * lo que evita que dos pastorales tomen el mismo salón. El enlace a
+     * editar solo se dibuja sobre lo propio (urlDeEdicion()).
+     */
+    public function calendario(): void
+    {
+        $this->requirePermiso('eventos.ver');
+
+        $estado     = $this->estadoSolicitado('todos');
+        $pastorales = (new PastoralModel())->paraSelector();
+        $centros    = (new CentroModel())->activos();
+        [$filtroPastoral, $idsPastoral] = $this->filtroPastoral($pastorales);
+        [$filtroCentro,   $idsCentro]   = $this->filtroCentro($centros);
+
+        $vista = Calendario::vistaSolicitada($_GET);
+        $ancla = Calendario::fechaSolicitada($_GET);
+        [$desde, $hasta] = Calendario::limites($vista, $ancla);
+
+        $items = array_map(
+            [$this, 'itemDeCalendario'],
+            $this->delEstado($this->modelo->agenda($desde, $hasta, $idsPastoral, $idsCentro), $estado)
+        );
+        $porDia  = Calendario::repartirPorDia($items, $desde, $hasta);
+        $comunes = ($estado !== 'todos' ? ['estado' => $estado] : [])
+                 + ($filtroPastoral !== '' ? ['pastoral' => $filtroPastoral] : [])
+                 + ($filtroCentro !== '' ? ['centro' => $filtroCentro] : []);
+
+        $urlDe = static fn (string $v, DateTimeImmutable $f): string =>
+            url_admin('eventos', 'calendario', ['vista' => $v, 'fecha' => $f->format('Y-m-d')] + $comunes);
+        $urlsVista = [];
+        foreach (array_keys(Calendario::VISTAS) as $unaVista) {
+            $urlsVista[$unaVista] = $urlDe($unaVista, $ancla);
+        }
+
+        $this->render('eventos/calendario', [
+            'titulo'         => 'Eventos — Calendario',
+            'calRuta'        => ['eventos', 'calendario'],
+            'vista'          => $vista,
+            'vistas'         => Calendario::VISTAS,
+            'fecha'          => $ancla->format('Y-m-d'),
+            'periodo'        => Calendario::titulo($vista, $ancla),
+            'dias'           => Calendario::diasDelPeriodo($vista, $desde, $hasta, $porDia),
+            'semanas'        => $vista === 'mes'  ? Calendario::cuadriculaDelMes($ancla, $porDia)  : [],
+            'meses'          => $vista === 'anio' ? Calendario::cuadriculaDelAnio($ancla, $porDia) : [],
+            // Eventos distintos, no días ocupados.
+            'total'          => count($items),
+            'urlAnterior'    => $urlDe($vista, Calendario::desplazar($vista, $ancla, -1)),
+            'urlSiguiente'   => $urlDe($vista, Calendario::desplazar($vista, $ancla, 1)),
+            'urlHoy'         => $urlDe($vista, new DateTimeImmutable('today')),
+            'urlsVista'      => $urlsVista,
+            'incluyeHoy'     => date('Y-m-d') >= $desde && date('Y-m-d') <= $hasta,
+            'comunes'        => $comunes,
+            'estado'         => $estado,
+            'pastorales'     => $pastorales,
+            'filtroPastoral' => $filtroPastoral,
+            'centros'        => $centros,
+            'filtroCentro'   => $filtroCentro,
+            'tieneAlcance'   => Auth::pastoralesPermitidas() !== [],
+        ]);
+    }
+
+    /**
+     * Lo que cada pastoral tiene programado para un año —por omisión el que
+     * viene—, en una tabla de pastorales por meses. Es la pantalla para
+     * revisar el calendario del año siguiente: las pastorales capturan sus
+     * fechas como borrador y aquí se ven todas juntas, con las que todavía
+     * no han propuesto nada.
+     *
+     * Quien tiene alcance global ve todas las pastorales; una coordinación,
+     * solo las suyas (y no la lista de quién falta, que no le toca).
+     */
+    public function propuestas(): void
+    {
+        $this->requirePermiso('eventos.ver');
+
+        $hoy    = (int) date('Y');
+        $anio   = $this->getInt('anio', $hoy + 1);
+        $anio   = ($anio >= $hoy - 1 && $anio <= $hoy + 3) ? $anio : $hoy + 1;
+        $estado = $this->estadoSolicitado('borradores');
+
+        $centros = (new CentroModel())->activos();
+        [$filtroCentro, $idsCentro] = $this->filtroCentro($centros);
+
+        $global     = Auth::tieneAlcanceGlobal();
+        $permitidas = $global ? null : Auth::pastoralesPermitidas();
+
+        $eventos = $this->delEstado(
+            $this->modelo->agenda($anio . '-01-01', $anio . '-12-31', $permitidas, $idsCentro),
+            $estado
+        );
+
+        // [pastoral_id, o 0 para lo general de la parroquia][mes] => eventos.
+        $celdas = [];
+        foreach ($eventos as $evento) {
+            // Un evento que empezó en diciembre del año anterior y sigue en
+            // enero se pinta en enero, que es donde cae dentro de este año.
+            $mes = (int) substr((string) $evento['fecha_inicio'], 0, 4) < $anio
+                ? 1
+                : (int) substr((string) $evento['fecha_inicio'], 5, 2);
+            $evento['url'] = $this->urlDeEdicion($evento);
+            $celdas[(int) ($evento['pastoral_id'] ?? 0)][$mes][] = $evento;
+        }
+
+        $agrupado = (new PastoralModel())->agrupadoVisible($permitidas);
+
+        // Las pastorales activas que no tienen nada en el año. Solo para quien
+        // ve todas: a una coordinación no le toca llevar esa cuenta. Las
+        // Comisiones no cuentan —casi nunca programan a su nombre, lo hacen
+        // sus dimensiones—, y contarlas como «faltan» sería ruido.
+        $sinPropuestas = [];
+        if ($global) {
+            $hojas = $agrupado['sueltas'];
+            foreach ($agrupado['comisiones'] as $grupo) {
+                array_push($hojas, ...$grupo['hijas']);
+            }
+            foreach ($hojas as $pastoral) {
+                if (!empty($pastoral['activa']) && empty($celdas[(int) $pastoral['id']])) {
+                    $sinPropuestas[] = $pastoral;
+                }
+            }
+            usort($sinPropuestas, static fn (array $a, array $b): int => strcmp($a['nombre'], $b['nombre']));
+        }
+
+        $this->render('eventos/propuestas', [
+            'titulo'        => 'Eventos — Propuestas ' . $anio,
+            'anio'          => $anio,
+            'anios'         => range($hoy - 1, $hoy + 3),
+            'estado'        => $estado,
+            'centros'       => $centros,
+            'filtroCentro'  => $filtroCentro,
+            'agrupado'      => $agrupado,
+            'celdas'        => $celdas,
+            'global'        => $global,
+            'total'         => count($eventos),
+            'conPropuestas' => count(array_filter(array_keys($celdas), static fn (int $id): bool => $id !== 0)),
+            'sinPropuestas' => $sinPropuestas,
+        ]);
+    }
+
+    /** ?estado= todos | publicados | borradores; cualquier otra cosa, el de omisión. */
+    private function estadoSolicitado(string $omision): string
+    {
+        $estado = $this->getStr('estado');
+        return in_array($estado, ['todos', 'publicados', 'borradores'], true) ? $estado : $omision;
+    }
+
+    private function delEstado(array $eventos, string $estado): array
+    {
+        if ($estado === 'todos') {
+            return $eventos;
+        }
+        $quierePublicados = $estado === 'publicados';
+        return array_values(array_filter(
+            $eventos,
+            static fn (array $e): bool => (bool) $e['publicado'] === $quierePublicados
+        ));
+    }
+
+    /** Un evento de EventoModel::agenda() con la forma que esperan las vistas del calendario. */
+    private function itemDeCalendario(array $evento): array
+    {
+        return [
+            'tipo'            => 'evento',
+            'id'              => (int) $evento['id'],
+            'titulo'          => $evento['titulo'],
+            'fecha_inicio'    => $evento['fecha_inicio'],
+            'fecha_fin'       => $evento['fecha_fin'],
+            'todo_el_dia'     => (int) $evento['todo_el_dia'],
+            'lugar'           => $evento['lugar'],
+            'color'           => $evento['color'] ?: self::COLOR_EVENTO,
+            'publicado'       => (int) $evento['publicado'],
+            'estado'          => $evento['publicado'] ? 'publico' : 'borrador',
+            'pastoral_id'     => $evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null,
+            'pastoral_nombre' => $evento['pastoral_nombre'],
+            'centro_nombre'   => $evento['centro_nombre'],
+            'url'             => $this->urlDeEdicion($evento),
+        ];
+    }
+
+    /**
+     * El formulario del evento, o null si quien mira no puede editarlo: un
+     * enlace que acaba en «no tienes permiso» es peor que no tener enlace. La
+     * misma regla que AgendaController::urlDeEdicion().
+     */
+    private function urlDeEdicion(array $evento): ?string
+    {
+        $puede = Auth::tienePermiso('eventos.editar')
+              && Auth::puedeSobrePastoral($evento['pastoral_id'] !== null ? (int) $evento['pastoral_id'] : null)
+              && Auth::puedeSobreCentro($evento['centro_id'] !== null ? (int) $evento['centro_id'] : null);
+
+        return $puede ? url_admin('eventos', 'editar', ['id' => (int) $evento['id']]) : null;
     }
 
     /**

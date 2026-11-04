@@ -21,7 +21,7 @@
                 <td class="<?= $celda && $celda['hoy'] ? 'dia-hoy' : '' ?>">
                     <?php if ($celda): ?>
                     <a class="numero-dia text-decoration-none"
-                       href="<?= e(url_admin('agenda', '', ['vista' => 'dia', 'fecha' => $celda['fecha']] + $comunes)) ?>">
+                       href="<?= e(url_admin($calRuta[0], $calRuta[1], ['vista' => 'dia', 'fecha' => $celda['fecha']] + $comunes)) ?>">
                         <?= (int) $celda['dia'] ?>
                     </a>
                     <?php foreach ($celda['eventos'] as $it): ?>

@@ -7,7 +7,7 @@
 <div class="calendario-semana">
     <?php foreach ($dias as $d): ?>
     <div class="calendario-semana-dia <?= $d['hoy'] ? 'es-hoy' : '' ?>">
-        <a href="<?= e(url_admin('agenda', '', ['vista' => 'dia', 'fecha' => $d['fecha']] + $comunes)) ?>"
+        <a href="<?= e(url_admin($calRuta[0], $calRuta[1], ['vista' => 'dia', 'fecha' => $d['fecha']] + $comunes)) ?>"
            class="calendario-semana-cabecera text-decoration-none">
             <span class="nombre-dia"><?= e(ucfirst($d['nombreDia'])) ?></span>
             <span class="numero-dia-grande"><?= (int) $d['dia'] ?></span>

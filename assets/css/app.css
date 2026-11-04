@@ -1506,3 +1506,45 @@ a.evento-linea:hover {
 :focus-visible {
     outline-color: var(--color-dorado);
 }
+
+
+/* ------------------------------------------------------------------
+   Eventos → Propuestas: tabla de pastorales por mes
+   (modules/eventos/views/propuestas.php). Cada fecha es una pastilla
+   con el color del evento; el borrador va con borde punteado, como en
+   el calendario.
+   ------------------------------------------------------------------ */
+.propuestas-tabla { min-width: 1650px; font-size: .8rem; table-layout: fixed; }
+.propuestas-tabla thead th { position: sticky; top: 0; background: var(--bs-light, #f8f9fa); z-index: 2; text-align: center; }
+/* Con table-layout: fixed el ancho de cada columna lo dicta el encabezado. */
+.propuestas-tabla thead th:first-child { width: 220px; left: 0; z-index: 3; text-align: left; }
+.propuestas-tabla thead th:last-child { width: 56px; }
+.propuestas-tabla th.propuestas-pastoral { font-weight: 500; position: sticky; left: 0; background: #fff; z-index: 1; }
+.propuestas-tabla.solo-con-fechas .propuestas-vacia { display: none; }
+.propuestas-tabla .propuestas-comision th.propuestas-pastoral { font-weight: 700; background: #f3f5f9; }
+.propuestas-tabla .propuestas-comision td { background: #f8f9fc; }
+.propuestas-tabla .propuestas-vacia th.propuestas-pastoral { color: var(--bs-secondary-color, #6c757d); }
+.propuestas-tabla td { vertical-align: top; padding: .25rem; }
+.propuestas-grupo th { background: #1e3050 !important; color: #fff; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+.propuesta { display: flex; gap: .25rem; align-items: baseline; margin-bottom: .2rem; padding: .1rem .3rem;
+             border-radius: .3rem; border: 1px solid var(--color); border-left-width: 4px;
+             background: color-mix(in srgb, var(--color) 10%, #fff); color: #1f2937; text-decoration: none; line-height: 1.2; }
+.propuesta.es-borrador { border-style: dashed; border-left-style: solid; background: #fff; }
+a.propuesta:hover { background: color-mix(in srgb, var(--color) 22%, #fff); }
+.propuesta-dia { font-weight: 700; white-space: nowrap; }
+.propuesta-titulo { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* Solo en la página que tiene la tabla: esta hoja la carga todo el panel. */
+@media print {
+    body:has(.propuestas-tabla) :is(.sidebar, #sidebar, .topbar, nav.navbar, .nav-tabs, .propuestas-filtros, .btn, .form-switch) { display: none !important; }
+    .propuestas-tabla { min-width: 0; font-size: 7pt; }
+    body:has(.propuestas-tabla) .table-responsive { overflow: visible !important; max-height: none !important; }
+    body:has(.propuestas-tabla) .main-content { margin: 0 !important; padding: 0 !important; }
+    .propuestas-tabla :is(thead th, th.propuestas-pastoral) { position: static; }
+    /* En papel no hay ratón para ver el título completo: que se parta. */
+    .propuestas-tabla thead th:first-child { width: 120px; }
+    .propuestas-tabla thead th:last-child { width: 36px; }
+    .propuesta { display: block; }
+    .propuesta-dia { margin-right: .25em; }
+    .propuesta-titulo { white-space: normal; overflow: visible; overflow-wrap: break-word; }
+    .propuesta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

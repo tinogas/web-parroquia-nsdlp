@@ -1,14 +1,4 @@
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div>
-        <h1 class="h4 fw-bold mb-1">Eventos</h1>
-        <p class="text-muted mb-0 small">Celebraciones y actividades con fecha concreta.</p>
-    </div>
-    <?php if (Auth::tienePermiso('eventos.crear')): ?>
-    <a href="<?= e(url_admin('eventos', 'nuevo')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nuevo evento
-    </a>
-    <?php endif; ?>
-</div>
+<?php $pestana = 'lista'; require __DIR__ . '/_pestanas.php'; ?>
 
 <?php
 // Los cuatro filtros —estado, fecha, pastoral y sede— se combinan, así que

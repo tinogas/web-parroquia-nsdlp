@@ -5,7 +5,12 @@
  *
  * Es la contraparte de eventos/publico/calendario.php, con dos diferencias:
  * las URLs son del panel y aquí no hay AJAX, así que cada enlace recarga.
+ *
+ * Lo usan la Agenda y el calendario de Eventos (EventoController::calendario()).
+ * $calRuta dice a dónde llevan el número del día y el nombre del mes:
+ * [módulo, acción]. Sin ella, a la Agenda, que es de donde salió.
  */
+$calRuta = $calRuta ?? ['agenda', ''];
 ?>
 <div class="card border-0 shadow-sm">
     <div class="card-body p-3 p-md-4">
