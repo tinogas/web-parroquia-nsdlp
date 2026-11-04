@@ -33,6 +33,12 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   parroquia. Los cursos pasaron a administrarse por pastoral, igual que los eventos, y una
   y otros los publica la propia pastoral que los organiza. El calendario del sitio público
   no cambió.
+- **Eventos en calendario y propuestas del año siguiente**: el módulo de Eventos tiene
+  ahora tres pestañas. **Calendario** los enseña como el sitio, pero con los borradores
+  (borde punteado) y un filtro para quedarse solo con ellos. **Propuestas** pone en una
+  tabla de pastorales por mes lo que cada una tiene en borrador para el año que viene, dice
+  cuáles todavía no proponen nada y se imprime para la reunión de planeación. Proponer es
+  capturar el evento sin publicarlo, como antes.
 - **Los roles se simplificaron y las cuentas salen del equipo pastoral**: se retiraron los
   seis roles con la pastoral en el nombre (Administrador MESC, Consulta Catequesis…) y
   quedan Administrador, Editor, Coordinador, Coordinador general, Consulta y Secretaría —el

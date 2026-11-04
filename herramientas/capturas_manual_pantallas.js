@@ -484,6 +484,45 @@ module.exports = [
         espera: 'table',
     },
     {
+        id: 'eventos-calendario',
+        titulo: 'Los eventos en calendario',
+        url: '/admin/eventos/calendario',
+        espera: '.calendario-tabla',
+    },
+    {
+        // Sin ?anio=: así siempre enseña el año que viene, que es para lo que
+        // existe esta pantalla.
+        id: 'eventos-propuestas',
+        titulo: 'Las propuestas de las pastorales para el año que viene',
+        url: '/admin/eventos/propuestas',
+        espera: '.propuestas-tabla',
+        antes: async (page) => {
+            await page.$eval('details', (d) => { d.open = true; }).catch(() => {});
+        },
+    },
+    {
+        // La tabla con contenido: 2026 es el año que la parroquia ya tiene
+        // capturado completo. Para el año que viene todavía hay muy poco, y
+        // la tabla saldría casi en blanco.
+        id: 'eventos-propuestas-tabla',
+        titulo: 'La tabla de pastorales por mes',
+        url: '/admin/eventos/propuestas?anio=2026&estado=todos',
+        espera: '.propuestas-tabla',
+        antes: async (page) => {
+            // Lo general de la parroquia ocupa sola la primera pantalla: se
+            // ocultan las filas vacías y se baja hasta la primera Comisión,
+            // que es donde se ve la idea de la tabla.
+            await page.$eval('.propuestas-tabla', (t) => {
+                const casilla = document.getElementById('soloConFechas');
+                if (casilla && !casilla.checked) { casilla.click(); }
+                t.closest('.card').scrollIntoView();
+                const marco = t.closest('.table-responsive');
+                const fila  = [...t.tBodies[0].rows].slice(1).find((r) => r.offsetParent !== null);
+                if (marco && fila) { marco.scrollTop = fila.offsetTop - t.tHead.offsetHeight; }
+            });
+        },
+    },
+    {
         id: 'eventos-form',
         titulo: 'El formulario de un evento',
         url: '/admin/eventos/nuevo',

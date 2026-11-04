@@ -69,3 +69,12 @@ Debajo del calendario aparece a veces una nota con los **cursos sin fecha de
 inicio**. Un curso sin fecha no cabe en ninguna casilla, y en vez de
 desaparecerlo en silencio, la agenda lo enumera ahí para que alguien le ponga
 fecha.
+
+## Solo los eventos, o el año que viene
+
+Si lo que buscas son **solo los eventos** —sin los cursos— o **solo lo que está
+en borrador**, en Comunicación → Eventos está la pestaña **Calendario**, con el
+mismo dibujo y un filtro para quedarse con los borradores. Y para revisar **lo
+que cada pastoral propone para el año siguiente**, la pestaña **Propuestas**
+lo pone en una tabla de pastorales por mes. Las dos se explican en el
+capítulo 6.

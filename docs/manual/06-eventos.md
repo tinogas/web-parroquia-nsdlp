@@ -6,6 +6,10 @@ publicados o no, a la agenda interna del equipo.
 
 **Menú:** Comunicación → Eventos.
 
+Arriba hay tres pestañas, que son tres maneras de ver los mismos eventos:
+**Lista**, **Calendario** y **Propuestas** del año que viene. Las dos últimas
+se explican más abajo.
+
 ## El listado
 
 ![El listado de eventos](img/eventos-lista.webp)
@@ -22,6 +26,77 @@ Cada renglón dice el título —con la pastoral y la sede en dos etiquetas
 debajo—, la fecha con su hora, el lugar y el estado. A la derecha, el lápiz
 para editar y el bote para borrar. Con el botón azul **Nuevo evento** se crea
 uno.
+
+## El calendario
+
+![Los eventos en calendario](img/eventos-calendario.webp)
+
+La pestaña **Calendario** enseña los eventos **igual que el calendario del
+sitio** —con sus vistas de *Día*, *Semana*, *Mes* y *Año*, y las flechas para
+ir al periodo anterior o al siguiente—, pero con una diferencia que es la razón
+de que exista: **aquí también salen los borradores**. Se distinguen por el
+**borde punteado**; lo publicado va lleno.
+
+Encima están los filtros:
+
+- **Todos / Publicados / Borradores.** Con *Borradores* queda solo lo que
+  todavía no se anuncia: lo que las pastorales tienen propuesto.
+- **Pastoral** y **Sede**, para quedarse con lo de una comunidad.
+
+Al pasar el ratón por una casilla se ve de qué pastoral es, y con un clic se
+abre su formulario. **Solo es enlace lo que puedes editar**: lo de las demás
+pastorales se ve, pero no lleva a ninguna parte. Es la misma regla de la
+agenda interna (capítulo 8): aquí se mira todo, y se toca lo tuyo.
+
+> La diferencia con la **Agenda** es que aquí solo hay eventos —la agenda
+> junta también los cursos— y que el filtro de borradores es de verdad: la
+> agenda los atenúa, este calendario puede quedarse solo con ellos.
+
+## Las propuestas del año que viene
+
+![Las propuestas de las pastorales para el año que viene](img/eventos-propuestas.webp)
+
+Cada pastoral captura sus fechas del año siguiente **como borrador**, con
+**Publicado** apagado. La pestaña **Propuestas** las junta todas en una sola
+pantalla para revisarlas antes de publicarlas.
+
+**Arriba, tres números:** cuántas fechas hay propuestas, cuántas pastorales ya
+propusieron algo y **cuántas no tienen ninguna fecha todavía**; con **Ver
+cuáles** sale la lista, que es la de a quién hay que recordarle. Las Comisiones
+no cuentan en esa lista, porque casi nunca programan a su nombre: lo hacen sus
+dimensiones.
+
+**Los filtros:**
+
+- **Año.** Por omisión, el que viene. Se puede ver también el actual, el
+  anterior o los siguientes.
+- **Mostrar.** Por omisión *Solo borradores*, que son las propuestas. Con
+  *Borradores y publicados* se ve el año completo, y con *Solo publicados*,
+  lo que ya se anunció.
+- **Sede**, si la parroquia tiene más de una.
+- **Imprimir**, para llevar la tabla a la reunión de planeación.
+
+![La tabla de pastorales por mes](img/eventos-propuestas-tabla.webp)
+
+**La tabla** tiene una fila por pastoral, agrupadas bajo su Comisión como en el
+sitio, y una columna por mes. En cada casilla van las fechas de esa pastoral
+ese mes: el número es el día, y luego el título. **«12–14»** es un evento que
+dura del 12 al 14; **«28+»**, uno que sigue en el mes siguiente. Los borradores
+van con borde punteado, igual que en el calendario. Al pasar el ratón se ve el
+detalle —fecha completa, hora, lugar y sede—, y con un clic se abre para
+editarlo o publicarlo. La primera fila, **General de la parroquia**, es lo que
+no tiene pastoral.
+
+El interruptor **Ocultar las pastorales sin fechas** deja solo las filas con
+algo; la Comisión se queda como encabezado si alguna de sus dimensiones tiene
+fechas. El navegador recuerda cómo lo dejaste.
+
+> **Quién ve qué.** El administrador y el editor ven todas las pastorales y la
+> lista de las que faltan. Una coordinación ve la misma tabla, pero solo con
+> sus pastorales y sin esa lista: le sirve para revisar su propio año.
+
+Para **publicar** una fecha ya aprobada no hace falta salir de aquí: se le da
+clic, se enciende **Publicado** y se guarda.
 
 ## El formulario
 
@@ -62,7 +137,8 @@ uno.
 
 Los eventos **no tienen los tres escalones de los avisos**: llevan un solo
 interruptor, **Publicado**, con dos posiciones. Apagado es borrador —lo ve el
-equipo en la agenda interna, nadie más—; encendido sale en el calendario del
+equipo en la agenda interna y en el calendario y las propuestas de Eventos,
+nadie más—; encendido sale en el calendario del
 sitio. **En un evento nuevo viene encendido**: si todavía no quieres que se vea,
 apágalo antes de guardar.
 

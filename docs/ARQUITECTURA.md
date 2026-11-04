@@ -576,6 +576,46 @@ consultan contenido, **incluidos los seis de Consulta**: para un ministro, cateq
 proclamador es la única pantalla que verán además de la de su pastoral, y es la que responde
 "¿qué hay programado esta semana?" sin darles con qué editar nada.
 
+### Eventos en calendario y las propuestas del año siguiente
+
+La parroquia pidió, dentro de Eventos, verlos en calendario «como en la página» y, sobre
+todo, **revisar las fechas que cada pastoral propone para el año siguiente**. Las propuestas
+no son un estado nuevo: una pastoral propone capturando el evento con `publicado = 0`, que
+es lo que ya hacía. No se añadió columna ni flujo de aprobación —aprobar es encender
+**Publicado**, como siempre—, así que no hay migración.
+
+Eventos pasó a tener tres pestañas (`modules/eventos/views/_pestanas.php`):
+
+- **Lista**, el listado de siempre, que sigue recortando por alcance.
+- **Calendario** (`EventoController::calendario()`). Es la Agenda recortada a eventos, con
+  dos diferencias: el estado es un **filtro de servidor** (`?estado=borradores` deja solo lo
+  propuesto; la Agenda solo atenúa u oculta en pantalla) y no mezcla cursos. Reutiliza
+  `EventoModel::agenda()`, `Calendario` y **las mismas vistas de la Agenda**
+  (`modules/agenda/views/`), que ahora reciben `$calRuta` —[módulo, acción]— para saber a
+  dónde llevan el número del día y el nombre del mes; sin ella siguen apuntando a la Agenda.
+  Como la Agenda, **no recorta por alcance** —mirar todo es lo que evita pisarse el salón— y
+  el enlace a editar solo se dibuja sobre lo propio (`urlDeEdicion()`, la misma regla que
+  `AgendaController`).
+- **Propuestas** (`EventoController::propuestas()`): una tabla de pastorales por meses para
+  un año —por omisión el siguiente— y, por omisión, solo borradores. Las filas salen de
+  `PastoralModel::agrupadoVisible()`, así que van bajo su Comisión igual que en el sitio, y
+  una fila «General de la parroquia» recoge lo que no tiene pastoral. Arriba, cuántas
+  pastorales tienen fechas y **cuáles no tienen ninguna**, que es la lista de a quién hay
+  que recordarle; las Comisiones no cuentan ahí porque casi nunca programan a su nombre.
+
+**Propuestas sí recorta, a diferencia del calendario.** Con alcance global se ven todas las
+pastorales y la lista de las que faltan; una coordinación ve la misma tabla con solo sus
+pastorales (`Auth::pastoralesPermitidas()` → `agenda()` y `agrupadoVisible()`) y sin esa
+lista, que no le toca llevar. Es una pantalla de revisión, no de coordinación: el
+calendario completo ya está en la pestaña de al lado y en la Agenda.
+
+Un evento que empieza en diciembre y acaba en enero aparece en enero del año siguiente: es
+donde cae dentro de ese año. En la casilla, «12–14» dura varios días y «28+» sigue en el
+mes siguiente. Los estilos están en `app.css`, incluida una hoja de impresión acotada con
+`body:has(.propuestas-tabla)` —la hoja la carga todo el panel— que pone la tabla en papel
+horizontal y deja que los títulos se partan, porque en papel no hay ratón para leer el
+título completo.
+
 ### Coordinarse y administrar son dos pantallas, no una
 
 Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y
