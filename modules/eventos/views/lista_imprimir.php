@@ -37,8 +37,11 @@ $publicados = count(array_filter($eventos, static fn ($ev) => (int) $ev['publica
     .li-boton { background: #1e4d8b; color: #fff; border: 0; border-radius: .4rem; padding: .55rem 1.1rem; font-size: .9rem; cursor: pointer; }
     .li-aviso { background: #fff8e1; border: 1px solid #f0c36d; border-radius: .4rem; padding: .6rem .9rem; margin-bottom: 1rem; font-size: .9rem; }
     .li-hoja { background: #fff; max-width: 1100px; margin: 0 auto; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-    .li-parroquia { margin: 0; color: #555; font-size: 9pt; text-transform: uppercase; letter-spacing: .05em; }
-    h1 { margin: .15rem 0 .35rem; font-size: 16pt; color: #16233a; }
+    .encabezado-reporte { display: flex; align-items: center; gap: 1rem; padding-bottom: .6rem; margin-bottom: .6rem; border-bottom: 2px solid #000; }
+    .encabezado-reporte-logo { height: 58px; width: auto; }
+    .encabezado-reporte p { margin: 0; }
+    .encabezado-reporte-parroquia { font-size: 9pt; text-transform: uppercase; letter-spacing: .05em; color: #333; }
+    .encabezado-reporte-titulo { font-size: 16pt; font-weight: bold; color: #000; }
     .li-datos { margin: 0 0 1rem; color: #444; font-size: 9pt; }
     table { width: 100%; border-collapse: collapse; }
     thead th { text-align: left; background: #1e4d8b; color: #fff; padding: .35rem .45rem; font-size: 9pt; }
@@ -79,8 +82,7 @@ $publicados = count(array_filter($eventos, static fn ($ev) => (int) $ev['publica
 <?php endif; ?>
 
 <div class="li-hoja">
-    <p class="li-parroquia"><?= e(APP_NAME) ?></p>
-    <h1>Eventos</h1>
+    <?php $rep_titulo = 'Eventos'; require BASE_PATH . '/shared/views/parciales/encabezado_reporte.php'; ?>
     <p class="li-datos">
         <?= count($eventos) === 1 ? '1 evento' : count($eventos) . ' eventos' ?>
         <?php if ($eventos): ?>(<?= $publicados ?> publicados, <?= count($eventos) - $publicados ?> en borrador)<?php endif; ?>

@@ -4,7 +4,12 @@
  * publicado y lo que sigue en borrador.
  */
 ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+<?php
+$rep_titulo = 'Agenda parroquial';
+$rep_soloImpresion = true;
+require BASE_PATH . '/shared/views/parciales/encabezado_reporte.php';
+?>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 d-print-none">
     <div>
         <h1 class="h4 fw-bold mb-1">Agenda</h1>
         <p class="text-muted mb-0 small">

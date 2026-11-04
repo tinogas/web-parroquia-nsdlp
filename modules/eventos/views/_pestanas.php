@@ -13,8 +13,20 @@ $pestanas = [
     'calendario' => ['Calendario', 'bi-calendar3',      url_admin('eventos', 'calendario')],
     'propuestas' => ['Propuestas ' . $proximoAnio, 'bi-calendar2-range', url_admin('eventos', 'propuestas')],
 ];
+
+// En papel, en lugar del título de pantalla, el encabezado con el logo.
+$rep_titulo = [
+    'lista'      => 'Eventos',
+    'calendario' => 'Eventos — Calendario',
+    'propuestas' => isset($anio, $estado)
+        ? 'Propuestas ' . $anio . ' · ' . (['borradores' => 'solo borradores', 'todos' => 'borradores y publicados',
+                                            'publicados' => 'solo publicados'][$estado] ?? '')
+        : 'Propuestas',
+][$pestana] ?? 'Eventos';
+$rep_soloImpresion = true;
+require BASE_PATH . '/shared/views/parciales/encabezado_reporte.php';
 ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 d-print-none">
     <div>
         <h1 class="h4 fw-bold mb-1">Eventos</h1>
         <p class="text-muted mb-0 small"><?= e($subtitulo ?? 'Celebraciones y actividades con fecha concreta.') ?></p>

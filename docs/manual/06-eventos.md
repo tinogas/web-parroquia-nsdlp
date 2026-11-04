@@ -44,7 +44,7 @@ que estás viendo; y en orden de fecha, del primero al último.
   navegador; no hay que instalar nada.
 - **Imprimir** abre esa misma hoja y la manda a la impresora.
 
-Arriba de la hoja se dice cuántos eventos son, qué filtros se usaron y la fecha
+Arriba de la hoja va el logo de la parroquia, en negro, y se dice cuántos eventos son, qué filtros se usaron y la fecha
 en que se imprimió, para que el papel se entienda solo. Quien no tiene alcance
 sobre toda la parroquia saca lo mismo que ve en su lista: lo de sus pastorales y
 lo general.

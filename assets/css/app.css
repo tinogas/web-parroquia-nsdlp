@@ -1563,7 +1563,21 @@ a.propuesta:hover { background: color-mix(in srgb, var(--color) 22%, #fff); }
     body:has(.calendario-interno), body:has(.calendario-interno) .main-content { background: #fff !important; }
     .calendario-interno * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body:has(.calendario-interno) .table-responsive { overflow: visible !important; }
+    /* Con el encabezado del logo, el mes ya no cabía en una hoja: casillas tan
+       altas como su contenido y una semana nunca partida entre dos hojas. */
+    body:has(.calendario-interno) .calendario-tabla td { height: 3.2rem; padding: .2rem; }
+    body:has(.calendario-interno) .calendario-tabla tr { break-inside: avoid; }
+    body:has(.calendario-interno) .calendario-interno { zoom: .85; }
+    body:has(.calendario-interno) .calendario-tabla .evento-punto { font-size: .62rem; line-height: 1.25; padding: 0 .25rem; margin-bottom: 1px; }
+    body:has(.calendario-interno) .calendario-interno h2 { margin-bottom: .25rem; }
     /* Hoja apaisada solo para esta página: un @page suelto cambiaría la de todo el panel. */
     body:has(.calendario-interno) .main-content { page: calendario-apaisado; }
 }
 @page calendario-apaisado { size: landscape; margin: 8mm; }
+
+/* ── Encabezado de los reportes impresos (parciales/encabezado_reporte.php) ── */
+.encabezado-reporte { align-items: center; gap: 1rem; padding-bottom: .5rem; margin-bottom: .75rem; border-bottom: 2px solid #000; }
+.encabezado-reporte-logo { height: 52px; width: auto; }
+.encabezado-reporte p { margin: 0; color: #000; }
+.encabezado-reporte-parroquia { font-size: 8pt; text-transform: uppercase; letter-spacing: .05em; }
+.encabezado-reporte-titulo { font-size: 14pt; font-weight: 700; }

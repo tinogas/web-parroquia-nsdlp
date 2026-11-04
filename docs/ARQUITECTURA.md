@@ -645,6 +645,14 @@ que imprime la página misma. La hoja de impresión en `app.css` va acotada con
 horizontal la impresión de todo el panel. Los filtros no se imprimen, así que un script los
 escribe junto al título en `beforeprint`.
 
+**El logo en los reportes.** Las cuatro salidas impresas —la hoja de la lista, los dos
+calendarios y Propuestas— llevan arriba `shared/views/parciales/encabezado_reporte.php`: el
+logo **negro** (`assets/img/logo-nsdlp-negro.png`) y el nombre del reporte. No es el logo de
+Configuración, que es blanco para la barra oscura del sitio y en papel no se vería; y va en
+`assets/` y no en `uploads/` porque `uploads/` no se versiona. En las páginas del panel que
+se imprimen tal cual, el encabezado es `d-none d-print-flex` y la cabecera de pantalla
+`d-print-none`.
+
 ### Coordinarse y administrar son dos pantallas, no una
 
 Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y
