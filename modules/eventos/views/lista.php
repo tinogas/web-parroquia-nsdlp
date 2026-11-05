@@ -179,6 +179,7 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                      && Auth::puedeSobreCentro($evento['centro_id'] !== null ? (int) $evento['centro_id'] : null);
                 $puedeEditar  = $suyo && Auth::tienePermiso('eventos.editar');
                 $puedeBorrar  = $suyo && Auth::tienePermiso('eventos.eliminar');
+                $puedeDuplicar = $suyo && Auth::tienePermiso('eventos.crear');
                 ?>
                 <tr>
                     <td>
@@ -214,7 +215,12 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?>
                         <a href="<?= e(url_admin('eventos', 'editar', ['id' => $evento['id']])) ?>"
-                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                           class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <?php endif; ?>
+                        <?php if ($puedeDuplicar): ?>
+                        <a href="<?= e(url_admin('eventos', 'duplicar', ['id' => $evento['id']])) ?>"
+                           class="btn btn-sm btn-outline-secondary" title="Duplicar: el mismo evento en otra fecha"
+                           aria-label="Duplicar «<?= e($evento['titulo']) ?>»"><i class="bi bi-copy"></i></a>
                         <?php endif; ?>
                         <?php if ($puedeBorrar): ?>
                         <button type="button" class="btn btn-sm btn-outline-danger"

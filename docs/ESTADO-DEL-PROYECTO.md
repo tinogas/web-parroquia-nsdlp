@@ -88,7 +88,8 @@ WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos lle
 **Comunicación** — `avisos`, `eventos` (con tres pestañas: la lista, un calendario como el
 del sitio pero con los borradores, y **Propuestas**, la tabla de pastorales por mes para
 revisar lo que cada una propone para el año siguiente; la lista se saca a Excel —`.xlsx`
-escrito por `core/Xlsx.php`, sin librería—, a PDF o a papel), `agenda` (calendario interno,
+escrito por `core/Xlsx.php`, sin librería—, a PDF o a papel, y cada evento se puede
+**duplicar** a otra fecha), `agenda` (calendario interno,
 ve borradores de toda la parroquia a propósito, para que nadie reserve el salón dos veces).
 Los dos calendarios internos saltan por mes y año y se imprimen.
 

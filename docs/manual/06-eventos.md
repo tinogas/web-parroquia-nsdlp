@@ -24,7 +24,7 @@ Como el de avisos, pero con **más filtros, y todos se combinan**:
 
 Cada renglón dice el título —con la pastoral y la sede en dos etiquetas
 debajo—, la fecha con su hora, el lugar y el estado. A la derecha, el lápiz
-para editar y el bote para borrar. Con el botón azul **Nuevo evento** se crea
+para editar, las dos hojas para **duplicar** y el bote para borrar. Con el botón azul **Nuevo evento** se crea
 uno.
 
 ### Sacar la lista: Excel, PDF o papel
@@ -194,6 +194,27 @@ queda en borrador hasta que alguien con permiso lo publique.
 
 El lápiz abre el formulario; apagar **Publicado** lo retira del sitio sin
 borrarlo, y el bote de basura lo elimina, preguntando antes.
+
+### Duplicar: el mismo evento en otra fecha
+
+Como en cualquier calendario. Cuando un evento se repite con otra fecha —el
+retiro de cada trimestre, la junta mensual, la fiesta del año que viene— no
+hace falta capturarlo de nuevo: el botón de las **dos hojas** en el renglón
+de la lista, o **Duplicar** arriba del formulario de un evento, abre un
+evento **nuevo** ya lleno con todo lo del original: título, horario, lugar,
+descripción, pastoral, sede, color, imagen y si va publicado.
+
+- Solo hay que **poner la nueva fecha de inicio**. El cursor ya está ahí, y
+  **el fin se mueve solo**, guardando la duración: si el original iba del
+  viernes 8:00 al domingo 19:00 y lo pasas a otro viernes, el fin queda en
+  el domingo siguiente a las 19:00.
+- Se puede cambiar cualquier otra cosa antes de guardar; el botón dice
+  **Guardar la copia**. Hasta entonces no se ha creado nada: si te
+  arrepientes, basta con **Cancelar**.
+- **El original no se toca.** La copia lleva su propio archivo de la imagen,
+  así que borrar o cambiar la foto de uno no afecta al otro.
+- Si tu cuenta no puede publicar, la copia queda en borrador, como todo lo
+  que capturas. Solo se pueden duplicar eventos de tu pastoral y tu sede.
 
 Para algo que se repite todas las semanas —la misa, la hora santa, el ensayo
 del coro— **no se capturan eventos uno por uno**: eso son horarios, y viven en

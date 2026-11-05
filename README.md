@@ -40,7 +40,8 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   cuáles todavía no proponen nada y se imprime para la reunión de planeación. Proponer es
   capturar el evento sin publicarlo, como antes. La **lista** se descarga a Excel o se
   imprime / guarda como PDF con los filtros puestos, y los calendarios internos saltan a
-  cualquier mes y año y se imprimen.
+  cualquier mes y año y se imprimen. Cada evento se **duplica** a otra fecha con un botón,
+  como en cualquier calendario.
 - **Los roles se simplificaron y las cuentas salen del equipo pastoral**: se retiraron los
   seis roles con la pastoral en el nombre (Administrador MESC, Consulta Catequesis…) y
   quedan Administrador, Editor, Coordinador, Coordinador general, Consulta y Secretaría —el

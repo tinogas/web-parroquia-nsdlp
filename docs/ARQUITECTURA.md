@@ -653,6 +653,24 @@ Configuración, que es blanco para la barra oscura del sitio y en papel no se ve
 se imprimen tal cual, el encabezado es `d-none d-print-flex` y la cabecera de pantalla
 `d-print-none`.
 
+### Duplicar un evento
+
+`EventoController::duplicar()` pinta `eventos/form` como **evento nuevo** (`evento` null)
+con `original` lleno: el formulario toma los valores de `$evento ?? $original` y manda
+`id=0` más un oculto `duplicar_de`. No se guarda nada hasta el POST, que pasa por el
+`guardar()` de siempre. Pide `eventos.crear` y alcance sobre la pastoral y la sede del
+original, en la acción y otra vez al guardar (`originalDeDuplicado()`): si el original ya no
+es visible, se guarda como un evento nuevo cualquiera, sin su imagen.
+
+**La imagen se copia, no se comparte.** Si dos eventos apuntaran al mismo archivo, borrar
+uno (`Upload::borrar()`) dejaría al otro sin foto; `imagenDeDuplicado()` usa la que se suba,
+ninguna si se marcó «Quitar», o `Upload::copiar()`, que duplica el archivo con nombre nuevo.
+El archivo del original nunca se borra desde ahí. El slug sale nuevo del título
+(`Slug::unico()`), y en la bitácora queda `crear` con «(copia del #id)».
+
+En el formulario, un script mueve **Fin** al mover **Inicio**, conservando la duración
+—como cualquier calendario—, y vale también para crear y editar.
+
 ### Coordinarse y administrar son dos pantallas, no una
 
 Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y

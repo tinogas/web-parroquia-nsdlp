@@ -500,6 +500,55 @@ class EventoController extends Controller
         ]));
     }
 
+    /**
+     * Duplicar, como en cualquier calendario: el mismo evento —título, horario,
+     * lugar, descripción, pastoral, sede, color e imagen— en otra fecha. Abre
+     * el formulario de evento nuevo ya lleno; nada se guarda hasta que se
+     * pulsa Guardar, así que arrepentirse es solo no guardar.
+     *
+     * Hace falta poder crear eventos y que el original sea de su pastoral y
+     * sede: duplicar lo ajeno sería una forma de leer lo que no le toca.
+     */
+    public function duplicar(): void
+    {
+        $this->requirePermiso('eventos.crear');
+
+        $original = $this->modelo->porId($this->getInt('id'));
+        if (!$original) {
+            Session::flash('error', 'No encontramos ese evento.');
+            $this->redirect(url_admin('eventos'));
+            return;
+        }
+        $this->requireAlcanceContenido(
+            $original['pastoral_id'] !== null ? (int) $original['pastoral_id'] : null,
+            $original['centro_id'] !== null ? (int) $original['centro_id'] : null
+        );
+
+        $this->render('eventos/form', array_merge($this->opcionesPastoral(), $this->opcionesCentro(), [
+            'titulo'      => 'Duplicar evento',
+            'evento'      => null,
+            'original'    => $original,
+            'scriptExtra' => $this->scriptEditor(),
+        ]));
+    }
+
+    /**
+     * El evento del que se está haciendo copia, si el formulario viene de
+     * Duplicar y quien guarda todavía puede verlo; si no, null y se guarda
+     * como un evento nuevo cualquiera (sin imagen heredada).
+     */
+    private function originalDeDuplicado(): ?array
+    {
+        $id = $this->postInt('duplicar_de');
+        $original = $id ? $this->modelo->porId($id) : null;
+        if (!$original
+            || !Auth::puedeSobrePastoral($original['pastoral_id'] !== null ? (int) $original['pastoral_id'] : null)
+            || !Auth::puedeSobreCentro($original['centro_id'] !== null ? (int) $original['centro_id'] : null)) {
+            return null;
+        }
+        return $original;
+    }
+
     public function guardar(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -517,13 +566,19 @@ class EventoController extends Controller
                 $existente['centro_id'] !== null ? (int) $existente['centro_id'] : null
             );
         }
+        $original = $existente ? null : $this->originalDeDuplicado();
+
+        // A dónde volver si algo falta: al mismo formulario del que se vino.
+        $urlFormulario = $id
+            ? url_admin('eventos', 'editar', ['id' => $id])
+            : ($original ? url_admin('eventos', 'duplicar', ['id' => (int) $original['id']]) : url_admin('eventos', 'nuevo'));
 
         $titulo = $this->postStr('titulo');
         $inicio = $this->postStr('fecha_inicio');
 
         if ($titulo === '' || $inicio === '') {
             Session::flash('error', 'El evento necesita título y fecha de inicio.');
-            $this->redirect($id ? url_admin('eventos', 'editar', ['id' => $id]) : url_admin('eventos', 'nuevo'));
+            $this->redirect($urlFormulario);
             return;
         }
 
@@ -532,7 +587,7 @@ class EventoController extends Controller
             $centroId   = $this->centroIdValidado();
         } catch (RuntimeException $e) {
             Session::flash('error', $e->getMessage());
-            $this->redirect($id ? url_admin('eventos', 'editar', ['id' => $id]) : url_admin('eventos', 'nuevo'));
+            $this->redirect($urlFormulario);
             return;
         }
 
@@ -543,7 +598,11 @@ class EventoController extends Controller
 
         $imagen = $existente['imagen'] ?? null;
         try {
-            $imagen = $this->procesarImagen($imagen);
+            if ($original) {
+                $imagen = $this->imagenDeDuplicado($original);
+            } else {
+                $imagen = $this->procesarImagen($imagen);
+            }
         } catch (RuntimeException $e) {
             Session::flash('warning', 'El evento se guardó, pero la imagen no: ' . $e->getMessage());
         }
@@ -574,8 +633,12 @@ class EventoController extends Controller
             if (!Session::hayFlash()) { Session::flash('success', 'Evento actualizado.'); }
         } else {
             $id = $this->modelo->crear($datos, (int) Auth::usuario()['id']);
-            $this->auditoria('crear', 'eventos', $id, $titulo);
-            Session::flash('success', $puedePublicar ? 'Evento creado.' : 'Evento enviado como borrador para revisión.');
+            $this->auditoria('crear', 'eventos', $id, $original ? $titulo . ' (copia del #' . (int) $original['id'] . ')' : $titulo);
+            Session::flash('success', match (true) {
+                !$puedePublicar    => 'Evento enviado como borrador para revisión.',
+                $original !== null => 'Evento duplicado.',
+                default            => 'Evento creado.',
+            });
         }
 
         $this->redirect(url_admin('eventos'));
@@ -614,6 +677,31 @@ class EventoController extends Controller
             return null;
         }
         return Upload::imagen('imagen', 'eventos', 'evento', $actual);
+    }
+
+    /**
+     * La imagen de la copia: la que se suba en el formulario, ninguna si se
+     * marcó «Quitar», o si no, una copia del archivo del original —nunca el
+     * mismo archivo, porque borrar o cambiar la imagen de uno se llevaría la
+     * del otro—. El archivo del original no se toca en ningún caso.
+     */
+    private function imagenDeDuplicado(array $original): ?string
+    {
+        if (!empty($_POST['imagen_quitar'])) {
+            return null;
+        }
+        $subida = Upload::imagen('imagen', 'eventos', 'evento', null);
+        if ($subida !== null) {
+            return $subida;
+        }
+        if (empty($original['imagen'])) {
+            return null;
+        }
+        $copia = Upload::copiar($original['imagen'], 'eventos', 'evento');
+        if ($copia === null) {
+            throw new RuntimeException('no se pudo copiar la del evento original.');
+        }
+        return $copia;
     }
 
     private function scriptEditor(): string

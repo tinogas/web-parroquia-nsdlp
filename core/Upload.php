@@ -111,6 +111,36 @@ class Upload
         return $ruta;
     }
 
+    /**
+     * Copia un archivo ya subido con nombre nuevo, para que otro registro lo
+     * use sin compartirlo: al duplicar un evento, si los dos apuntaran al mismo
+     * archivo, borrar uno dejaría al otro sin imagen. Devuelve null si el
+     * original ya no está en el disco o no se puede copiar.
+     */
+    public static function copiar(?string $ruta, string $subdir, string $prefijo): ?string
+    {
+        if (empty($ruta) || !str_starts_with($ruta, 'uploads/') || str_contains($ruta, '..')) {
+            return null;
+        }
+        $origen = rtrim(BASE_PATH, '/\\') . '/' . $ruta;
+        if (!is_file($origen)) {
+            return null;
+        }
+
+        $relativa = 'uploads/' . self::subdirSeguro($subdir) . '/' . date('Y') . '/' . date('m') . '/';
+        $absoluta = rtrim(BASE_PATH, '/\\') . '/' . $relativa;
+        if (!is_dir($absoluta) && !@mkdir($absoluta, 0775, true) && !is_dir($absoluta)) {
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($ruta, PATHINFO_EXTENSION));
+        $nombre = preg_replace('/[^a-z0-9]/', '', strtolower($prefijo))
+                . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4))
+                . ($extension !== '' ? '.' . preg_replace('/[^a-z0-9]/', '', $extension) : '');
+
+        return @copy($origen, $absoluta . $nombre) ? $relativa . $nombre : null;
+    }
+
     /** Borra un archivo subido. Solo actúa dentro de uploads/. */
     public static function borrar(?string $ruta): void
     {
