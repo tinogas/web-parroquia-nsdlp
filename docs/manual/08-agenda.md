@@ -32,6 +32,17 @@ anterior o siguiente. Al lado del nombre del periodo se dice cuántos registros
 tiene: son registros, no días ocupados, así que un curso de tres meses cuenta
 como uno aunque se pinte en noventa casillas.
 
+**Saltar a otro mes o año.** Junto a las flechas hay dos selectores, **mes** y
+**año**. Al elegir uno, la agenda salta ahí directamente, en la misma vista y
+con los mismos filtros. Es lo cómodo para mirar, desde noviembre, cómo viene
+marzo del año que entra.
+
+**Imprimir.** El botón **Imprimir** de esa misma fila imprime el periodo que se
+ve —el mes, la semana, el año— en hoja horizontal y sin el menú ni los botones.
+En la ventana de impresión, eligiendo **«Guardar como PDF»** en Destino, queda
+como PDF. Si filtraste por pastoral o por sede, el filtro sale escrito junto al
+título.
+
 **Los colores.** La leyenda de la derecha lo resume: azul para los eventos,
 dorado para los cursos. Un evento al que se le puso color propio en su
 formulario se dibuja con ese color, que es para lo que sirve ese campo.
@@ -69,3 +80,12 @@ Debajo del calendario aparece a veces una nota con los **cursos sin fecha de
 inicio**. Un curso sin fecha no cabe en ninguna casilla, y en vez de
 desaparecerlo en silencio, la agenda lo enumera ahí para que alguien le ponga
 fecha.
+
+## Solo los eventos, o el año que viene
+
+Si lo que buscas son **solo los eventos** —sin los cursos— o **solo lo que está
+en borrador**, en Comunicación → Eventos está la pestaña **Calendario**, con el
+mismo dibujo y un filtro para quedarse con los borradores. Y para revisar **lo
+que cada pastoral propone para el año siguiente**, la pestaña **Propuestas**
+lo pone en una tabla de pastorales por mes. Las dos se explican en el
+capítulo 6.

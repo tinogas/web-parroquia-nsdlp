@@ -10,12 +10,12 @@
     },
     {
       "imagen": "eventos-lista",
-      "texto": "Este listado tiene más filtros que el de avisos, y todos se combinan: el estado, la pastoral, la sede, y el día, el mes y el año. Casi siempre se busca lo de este mes: se elige y se pulsa Filtrar.",
+      "texto": "Arriba hay tres pestañas: Lista, Calendario y Propuestas. En la lista hay más filtros que en avisos, y todos se combinan: el estado, la pastoral, la sede, y el día, el mes y el año. Casi siempre se busca lo de este mes: se elige y se pulsa Filtrar.",
       "foco": [
         0.21,
-        0.2,
+        0.27,
         0.92,
-        0.45
+        0.53
       ]
     },
     {
@@ -23,9 +23,59 @@
       "texto": "Cada renglón dice el título, con su pastoral y su sede, la fecha con su hora, el lugar y el estado.",
       "foco": [
         0.21,
+        0.52,
+        0.98,
+        1.0
+      ]
+    },
+    {
+      "imagen": "eventos-calendario",
+      "texto": "La pestaña Calendario enseña los eventos igual que el calendario del sitio, con sus vistas de día, semana, mes y año. La diferencia es que aquí también salen los borradores, con el borde punteado.",
+      "foco": [
+        0.21,
         0.45,
         0.98,
         1.0
+      ]
+    },
+    {
+      "imagen": "eventos-calendario",
+      "texto": "Encima están los filtros. Con Borradores queda solo lo que todavía no se anuncia: lo que las pastorales tienen propuesto. También se puede filtrar por pastoral y por sede. Solo lo que puedes editar se abre con un clic; lo demás se ve, pero no lleva a ninguna parte.",
+      "foco": [
+        0.21,
+        0.27,
+        0.82,
+        0.5
+      ]
+    },
+    {
+      "imagen": "eventos-propuestas",
+      "texto": "La pestaña Propuestas es para revisar el año que viene. Cada pastoral captura sus fechas como borrador, y aquí se ven todas juntas. Arriba dice cuántas fechas hay, cuántas pastorales ya propusieron algo, y cuáles todavía no tienen ninguna fecha, que es la lista de a quién hay que recordarle.",
+      "foco": [
+        0.21,
+        0.26,
+        0.98,
+        0.8
+      ]
+    },
+    {
+      "imagen": "eventos-propuestas-tabla",
+      "texto": "La tabla tiene una fila por pastoral, agrupadas bajo su comisión, y una columna por mes. El número es el día y luego va el título. Los borradores llevan borde punteado. Al pasar el ratón se ve el detalle, y con un clic se abre para editarlo o publicarlo.",
+      "foco": [
+        0.21,
+        0.15,
+        0.98,
+        0.9
+      ]
+    },
+    {
+      "imagen": "eventos-propuestas",
+      "texto": "Por omisión muestra el año siguiente y solo los borradores, pero se puede cambiar el año o ver también lo publicado. Con Imprimir sale en papel horizontal, para la reunión de planeación. Una coordinación ve la misma tabla, solo con sus pastorales.",
+      "foco": [
+        0.21,
+        0.27,
+        0.8,
+        0.48
       ]
     },
     {
@@ -131,7 +181,7 @@
       "texto": "Para cambiar un evento, usa el lápiz. Apagar Publicado lo retira del sitio sin borrarlo, y el bote de basura lo elimina, preguntando antes.",
       "foco": [
         0.84,
-        0.45,
+        0.52,
         0.98,
         1.0
       ]

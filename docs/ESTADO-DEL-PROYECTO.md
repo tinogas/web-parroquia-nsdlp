@@ -85,8 +85,13 @@ pastoral, y un responsable que puede ser una persona o un matrimonio). En los li
 integrantes —los cuatro módulos dedicados y el panel básico— cada quien lleva su botón de
 WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos llevarán.
 
-**Comunicación** — `avisos`, `eventos`, `agenda` (calendario interno, ve borradores de
-toda la parroquia a propósito, para que nadie reserve el salón dos veces).
+**Comunicación** — `avisos`, `eventos` (con tres pestañas: la lista, un calendario como el
+del sitio pero con los borradores, y **Propuestas**, la tabla de pastorales por mes para
+revisar lo que cada una propone para el año siguiente; la lista se saca a Excel —`.xlsx`
+escrito por `core/Xlsx.php`, sin librería—, a PDF o a papel, y cada evento se puede
+**duplicar** a otra fecha), `agenda` (calendario interno,
+ve borradores de toda la parroquia a propósito, para que nadie reserve el salón dos veces).
+Los dos calendarios internos saltan por mes y año y se imprimen.
 
 **Trámites** — `sacramentos` (informativo), `cursos` e `inscripciones`.
 

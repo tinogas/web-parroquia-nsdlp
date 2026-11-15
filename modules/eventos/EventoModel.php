@@ -30,6 +30,53 @@ class EventoModel extends Model
         ?int $mes = null,
         ?int $dia = null
     ): array {
+        [$where, $params] = $this->condicionesLista($filtro, $pastorales, $centros, $anio, $mes, $dia);
+
+        return $this->paginar(
+            self::SELECT_LISTA . " {$where} ORDER BY e.fecha_inicio DESC, e.id DESC",
+            $params,
+            $pagina,
+            15
+        );
+    }
+
+    /**
+     * Lo mismo que listar() pero sin paginar y en orden cronológico, que es
+     * como se lee un listado en papel o en Excel. Lo usan la exportación y la
+     * hoja de impresión (EventoController::exportar() e imprimir()).
+     */
+    public function listarTodos(
+        string $filtro = 'todos',
+        ?array $pastorales = null,
+        ?array $centros = null,
+        ?int $anio = null,
+        ?int $mes = null,
+        ?int $dia = null
+    ): array {
+        [$where, $params] = $this->condicionesLista($filtro, $pastorales, $centros, $anio, $mes, $dia);
+
+        return $this->fetchAll(
+            self::SELECT_LISTA . " {$where} ORDER BY e.fecha_inicio ASC, e.id ASC",
+            $params
+        );
+    }
+
+    private const SELECT_LISTA =
+        'SELECT e.*, u.nombre AS autor, p.nombre AS pastoral_nombre, c.nombre AS centro_nombre
+           FROM eventos e
+           LEFT JOIN usuarios u ON u.id = e.usuario_id
+           LEFT JOIN pastorales p ON p.id = e.pastoral_id
+           LEFT JOIN centros c ON c.id = e.centro_id';
+
+    /** WHERE de la lista de eventos —estado, fecha, pastoral y sede— como [sql, params]. */
+    private function condicionesLista(
+        string $filtro,
+        ?array $pastorales,
+        ?array $centros,
+        ?int $anio,
+        ?int $mes,
+        ?int $dia
+    ): array {
         $condiciones = [];
         $params      = [];
 
@@ -53,20 +100,7 @@ class EventoModel extends Model
             }
         }
 
-        $where = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
-
-        return $this->paginar(
-            "SELECT e.*, u.nombre AS autor, p.nombre AS pastoral_nombre, c.nombre AS centro_nombre
-               FROM eventos e
-               LEFT JOIN usuarios u ON u.id = e.usuario_id
-               LEFT JOIN pastorales p ON p.id = e.pastoral_id
-               LEFT JOIN centros c ON c.id = e.centro_id
-               {$where}
-              ORDER BY e.fecha_inicio DESC, e.id DESC",
-            $params,
-            $pagina,
-            15
-        );
+        return [$condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '', $params];
     }
 
     /**

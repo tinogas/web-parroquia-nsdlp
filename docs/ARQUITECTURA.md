@@ -576,6 +576,101 @@ consultan contenido, **incluidos los seis de Consulta**: para un ministro, cateq
 proclamador es la única pantalla que verán además de la de su pastoral, y es la que responde
 "¿qué hay programado esta semana?" sin darles con qué editar nada.
 
+### Eventos en calendario y las propuestas del año siguiente
+
+La parroquia pidió, dentro de Eventos, verlos en calendario «como en la página» y, sobre
+todo, **revisar las fechas que cada pastoral propone para el año siguiente**. Las propuestas
+no son un estado nuevo: una pastoral propone capturando el evento con `publicado = 0`, que
+es lo que ya hacía. No se añadió columna ni flujo de aprobación —aprobar es encender
+**Publicado**, como siempre—, así que no hay migración.
+
+Eventos pasó a tener tres pestañas (`modules/eventos/views/_pestanas.php`):
+
+- **Lista**, el listado de siempre, que sigue recortando por alcance.
+- **Calendario** (`EventoController::calendario()`). Es la Agenda recortada a eventos, con
+  dos diferencias: el estado es un **filtro de servidor** (`?estado=borradores` deja solo lo
+  propuesto; la Agenda solo atenúa u oculta en pantalla) y no mezcla cursos. Reutiliza
+  `EventoModel::agenda()`, `Calendario` y **las mismas vistas de la Agenda**
+  (`modules/agenda/views/`), que ahora reciben `$calRuta` —[módulo, acción]— para saber a
+  dónde llevan el número del día y el nombre del mes; sin ella siguen apuntando a la Agenda.
+  Como la Agenda, **no recorta por alcance** —mirar todo es lo que evita pisarse el salón— y
+  el enlace a editar solo se dibuja sobre lo propio (`urlDeEdicion()`, la misma regla que
+  `AgendaController`).
+- **Propuestas** (`EventoController::propuestas()`): una tabla de pastorales por meses para
+  un año —por omisión el siguiente— y, por omisión, solo borradores. Las filas salen de
+  `PastoralModel::agrupadoVisible()`, así que van bajo su Comisión igual que en el sitio, y
+  una fila «General de la parroquia» recoge lo que no tiene pastoral. Arriba, cuántas
+  pastorales tienen fechas y **cuáles no tienen ninguna**, que es la lista de a quién hay
+  que recordarle; las Comisiones no cuentan ahí porque casi nunca programan a su nombre.
+
+**Propuestas sí recorta, a diferencia del calendario.** Con alcance global se ven todas las
+pastorales y la lista de las que faltan; una coordinación ve la misma tabla con solo sus
+pastorales (`Auth::pastoralesPermitidas()` → `agenda()` y `agrupadoVisible()`) y sin esa
+lista, que no le toca llevar. Es una pantalla de revisión, no de coordinación: el
+calendario completo ya está en la pestaña de al lado y en la Agenda.
+
+Un evento que empieza en diciembre y acaba en enero aparece en enero del año siguiente: es
+donde cae dentro de ese año. En la casilla, «12–14» dura varios días y «28+» sigue en el
+mes siguiente. Los estilos están en `app.css`, incluida una hoja de impresión acotada con
+`body:has(.propuestas-tabla)` —la hoja la carga todo el panel— que pone la tabla en papel
+horizontal y deja que los títulos se partan, porque en papel no hay ratón para leer el
+título completo.
+
+### La lista de eventos a Excel, PDF y papel; el calendario a papel
+
+**Excel de verdad, no CSV.** Las demás exportaciones del panel (inscripciones, bitácora,
+rutas MESC) son CSV; esta se pidió «a Excel», y un CSV llega sin formato, con las fechas como
+texto y con el separador equivocado en un Excel en español. `core/Xlsx.php` escribe un
+`.xlsx` mínimo —una pestaña, encabezado fijo con autofiltro, anchos de columna, fechas y
+horas como valores— **sin librería**: el proyecto no usa Composer y el PHP de XAMPP trae
+`ZipArchive` apagado (`;extension=zip`), así que el zip se arma a mano con `gzdeflate()` y
+`crc32()`, que vienen siempre. Si algún día hace falta otra exportación a Excel, es esa clase.
+
+**El PDF lo hace el navegador**, como el organigrama, los horarios y los turnos MESC:
+`EventoController::imprimir()` sirve `eventos/lista_imprimir.php`, una página sin layout,
+partida por meses, que abre sola el diálogo de impresión; con `?pdf=1` lleva además el aviso
+de elegir «Guardar como PDF», y el `<title>` es el nombre sugerido del archivo.
+
+Las tres salidas —`index()`, `exportar()` e `imprimir()`— leen los filtros con el mismo
+`filtrosDeLista()`, así que **lo que se descarga es exactamente lo de la pantalla**, con su
+recorte por alcance, pero sin paginar (`EventoModel::listarTodos()`, en orden cronológico).
+Las dos salidas quedan en la bitácora como `exportar` sobre `eventos`.
+
+**Los calendarios internos** (Agenda y Eventos → Calendario, que comparten
+`modules/agenda/views/calendario.php`) ganaron un salto por **mes y año** —un formulario GET
+con `?anio=&mes=`, que `Calendario::fechaSolicitada()` ya entendía— y un botón **Imprimir**
+que imprime la página misma. La hoja de impresión en `app.css` va acotada con
+`body:has(.calendario-interno)`, y la orientación horizontal con una **página con nombre**
+(`page: calendario-apaisado`): un `@page { size: landscape }` suelto habría puesto en
+horizontal la impresión de todo el panel. Los filtros no se imprimen, así que un script los
+escribe junto al título en `beforeprint`.
+
+**El logo en los reportes.** Las cuatro salidas impresas —la hoja de la lista, los dos
+calendarios y Propuestas— llevan arriba `shared/views/parciales/encabezado_reporte.php`: el
+logo **negro** (`assets/img/logo-nsdlp-negro.png`) y el nombre del reporte. No es el logo de
+Configuración, que es blanco para la barra oscura del sitio y en papel no se vería; y va en
+`assets/` y no en `uploads/` porque `uploads/` no se versiona. En las páginas del panel que
+se imprimen tal cual, el encabezado es `d-none d-print-flex` y la cabecera de pantalla
+`d-print-none`.
+
+### Duplicar un evento
+
+`EventoController::duplicar()` pinta `eventos/form` como **evento nuevo** (`evento` null)
+con `original` lleno: el formulario toma los valores de `$evento ?? $original` y manda
+`id=0` más un oculto `duplicar_de`. No se guarda nada hasta el POST, que pasa por el
+`guardar()` de siempre. Pide `eventos.crear` y alcance sobre la pastoral y la sede del
+original, en la acción y otra vez al guardar (`originalDeDuplicado()`): si el original ya no
+es visible, se guarda como un evento nuevo cualquiera, sin su imagen.
+
+**La imagen se copia, no se comparte.** Si dos eventos apuntaran al mismo archivo, borrar
+uno (`Upload::borrar()`) dejaría al otro sin foto; `imagenDeDuplicado()` usa la que se suba,
+ninguna si se marcó «Quitar», o `Upload::copiar()`, que duplica el archivo con nombre nuevo.
+El archivo del original nunca se borra desde ahí. El slug sale nuevo del título
+(`Slug::unico()`), y en la bitácora queda `crear` con «(copia del #id)».
+
+En el formulario, un script mueve **Fin** al mover **Inicio**, conservando la duración
+—como cualquier calendario—, y vale también para crear y editar.
+
 ### Coordinarse y administrar son dos pantallas, no una
 
 Hasta aquí, el alcance por pastoral servía para dos cosas a la vez: qué se puede escribir y

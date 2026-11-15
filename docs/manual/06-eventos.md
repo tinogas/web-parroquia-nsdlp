@@ -6,6 +6,10 @@ publicados o no, a la agenda interna del equipo.
 
 **Menú:** Comunicación → Eventos.
 
+Arriba hay tres pestañas, que son tres maneras de ver los mismos eventos:
+**Lista**, **Calendario** y **Propuestas** del año que viene. Las dos últimas
+se explican más abajo.
+
 ## El listado
 
 ![El listado de eventos](img/eventos-lista.webp)
@@ -20,8 +24,111 @@ Como el de avisos, pero con **más filtros, y todos se combinan**:
 
 Cada renglón dice el título —con la pastoral y la sede en dos etiquetas
 debajo—, la fecha con su hora, el lugar y el estado. A la derecha, el lápiz
-para editar y el bote para borrar. Con el botón azul **Nuevo evento** se crea
+para editar, las dos hojas para **duplicar** y el bote para borrar. Con el botón azul **Nuevo evento** se crea
 uno.
+
+### Sacar la lista: Excel, PDF o papel
+
+Encima del listado, a la derecha, hay tres botones. Los tres llevan **los
+eventos del filtro que tienes puesto, todos**, no solo los quince de la página
+que estás viendo; y en orden de fecha, del primero al último.
+
+- **Excel** descarga una hoja (`eventos-2026-03.xlsx`, por ejemplo: el nombre
+  dice el filtro). Trae fecha, hora, cuándo termina, el evento, la pastoral, la
+  sede, el lugar, si está publicado y quién lo capturó. Las fechas son fechas de
+  verdad: en Excel se pueden ordenar y filtrar por mes, y la primera fila ya
+  viene con los filtros puestos.
+- **PDF** abre en otra pestaña una hoja lista para imprimir, partida por meses,
+  y enseguida la ventana de impresión. Ahí, en **Destino**, se elige
+  **«Guardar como PDF»** y se pulsa **Guardar**. El PDF lo hace el propio
+  navegador; no hay que instalar nada.
+- **Imprimir** abre esa misma hoja y la manda a la impresora.
+
+Arriba de la hoja va el logo de la parroquia, en negro, y se dice cuántos eventos son, qué filtros se usaron y la fecha
+en que se imprimió, para que el papel se entienda solo. Quien no tiene alcance
+sobre toda la parroquia saca lo mismo que ve en su lista: lo de sus pastorales y
+lo general.
+
+## El calendario
+
+![Los eventos en calendario](img/eventos-calendario.webp)
+
+La pestaña **Calendario** enseña los eventos **igual que el calendario del
+sitio** —con sus vistas de *Día*, *Semana*, *Mes* y *Año*, y las flechas para
+ir al periodo anterior o al siguiente—, pero con una diferencia que es la razón
+de que exista: **aquí también salen los borradores**. Se distinguen por el
+**borde punteado**; lo publicado va lleno.
+
+Encima están los filtros:
+
+- **Todos / Publicados / Borradores.** Con *Borradores* queda solo lo que
+  todavía no se anuncia: lo que las pastorales tienen propuesto.
+- **Pastoral** y **Sede**, para quedarse con lo de una comunidad.
+
+Para ir lejos sin dar clic mes por mes, junto a las flechas están los
+selectores de **mes** y **año**: se elige, por ejemplo, *Marzo* y *2027*, y el
+calendario salta ahí sin perder la vista ni los filtros. (En la vista *Año* solo
+aparece el del año.)
+
+El botón **Imprimir** imprime —o guarda como PDF, eligiendo «Guardar como PDF»
+en Destino— el periodo que estás viendo, en hoja horizontal y sin el menú ni los
+botones. Los filtros que tenías puestos salen escritos junto al título, para que
+en el papel se sepa si es «solo borradores» o «solo Catequesis».
+
+Al pasar el ratón por una casilla se ve de qué pastoral es, y con un clic se
+abre su formulario. **Solo es enlace lo que puedes editar**: lo de las demás
+pastorales se ve, pero no lleva a ninguna parte. Es la misma regla de la
+agenda interna (capítulo 8): aquí se mira todo, y se toca lo tuyo.
+
+> La diferencia con la **Agenda** es que aquí solo hay eventos —la agenda
+> junta también los cursos— y que el filtro de borradores es de verdad: la
+> agenda los atenúa, este calendario puede quedarse solo con ellos.
+
+## Las propuestas del año que viene
+
+![Las propuestas de las pastorales para el año que viene](img/eventos-propuestas.webp)
+
+Cada pastoral captura sus fechas del año siguiente **como borrador**, con
+**Publicado** apagado. La pestaña **Propuestas** las junta todas en una sola
+pantalla para revisarlas antes de publicarlas.
+
+**Arriba, tres números:** cuántas fechas hay propuestas, cuántas pastorales ya
+propusieron algo y **cuántas no tienen ninguna fecha todavía**; con **Ver
+cuáles** sale la lista, que es la de a quién hay que recordarle. Las Comisiones
+no cuentan en esa lista, porque casi nunca programan a su nombre: lo hacen sus
+dimensiones.
+
+**Los filtros:**
+
+- **Año.** Por omisión, el que viene. Se puede ver también el actual, el
+  anterior o los siguientes.
+- **Mostrar.** Por omisión *Solo borradores*, que son las propuestas. Con
+  *Borradores y publicados* se ve el año completo, y con *Solo publicados*,
+  lo que ya se anunció.
+- **Sede**, si la parroquia tiene más de una.
+- **Imprimir**, para llevar la tabla a la reunión de planeación.
+
+![La tabla de pastorales por mes](img/eventos-propuestas-tabla.webp)
+
+**La tabla** tiene una fila por pastoral, agrupadas bajo su Comisión como en el
+sitio, y una columna por mes. En cada casilla van las fechas de esa pastoral
+ese mes: el número es el día, y luego el título. **«12–14»** es un evento que
+dura del 12 al 14; **«28+»**, uno que sigue en el mes siguiente. Los borradores
+van con borde punteado, igual que en el calendario. Al pasar el ratón se ve el
+detalle —fecha completa, hora, lugar y sede—, y con un clic se abre para
+editarlo o publicarlo. La primera fila, **General de la parroquia**, es lo que
+no tiene pastoral.
+
+El interruptor **Ocultar las pastorales sin fechas** deja solo las filas con
+algo; la Comisión se queda como encabezado si alguna de sus dimensiones tiene
+fechas. El navegador recuerda cómo lo dejaste.
+
+> **Quién ve qué.** El administrador y el editor ven todas las pastorales y la
+> lista de las que faltan. Una coordinación ve la misma tabla, pero solo con
+> sus pastorales y sin esa lista: le sirve para revisar su propio año.
+
+Para **publicar** una fecha ya aprobada no hace falta salir de aquí: se le da
+clic, se enciende **Publicado** y se guarda.
 
 ## El formulario
 
@@ -62,7 +169,8 @@ uno.
 
 Los eventos **no tienen los tres escalones de los avisos**: llevan un solo
 interruptor, **Publicado**, con dos posiciones. Apagado es borrador —lo ve el
-equipo en la agenda interna, nadie más—; encendido sale en el calendario del
+equipo en la agenda interna y en el calendario y las propuestas de Eventos,
+nadie más—; encendido sale en el calendario del
 sitio. **En un evento nuevo viene encendido**: si todavía no quieres que se vea,
 apágalo antes de guardar.
 
@@ -86,6 +194,27 @@ queda en borrador hasta que alguien con permiso lo publique.
 
 El lápiz abre el formulario; apagar **Publicado** lo retira del sitio sin
 borrarlo, y el bote de basura lo elimina, preguntando antes.
+
+### Duplicar: el mismo evento en otra fecha
+
+Como en cualquier calendario. Cuando un evento se repite con otra fecha —el
+retiro de cada trimestre, la junta mensual, la fiesta del año que viene— no
+hace falta capturarlo de nuevo: el botón de las **dos hojas** en el renglón
+de la lista, o **Duplicar** arriba del formulario de un evento, abre un
+evento **nuevo** ya lleno con todo lo del original: título, horario, lugar,
+descripción, pastoral, sede, color, imagen y si va publicado.
+
+- Solo hay que **poner la nueva fecha de inicio**. El cursor ya está ahí, y
+  **el fin se mueve solo**, guardando la duración: si el original iba del
+  viernes 8:00 al domingo 19:00 y lo pasas a otro viernes, el fin queda en
+  el domingo siguiente a las 19:00.
+- Se puede cambiar cualquier otra cosa antes de guardar; el botón dice
+  **Guardar la copia**. Hasta entonces no se ha creado nada: si te
+  arrepientes, basta con **Cancelar**.
+- **El original no se toca.** La copia lleva su propio archivo de la imagen,
+  así que borrar o cambiar la foto de uno no afecta al otro.
+- Si tu cuenta no puede publicar, la copia queda en borrador, como todo lo
+  que capturas. Solo se pueden duplicar eventos de tu pastoral y tu sede.
 
 Para algo que se repite todas las semanas —la misa, la hora santa, el ensayo
 del coro— **no se capturan eventos uno por uno**: eso son horarios, y viven en

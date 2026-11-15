@@ -12,7 +12,7 @@ $anio = substr($fecha, 0, 4);
     <?php $primeroDelMes = sprintf('%s-%02d-01', $anio, $m['mes']); ?>
     <div class="calendario-anio-mes">
         <a class="calendario-anio-titulo text-decoration-none"
-           href="<?= e(url_admin('agenda', '', ['vista' => 'mes', 'fecha' => $primeroDelMes] + $comunes)) ?>">
+           href="<?= e(url_admin($calRuta[0], $calRuta[1], ['vista' => 'mes', 'fecha' => $primeroDelMes] + $comunes)) ?>">
             <?= e($m['nombre']) ?>
             <?php if ($m['total']): ?><span class="cuantos"><?= (int) $m['total'] ?></span><?php endif; ?>
         </a>
@@ -30,7 +30,7 @@ $anio = substr($fecha, 0, 4);
                     <?php foreach ($semana as $celda): ?>
                     <td>
                         <?php if ($celda && $celda['cuantos']): ?>
-                        <a href="<?= e(url_admin('agenda', '', ['vista' => 'dia', 'fecha' => $celda['fecha']] + $comunes)) ?>"
+                        <a href="<?= e(url_admin($calRuta[0], $calRuta[1], ['vista' => 'dia', 'fecha' => $celda['fecha']] + $comunes)) ?>"
                            class="mini-dia con-eventos <?= $celda['hoy'] ? 'es-hoy' : '' ?>"
                            style="--punto:<?= e($celda['color']) ?>"
                            title="<?= (int) $celda['cuantos'] ?> <?= $celda['cuantos'] === 1 ? 'registro' : 'registros' ?> el <?= e(fecha_larga($celda['fecha'])) ?>">

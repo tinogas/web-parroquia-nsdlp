@@ -1,14 +1,4 @@
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div>
-        <h1 class="h4 fw-bold mb-1">Eventos</h1>
-        <p class="text-muted mb-0 small">Celebraciones y actividades con fecha concreta.</p>
-    </div>
-    <?php if (Auth::tienePermiso('eventos.crear')): ?>
-    <a href="<?= e(url_admin('eventos', 'nuevo')) ?>" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nuevo evento
-    </a>
-    <?php endif; ?>
-</div>
+<?php $pestana = 'lista'; require __DIR__ . '/_pestanas.php'; ?>
 
 <?php
 // Los cuatro filtros —estado, fecha, pastoral y sede— se combinan, así que
@@ -124,6 +114,27 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
     </form>
 </div>
 
+<?php if ($listado['filas']): ?>
+<?php /* Llevan los mismos filtros que la pantalla, pero todas las páginas. */
+      $porTodo = $porEstado + $porFecha + $porAmbito; ?>
+<div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-3">
+    <span class="small text-muted me-1">
+        <?= (int) $listado['total'] === 1 ? 'El evento' : 'Los ' . (int) $listado['total'] . ' eventos' ?> de este filtro:
+    </span>
+    <a href="<?= e(url_admin('eventos', 'exportar', $porTodo)) ?>" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+    </a>
+    <a href="<?= e(url_admin('eventos', 'imprimir', $porTodo + ['pdf' => 1])) ?>" target="_blank" rel="noopener"
+       class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+    </a>
+    <a href="<?= e(url_admin('eventos', 'imprimir', $porTodo)) ?>" target="_blank" rel="noopener"
+       class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Imprimir
+    </a>
+</div>
+<?php endif; ?>
+
 <?php if ($porFecha): ?>
 <p class="small text-muted mb-3">
     <?= (int) $listado['total'] ?>
@@ -168,6 +179,7 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                      && Auth::puedeSobreCentro($evento['centro_id'] !== null ? (int) $evento['centro_id'] : null);
                 $puedeEditar  = $suyo && Auth::tienePermiso('eventos.editar');
                 $puedeBorrar  = $suyo && Auth::tienePermiso('eventos.eliminar');
+                $puedeDuplicar = $suyo && Auth::tienePermiso('eventos.crear');
                 ?>
                 <tr>
                     <td>
@@ -203,7 +215,12 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?>
                         <a href="<?= e(url_admin('eventos', 'editar', ['id' => $evento['id']])) ?>"
-                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                           class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <?php endif; ?>
+                        <?php if ($puedeDuplicar): ?>
+                        <a href="<?= e(url_admin('eventos', 'duplicar', ['id' => $evento['id']])) ?>"
+                           class="btn btn-sm btn-outline-secondary" title="Duplicar: el mismo evento en otra fecha"
+                           aria-label="Duplicar «<?= e($evento['titulo']) ?>»"><i class="bi bi-copy"></i></a>
                         <?php endif; ?>
                         <?php if ($puedeBorrar): ?>
                         <button type="button" class="btn btn-sm btn-outline-danger"
