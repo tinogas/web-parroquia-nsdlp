@@ -1,5 +1,6 @@
 <?php
 require_once BASE_PATH . '/core/Model.php';
+require_once BASE_PATH . '/core/CambiosTurno.php';
 
 /**
  * MescModel — Visitas a enfermos de los Ministros Extraordinarios de la
@@ -267,10 +268,15 @@ class MescModel extends Model
     // ── Turnos ───────────────────────────────────────────────────────────
 
     /**
-     * Turnos del mes de la pastoral, con los nombres de sus ministros ya
-     * concatenados, para el calendario. Con $ministroId, solo los turnos donde
-     * sirve ese ministro (su calendario personal); los nombres siguen saliendo
-     * todos, para que vea con quién le toca.
+     * Turnos del mes de la pastoral para el calendario, con quién sirve
+     * realmente —el rol original más las permutas y coberturas registradas,
+     * ver core/CambiosTurno.php— en `ministros_nombres`, y el rol original en
+     * `nombres_originales`.
+     *
+     * Con $ministroId, su calendario personal: los turnos donde sirve, y
+     * también los que cedió en una permuta, marcados con `cedido` = true para
+     * que vea que ya no le tocan. Los nombres siguen saliendo todos, para que
+     * vea con quién le toca.
      */
     public function turnosDelMes(int $anio, int $mes, int $pastoralId, ?int $ministroId = null): array
     {
@@ -279,25 +285,40 @@ class MescModel extends Model
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
 
-        $params = [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId];
-        $soloMinistro = '';
-        if ($ministroId !== null) {
-            $soloMinistro = ' AND EXISTS (SELECT 1 FROM mesc_turno_ministros f
-                                           WHERE f.turno_id = t.id AND f.ministro_id = :ministro)';
-            $params[':ministro'] = $ministroId;
-        }
-
-        return $this->fetchAll(
-            "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
-                    (SELECT GROUP_CONCAT(m.nombre ORDER BY m.nombre SEPARATOR ', ')
-                       FROM mesc_turno_ministros tm JOIN mesc_ministros m ON m.id = tm.ministro_id
-                      WHERE tm.turno_id = t.id) AS ministros_nombres
+        $turnos = (new CambiosTurno(CambiosTurno::MESC))->aplicar($this->fetchAll(
+            'SELECT t.*, c.nombre AS color_nombre, c.color_hex
                FROM mesc_turnos t
                LEFT JOIN colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral{$soloMinistro}
-              ORDER BY t.fecha, t.hora",
-            $params
-        );
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
+              ORDER BY t.fecha, t.hora',
+            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
+        ));
+
+        $resultado = [];
+        foreach ($turnos as $turno) {
+            $turno['ministros_nombres'] = $turno['nombres_actuales'];
+            $turno['cedido'] = false;
+            if ($ministroId !== null) {
+                $sirve = isset($turno['actuales'][$ministroId]);
+                if (!$sirve && !isset($turno['originales'][$ministroId])) {
+                    continue;
+                }
+                $turno['cedido'] = !$sirve;
+            }
+            $resultado[] = $turno;
+        }
+        return $resultado;
+    }
+
+    /** El turno con su rol real y original, para su ficha. */
+    public function turnoConRol(int $turnoId, int $pastoralId): ?array
+    {
+        return (new CambiosTurno(CambiosTurno::MESC))->turnoConRol($turnoId, $pastoralId);
+    }
+
+    public function cambiosDeTurno(int $turnoId): array
+    {
+        return (new CambiosTurno(CambiosTurno::MESC))->cambiosDeTurno($turnoId);
     }
 
     public function turnoPorId(int $id): ?array

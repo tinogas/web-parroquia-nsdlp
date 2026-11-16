@@ -1,5 +1,6 @@
 <?php
 require_once BASE_PATH . '/core/Model.php';
+require_once BASE_PATH . '/core/CambiosTurno.php';
 
 /**
  * ProclamadoresModel — Calendario de turnos y catálogo de proclamadores.
@@ -118,7 +119,13 @@ class ProclamadoresModel extends Model
 
     // ── Turnos ───────────────────────────────────────────────────────────
 
-    /** Turnos del mes, con los nombres de sus proclamadores ya concatenados, para el calendario. */
+    /**
+     * Turnos del mes para el calendario, con quién proclama realmente —el rol
+     * original más las permutas y coberturas registradas, ver
+     * core/CambiosTurno.php— en `proclamadores_nombres`. Mismo criterio que
+     * MescModel::turnosDelMes(): con $proclamadorId salen sus turnos y los que
+     * cedió, estos con `cedido` = true.
+     */
     public function turnosDelMes(int $anio, int $mes, int $pastoralId, ?int $proclamadorId = null): array
     {
         $inicio        = sprintf('%04d-%02d-01', $anio, $mes);
@@ -126,28 +133,40 @@ class ProclamadoresModel extends Model
         $siguienteMes  = $mes === 12 ? 1 : $mes + 1;
         $fin           = sprintf('%04d-%02d-01', $siguienteAnio, $siguienteMes);
 
-        // Con $proclamadorId, solo sus turnos: su calendario personal. Los
-        // nombres siguen saliendo todos, para que vea con quién le toca.
-        $params = [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId];
-        $soloProclamador = '';
-        if ($proclamadorId !== null) {
-            $soloProclamador = ' AND EXISTS (SELECT 1 FROM proclamadores_turno_proclamadores f
-                                              WHERE f.turno_id = t.id AND f.proclamador_id = :proclamador)';
-            $params[':proclamador'] = $proclamadorId;
-        }
-
-        return $this->fetchAll(
-            "SELECT t.*, c.nombre AS color_nombre, c.color_hex,
-                    (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
-                       FROM proclamadores_turno_proclamadores tp
-                       JOIN proclamadores p ON p.id = tp.proclamador_id
-                      WHERE tp.turno_id = t.id) AS proclamadores_nombres
+        $turnos = (new CambiosTurno(CambiosTurno::PROCLAMADORES))->aplicar($this->fetchAll(
+            'SELECT t.*, c.nombre AS color_nombre, c.color_hex
                FROM proclamadores_turnos t
                LEFT JOIN colores_liturgicos c ON c.id = t.color_liturgico_id
-              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral{$soloProclamador}
-              ORDER BY t.fecha, t.hora",
-            $params
-        );
+              WHERE t.fecha >= :inicio AND t.fecha < :fin AND t.pastoral_id = :pastoral
+              ORDER BY t.fecha, t.hora',
+            [':inicio' => $inicio, ':fin' => $fin, ':pastoral' => $pastoralId]
+        ));
+
+        $resultado = [];
+        foreach ($turnos as $turno) {
+            $turno['proclamadores_nombres'] = $turno['nombres_actuales'];
+            $turno['cedido'] = false;
+            if ($proclamadorId !== null) {
+                $sirve = isset($turno['actuales'][$proclamadorId]);
+                if (!$sirve && !isset($turno['originales'][$proclamadorId])) {
+                    continue;
+                }
+                $turno['cedido'] = !$sirve;
+            }
+            $resultado[] = $turno;
+        }
+        return $resultado;
+    }
+
+    /** El turno con su rol real y original, para su ficha. */
+    public function turnoConRol(int $turnoId, int $pastoralId): ?array
+    {
+        return (new CambiosTurno(CambiosTurno::PROCLAMADORES))->turnoConRol($turnoId, $pastoralId);
+    }
+
+    public function cambiosDeTurno(int $turnoId): array
+    {
+        return (new CambiosTurno(CambiosTurno::PROCLAMADORES))->cambiosDeTurno($turnoId);
     }
 
     public function turnoPorId(int $id): ?array

@@ -3,8 +3,8 @@
  * Barra de navegación entre las pantallas del módulo.
  *
  * Un parcial y no el bloque repetido en cada vista —como sí lo está en
- * Catequesis, que tiene tres pantallas— porque aquí son cinco: repetido,
- * agregar una sexta obliga a acordarse de editar los cinco archivos, y el que
+ * Catequesis, que tiene tres pantallas— porque aquí son seis: repetido,
+ * agregar una más obliga a acordarse de editar todos los archivos, y el que
  * se olvide queda con una barra distinta a las demás. La lista de abajo es el
  * único sitio donde se declara.
  *
@@ -17,6 +17,7 @@
 $pantallasModulo = [
     ''            => ['Proclamadores', 'bi-people'],
     'turnos'      => ['Turnos',        'bi-calendar3'],
+    'cambios'     => ['Cambios',       'bi-arrow-left-right'],
     'actividades' => ['Actividades',   'bi-clipboard-check'],
     'documentos'  => ['Documentos',    'bi-file-earmark-pdf'],
     'colores'     => ['Colores',       'bi-palette'],

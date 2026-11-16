@@ -99,6 +99,10 @@ if (!function_exists('mesc_imprimir_texto_legible')) {
                             <?php else: ?>
                             <span class="ti-sin-nombres">Sin asignar</span>
                             <?php endif; ?>
+                            <?php if (!empty($turno['salieron'])): ?>
+                            <?php /* Cambio de turno registrado: quién estaba en el rol original. */ ?>
+                            <span class="ti-cambio">en lugar de <?= e(implode(', ', $turno['salieron'])) ?></span>
+                            <?php endif; ?>
                         </div>
                         <?php endforeach; ?>
                     </div>

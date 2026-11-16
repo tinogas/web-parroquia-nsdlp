@@ -2,6 +2,7 @@
 require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/mesc/MescModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
 
 /**
  * MescController — Exclusivo de la pastoral "Ministro Extraordinario de la
@@ -15,6 +16,8 @@ require_once BASE_PATH . '/modules/personas/PersonaModel.php';
  */
 class MescController extends Controller
 {
+    use CambiosTurnoAcciones;
+
     private MescModel $modelo;
 
     public function __construct()
@@ -510,7 +513,8 @@ class MescController extends Controller
             'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
             'ministros'       => $this->modelo->ministros($pastoralId),
             'ministro'        => $ministro,
-            'totalTurnos'     => count($turnosDelMes),
+            'totalTurnos'     => count(array_filter($turnosDelMes, static fn (array $t): bool => !$t['cedido'])),
+            'urlCambios'      => url_admin('mesc', 'cambios', ['anio' => $anio, 'mes' => $mes]),
             'urlMesAnterior'  => url_admin('mesc', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior] + $filtro),
             'urlMesSiguiente' => url_admin('mesc', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente] + $filtro),
             'urlImprimir'     => url_admin('mesc', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes] + $filtro),
@@ -546,7 +550,12 @@ class MescController extends Controller
         $ministro = $this->ministroPedido($pastoralId);
         $filtro   = $ministro ? ['ministro' => (int) $ministro['id']] : [];
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $ministro ? (int) $ministro['id'] : null);
+        // En la hoja personal, solo donde sirve: los turnos que cedió ya no son
+        // suyos, y en papel no hay forma de tacharlos sin que confundan.
+        $turnosDelMes = array_filter(
+            $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $ministro ? (int) $ministro['id'] : null),
+            static fn (array $t): bool => !$t['cedido']
+        );
 
         $this->renderSinLayout('mesc/turnos_imprimir', [
             'nombreMes'  => $this->nombreMes($mes) . ' ' . $anio,
@@ -599,6 +608,8 @@ class MescController extends Controller
             ),
             'fechaSugerida'    => '',
             'colores'          => $this->modelo->coloresLiturgicos(),
+            'turnoRol'         => $this->modelo->turnoConRol((int) $turno['id'], (int) $turno['pastoral_id']),
+            'cambiosTurno'     => $this->modelo->cambiosDeTurno((int) $turno['id']),
         ]);
     }
 
@@ -761,6 +772,24 @@ class MescController extends Controller
         }
 
         $this->redirect(url_admin('mesc', 'colores'));
+    }
+
+    // ── Cambios de turno (core/CambiosTurnoAcciones.php) ─────────────────
+
+    protected function cambiosConfig(): array
+    {
+        return [
+            'modulo'   => 'mesc',
+            'tablas'   => CambiosTurno::MESC,
+            'singular' => 'ministro',
+            'plural'   => 'ministros',
+            'titulo'   => 'MESC',
+        ];
+    }
+
+    protected function personasDelModulo(int $pastoralId): array
+    {
+        return $this->modelo->ministros($pastoralId);
     }
 
     // ── Privados ─────────────────────────────────────────────────────────

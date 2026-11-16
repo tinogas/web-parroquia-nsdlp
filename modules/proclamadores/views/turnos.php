@@ -94,15 +94,21 @@ if (!function_exists('proclamadores_texto_legible')) {
                             $fondo   = $turno['color_hex'] ?: '#1e4d8b';
                             $titulo  = $turno['descripcion']
                                      . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                     . ($turno['proclamadores_nombres'] ? ' — ' . $turno['proclamadores_nombres'] : ' — sin proclamadores asignados');
-                            $etiqueta = e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
+                                     . ($turno['proclamadores_nombres'] ? ' — ' . $turno['proclamadores_nombres'] : ' — sin proclamadores asignados')
+                                     . ($turno['tiene_cambios'] ? ' — rol original: ' . ($turno['nombres_originales'] ?: 'nadie') : '')
+                                     . ($turno['cedido'] ? ' — lo cedió en un cambio de turno' : '');
+                            // ⇄ marca los turnos donde ya no sirve exactamente el rol original;
+                            // tachado, el que la persona del filtro cedió.
+                            $etiqueta = ($turno['tiene_cambios'] ? '<i class="bi bi-arrow-left-right me-1" aria-label="Con cambios"></i>' : '')
+                                      . e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
+                            $claseCedido = $turno['cedido'] ? ' text-decoration-line-through opacity-50' : '';
                             ?>
                             <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
                             <a href="<?= e(url_admin('proclamadores', 'turno_editar', ['id' => $turno['id']])) ?>"
-                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
+                               class="evento-punto d-block<?= $claseCedido ?>" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
                                title="<?= e($titulo) ?>"><?= $etiqueta ?></a>
                             <?php else: ?>
-                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
+                            <span class="evento-punto d-block<?= $claseCedido ?>" style="background:<?= e($fondo) ?>;color:<?= proclamadores_texto_legible($fondo) ?>"
                                   title="<?= e($titulo) ?>"><?= $etiqueta ?></span>
                             <?php endif; ?>
                             <?php endforeach; ?>

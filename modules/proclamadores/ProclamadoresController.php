@@ -3,6 +3,7 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/proclamadores/ProclamadoresModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
 
 /**
  * ProclamadoresController — Exclusivo de la pastoral "Proclamadores" (se
@@ -23,6 +24,8 @@ require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
  */
 class ProclamadoresController extends Controller
 {
+    use CambiosTurnoAcciones;
+
     private ProclamadoresModel $modelo;
 
     /**
@@ -186,7 +189,7 @@ class ProclamadoresController extends Controller
             'semanas'         => $this->construirCalendarioTurnos($anio, $mes, $turnosDelMes),
             'proclamadores'   => $this->modelo->proclamadores($pastoralId),
             'proclamador'     => $proclamador,
-            'totalTurnos'     => count($turnosDelMes),
+            'totalTurnos'     => count(array_filter($turnosDelMes, static fn (array $t): bool => !$t['cedido'])),
             'urlMesAnterior'  => url_admin('proclamadores', 'turnos', ['anio' => $anioAnterior, 'mes' => $mesAnterior] + $filtro),
             'urlMesSiguiente' => url_admin('proclamadores', 'turnos', ['anio' => $anioSiguiente, 'mes' => $mesSiguiente] + $filtro),
             'urlImprimir'     => url_admin('proclamadores', 'turnos_imprimir', ['anio' => $anio, 'mes' => $mes] + $filtro),
@@ -215,7 +218,11 @@ class ProclamadoresController extends Controller
         $proclamador = $this->proclamadorPedido($pastoralId);
         $filtro      = $proclamador ? ['proclamador' => (int) $proclamador['id']] : [];
 
-        $turnosDelMes = $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $proclamador ? (int) $proclamador['id'] : null);
+        // En la hoja personal, solo donde proclama: los turnos que cedió ya no son suyos.
+        $turnosDelMes = array_filter(
+            $this->modelo->turnosDelMes($anio, $mes, $pastoralId, $proclamador ? (int) $proclamador['id'] : null),
+            static fn (array $t): bool => !$t['cedido']
+        );
 
         $this->renderSinLayout('proclamadores/turnos_imprimir', [
             'nombreMes'   => $this->nombreMes($mes) . ' ' . $anio,
@@ -268,6 +275,8 @@ class ProclamadoresController extends Controller
             ),
             'fechaSugerida' => '',
             'colores'       => $this->modelo->coloresLiturgicos(),
+            'turnoRol'      => $this->modelo->turnoConRol((int) $turno['id'], (int) $turno['pastoral_id']),
+            'cambiosTurno'  => $this->modelo->cambiosDeTurno((int) $turno['id']),
         ]);
     }
 
@@ -652,6 +661,24 @@ class ProclamadoresController extends Controller
             return null;
         }
         return $pastoralId;
+    }
+
+    // ── Cambios de turno (core/CambiosTurnoAcciones.php) ─────────────────
+
+    protected function cambiosConfig(): array
+    {
+        return [
+            'modulo'   => 'proclamadores',
+            'tablas'   => CambiosTurno::PROCLAMADORES,
+            'singular' => 'proclamador',
+            'plural'   => 'proclamadores',
+            'titulo'   => 'Proclamadores',
+        ];
+    }
+
+    protected function personasDelModulo(int $pastoralId): array
+    {
+        return $this->modelo->proclamadores($pastoralId);
     }
 
     /** Las preferencias marcadas en el formulario, filtradas contra el catálogo. */
