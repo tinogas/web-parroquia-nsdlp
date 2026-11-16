@@ -179,6 +179,16 @@ body {
     color: #6c757d;
 }
 
+/* Cambio de turno registrado: a quién reemplaza quien sirve. Hereda el color
+   del texto del bloque para leerse igual sobre fondo claro u oscuro. */
+.ti-cambio {
+    display: block;
+    font-size: .6rem;
+    font-style: italic;
+    opacity: .8;
+    line-height: 1.2;
+}
+
 /* Recuadro de aviso, como el del calendario original. */
 .ti-aviso {
     border: 1px solid var(--ti-borde);

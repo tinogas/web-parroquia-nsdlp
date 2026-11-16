@@ -915,6 +915,51 @@ CREATE TABLE IF NOT EXISTS mesc_turno_ministros (
     CONSTRAINT fk_mtm_ministro FOREIGN KEY (ministro_id) REFERENCES mesc_ministros(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Cambios de turno (permutas, coberturas y refuerzos) registrados DESPUÉS de
+-- armar el rol. mesc_turno_ministros sigue siendo el rol original y nunca se
+-- toca desde aquí; quién sirve realmente se calcula aplicando encima, en
+-- orden, estos movimientos (core/CambiosTurno.php). Sustitución y agregado
+-- tienen un movimiento; una permuta, uno por persona en cada turno —es de
+-- grupo a grupo: uno por uno, dos por dos o los turnos completos—. entra_id
+-- vacío es el sobrante de una permuta dispar (dos por uno); sale_id vacío, un
+-- refuerzo. Ver docs/migraciones/2026-11-15-cambios-de-turno.sql.
+CREATE TABLE IF NOT EXISTS mesc_cambios (
+    id          INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    tipo        ENUM('permuta', 'sustitucion', 'agregado') NOT NULL,
+    notas       VARCHAR(255)     NULL,
+    usuario_id  INT UNSIGNED     NULL,
+    estado      ENUM('pendiente', 'aprobado', 'rechazado', 'deshecho', 'retirado') NOT NULL DEFAULT 'aprobado',
+    resuelto_por INT UNSIGNED    NULL,
+    resuelto_at DATETIME         NULL,
+    motivo_rechazo VARCHAR(255)  NULL,
+    cancelado_por INT UNSIGNED   NULL,
+    cancelado_at DATETIME        NULL,
+    motivo_cancelacion VARCHAR(255) NULL,
+    visto_solicitante TINYINT(1) NOT NULL DEFAULT 1,
+    created_at  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_mca_pastoral (pastoral_id, estado),
+    CONSTRAINT fk_mca_pastoral FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mca_usuario  FOREIGN KEY (usuario_id)   REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_mca_resolvio FOREIGN KEY (resuelto_por) REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_mca_cancelo  FOREIGN KEY (cancelado_por) REFERENCES usuarios(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mesc_cambio_movimientos (
+    id        INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+    cambio_id INT UNSIGNED      NOT NULL,
+    turno_id  INT UNSIGNED      NOT NULL,
+    sale_id   SMALLINT UNSIGNED NULL,
+    entra_id  SMALLINT UNSIGNED NULL,
+    PRIMARY KEY (id),
+    KEY idx_mcm_turno (turno_id),
+    CONSTRAINT fk_mcm_cambio FOREIGN KEY (cambio_id) REFERENCES mesc_cambios(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_mcm_turno  FOREIGN KEY (turno_id)  REFERENCES mesc_turnos(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_mcm_sale   FOREIGN KEY (sale_id)   REFERENCES mesc_ministros(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mcm_entra  FOREIGN KEY (entra_id)  REFERENCES mesc_ministros(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- CATEQUESIS — CATEQUISTAS, PERIODOS, ACTIVIDADES Y DOCUMENTOS
 -- ------------------------------------------------------------
@@ -1046,6 +1091,44 @@ CREATE TABLE IF NOT EXISTS proclamadores_turno_proclamadores (
     PRIMARY KEY (turno_id, proclamador_id),
     CONSTRAINT fk_ptp_turno       FOREIGN KEY (turno_id)       REFERENCES proclamadores_turnos(id) ON DELETE CASCADE,
     CONSTRAINT fk_ptp_proclamador FOREIGN KEY (proclamador_id) REFERENCES proclamadores(id)        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Cambios de turno, calcados de mesc_cambios / mesc_cambio_movimientos.
+CREATE TABLE IF NOT EXISTS proclamadores_cambios (
+    id          INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    pastoral_id TINYINT UNSIGNED NOT NULL,
+    tipo        ENUM('permuta', 'sustitucion', 'agregado') NOT NULL,
+    notas       VARCHAR(255)     NULL,
+    usuario_id  INT UNSIGNED     NULL,
+    estado      ENUM('pendiente', 'aprobado', 'rechazado', 'deshecho', 'retirado') NOT NULL DEFAULT 'aprobado',
+    resuelto_por INT UNSIGNED    NULL,
+    resuelto_at DATETIME         NULL,
+    motivo_rechazo VARCHAR(255)  NULL,
+    cancelado_por INT UNSIGNED   NULL,
+    cancelado_at DATETIME        NULL,
+    motivo_cancelacion VARCHAR(255) NULL,
+    visto_solicitante TINYINT(1) NOT NULL DEFAULT 1,
+    created_at  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_pca_pastoral (pastoral_id, estado),
+    CONSTRAINT fk_pca_pastoral FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pca_usuario  FOREIGN KEY (usuario_id)   REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_pca_resolvio FOREIGN KEY (resuelto_por) REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_pca_cancelo  FOREIGN KEY (cancelado_por) REFERENCES usuarios(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS proclamadores_cambio_movimientos (
+    id        INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+    cambio_id INT UNSIGNED      NOT NULL,
+    turno_id  INT UNSIGNED      NOT NULL,
+    sale_id   SMALLINT UNSIGNED NULL,
+    entra_id  SMALLINT UNSIGNED NULL,
+    PRIMARY KEY (id),
+    KEY idx_pcm_turno (turno_id),
+    CONSTRAINT fk_pcm_cambio FOREIGN KEY (cambio_id) REFERENCES proclamadores_cambios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pcm_turno  FOREIGN KEY (turno_id)  REFERENCES proclamadores_turnos(id)  ON DELETE CASCADE,
+    CONSTRAINT fk_pcm_sale   FOREIGN KEY (sale_id)   REFERENCES proclamadores(id)         ON DELETE CASCADE,
+    CONSTRAINT fk_pcm_entra  FOREIGN KEY (entra_id)  REFERENCES proclamadores(id)         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

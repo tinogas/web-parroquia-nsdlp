@@ -60,6 +60,12 @@
             </div>
 
             <label class="form-label fw-semibold">Proclamadores asignados</label>
+            <?php if (!$esNuevo && !empty($cambiosTurno)): ?>
+            <div class="form-text mt-0 mb-2">
+                Este es el rol original. Las permutas y coberturas de este turno están registradas aparte,
+                abajo: no hace falta cambiarlo aquí.
+            </div>
+            <?php endif; ?>
             <?php if (!$proclamadores): ?>
             <p class="text-muted small">Todavía no hay proclamadores activos registrados.
                 <a href="<?= e(url_admin('proclamadores')) ?>">Agregar uno</a>.
@@ -103,3 +109,9 @@
         <a href="<?= e(url_admin('proclamadores', 'turnos')) ?>" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>
+
+<?php if (!$esNuevo && !empty($turnoRol)): ?>
+<div class="mt-4">
+    <?php $modulo = 'proclamadores'; $plural = 'proclamadores'; require BASE_PATH . '/shared/views/parciales/cambios_de_turno_ficha.php'; ?>
+</div>
+<?php endif; ?>

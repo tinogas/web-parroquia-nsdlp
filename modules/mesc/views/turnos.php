@@ -25,6 +25,9 @@ if (!function_exists('mesc_texto_legible')) {
         <a href="<?= e($urlImprimir) ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">
             <i class="bi bi-printer me-1"></i>Imprimir / Descargar PDF
         </a>
+        <a href="<?= e($urlCambios) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left-right me-1"></i>Cambios de turno
+        </a>
         <a href="<?= e(url_admin('mesc', 'colores')) ?>" class="btn btn-outline-secondary">
             <i class="bi bi-palette me-1"></i>Colores litúrgicos
         </a>
@@ -109,15 +112,21 @@ if (!function_exists('mesc_texto_legible')) {
                             $fondo   = $turno['color_hex'] ?: '#1e4d8b';
                             $titulo  = $turno['descripcion']
                                      . ($turno['color_nombre'] ? ' — color ' . $turno['color_nombre'] : '')
-                                     . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados');
-                            $etiqueta = e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
+                                     . ($turno['ministros_nombres'] ? ' — ' . $turno['ministros_nombres'] : ' — sin ministros asignados')
+                                     . ($turno['tiene_cambios'] ? ' — rol original: ' . ($turno['nombres_originales'] ?: 'nadie') : '')
+                                     . ($turno['cedido'] ? ' — lo cedió en un cambio de turno' : '');
+                            // ⇄ marca los turnos donde ya no sirve exactamente el rol original;
+                            // tachado, el que la persona del filtro cedió.
+                            $etiqueta = ($turno['tiene_cambios'] ? '<i class="bi bi-arrow-left-right me-1" aria-label="Con cambios"></i>' : '')
+                                      . e($turno['hora'] ? hora_corta($turno['hora']) . ' ' : '') . e($turno['descripcion']);
+                            $claseCedido = $turno['cedido'] ? ' text-decoration-line-through opacity-50' : '';
                             ?>
                             <?php if (Auth::tienePermiso('mesc.editar')): ?>
                             <a href="<?= e(url_admin('mesc', 'turno_editar', ['id' => $turno['id']])) ?>"
-                               class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
+                               class="evento-punto d-block<?= $claseCedido ?>" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
                                title="<?= e($titulo) ?>"><?= $etiqueta ?></a>
                             <?php else: ?>
-                            <span class="evento-punto d-block" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
+                            <span class="evento-punto d-block<?= $claseCedido ?>" style="background:<?= e($fondo) ?>;color:<?= mesc_texto_legible($fondo) ?>"
                                   title="<?= e($titulo) ?>"><?= $etiqueta ?></span>
                             <?php endif; ?>
                             <?php endforeach; ?>

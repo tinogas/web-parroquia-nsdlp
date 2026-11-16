@@ -362,6 +362,14 @@ define('PERMISOS', [
         'catequesis.ver',
         'proclamadores.ver',
         'coros.ver',
+        // Lo único que el laico propone en vez de solo mirar: un cambio de
+        // turno (permuta, cobertura o sumarse a un turno) que lo incluya a él.
+        // Nace como solicitud pendiente y no toca el calendario hasta que una
+        // coordinación de la pastoral la aprueba —quien tiene mesc.editar o
+        // proclamadores.editar registra el cambio directo—. Ver
+        // core/CambiosTurnoAcciones.php.
+        'mesc.solicitar',
+        'proclamadores.solicitar',
     ],
 
     // Único rol, junto con el administrador, que ve datos personales.

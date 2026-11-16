@@ -80,8 +80,24 @@
                 : [];
         }
 
-        $sinLeerTotal = $mensajesSinLeer + $avisosSinLeer;
-        $puedeVerCampana = Auth::tienePermiso('mensajes.ver') || Auth::tienePermiso('avisos.ver');
+        // Cambios de turno de MESC y Proclamadores: a quien coordina, las
+        // solicitudes por aprobar de su pastoral; al laico que pidió, las
+        // respuestas que no ha visto. Ver CambiosTurno::paraCampana(). Si la
+        // migración de esas tablas todavía no se aplica, la campanita sigue
+        // como antes en vez de tumbar el panel entero.
+        $campanaCambios = ['total' => 0, 'grupos' => []];
+        if (Auth::estaAutenticado()) {
+            try {
+                require_once BASE_PATH . '/core/CambiosTurno.php';
+                $campanaCambios = CambiosTurno::paraCampana((int) $usuario['id']);
+            } catch (PDOException $e) {
+                $campanaCambios = ['total' => 0, 'grupos' => []];
+            }
+        }
+
+        $sinLeerTotal = $mensajesSinLeer + $avisosSinLeer + $campanaCambios['total'];
+        $puedeVerCampana = Auth::tienePermiso('mensajes.ver') || Auth::tienePermiso('avisos.ver')
+                        || $campanaCambios['total'] > 0;
         ?>
         <?php if ($puedeVerCampana): ?>
         <div class="dropdown">
@@ -112,6 +128,31 @@
                 <span class="dropdown-item-text text-muted small mb-0">
                     <i class="bi bi-check2-circle me-1"></i>Nada sin leer.
                 </span>
+                <?php endif; ?>
+
+                <?php foreach ($campanaCambios['grupos'] as $grupoCambios): ?>
+                <h6 class="dropdown-header">
+                    <?= e($grupoCambios['titulo']) ?>
+                    <span class="badge rounded-pill bg-danger"><?= (int) $grupoCambios['total'] ?></span>
+                </h6>
+                <?php foreach ($grupoCambios['items'] as $itemCambio): ?>
+                <a class="dropdown-item d-flex gap-2 align-items-start py-2" href="<?= e($grupoCambios['url']) ?>">
+                    <i class="bi <?= e($itemCambio['icono']) ?> text-dorado mt-1"></i>
+                    <span class="flex-grow-1" style="white-space:normal">
+                        <span class="d-block small fw-semibold"><?= e($itemCambio['texto']) ?></span>
+                        <span class="d-block small text-muted"><?= e(resumen($itemCambio['detalle'], 110)) ?></span>
+                    </span>
+                </a>
+                <?php endforeach; ?>
+                <?php if ($grupoCambios['total'] > count($grupoCambios['items'])): ?>
+                <a class="dropdown-item small text-muted" href="<?= e($grupoCambios['url']) ?>">
+                    y <?= (int) ($grupoCambios['total'] - count($grupoCambios['items'])) ?> más…
+                </a>
+                <?php endif; ?>
+                <?php endforeach; ?>
+
+                <?php if ($campanaCambios['grupos'] && ($avisosUltimos || $mensajesUltimos)): ?>
+                <hr class="dropdown-divider">
                 <?php endif; ?>
 
                 <?php if ($avisosUltimos): ?>
