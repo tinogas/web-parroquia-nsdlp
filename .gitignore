@@ -32,6 +32,27 @@ proclamadores.json
 # comentarios. Si hace falta enseñarlo, se comparte por fuera.
 rol_ministros.jpeg
 
+# Material de trabajo que se deja suelto en la raíz: los roles mensuales de MESC
+# que manda la coordinación (con los nombres de los ministros, igual que el de
+# arriba) y los carteles que después se suben desde el panel. Ninguna imagen del
+# proyecto vive en la raíz: las del sitio están en assets/ y las del manual en
+# docs/manual/img/.
+/*.jpg
+/*.jpeg
+/*.jfif
+/*.png
+/*.webp
+
+# PDF sueltos en docs/: presentaciones y exportaciones de decenas de megas, que
+# se quedan fuera por lo mismo que el manual armado (ver abajo).
+docs/*.pdf
+
+# Habilidades para asistentes de IA instaladas en esta máquina: son de terceros,
+# tienen su propio repositorio de origen y no forman parte del proyecto.
+.agents/
+.taste-skill/
+skills-lock.json
+
 # Logs y caché
 *.log
 *.cache
