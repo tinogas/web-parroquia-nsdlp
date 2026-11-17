@@ -45,7 +45,8 @@ class PersonaModel extends Model
                        FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
                       WHERE pc.persona_id = p.id) AS centros_nombres,
                     (SELECT GROUP_CONCAT(pa2.nombre ORDER BY pa2.nombre SEPARATOR ', ')
-                       FROM pastorales pa2 WHERE pa2.responsable_persona_id = p.id) AS pastorales_coordina,
+                       FROM pastoral_coordinadores pco JOIN pastorales pa2 ON pa2.id = pco.pastoral_id
+                      WHERE pco.persona_id = p.id) AS pastorales_coordina,
                     (SELECT o.nombre
                        FROM parejas j JOIN personas o
                          ON o.id = CASE WHEN j.persona_a_id = p.id THEN j.persona_b_id ELSE j.persona_a_id END
@@ -117,15 +118,14 @@ class PersonaModel extends Model
      * PersonaController::directorioImprimir() y
      * docs/migraciones/2026-09-13-directorio-telefonico.sql
      *
-     * Pertenecer a una pastoral aquí es "estar en persona_pastorales, O ser
-     * su responsable (persona o pareja)": un coordinador puede estar marcado
-     * como responsable de su pastoral sin que además tenga la palomita de
-     * pertenencia marcada en su propia ficha, y aun así tiene que aparecer en
-     * el directorio de esa pastoral — no solo en la lista general.
+     * Pertenecer a una pastoral aquí es "estar en persona_pastorales, O
+     * coordinarla": un coordinador puede estar elegido en su pastoral sin que
+     * además tenga la palomita de pertenencia marcada en su propia ficha, y
+     * aun así tiene que aparecer en el directorio de esa pastoral — no solo
+     * en la lista general.
      *
      * @param  array $pastorales Filas planas de pastorales activas (id,
-     *                            pastoral_padre_id, responsable_persona_id,
-     *                            responsable_pareja_id) — ver
+     *                            pastoral_padre_id, coordinadores) — ver
      *                            PastoralModel::activas().
      * @return array{por_pastoral: array<int, array>, sin_pastoral: array}
      *         `por_pastoral`: pastoral_id => fichas de personas, ya
@@ -155,23 +155,12 @@ class PersonaModel extends Model
             $miembros[(int) $fila['pastoral_id']][(int) $fila['persona_id']] = true;
         }
 
-        $parejas = [];
-        foreach ($this->fetchAll('SELECT id, persona_a_id, persona_b_id FROM parejas') as $fila) {
-            $parejas[(int) $fila['id']] = [(int) $fila['persona_a_id'], (int) $fila['persona_b_id']];
-        }
-
         $vistos    = [];
         $resultado = [];
         foreach ($pastorales as $pastoral) {
             $pastoralId   = (int) $pastoral['id'];
             $esComision   = $pastoral['pastoral_padre_id'] === null;
-            $responsables = [];
-            if (!empty($pastoral['responsable_persona_id'])) {
-                $responsables[] = (int) $pastoral['responsable_persona_id'];
-            }
-            if (!empty($pastoral['responsable_pareja_id'])) {
-                $responsables = array_merge($responsables, $parejas[(int) $pastoral['responsable_pareja_id']] ?? []);
-            }
+            $responsables = array_column($pastoral['coordinadores'] ?? [], 'id');
 
             $idsAqui = array_unique(array_merge(array_keys($miembros[$pastoralId] ?? []), $responsables));
             $fichas  = [];
@@ -278,7 +267,8 @@ class PersonaModel extends Model
             $this->sincronizarCentros($id, $datos['centros']);
             $this->sincronizarCuenta($id, $datos);
             $this->sincronizarCuentaAlcance($id, $datos['pastorales'], $datos['centros']);
-            $this->sincronizarResponsable($id, $datos['nombre']);
+            // Lo que coordina no se toca: el nombre de quien coordina una
+            // pastoral se lee de esta ficha cada vez (PastoralModel::conCoordinacion()).
             $this->sincronizarPersonal($id, $datos);
             $this->commit();
             return $filas;
@@ -360,42 +350,14 @@ class PersonaModel extends Model
         $this->sincronizarCuentaAlcance($personaId, $this->pastoralesDe($personaId), $this->centrosDe($personaId));
     }
 
-    /**
-     * Si esta persona es la responsable de alguna pastoral (`pastorales.
-     * responsable_persona_id`), su nombre ahí también viene de aquí: la
-     * pastoral no guarda su propia copia editable una vez que se elige a
-     * alguien del equipo. Ver PastoralController::guardar(), que hace el
-     * mismo cálculo al elegir responsable.
-     */
-    private function sincronizarResponsable(int $personaId, string $nombre): void
-    {
-        $this->execute(
-            'UPDATE pastorales SET responsable_nombre = :nombre WHERE responsable_persona_id = :persona',
-            [':nombre' => $nombre, ':persona' => $personaId]
-        );
-
-        // Y si quien coordina es su pareja —JECSA y Raíces las coordina un
-        // matrimonio, igual que Matrimonios y AMA—, el nombre de la pastoral es
-        // el de los dos, recalculado aquí mismo: la pastoral tampoco guarda una
-        // copia editable de eso. Dos marcadores para la misma persona porque la
-        // conexión no emula los prepare (config/database.php).
-        $this->execute(
-            "UPDATE pastorales pas
-               JOIN parejas j   ON j.id = pas.responsable_pareja_id
-               JOIN personas a  ON a.id = j.persona_a_id
-               JOIN personas b  ON b.id = j.persona_b_id
-                SET pas.responsable_nombre = CONCAT(a.nombre, ' y ', b.nombre)
-              WHERE j.persona_a_id = :personaA OR j.persona_b_id = :personaB",
-            [':personaA' => $personaId, ':personaB' => $personaId]
-        );
-    }
-
     // ── Parejas: quién está con quién ───────────────────────────────────
     // Un matrimonio es el mismo en toda la parroquia, así que la liga se
     // captura una vez, en la ficha, y la usan todas las pastorales: el panel de
-    // cada una dice con quién está su gente, y una pastoral puede tener de
-    // responsable a la pareja entera. Ver
-    // docs/migraciones/2026-09-05-parejas-de-la-parroquia.sql
+    // cada una dice con quién está su gente, y cuando dos personas coordinan
+    // juntas y son pareja, la pastoral lo marca con un corazón
+    // (PastoralModel::conCoordinacion()). Ver
+    // docs/migraciones/2026-09-05-parejas-de-la-parroquia.sql y
+    // docs/migraciones/2026-11-16-varios-coordinadores.sql
 
     /** La pareja de esta persona: la fila, con el id y el nombre del otro. Null si no tiene. */
     public function parejaDe(int $personaId): ?array
@@ -436,32 +398,6 @@ class PersonaModel extends Model
         $this->execute(
             'INSERT INTO parejas (persona_a_id, persona_b_id) VALUES (:a, :b)',
             [':a' => min($personaId, $otroId), ':b' => max($personaId, $otroId)]
-        );
-    }
-
-    /** Las parejas de la parroquia, ya escritas "Ella y Él", para el selector de responsable. */
-    public function parejasParaSelector(): array
-    {
-        return $this->fetchAll(
-            "SELECT j.id, CONCAT(a.nombre, ' y ', b.nombre) AS nombre
-               FROM parejas j
-               JOIN personas a ON a.id = j.persona_a_id
-               JOIN personas b ON b.id = j.persona_b_id
-              ORDER BY a.nombre"
-        );
-    }
-
-    /** Una pareja concreta, ya escrita, para nombrar a quien coordina. */
-    public function parejaPorId(int $id): ?array
-    {
-        return $this->fetchOne(
-            "SELECT j.id, j.persona_a_id, j.persona_b_id,
-                    CONCAT(a.nombre, ' y ', b.nombre) AS nombre
-               FROM parejas j
-               JOIN personas a ON a.id = j.persona_a_id
-               JOIN personas b ON b.id = j.persona_b_id
-              WHERE j.id = :id",
-            [':id' => $id]
         );
     }
 

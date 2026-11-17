@@ -50,12 +50,13 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   foto: antes la misma coordinadora estaba escrita de tres formas distintas entre las dos
   listas. Coordinador general, además, ya puede dar de alta y editar las cuentas de
   Coordinador y Consulta de su propia pastoral, sin depender del administrador para eso.
-- **El responsable de cada pastoral se elige del equipo pastoral**, no se escribe a mano:
-  su nombre viene de su ficha, y puede ser una pareja en vez de una persona —en JECSA, en
-  Raíces, en Matrimonios y en AMA coordina un matrimonio—. Quién está con quién se marca
-  en la ficha de cada persona y vale en toda la parroquia. El correo, en cambio, es de la
-  pastoral y se escribe a mano: sobrevive a los relevos, en vez de publicar el correo
-  personal de quien esté al frente hoy.
+- **Quien coordina cada pastoral se elige del equipo pastoral**, no se escribe a mano: su
+  nombre viene de su ficha, y pueden ser **una persona o varias** —en Matrimonios coordina
+  un matrimonio; en Raíces, Betesaida y Dante, que no lo son—. Quién está con quién se
+  marca en la ficha de cada persona y vale en toda la parroquia: de ahí sabe el panel
+  cuándo dos que coordinan juntos son pareja y los marca con un corazón. El correo, en
+  cambio, es de la pastoral y se escribe a mano: sobrevive a los relevos, en vez de
+  publicar el correo personal de quien esté al frente hoy.
 - **La portada muestra lo último publicado en Facebook**, con el Page Plugin oficial
   (un iframe, sin token ni API propia) sobre la misma URL que ya se usaba para el icono
   del pie.
@@ -133,11 +134,12 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
 
 - **Quién con quién, y quién lleva cada pastoral.** El equipo pastoral guarda las parejas
   —un matrimonio es el mismo en Matrimonios, en AMA y en JECSA, así que se marca una sola
-  vez, en la ficha de cada persona— y con eso el responsable de una pastoral puede ser un
-  matrimonio y no solo una persona, que es como se coordinan JECSA, Raíces, Matrimonios y
-  AMA. Emparejar es opcional: quien participa por su cuenta se queda como está. El nombre de
-  quien coordina se lee ahora sin abrir la ficha: en el listado y en el panel de cada
-  pastoral, y en el sitio público bajo cada Comisión y en cada tarjeta.
+  vez, en la ficha de cada persona—. Una pastoral la coordinan las personas que haga falta,
+  matrimonio o no, cada una en su renglón del formulario; si las dos que coordinan son
+  pareja, el panel lo marca con un corazón. Emparejar es opcional: quien participa por su
+  cuenta se queda como está. El nombre de quien coordina se lee sin abrir la ficha: en el
+  listado y en el panel de cada pastoral, y en el sitio público bajo cada Comisión y en
+  cada tarjeta.
 - **Cada pastoral tiene su propio correo.** Antes se copiaba del correo de acceso de quien la
   coordinaba, lo que publicaba en el sitio una dirección personal y la cambiaba en cada
   relevo; ahora es un campo suyo, que se escribe a mano y se queda.

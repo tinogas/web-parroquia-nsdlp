@@ -15,8 +15,8 @@ Económicos—, igual que en el sitio. Cada
 tarjeta lleva el nombre, quién coordina y dos botones: **Panel básico** y
 **Editar**.
 
-Una **comisión** es una pastoral como cualquier otra, con su ficha y su
-responsable; lo que la hace comisión es que otras la tienen marcada como su
+Una **comisión** es una pastoral como cualquier otra, con su ficha y quien
+la coordina; lo que la hace comisión es que otras la tienen marcada como su
 «comisión padre». Y eso tiene una consecuencia práctica que conviene recordar:
 quien coordina una comisión recibe también lo que publican hacia dentro las
 pastorales que agrupa.
@@ -53,10 +53,15 @@ Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
 
 ### Quién la lleva y cómo se le escribe
 
-- **Responsable.** Se elige **del equipo pastoral**, no se escribe a mano. Si
-  la persona elegida tiene pareja marcada en su ficha, la pastoral aparece
-  coordinada por el matrimonio. Debajo hay un campo de nombre libre, que solo
-  se usa si no eliges a nadie del equipo.
+- **Quién la coordina.** Se elige **del equipo pastoral**, no se escribe a
+  mano, y pueden ser **una persona o varias**: cada una en su renglón, y
+  **"Agregar a alguien más"** abre el siguiente. La **×** de cada renglón lo
+  quita. Los nombres se leen en ese orden —«Coordinan Betesaida y Dante»—.
+  Si coordina un matrimonio, se eligen los dos: si en sus fichas están
+  marcados como pareja, el panel lo pinta con un corazón; si no lo son, con
+  dos siluetas. Debajo hay un campo de nombre libre para alguien que todavía
+  no tiene ficha en el equipo pastoral: su nombre se suma al final de los
+  elegidos.
 - **Correo de la pastoral** y **teléfono de contacto**. Se publican en su
   página. **El correo es de la pastoral, no de quien la coordina**: se escribe
   a mano a propósito, para que sobreviva a los relevos en vez de publicar el

@@ -49,10 +49,12 @@ dice.
   de WhatsApp de los listados— y nunca aparece en el sitio.
 - **Semblanza.** Un párrafo breve para «Quiénes somos».
 - **Foto.**
-- **Su pareja.** Se elige de la misma lista. Vale en toda la parroquia: es lo
-  que permite que en Matrimonios, AMA, JECSA y Raíces coordine un matrimonio y
-  no una persona suelta. Este campo **solo aparece al editar** una ficha ya
-  guardada: en una nueva todavía no hay a quién ligarla.
+- **Su pareja.** Se elige de la misma lista. Vale en toda la parroquia: el
+  panel de cada pastoral dice con quién está cada quien, y cuando los dos
+  coordinan juntos una pastoral, sale marcada con un corazón. Márcala solo si
+  de verdad son matrimonio o pareja: dos personas que coordinan juntas no
+  necesitan estar ligadas aquí. Este campo **solo aparece al editar** una
+  ficha ya guardada: en una nueva todavía no hay a quién ligarla.
 - **Sede o centros**, **Pastoral (Comisión)** y **Dimensión**, en tres listas
   de palomitas. Las dimensiones de una comisión se pueden marcar después de
   marcar la comisión arriba. Se puede pertenecer a varias de cada una.

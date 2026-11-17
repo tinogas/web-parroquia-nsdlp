@@ -127,8 +127,11 @@
                             <?php if ($centro): ?>
                             <li><i class="bi bi-building text-primary"></i> <?= e($centro['nombre']) ?></li>
                             <?php endif; ?>
-                            <?php if ($pastoral['responsable_nombre']): ?>
-                            <li><i class="bi bi-person text-primary"></i> <?= e($pastoral['responsable_nombre']) ?></li>
+                            <?php if ($pastoral['coordina']): ?>
+                            <li>
+                                <i class="bi <?= $pastoral['coordina_varios'] ? 'bi-people' : 'bi-person' ?> text-primary"></i>
+                                <?= e($pastoral['coordina']) ?>
+                            </li>
                             <?php endif; ?>
                             <?php if ($pastoral['dia_reunion'] || $pastoral['hora_reunion']): ?>
                             <li>

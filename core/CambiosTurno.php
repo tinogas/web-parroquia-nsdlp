@@ -797,16 +797,15 @@ class CambiosTurno extends Model
         return array_values($grupos);
     }
 
-    /** «Zulema», «Zulema y Tino», «Zulema, Tino e Hiram»: «e» delante de i/hi, como se escribe. */
+    /**
+     * «Zulema», «Zulema y Tino», «Zulema, Tino e Hiram». Vive en
+     * core/helpers.php desde que también la usan las pastorales para nombrar a
+     * quienes las coordinan; queda aquí con su nombre de siempre para no
+     * tocar a quienes ya la llaman.
+     */
     public static function unirNombres(array $nombres): string
     {
-        $nombres = array_values($nombres);
-        if (count($nombres) < 2) {
-            return $nombres[0] ?? '';
-        }
-        $ultimo = array_pop($nombres);
-        $conj   = preg_match('/^h?[iíIÍ](?![aeouáéóú])/iu', $ultimo) ? ' e ' : ' y ';
-        return implode(', ', $nombres) . $conj . $ultimo;
+        return unir_nombres($nombres);
     }
 
     /** «dom 5 nov, Misa 09:00»: lo justo para reconocer el turno en una lista. */

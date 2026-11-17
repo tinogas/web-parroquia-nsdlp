@@ -12,25 +12,134 @@ require_once BASE_PATH . '/core/Model.php';
  */
 class PastoralModel extends Model
 {
+    // Las cinco consultas que devuelven la ficha completa de una pastoral la
+    // entregan ya con quién la coordina (conCoordinacion()): son las que llegan
+    // a una vista, y así ninguna pantalla tiene que acordarse de pedirlo aparte.
+
     public function todas(): array
     {
-        return $this->fetchAll('SELECT * FROM pastorales ORDER BY orden, nombre');
+        return $this->conCoordinacion($this->fetchAll('SELECT * FROM pastorales ORDER BY orden, nombre'));
     }
 
     public function porId(int $id): ?array
     {
-        return $this->fetchOne('SELECT * FROM pastorales WHERE id = :id', [':id' => $id]);
+        return $this->unaConCoordinacion($this->fetchOne('SELECT * FROM pastorales WHERE id = :id', [':id' => $id]));
     }
 
     public function porSlugActiva(string $slug): ?array
     {
-        return $this->fetchOne('SELECT * FROM pastorales WHERE slug = :slug AND activa = 1', [':slug' => $slug]);
+        return $this->unaConCoordinacion(
+            $this->fetchOne('SELECT * FROM pastorales WHERE slug = :slug AND activa = 1', [':slug' => $slug])
+        );
     }
 
     /** Para el sitio público. */
     public function activas(): array
     {
-        return $this->fetchAll('SELECT * FROM pastorales WHERE activa = 1 ORDER BY orden, nombre');
+        return $this->conCoordinacion($this->fetchAll('SELECT * FROM pastorales WHERE activa = 1 ORDER BY orden, nombre'));
+    }
+
+    // ── Quién coordina ──────────────────────────────────────────────────
+    // De una a las personas que haga falta, en `pastoral_coordinadores`, más
+    // —opcional— un nombre escrito a mano en `responsable_nombre` para quien
+    // todavía no tiene ficha en el equipo pastoral. Antes era una persona o una
+    // pareja, en dos columnas excluyentes, y no cabían dos personas que no
+    // fueran matrimonio: Betesaida y Dante en Raíces. Ver
+    // docs/migraciones/2026-11-16-varios-coordinadores.sql
+
+    /**
+     * Agrega a cada fila de pastoral quién la coordina, ya listo para pintar:
+     *
+     *   - `coordinadores`: [['id' => …, 'nombre' => …, 'activo' => …], …], solo
+     *     las fichas, en su orden;
+     *   - `coordina`: "Betesaida y Dante", con el nombre libre al final si lo
+     *     hay; null si nadie coordina;
+     *   - `coordina_varios`: más de una persona, contando el nombre libre;
+     *   - `coordina_pareja`: coordinan exactamente dos fichas y son pareja entre
+     *     sí (`parejas`). Es lo que pinta el corazón en el panel: ya no se elige
+     *     "una pareja", se elige a dos personas y que sean matrimonio se sabe
+     *     por sus fichas.
+     *
+     * El nombre sale de la ficha cada vez que se lee, no de una copia guardada
+     * en la pastoral: así un cambio de nombre en Equipo pastoral se ve en todas
+     * partes sin sincronizar nada, y borrar una ficha no deja su nombre
+     * colgado. Una sola consulta para todas las filas, no una por pastoral.
+     *
+     * @param  array $filas Filas de `pastorales` (al menos id y responsable_nombre)
+     * @return array Las mismas filas, en el mismo orden, con las cuatro llaves
+     */
+    public function conCoordinacion(array $filas): array
+    {
+        if (!$filas) {
+            return [];
+        }
+
+        $marcadores = [];
+        $params     = [];
+        foreach (array_values($filas) as $i => $fila) {
+            $marcadores[]      = ":p{$i}";
+            $params[":p{$i}"] = (int) $fila['id'];
+        }
+
+        // La pareja de cada coordinador, si tiene: dos personas que coordinan
+        // juntas y comparten pareja_id son un matrimonio.
+        $porPastoral = [];
+        foreach ($this->fetchAll(
+            'SELECT pc.pastoral_id, pe.id, pe.nombre, pe.activo, j.id AS pareja_id
+               FROM pastoral_coordinadores pc
+               JOIN personas pe ON pe.id = pc.persona_id
+               LEFT JOIN parejas j ON j.persona_a_id = pe.id OR j.persona_b_id = pe.id
+              WHERE pc.pastoral_id IN (' . implode(',', $marcadores) . ')
+              ORDER BY pc.pastoral_id, pc.orden, pe.nombre',
+            $params
+        ) as $fila) {
+            $porPastoral[(int) $fila['pastoral_id']][] = $fila;
+        }
+
+        foreach ($filas as &$pastoral) {
+            $suyos   = $porPastoral[(int) $pastoral['id']] ?? [];
+            $nombres = array_column($suyos, 'nombre');
+            $libre   = trim((string) ($pastoral['responsable_nombre'] ?? ''));
+            if ($libre !== '') {
+                $nombres[] = $libre;
+            }
+
+            $pastoral['coordinadores'] = array_map(
+                static fn (array $c): array => ['id' => (int) $c['id'], 'nombre' => $c['nombre'], 'activo' => (bool) $c['activo']],
+                $suyos
+            );
+            $pastoral['coordina']        = $nombres ? unir_nombres($nombres) : null;
+            $pastoral['coordina_varios'] = count($nombres) > 1;
+            $pastoral['coordina_pareja'] = count($nombres) === 2 && count($suyos) === 2
+                && $suyos[0]['pareja_id'] !== null && $suyos[0]['pareja_id'] === $suyos[1]['pareja_id'];
+        }
+        unset($pastoral);
+
+        return $filas;
+    }
+
+    /** conCoordinacion() para una sola fila, que puede no existir. */
+    private function unaConCoordinacion(?array $fila): ?array
+    {
+        return $fila ? $this->conCoordinacion([$fila])[0] : null;
+    }
+
+    /**
+     * Deja a estas personas como coordinadoras de la pastoral, en este orden.
+     * Reemplaza la lista entera: quitar a alguien es no mandarlo. Los ids
+     * repetidos se quedan en su primera posición.
+     *
+     * @param int[] $personaIds
+     */
+    private function guardarCoordinadores(int $pastoralId, array $personaIds): void
+    {
+        $this->execute('DELETE FROM pastoral_coordinadores WHERE pastoral_id = :id', [':id' => $pastoralId]);
+        foreach (array_values(array_unique(array_map('intval', $personaIds))) as $orden => $personaId) {
+            $this->execute(
+                'INSERT INTO pastoral_coordinadores (pastoral_id, persona_id, orden) VALUES (:pastoral, :persona, :orden)',
+                [':pastoral' => $pastoralId, ':persona' => $personaId, ':orden' => $orden]
+            );
+        }
     }
 
     /** id => nombre, para selectores (formularios de avisos, eventos, galería). */
@@ -57,40 +166,59 @@ class PastoralModel extends Model
         );
     }
 
+    /** $datos['coordinadores']: ids de persona, en orden (ver guardarCoordinadores()). */
     public function crear(array $datos): int
     {
-        $this->execute(
-            'INSERT INTO pastorales
-                (centro_id, pastoral_padre_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
-                 responsable_nombre, responsable_persona_id, responsable_pareja_id,
-                 contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
-                 acepta_voluntarios, orden, activa)
-             VALUES
-                (:centro, :padre, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
-                 :responsable, :responsablePersona, :responsablePareja,
-                 :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
-                 :voluntarios, :orden, :activa)',
-            $this->parametros($datos)
-        );
-        return $this->lastInsertId();
+        $this->beginTransaction();
+        try {
+            $this->execute(
+                'INSERT INTO pastorales
+                    (centro_id, pastoral_padre_id, slug, nombre, descripcion_corta, descripcion, imagen, icono,
+                     responsable_nombre,
+                     contacto_email, contacto_telefono, dia_reunion, hora_reunion, lugar_reunion,
+                     acepta_voluntarios, orden, activa)
+                 VALUES
+                    (:centro, :padre, :slug, :nombre, :descCorta, :desc, :imagen, :icono,
+                     :responsable,
+                     :email, :telefono, :diaReunion, :horaReunion, :lugarReunion,
+                     :voluntarios, :orden, :activa)',
+                $this->parametros($datos)
+            );
+            $id = $this->lastInsertId();
+            $this->guardarCoordinadores($id, $datos['coordinadores']);
+            $this->commit();
+            return $id;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
+    /** $datos['coordinadores']: ids de persona, en orden (ver guardarCoordinadores()). */
     public function actualizar(int $id, array $datos): int
     {
-        return $this->execute(
-            'UPDATE pastorales
-                SET centro_id = :centro, pastoral_padre_id = :padre, slug = :slug, nombre = :nombre,
-                    descripcion_corta = :descCorta,
-                    descripcion = :desc, imagen = :imagen, icono = :icono,
-                    responsable_nombre = :responsable, responsable_persona_id = :responsablePersona,
-                    responsable_pareja_id = :responsablePareja,
-                    contacto_email = :email,
-                    contacto_telefono = :telefono, dia_reunion = :diaReunion,
-                    hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
-                    acepta_voluntarios = :voluntarios, orden = :orden, activa = :activa
-              WHERE id = :id',
-            $this->parametros($datos) + [':id' => $id]
-        );
+        $this->beginTransaction();
+        try {
+            $filas = $this->execute(
+                'UPDATE pastorales
+                    SET centro_id = :centro, pastoral_padre_id = :padre, slug = :slug, nombre = :nombre,
+                        descripcion_corta = :descCorta,
+                        descripcion = :desc, imagen = :imagen, icono = :icono,
+                        responsable_nombre = :responsable,
+                        contacto_email = :email,
+                        contacto_telefono = :telefono, dia_reunion = :diaReunion,
+                        hora_reunion = :horaReunion, lugar_reunion = :lugarReunion,
+                        acepta_voluntarios = :voluntarios, orden = :orden, activa = :activa
+                  WHERE id = :id',
+                $this->parametros($datos) + [':id' => $id]
+            );
+            $this->guardarCoordinadores($id, $datos['coordinadores']);
+            $this->commit();
+            return $filas;
+        } catch (Throwable $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
     /** Candidatas a "Comisión padre" en el selector: sin padre propio (máximo 2 niveles), sin incluirse a sí misma. */
@@ -216,10 +344,10 @@ class PastoralModel extends Model
     /** Pastorales hijas activas de una Comisión, para su ficha pública. */
     public function hijasActivas(int $padreId): array
     {
-        return $this->fetchAll(
+        return $this->conCoordinacion($this->fetchAll(
             'SELECT * FROM pastorales WHERE pastoral_padre_id = :id AND activa = 1 ORDER BY orden, nombre',
             [':id' => $padreId]
-        );
+        ));
     }
 
     /** Para el panel: todas, agrupadas en [padre => [hijas...]] + sueltas aparte. */
@@ -307,8 +435,9 @@ class PastoralModel extends Model
     }
 
     /**
-     * Borrado físico de la fila (no un desactivado): `pastoral_actividades` y
-     * `pastoral_documentos` se van con ella en cascada, pero avisos, eventos
+     * Borrado físico de la fila (no un desactivado): `pastoral_actividades`,
+     * `pastoral_documentos` y `pastoral_coordinadores` se van con ella en
+     * cascada —las fichas de quienes la coordinaban no—, pero avisos, eventos
      * y cursos (`ON DELETE SET NULL`) no se borran, quedan sin pastoral, como
      * contenido parroquial general. Por eso PastoralController::eliminar()
      * exige confirmar con contraseña de Administrador.
@@ -516,9 +645,7 @@ class PastoralModel extends Model
             ':desc'        => $datos['descripcion'],
             ':imagen'      => $datos['imagen'],
             ':icono'       => $datos['icono'],
-            ':responsable'         => $datos['responsable_nombre'],
-            ':responsablePersona'  => $datos['responsable_persona_id'],
-            ':responsablePareja'   => $datos['responsable_pareja_id'],
+            ':responsable' => $datos['responsable_nombre'],
             ':email'       => $datos['contacto_email'],
             ':telefono'    => $datos['contacto_telefono'],
             ':diaReunion'  => $datos['dia_reunion'],

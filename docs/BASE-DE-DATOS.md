@@ -300,11 +300,11 @@ panel, no en el sitio público, porque lleva teléfonos. Ver
 
 El directorio se agrupa por pastoral y su jerarquía —una Comisión y, indentadas debajo,
 sus dimensiones—, no por `tipo`: dentro de cada pastoral, primero quien la coordina
-("Coordinador general" si es responsable de la Comisión entera, "Coordinador" si lo es
-solo de esa dimensión, vía `pastorales.responsable_persona_id`/`responsable_pareja_id`),
-luego quien tiene "Encargad-" en su `cargo`, y el resto por nombre. Pertenecer a una
-pastoral para esto es estar en `persona_pastorales` **o** ser su responsable, aunque no
-tenga la palomita de pertenencia marcada. Quien está en el directorio sin pertenecer ni
+("Coordinador general" si coordina la Comisión entera, "Coordinador" si solo esa
+dimensión, vía [`pastoral_coordinadores`](#pastoral_coordinadores)), luego quien tiene
+"Encargad-" en su `cargo`, y el resto por nombre. Pertenecer a una pastoral para esto es
+estar en `persona_pastorales` **o** coordinarla, aunque no tenga la palomita de
+pertenencia marcada. Quien está en el directorio sin pertenecer ni
 coordinar ninguna pastoral cae en un grupo final, "Sin pastoral asignada".
 
 `fecha_nacimiento` (DATE, opcional) es para `PersonaModel::cumpleanerosDelMes()`, que arma
@@ -417,19 +417,24 @@ muestra de cada fila.
 `centro_id` (issue #3: FK a `centros`, `ON DELETE SET NULL`, NULL en las que ya existían
 antes de este campo), `pastoral_padre_id`, `slug` con `uq_pas_slug`, `nombre`, `descripcion_corta`,
 `descripcion` MEDIUMTEXT, `imagen`, `icono` (clase de Bootstrap Icons),
-`responsable_nombre`, `responsable_persona_id`, `responsable_pareja_id`, `contacto_email`,
+`responsable_nombre`, `contacto_email`,
 `contacto_telefono`,
 `dia_reunion`, `hora_reunion`, `lugar_reunion`, `acepta_voluntarios`, `orden`, `activa`,
 `visible_en_menu`.
 
-`responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`, índice `idx_pas_responsable`)
-es el select del formulario: el responsable se elige del equipo pastoral. Con persona
-elegida, `responsable_nombre` se recalcula solo —del nombre de su ficha— y deja de ser
-editable a mano; solo se sigue escribiendo libre cuando `responsable_persona_id` es NULL
-(la persona todavía no está de alta en el equipo). `contacto_email` **no** se recalcula:
-es el correo de la pastoral, se escribe a mano y sobrevive a los relevos de quien la
-coordina. Lo heredó del correo de acceso del responsable hasta que la parroquia pidió lo
-contrario — el porqué del cambio, en `ARQUITECTURA.md`. Ver
+Quién coordina **no** está en esta tabla: vive en
+[`pastoral_coordinadores`](#pastoral_coordinadores), una fila por persona, sin límite.
+`responsable_nombre` es solo el nombre escrito a mano de quien coordina sin tener ficha
+todavía en el equipo pastoral; se suma al final de los elegidos ("Betesaida, Dante y Jesús
+Ríos") y no es la copia de ninguna ficha. Hasta la migración
+`2026-11-16-varios-coordinadores.sql` había aquí dos columnas excluyentes,
+`responsable_persona_id` y `responsable_pareja_id` —una persona o una pareja—, y
+`responsable_nombre` guardaba una copia del nombre de la ficha que `PersonaModel`
+resincronizaba en cada guardado.
+
+`contacto_email` **no** viene de nadie: es el correo de la pastoral, se escribe a mano y
+sobrevive a los relevos de quien la coordina. Lo heredó del correo de acceso del
+responsable hasta que la parroquia pidió lo contrario — el porqué del cambio, en
 [`ARQUITECTURA.md`](ARQUITECTURA.md#contenido-propio-por-pastoral-issue-3).
 
 `pastoral_padre_id` (self-FK, `ON DELETE SET NULL`, índice `idx_pas_padre`) agrupa
@@ -440,17 +445,6 @@ reglas es un CHECK de SQL (no puede mirar otras filas), las valida
 `PastoralController::guardar()`. No hay columna `tipo`/`es_comision`: "es Comisión" se
 deriva de "tiene alguna hija" (`PastoralModel::tieneHijos()`), calculado en cada lectura
 en vez de guardado aparte, para que nunca pueda desincronizarse de la realidad.
-
-`responsable_pareja_id` (FK a [`parejas`](#parejas), `ON DELETE SET NULL`, índice
-`idx_pas_resp_pareja`) es la otra mitad del mismo selector: en JECSA, en Raíces y en las dos
-pastorales de familia quien coordina es un matrimonio, no una persona. Es **excluyente** con
-`responsable_persona_id` —el formulario ofrece personas y parejas en una sola lista, con el
-valor prefijado `persona:12`/`pareja:3`, para que no puedan quedar elegidas las dos a la vez—
-y con pareja elegida `responsable_nombre` es "Ella y Él", calculado de las dos fichas y
-mantenido por `PersonaModel::sincronizarResponsable()`. Lo que **no** se sincroniza entonces es
-`contacto_email`, que es de la pastoral y se escribe a mano coordine quien coordine.
-Si se borra la ficha de uno de los dos,
-la pareja desaparece y la pastoral queda sin responsable (SET NULL), no con uno roto.
 
 `visible_en_menu` (`TINYINT(1)`, default 0) decide si la pastoral aparece en el bloque
 "Pastorales y comisiones" del menú del panel, con acceso a su panel básico (avisos,
@@ -563,8 +557,8 @@ después no obliga a rehacer nada.
 **Es un dato de la parroquia, no de una pastoral.** Un matrimonio es el mismo en Matrimonios,
 en AMA y en JECSA, así que se captura una sola vez —en la ficha de la persona, en Equipo
 pastoral, junto a sus pastorales y sus sedes— y lo usan todas: el panel de cada pastoral dice
-con quién está cada integrante, y `pastorales.responsable_pareja_id` deja que quien coordine
-sea la pareja entera. Hubo un primer intento por pastoral (`pastoral_parejas`, una liga
+con quién está cada integrante, y una pastoral que coordinan los dos sale marcada con un
+corazón (ver [`pastoral_coordinadores`](#pastoral_coordinadores)). Hubo un primer intento por pastoral (`pastoral_parejas`, una liga
 distinta en cada una), corregido el mismo día y antes de subirse a ninguna parte: no tenía
 dónde meter al matrimonio que coordina JECSA —esa pastoral no se organiza por parejas— y
 obligaba a capturar dos veces al mismo matrimonio que está en Matrimonios y en AMA.
@@ -584,6 +578,34 @@ tuviera cada uno de los dos: cambiar de pareja es deshacer la anterior, no acumu
 le falta nada; quien participa solo aparece en las listas como cualquier otro, sin advertencia
 ni marca de registro a medias. Ver
 [`docs/migraciones/2026-09-05-parejas-de-la-parroquia.sql`](migraciones/2026-09-05-parejas-de-la-parroquia.sql).
+
+### `pastoral_coordinadores`
+
+Quién coordina cada pastoral. `pastoral_id` (FK a `pastorales`, `ON DELETE CASCADE`),
+`persona_id` (FK a `personas`, `ON DELETE CASCADE`, índice `idx_pco_persona`) y `orden`, el
+lugar de cada quien al leer los nombres. Llave primaria `(pastoral_id, persona_id)`: nadie
+coordina dos veces la misma pastoral.
+
+**De una a las personas que haga falta.** Antes eran dos columnas excluyentes de
+`pastorales` —una persona o una pareja—, y no cabía el caso que lo cambió: en Raíces
+coordinan Betesaida y Dante, que no son matrimonio. Darlos de alta como pareja para que
+cupieran habría sido inventar una pareja que no existe, y ese dato vale en toda la parroquia.
+Un matrimonio que coordina son ahora sus dos fichas aquí, igual que dos personas
+cualesquiera; que sean pareja se sabe por [`parejas`](#parejas), y de ahí sale el corazón
+del panel: se dibuja solo cuando coordinan exactamente dos personas y son pareja entre sí.
+
+**El nombre se calcula al leer.** `PastoralModel::conCoordinacion()` une los nombres de las
+fichas en su orden ("Betesaida y Dante", "A, B e Iveth", con `unir_nombres()`) más el
+`responsable_nombre` libre al final, en una sola consulta para todas las pastorales de una
+pantalla. No hay copia que guardar ni que sincronizar: un cambio de nombre en Equipo
+pastoral se ve en todas partes, y borrar una ficha la saca de las pastorales que coordinaba
+(CASCADE) sin dejar su nombre colgado.
+
+**Coordinar no es pertenecer ni administrar.** `persona_pastorales` dice quién está en la
+pastoral y `usuarios_pastorales` sobre qué pastorales trabaja una cuenta del panel; esta
+tabla dice quién figura al frente, en la ficha de la pastoral y en el sitio. Las tres son
+independientes a propósito: elegir a alguien aquí no le abre ninguna pantalla. Ver
+[`docs/migraciones/2026-11-16-varios-coordinadores.sql`](migraciones/2026-11-16-varios-coordinadores.sql).
 
 ---
 
@@ -1105,7 +1127,7 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `evangelios_dia`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `persona_enlaces`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos`, `parejas` |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `persona_enlaces`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos`, `parejas`, `pastoral_coordinadores` |
 | MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_cambios`, `mesc_cambio_movimientos`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
 | Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, `proclamadores_cambios`, `proclamadores_cambio_movimientos`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
@@ -1136,8 +1158,10 @@ enteramente nuevo—. Después la subieron a **47** las tres tablas de Coros
 `parejas`, que no reemplaza a ninguna: guarda un dato que hasta entonces no se guardaba en
 ninguna parte, quién está con quién dentro del equipo pastoral.
 
-**Total actual: 54 tablas.** Después de esas 48 llegaron `menu_sitio`
+**Total actual: 55 tablas.** Después de esas 48 llegaron `menu_sitio`
 (`docs/migraciones/2026-11-02-menu-del-sitio.sql`), las cuatro de cambios de turno
 —`mesc_cambios`, `mesc_cambio_movimientos`, `proclamadores_cambios` y
-`proclamadores_cambio_movimientos`— y `persona_enlaces`, el enlace personal de los
-integrantes (las dos migraciones del 2026-11-15).
+`proclamadores_cambio_movimientos`—, `persona_enlaces`, el enlace personal de los
+integrantes (las dos migraciones del 2026-11-15), y `pastoral_coordinadores`, que saca de
+`pastorales` a quien la coordina para que puedan ser varias personas
+(`docs/migraciones/2026-11-16-varios-coordinadores.sql`).

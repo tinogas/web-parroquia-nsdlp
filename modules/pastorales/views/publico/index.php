@@ -6,8 +6,9 @@
  * lista respire; grid-auto-flow: dense rellena los huecos que eso deja.
  *
  * Quién coordina se sigue leyendo sin abrir la ficha —una silueta si es una
- * persona, dos si es un matrimonio—; correo y teléfono, en cambio, siguen
- * solo en la ficha de cada pastoral, que es donde tiene sentido escribirle.
+ * persona, dos si son varias, matrimonio o no—; correo y teléfono, en cambio,
+ * siguen solo en la ficha de cada pastoral, que es donde tiene sentido
+ * escribirle.
  */
 
 /** "Miércoles, 8:00 p. m." o '' si la pastoral no tiene reunión fija. */
@@ -20,11 +21,11 @@ $reunion = static function (array $p): string {
 };
 
 $responsable = static function (array $p): string {
-    if (!$p['responsable_nombre']) {
+    if (!$p['coordina']) {
         return '';
     }
-    $icono = $p['responsable_pareja_id'] ? 'bi-people' : 'bi-person';
-    return '<i class="bi ' . $icono . ' me-1" aria-hidden="true"></i>' . e($p['responsable_nombre']);
+    $icono = $p['coordina_varios'] ? 'bi-people' : 'bi-person';
+    return '<i class="bi ' . $icono . ' me-1" aria-hidden="true"></i>' . e($p['coordina']);
 };
 
 $total = count($comisiones) + count($sueltas);
@@ -71,7 +72,7 @@ foreach ($comisiones as $i => $grupo) {
             <h2 class="bento-titulo" id="comision-<?= (int) $padre['id'] ?>">
                 <a href="<?= e(url_publica('pastorales', ['slug' => $padre['slug']])) ?>"><?= e($padre['nombre']) ?></a>
             </h2>
-            <?php if ($padre['responsable_nombre']): ?>
+            <?php if ($padre['coordina']): ?>
             <p class="bento-responsable mt-1"><?= $responsable($padre) ?></p>
             <?php endif; ?>
             <?php if ($padre['descripcion_corta']): ?>
@@ -85,7 +86,7 @@ foreach ($comisiones as $i => $grupo) {
             <li>
                 <a href="<?= e(url_publica('pastorales', ['slug' => $hija['slug']])) ?>">
                     <span class="nombre"><?= e($hija['nombre']) ?></span>
-                    <?php if ($hija['responsable_nombre']): ?>
+                    <?php if ($hija['coordina']): ?>
                     <span class="detalle"><?= $responsable($hija) ?></span>
                     <?php endif; ?>
                     <?php if ($detalle): ?>
@@ -112,7 +113,7 @@ foreach ($comisiones as $i => $grupo) {
             <h2 class="bento-titulo" id="pastoral-<?= (int) $pastoral['id'] ?>">
                 <a href="<?= e(url_publica('pastorales', ['slug' => $pastoral['slug']])) ?>"><?= e($pastoral['nombre']) ?></a>
             </h2>
-            <?php if ($pastoral['responsable_nombre']): ?>
+            <?php if ($pastoral['coordina']): ?>
             <p class="bento-responsable mt-1"><?= $responsable($pastoral) ?></p>
             <?php endif; ?>
             <?php if ($pastoral['descripcion_corta']): ?>

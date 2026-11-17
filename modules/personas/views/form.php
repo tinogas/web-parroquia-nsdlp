@@ -104,8 +104,8 @@
             /* Su pareja. Es un dato de la persona y no de una pastoral —un
                matrimonio es el mismo en Matrimonios, en AMA y en JECSA—, así que
                se captura una sola vez, aquí, y de aquí lo toman todas: el panel
-               de cada pastoral dice con quién está su gente, y una pastoral puede
-               tener de responsable a la pareja entera.
+               de cada pastoral dice con quién está su gente, y una pastoral que
+               coordinan los dos sale marcada con un corazón.
 
                No es obligatorio ni es lo normal: la mayoría del equipo no tiene a
                nadie marcado y no le falta nada. En una ficha nueva ni se ofrece:

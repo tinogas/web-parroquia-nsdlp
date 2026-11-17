@@ -227,6 +227,36 @@ if (!function_exists('e')) {
         return rtrim($espacio !== false ? mb_substr($corte, 0, $espacio) : $corte, ',.;:') . '…';
     }
 
+    /**
+     * «Zulema», «Zulema y Tino», «Zulema, Tino e Hiram»: «e» delante de i/hi,
+     * como se escribe, pero no ante un diptongo («y Hielo») ni ante «y-»
+     * («y Yolanda»). La usan quienes coordinan una pastoral y los cambios de
+     * turno (CambiosTurno::unirNombres()).
+     */
+    function unir_nombres(array $nombres): string
+    {
+        $nombres = array_values($nombres);
+        if (count($nombres) < 2) {
+            return $nombres[0] ?? '';
+        }
+        $ultimo = array_pop($nombres);
+        $conj   = preg_match('/^h?[iíIÍ](?![aeouáéóú])/iu', $ultimo) ? ' e ' : ' y ';
+        return implode(', ', $nombres) . $conj . $ultimo;
+    }
+
+    /**
+     * Clases del icono que va antes de "Coordina …" en el panel, para una fila
+     * de PastoralModel::conCoordinacion(): corazón si coordina un matrimonio,
+     * dos siluetas si son varias personas, una si es una sola.
+     */
+    function icono_coordina(array $pastoral): string
+    {
+        if (!empty($pastoral['coordina_pareja'])) {
+            return 'bi-heart-fill text-danger';
+        }
+        return !empty($pastoral['coordina_varios']) ? 'bi-people' : 'bi-person';
+    }
+
     // ── Teléfonos ───────────────────────────────────────────────────────
 
     /**

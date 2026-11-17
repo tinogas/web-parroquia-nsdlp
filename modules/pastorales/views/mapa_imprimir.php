@@ -23,10 +23,10 @@ if (!function_exists('pastorales_mapa_nodo')) {
     {
         ?>
         <span class="mp-nombre"><?= e($pastoral['nombre']) ?></span>
-        <?php if ($pastoral['responsable_nombre']): ?>
+        <?php if ($pastoral['coordina']): ?>
         <span class="mp-responsable">
-            <?= $pastoral['responsable_pareja_id'] ? '♥' : '' ?>
-            <?= e($pastoral['responsable_nombre']) ?>
+            <?= $pastoral['coordina_pareja'] ? '♥' : '' ?>
+            <?= e($pastoral['coordina']) ?>
         </span>
         <?php endif; ?>
         <?php
