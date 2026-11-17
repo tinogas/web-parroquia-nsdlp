@@ -110,16 +110,29 @@ if ($sinPastoral):
 <?php
     $padreId          = (int) $grupo['padre']['id'];
     $personasDirectas = $porPastoral[$padreId] ?? [];
-    $hijasConGente     = array_filter($grupo['hijas'], static fn (array $h): bool => !empty($porPastoral[(int) $h['id']]));
-    if (!$personasDirectas && !$hijasConGente) { continue; }
+    $conGente         = static fn (array $p): bool => !empty($porPastoral[(int) $p['id']]);
+    // Cada dimensión con sus grupos dentro (tercer nivel: Piedad Popular →
+    // Rosario Diario). Una dimensión entra si tiene gente o si la tiene
+    // alguno de sus grupos: sin su título, esos grupos quedarían sueltos.
+    $ramas = array_values(array_filter(
+        PastoralModel::anidarHijas($grupo['hijas']),
+        static fn (array $r): bool => $conGente($r['pastoral']) || array_filter($r['grupos'], $conGente)
+    ));
+    if (!$personasDirectas && !$ramas) { continue; }
 ?>
 <div class="di-comision">
     <h2 class="di-comision-titulo"><?= e($grupo['padre']['nombre']) ?></h2>
     <?php directorio_imprimir_lista($personasDirectas, 1); ?>
-    <?php foreach ($hijasConGente as $hija): ?>
+    <?php foreach ($ramas as $rama): ?>
     <div class="di-dimension">
-        <h3 class="di-dimension-titulo"><?= e($hija['nombre']) ?></h3>
-        <?php directorio_imprimir_lista($porPastoral[(int) $hija['id']], 2); ?>
+        <h3 class="di-dimension-titulo"><?= e($rama['pastoral']['nombre']) ?></h3>
+        <?php directorio_imprimir_lista($porPastoral[(int) $rama['pastoral']['id']] ?? [], 2); ?>
+        <?php foreach (array_filter($rama['grupos'], $conGente) as $subgrupo): ?>
+        <div class="di-dimension di-grupo">
+            <h4 class="di-grupo-titulo"><?= e($subgrupo['nombre']) ?></h4>
+            <?php directorio_imprimir_lista($porPastoral[(int) $subgrupo['id']], 2); ?>
+        </div>
+        <?php endforeach; ?>
     </div>
     <?php endforeach; ?>
 </div>

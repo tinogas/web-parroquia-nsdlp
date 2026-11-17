@@ -19,7 +19,7 @@ $comunes = ($estado !== 'borradores' ? ['estado' => $estado] : [])
          + ($filtroCentro !== '' ? ['centro' => $filtroCentro] : []);
 
 /**
- * Dibuja la fila de una pastoral; $nivel 0 = Comisión o suelta, 1 = dimensión.
+ * Dibuja la fila de una pastoral; $nivel 0 = Comisión o suelta, 1 = dimensión, 2 = grupo dentro de una dimensión.
  * $grupoConFechas: en una Comisión, si alguna de sus dimensiones tiene fechas.
  * Entonces su fila no se esconde con «Ocultar las pastorales sin fechas»,
  * porque es el encabezado que dice de quién son las de abajo.
@@ -37,7 +37,7 @@ $fila = static function (?array $pastoral, string $nombre, int $nivel, bool $esC
     ob_start();
     ?>
     <tr class="<?= $esComision ? 'propuestas-comision' : '' ?> <?= $cuenta === 0 && !$grupoConFechas ? 'propuestas-vacia' : '' ?>">
-        <th scope="row" class="propuestas-pastoral <?= $nivel ? 'ps-4' : '' ?>">
+        <th scope="row" class="propuestas-pastoral <?= $nivel > 1 ? 'ps-5' : ($nivel ? 'ps-4' : '') ?>">
             <?php if ($nivel): ?><i class="bi bi-arrow-return-right text-muted me-1"></i><?php endif; ?>
             <?= e($nombre) ?>
             <?php if ($pastoral && empty($pastoral['activa'])): ?>
@@ -191,7 +191,7 @@ $fila = static function (?array $pastoral, string $nombre, int $nivel, bool $esC
                     ?>
                     <?= $fila($grupo['padre'], $grupo['padre']['nombre'], 0, true, $grupoConFechas) ?>
                     <?php foreach ($grupo['hijas'] as $hija): ?>
-                    <?= $fila($hija, $hija['nombre'], 1, false) ?>
+                    <?= $fila($hija, $hija['nombre'], ($hija['profundidad'] ?? 2) - 1, false) ?>
                     <?php endforeach; ?>
                     <?php endforeach; ?>
 

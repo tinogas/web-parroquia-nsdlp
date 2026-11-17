@@ -81,9 +81,16 @@ foreach ($comisiones as $i => $grupo) {
         </div>
         <?php if ($hijas): ?>
         <ul class="bento-lista">
-            <?php foreach ($hijas as $hija): ?>
-            <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
+            <?php /* Una celda por dimensión; sus grupos (tercer nivel: Piedad Popular →
+                     Rosario Diario) en una sublista dentro de la misma celda, para que en
+                     la rejilla de dos columnas no caigan lejos de la dimensión que los
+                     agrupa. */ ?>
+            <?php foreach (PastoralModel::anidarHijas($hijas) as $rama): ?>
             <li>
+                <?php foreach (array_merge([$rama['pastoral']], $rama['grupos']) as $i => $hija): ?>
+                <?php if ($i === 1): ?><ul class="lista-subgrupos"><?php endif; ?>
+                <?php if ($i >= 1): ?><li><?php endif; ?>
+                <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
                 <a href="<?= e(url_publica('pastorales', ['slug' => $hija['slug']])) ?>">
                     <span class="nombre"><?= e($hija['nombre']) ?></span>
                     <?php if ($hija['coordina']): ?>
@@ -93,6 +100,9 @@ foreach ($comisiones as $i => $grupo) {
                     <span class="detalle"><?= e($detalle) ?></span>
                     <?php endif; ?>
                 </a>
+                <?php if ($i >= 1): ?></li><?php endif; ?>
+                <?php endforeach; ?>
+                <?php if ($rama['grupos']): ?></ul><?php endif; ?>
             </li>
             <?php endforeach; ?>
         </ul>

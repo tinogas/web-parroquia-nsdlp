@@ -299,7 +299,7 @@ panel, no en el sitio público, porque lleva teléfonos. Ver
 [`migraciones/2026-09-13-directorio-telefonico.sql`](migraciones/2026-09-13-directorio-telefonico.sql).
 
 El directorio se agrupa por pastoral y su jerarquía —una Comisión y, indentadas debajo,
-sus dimensiones—, no por `tipo`: dentro de cada pastoral, primero quien la coordina
+sus dimensiones y los grupos de cada dimensión—, no por `tipo`: dentro de cada pastoral, primero quien la coordina
 ("Coordinador general" si coordina la Comisión entera, "Coordinador" si solo esa
 dimensión, vía [`pastoral_coordinadores`](#pastoral_coordinadores)), luego quien tiene
 "Encargad-" en su `cargo`, y el resto por nombre. Pertenecer a una pastoral para esto es
@@ -439,12 +439,15 @@ responsable hasta que la parroquia pidió lo contrario — el porqué del cambio
 
 `pastoral_padre_id` (self-FK, `ON DELETE SET NULL`, índice `idx_pas_padre`) agrupa
 pastorales bajo la Comisión que las coordina (Litúrgica agrupa a MESC, Coros...;
-Profética agrupa a Catequesis, Misión). Máximo 2 niveles: una Comisión no puede a su vez
-tener padre, y una pastoral que ya agrupa hijas no puede recibir uno — ninguna de las dos
-reglas es un CHECK de SQL (no puede mirar otras filas), las valida
-`PastoralController::guardar()`. No hay columna `tipo`/`es_comision`: "es Comisión" se
-deriva de "tiene alguna hija" (`PastoralModel::tieneHijos()`), calculado en cada lectura
-en vez de guardado aparte, para que nunca pueda desincronizarse de la realidad.
+Profética agrupa a Catequesis, Misión). Hasta **3 niveles**: Comisión, dimensión y
+grupo —Litúrgica → Piedad Popular → Rosario Diario—. Ninguna pastoral puede quedar más
+abajo, tampoco los grupos de una que se mueve, y no puede haber ciclos; nada de eso es un
+CHECK de SQL (no puede mirar otras filas), lo valida `PastoralController::guardar()` con
+`PastoralModel::motivoPadreInvalido()`. Hasta noviembre de 2026 eran 2; el tercero no
+necesitó migración, porque la columna siempre pudo apuntar a cualquier pastoral. No hay
+columna `tipo`/`es_comision`: "es Comisión" se deriva de "primer nivel y con alguna hija"
+(`PastoralModel::esComision()`), calculado en cada lectura en vez de guardado aparte, para
+que nunca pueda desincronizarse de la realidad.
 
 `visible_en_menu` (`TINYINT(1)`, default 0) decide si la pastoral aparece en el bloque
 "Pastorales y comisiones" del menú del panel, con acceso a su panel básico (avisos,

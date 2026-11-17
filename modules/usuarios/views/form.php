@@ -193,7 +193,8 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                             <?= e($grupo['padre']['nombre']) ?>
                                         </p>
                                         <?php foreach ($grupo['hijas'] as $hija): ?>
-                                        <div class="form-check">
+                                        <?php /* Los grupos (tercer nivel) ya vienen justo debajo de su dimensión: basta sangrarlos. */ ?>
+                                        <div class="form-check <?= ($hija['profundidad'] ?? 2) > 2 ? 'ms-4' : '' ?>">
                                             <input class="form-check-input" type="checkbox" name="pastorales[]"
                                                    value="<?= (int) $hija['id'] ?>" id="pas<?= (int) $hija['id'] ?>"
                                                    <?= in_array((int) $hija['id'], $asignadas, true) ? 'checked' : '' ?>>
@@ -280,7 +281,7 @@ $vinculada = !$esNuevo && $cuenta['persona_id'] !== null;
                                             <?= e($grupo['padre']['nombre']) ?>
                                         </p>
                                         <?php foreach ($grupo['hijas'] as $hija): ?>
-                                        <div class="d-flex justify-content-between align-items-center gap-2 small mb-1">
+                                        <div class="d-flex justify-content-between align-items-center gap-2 small mb-1 <?= ($hija['profundidad'] ?? 2) > 2 ? 'ms-3' : '' ?>">
                                             <span><?= e($hija['nombre']) ?></span>
                                             <span class="badge <?= e($claseNivel[$hija['nivel']] ?? '') ?>">
                                                 <?= e($hija['nivel_etiqueta']) ?>

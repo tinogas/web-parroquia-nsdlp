@@ -78,8 +78,10 @@ class Auth
         require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
         $modelo = new PastoralModel();
         foreach ($pastorales as $id) {
-            if (!$modelo->tieneHijos($id)) {
-                return true; // Al menos una es una pastoral operativa (hoja), no una Comisión.
+            // Al menos una es operativa: cualquiera que no sea Comisión. Una
+            // dimensión con grupos —Piedad Popular— también lo es.
+            if (!$modelo->esComision($id)) {
+                return true;
             }
         }
         return false;

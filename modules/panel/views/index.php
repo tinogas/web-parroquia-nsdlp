@@ -222,6 +222,10 @@ $dibujarTarjetaMenu = static function (array $pastoral): void {
             <div class="card-body p-3 text-center">
                 <div class="fs-3 text-dorado mb-2"><i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?>"></i></div>
                 <div class="small fw-semibold"><?= e($pastoral['nombre']) ?></div>
+                <?php /* Un grupo (tercer nivel) va entre las dimensiones de su Comisión; esto dice de cuál es. */ ?>
+                <?php if (($pastoral['profundidad'] ?? 2) > 2): ?>
+                <div class="small text-muted">en <?= e($pastoral['padre_nombre']) ?></div>
+                <?php endif; ?>
             </div>
         </a>
     </div>

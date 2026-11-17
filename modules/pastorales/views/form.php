@@ -60,23 +60,28 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
 
                     <div class="mb-3">
                         <label for="pastoral_padre_id" class="form-label fw-semibold">Comisión padre</label>
-                        <?php if ($tieneHijos): ?>
-                        <p class="form-control-plaintext py-1 mb-0 small text-muted">
-                            <i class="bi bi-info-circle me-1"></i>Esta pastoral ya agrupa a otras; no puede a la vez
-                            tener una Comisión padre.
-                        </p>
-                        <?php else: ?>
+                        <?php /* Hasta tres niveles: Comisión → dimensión → grupo (Litúrgica → Piedad
+                                 Popular → Rosario Diario). Solo se ofrece lo que no rompe ese límite
+                                 (PastoralModel::candidatosPadre()): a una pastoral que ya agrupa a
+                                 otras, solo Comisiones, para que sus grupos no bajen a un cuarto
+                                 nivel. La ruta completa en cada opción dice a qué nivel quedaría. */ ?>
                         <select name="pastoral_padre_id" id="pastoral_padre_id" class="form-select">
                             <option value="">Ninguna — pastoral suelta o Comisión</option>
                             <?php foreach ($padresDisponibles as $candidato): ?>
                             <option value="<?= (int) $candidato['id'] ?>"
                                 <?= (!$esNueva && (int) ($pastoral['pastoral_padre_id'] ?? 0) === (int) $candidato['id']) ? 'selected' : '' ?>>
-                                <?= e($candidato['nombre']) ?>
+                                <?= e($candidato['etiqueta']) ?>
                             </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Si esta pastoral pertenece a una Comisión (Litúrgica, Profética...), elígela aquí.</div>
-                        <?php endif; ?>
+                        <div class="form-text">
+                            Si pertenece a una Comisión (Litúrgica, Profética…), elígela aquí. Elegir una
+                            dimensión («Litúrgica › Piedad Popular») la deja como grupo dentro de ella: el
+                            tercer y último nivel.
+                            <?php if ($tieneHijos): ?>
+                            Como esta pastoral ya agrupa a otras, solo puede ir dentro de una Comisión.
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="mb-3">

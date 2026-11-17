@@ -1225,18 +1225,46 @@ La parroquia organiza su acción pastoral en Comisiones (Profética, Litúrgica,
 la Salud, De la Familia, De la Comunicación) que agrupan pastorales concretas —estructura
 real, no solo una forma de ordenar el listado—. `pastorales.pastoral_padre_id` (self-FK,
 `ON DELETE SET NULL`) la modela con el mismo patrón que `organigrama_nodos.padre_id`, pero
-a diferencia de aquel (hasta 4 niveles) aquí son exactamente 2: una Comisión no puede a su
-vez tener padre, y una pastoral que agrupa hijas no puede recibir uno. Ninguna de las dos
-reglas es un CHECK de SQL —no puede mirar otras filas—, las valida
-`PastoralController::guardar()`; la UI (`candidatosPadre()`) ya solo ofrece candidatos
-válidos, así que la validación en el controlador es defensa ante un POST manipulado, no un
-caso de uso real.
+a diferencia de aquel (hasta 4 niveles) aquí son **hasta 3**: Comisión, dimensión y grupo.
+Las reglas viven en `PastoralModel::motivoPadreInvalido()`: el padre existe, no es la
+pastoral misma ni algo que ella agrupa —sería un ciclo—, y con él nadie queda más abajo del
+tercer nivel, tampoco los grupos que ya cuelgan de la que se mueve (por eso a una pastoral
+que agrupa a otras solo se le ofrecen Comisiones). Ninguna es un CHECK de SQL —no puede
+mirar otras filas—; la UI (`candidatosPadre()`) ya solo ofrece candidatos válidos, y si
+aun así llega uno que no vale, `PastoralController::guardar()` no guarda y dice por qué.
+
+**El tercer nivel llegó en noviembre de 2026, por un caso y sin migración.** Piedad Popular
+pasó a ser una dimensión de Litúrgica con sus propios grupos —Llama del Amor, Rosario
+Diario, Sábado Comunitario, Viernes de Reparación—. Hasta entonces eran 2 niveles exactos,
+y al intentarlo el formulario descartaba en silencio el padre que no cumplía la regla: Llama
+del Amor se quedó sin comisión sin que nadie lo notara. Ahora el error se dice. La columna
+siempre pudo apuntar a cualquier pastoral, así que no hubo nada que migrar; lo que cambió
+fue el código que daba por hecho dos niveles:
+
+- `PastoralModel::agrupar()` sigue entregando `comisiones` con `hijas`, pero `hijas` trae
+  ahora todo lo que cuelga de la Comisión **en una lista plana**: cada dimensión seguida
+  de sus grupos, con `profundidad` (2 o 3), `padre_nombre` y `tiene_grupos`. Plana a
+  propósito: una pantalla que no sepa del tercer nivel enseña los grupos entre las
+  dimensiones en vez de perderlos. Las vistas de árbol —mapa imprimible, directorio, las
+  listas del sitio y las casillas de la ficha— los meten dentro de su dimensión con
+  `PastoralModel::anidarHijas()`; el resto los sangra o los rotula «Dentro de …».
+- `conAncestros()` sube hasta la Comisión, no un solo nivel: quien está en Rosario Diario
+  lee lo que publican Piedad Popular y Litúrgica (`Auth::pastoralesAudiencia()`, `/mi`).
+- `agruparIds()` trae los ancestros para armar el árbol y luego los quita: a quien tiene
+  Rosario Diario no se le lista además Piedad Popular.
+- Una dimensión con grupos no es Comisión: tiene coordinadora, panel y vida propia, se
+  puede asignar a una cuenta (`sinComisiones()`) y cuenta como operativa
+  (`Auth::rolPrincipalTieneAlcance()`, con `esComision()`). Administrarla no da acceso a
+  sus grupos, igual que con las Comisiones.
+
+Si algún día hiciera falta un cuarto nivel, el tope es `PastoralModel::NIVEL_MAXIMO`, pero
+las vistas de árbol anidan un solo escalón bajo la dimensión: habría que revisarlas.
 
 **No hay columna `tipo`/`es_comision`.** Sin padre y sin hijas es una pastoral suelta; sin
-padre y con hijas es una Comisión; con padre es una pastoral hija — los tres estados se
-derivan de los datos (`PastoralModel::tieneHijos()`), no se guardan aparte, para que nunca
-puedan desincronizarse de la realidad si alguien reasigna un padre sin acordarse de tocar
-un flag.
+padre y con hijas es una Comisión; con padre es una dimensión, y una dimensión con hijas
+agrupa grupos — los estados se derivan de los datos (`PastoralModel::esComision()`,
+`tieneHijos()`), no se guardan aparte, para que nunca puedan desincronizarse de la
+realidad si alguien reasigna un padre sin acordarse de tocar un flag.
 
 **Lectores se separó de Litúrgica al introducir esto, sin migrar ningún dato.** Antes de
 la jerarquía, la fila `slug='liturgia'` era a la vez "la pastoral Litúrgica" y, en la

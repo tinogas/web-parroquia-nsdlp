@@ -597,11 +597,11 @@ CREATE TABLE IF NOT EXISTS pastorales (
     id                 TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
     centro_id          SMALLINT UNSIGNED NULL,
     -- pastoral_padre_id agrupa pastorales bajo la Comisión que las coordina
-    -- (Litúrgica, Profética...). Máximo 2 niveles, igual que en la vida real
-    -- de la parroquia: no lo garantiza un CHECK entre filas, lo valida
-    -- PastoralController::guardar() (una Comisión no puede a su vez tener
-    -- padre, y una pastoral con hijas no puede recibir una). "Es Comisión" no
-    -- es una columna aparte: se deriva de "tiene alguna hija".
+    -- (Litúrgica, Profética...). Hasta 3 niveles —Comisión, dimensión y
+    -- grupo, como Litúrgica → Piedad Popular → Rosario Diario—: no lo
+    -- garantiza un CHECK entre filas, lo valida PastoralController::guardar()
+    -- con PastoralModel::motivoPadreInvalido(). "Es Comisión" no es una
+    -- columna aparte: se deriva de "primer nivel y con alguna hija".
     pastoral_padre_id  TINYINT UNSIGNED NULL,
     slug               VARCHAR(80)  NOT NULL,
     nombre             VARCHAR(120) NOT NULL,
