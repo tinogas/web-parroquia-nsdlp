@@ -185,56 +185,66 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
                     ?>
 
                     <?php
-                    /* Personas y parejas en un mismo selector, con el valor
-                       prefijado ("persona:12" / "pareja:3"): así no pueden
-                       quedar elegidas las dos a la vez, que es lo que pasaría
-                       con dos listas separadas. Quien coordina JECSA, Raíces,
-                       Matrimonios o AMA suele ser un matrimonio; en el resto de
-                       las pastorales, una persona. */
-                    $refActual = '';
-                    if (!$esNueva && $pastoral['responsable_pareja_id']) {
-                        $refActual = 'pareja:' . (int) $pastoral['responsable_pareja_id'];
-                    } elseif (!$esNueva && $pastoral['responsable_persona_id']) {
-                        $refActual = 'persona:' . (int) $pastoral['responsable_persona_id'];
-                    }
-                    ?>
-                    <div class="mb-3">
-                        <label for="responsable_ref" class="form-label fw-semibold">Responsable</label>
-                        <select name="responsable_ref" id="responsable_ref" class="form-select">
-                            <option value="">— Elegir del equipo pastoral —</option>
-                            <?php if ($parejas): ?>
-                            <optgroup label="Parejas">
-                                <?php foreach ($parejas as $pareja): ?>
-                                <?php $ref = 'pareja:' . (int) $pareja['id']; ?>
-                                <option value="<?= e($ref) ?>" <?= $refActual === $ref ? 'selected' : '' ?>>
-                                    <?= e($pareja['nombre']) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </optgroup>
-                            <?php endif; ?>
-                            <optgroup label="Personas">
+                    /* Quién la coordina: un renglón por persona del equipo
+                       pastoral, en el orden en que se leerán sus nombres
+                       ("Betesaida y Dante"), y "Agregar a alguien más" para el
+                       siguiente. Renglones y no una lista de casillas porque el
+                       equipo pasa de noventa personas y esta columna es
+                       angosta. Ya no hay parejas que elegir: un matrimonio que
+                       coordina son sus dos fichas, y el corazón del panel sale
+                       solo si en ellas son pareja (PastoralModel::conCoordinacion()). */
+                    $renglonCoordinador = static function (?array $elegido) use ($personas): void {
+                        $elegidoId = $elegido ? (int) $elegido['id'] : 0;
+                        ?>
+                        <div class="input-group" data-coordinador>
+                            <select name="coordinadores[]" class="form-select" aria-label="Persona que coordina">
+                                <option value="">— Elegir del equipo pastoral —</option>
+                                <?php if ($elegido && !$elegido['activo']): ?>
+                                <?php /* La lista solo trae fichas activas: sin esta opción, guardar
+                                         la quitaría de coordinadora sin que nadie lo decidiera. */ ?>
+                                <option value="<?= $elegidoId ?>" selected><?= e($elegido['nombre']) ?> (ficha inactiva)</option>
+                                <?php endif; ?>
                                 <?php foreach ($personas as $persona): ?>
-                                <?php $ref = 'persona:' . (int) $persona['id']; ?>
-                                <option value="<?= e($ref) ?>" <?= $refActual === $ref ? 'selected' : '' ?>>
+                                <option value="<?= (int) $persona['id'] ?>" <?= (int) $persona['id'] === $elegidoId ? 'selected' : '' ?>>
                                     <?= e($persona['nombre']) ?><?= $persona['cargo'] ? ' — ' . e($persona['cargo']) : '' ?>
                                 </option>
                                 <?php endforeach; ?>
-                            </optgroup>
-                        </select>
+                            </select>
+                            <button type="button" class="btn btn-outline-secondary" data-quitar-coordinador
+                                    title="Quitar" aria-label="Quitar a esta persona">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <?php
+                    };
+                    $coordinadores = $esNueva ? [] : $pastoral['coordinadores'];
+                    ?>
+                    <div class="mb-3">
+                        <span class="form-label fw-semibold d-block" id="etiquetaCoordinan">Quién la coordina</span>
+                        <div class="vstack gap-2 mb-2" id="coordinadores" role="group" aria-labelledby="etiquetaCoordinan">
+                            <?php foreach ($coordinadores ?: [null] as $elegido) { $renglonCoordinador($elegido); } ?>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="agregarCoordinador">
+                            <i class="bi bi-plus-lg me-1"></i>Agregar a alguien más
+                        </button>
+                        <template id="plantillaCoordinador"><?php $renglonCoordinador(null); ?></template>
                         <div class="form-text">
-                            El nombre se toma de su ficha del equipo pastoral —de las dos, si es una pareja—.
-                            Si todavía no está de alta ahí, escríbelo abajo en vez de elegir de la lista.
-                            Las parejas de la lista se forman en la ficha de cada persona.
+                            Una persona o varias, en el orden en que se leerán sus nombres. Si coordina un
+                            matrimonio, elige a los dos: si en sus fichas son pareja, el panel lo marca con
+                            un corazón.
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="responsable_nombre" class="form-label fw-semibold">
-                            Nombre, si no está en el equipo pastoral
+                            Alguien más, sin ficha en el equipo pastoral
                         </label>
                         <input type="text" name="responsable_nombre" id="responsable_nombre" class="form-control"
-                               value="<?= e($esNueva || $refActual ? '' : (string) $pastoral['responsable_nombre']) ?>"
+                               value="<?= e($esNueva ? '' : (string) $pastoral['responsable_nombre']) ?>"
                                maxlength="140">
-                        <div class="form-text">Se ignora si arriba eliges a alguien del equipo.</div>
+                        <div class="form-text">
+                            Su nombre se suma al final de los de arriba. Mejor darle de alta en Equipo
+                            pastoral: así su nombre se mantiene al día solo.
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="contacto_email" class="form-label fw-semibold">Correo de la pastoral</label>
@@ -320,6 +330,34 @@ $puedeActivar = Auth::tieneAlcanceGlobal();
         </div>
     </div>
 </form>
+
+<script>
+(function () {
+    var lista     = document.getElementById('coordinadores');
+    var plantilla = document.getElementById('plantillaCoordinador');
+    var agregar   = document.getElementById('agregarCoordinador');
+    if (!lista || !plantilla || !agregar) { return; }
+
+    agregar.addEventListener('click', function () {
+        var renglon = plantilla.content.firstElementChild.cloneNode(true);
+        lista.appendChild(renglon);
+        renglon.querySelector('select').focus();
+    });
+
+    // Quitar el único renglón lo vacía en vez de borrarlo: siempre queda dónde
+    // elegir. Los renglones vacíos no se guardan.
+    lista.addEventListener('click', function (ev) {
+        var boton = ev.target.closest('[data-quitar-coordinador]');
+        if (!boton) { return; }
+        var renglones = lista.querySelectorAll('[data-coordinador]');
+        if (renglones.length > 1) {
+            boton.closest('[data-coordinador]').remove();
+        } else {
+            renglones[0].querySelector('select').value = '';
+        }
+    });
+})();
+</script>
 
 <?php if (!$esNueva): ?>
 <?php

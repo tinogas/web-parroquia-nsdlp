@@ -255,8 +255,9 @@ Dos detalles que suelen confundir:
 - **El correo es de la pastoral, no de quien la coordina.** Se escribe a mano y
   sobrevive a los relevos, en vez de publicar el correo personal de quien esté
   al frente hoy.
-- **Quien coordina puede ser un matrimonio.** En Matrimonios, AMA, JECSA y
-  Raíces coordina una pareja, y así aparece.
+- **Quien coordina puede ser más de una persona.** Un matrimonio, como en
+  Matrimonios, o dos o más personas que no lo son, como en Raíces: salen
+  todos sus nombres, con un icono de dos siluetas.
 
 > **Se llena desde:** Parroquia → Pastorales.
 

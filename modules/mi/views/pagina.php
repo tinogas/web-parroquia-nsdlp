@@ -125,10 +125,10 @@ $nadaPublicado = !$turnos && !$avisos && !$eventos && !$tablero && !$documentos;
         <p class="small text-muted mb-2"><?= e($pastoral['descripcion_corta']) ?></p>
         <?php endif; ?>
         <ul class="list-unstyled small mb-0">
-            <?php if (!empty($pastoral['responsable_nombre'])): ?>
+            <?php if (!empty($pastoral['coordina'])): ?>
             <li class="mb-1">
-                <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?> me-1"></i>Coordina
-                <?= e($pastoral['responsable_nombre']) ?>
+                <i class="bi <?= icono_coordina($pastoral) ?> me-1"></i><?= $pastoral['coordina_varios'] ? 'Coordinan' : 'Coordina' ?>
+                <?= e($pastoral['coordina']) ?>
             </li>
             <?php endif; ?>
             <?php if ($reunion !== ''): ?>

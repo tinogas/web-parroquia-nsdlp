@@ -39,7 +39,6 @@ class PastoralController extends Controller
             'pastoral'          => null,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
-            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'padresDisponibles' => $this->modelo->candidatosPadre(),
             'tieneHijos'        => false,
         ]);
@@ -62,7 +61,6 @@ class PastoralController extends Controller
             'pastoral'          => $pastoral,
             'centros'           => (new CentroModel())->activos(),
             'personas'          => (new PersonaModel())->paraSelector(),
-            'parejas'           => (new PersonaModel())->parejasParaSelector(),
             'padresDisponibles' => $this->modelo->candidatosPadre((int) $pastoral['id']),
             'tieneHijos'        => $this->modelo->tieneHijos((int) $pastoral['id']),
             'actividades'       => $this->modelo->actividades((int) $pastoral['id']),
@@ -285,24 +283,13 @@ class PastoralController extends Controller
             Session::flash('warning', 'La pastoral se guardó, pero la imagen no: ' . $e->getMessage());
         }
 
-        // El responsable se elige del equipo pastoral; si no está ahí todavía,
-        // el nombre libre de abajo es el respaldo. Con persona elegida, su
-        // nombre manda sobre el campo de texto (que se ignora) y su correo de
-        // acceso —si tiene cuenta— manda sobre el de contacto: es la misma
-        // regla que corrige el caso real de MESC, donde el correo de contacto
-        // llevaba una letra distinta al de la cuenta de la coordinadora.
-        // Y puede ser una persona o una pareja: en JECSA, en Raíces y en las dos
-        // pastorales de familia quien coordina es un matrimonio. Las dos
-        // opciones viven en un mismo selector ("persona:12" / "pareja:3"), así
-        // que no pueden quedar elegidas a la vez ni hay que limpiar la otra.
-        $personaModel = new PersonaModel();
-        [$tipoResponsable, $idResponsable] = $this->responsableElegido();
-
-        $responsablePersona = $tipoResponsable === 'persona' ? $personaModel->porId($idResponsable) : null;
-        $responsablePareja  = $tipoResponsable === 'pareja'  ? $personaModel->parejaPorId($idResponsable) : null;
-        // Un id inválido se ignora en silencio, como el resto de selects opcionales.
-        $responsablePersonaId = $responsablePersona ? (int) $responsablePersona['id'] : null;
-        $responsableParejaId  = $responsablePareja  ? (int) $responsablePareja['id']  : null;
+        // Quién la coordina: las personas que hagan falta, elegidas del equipo
+        // pastoral y en el orden en que se eligieron, más el nombre libre para
+        // quien todavía no tiene ficha, que se suma al final. Ya no es "una
+        // persona o una pareja": en Raíces coordinan Betesaida y Dante, que no
+        // son matrimonio. Un matrimonio que coordina se elige como dos personas;
+        // que lo son se sabe por sus fichas (PastoralModel::conCoordinacion()).
+        $coordinadores = $this->coordinadoresElegidos();
 
         // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
         // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
@@ -319,16 +306,6 @@ class PastoralController extends Controller
             if (!$valido) {
                 $pastoralPadreId = null;
             }
-        }
-
-        if ($responsablePersona) {
-            $responsableNombre = $responsablePersona['nombre'];
-        } elseif ($responsablePareja) {
-            // "Ella y Él", de las dos fichas, y se mantiene solo desde ahí
-            // (PersonaModel::sincronizarResponsable()).
-            $responsableNombre = $responsablePareja['nombre'];
-        } else {
-            $responsableNombre = $this->postStr('responsable_nombre') ?: null;
         }
 
         // El correo es de la pastoral, no de quien la coordina: se escribe aquí
@@ -352,9 +329,8 @@ class PastoralController extends Controller
             'descripcion'        => SanitizadorHtml::limpiar($this->postHtml('descripcion')) ?: null,
             'imagen'             => $imagen,
             'icono'              => $this->postStr('icono') ?: 'bi-people',
-            'responsable_nombre'      => $responsableNombre,
-            'responsable_persona_id'  => $responsablePersonaId,
-            'responsable_pareja_id'   => $responsableParejaId,
+            'coordinadores'           => $coordinadores,
+            'responsable_nombre'      => $this->postStr('responsable_nombre') ?: null,
             'contacto_email'          => $contactoEmail,
             'contacto_telefono'  => $this->postStr('contacto_telefono') ?: null,
             'dia_reunion'        => $this->postStr('dia_reunion') ?: null,
@@ -568,18 +544,22 @@ class PastoralController extends Controller
     }
 
     /**
-     * Lee el selector de responsable, que ofrece personas y parejas en la misma
-     * lista. Devuelve ['persona'|'pareja'|null, id]. Un valor con otra forma se
-     * trata como "sin responsable", igual que un id que no existe: es defensa
-     * ante un POST manipulado, no un caso de uso.
+     * Lee los renglones de "Quién la coordina": ids de persona, en el orden del
+     * formulario, sin vacíos ni repetidos (alguien elegido dos veces se queda
+     * en su primer lugar). Un id que no es una ficha se descarta en silencio,
+     * como el resto de selects opcionales: es defensa ante un POST manipulado,
+     * no un caso de uso.
+     *
+     * @return int[]
      */
-    private function responsableElegido(): array
+    private function coordinadoresElegidos(): array
     {
-        $ref = $this->postStr('responsable_ref');
-        if (preg_match('/^(persona|pareja):(\d+)$/', $ref, $m)) {
-            return [$m[1], (int) $m[2]];
-        }
-        return [null, 0];
+        $ids = array_values(array_unique(array_map(
+            'intval',
+            array_filter((array) ($_POST['coordinadores'] ?? []), static fn ($v): bool => is_string($v) && ctype_digit($v))
+        )));
+        $personas = new PersonaModel();
+        return array_values(array_filter($ids, static fn (int $id): bool => $id > 0 && $personas->porId($id) !== null));
     }
 
     private function scriptEditor(): string

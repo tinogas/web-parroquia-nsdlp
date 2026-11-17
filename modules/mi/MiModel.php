@@ -28,19 +28,21 @@ class MiModel extends Model
     public const EVENTOS = 8;
     public const DIAS_EVENTOS = 120;
 
-    /** Las pastorales activas en las que está marcada en su ficha, por nombre. */
+    /**
+     * Las pastorales activas en las que está marcada en su ficha, por nombre,
+     * con quién coordina cada una (PastoralModel::conCoordinacion()).
+     */
     public function pastoralesDe(int $personaId): array
     {
-        return $this->fetchAll(
-            'SELECT p.id, p.slug, p.nombre, p.descripcion_corta, p.icono,
-                    p.responsable_nombre, p.responsable_pareja_id,
+        return (new PastoralModel())->conCoordinacion($this->fetchAll(
+            'SELECT p.id, p.slug, p.nombre, p.descripcion_corta, p.icono, p.responsable_nombre,
                     p.dia_reunion, p.hora_reunion, p.lugar_reunion, p.whatsapp_grupo
                FROM persona_pastorales pp
                JOIN pastorales p ON p.id = pp.pastoral_id
               WHERE pp.persona_id = :persona AND p.activa = 1
               ORDER BY p.nombre',
             [':persona' => $personaId]
-        );
+        ));
     }
 
     /**

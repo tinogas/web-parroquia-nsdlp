@@ -81,7 +81,7 @@ del día y la reflexión del párroco, solo Admin y Editor), `carrusel`, `galeri
 **La parroquia** — `centros` (sedes), `personas` (equipo pastoral, con la pareja de cada
 quien: quién con quién es un dato de la parroquia y lo usan todas las pastorales),
 `organigrama`, `horarios`, `pastorales` (con su jerarquía de Comisiones, su panel básico por
-pastoral, y un responsable que puede ser una persona o un matrimonio). En los listados de
+pastoral, y quien la coordina: una persona o varias, matrimonio o no). En los listados de
 integrantes —los cuatro módulos dedicados y el panel básico— cada quien lleva su botón de
 WhatsApp, y arriba un cuadro para escribir una sola vez el mensaje que todos llevarán.
 
@@ -108,7 +108,7 @@ cuentan ya con el panel básico genérico de cualquier pastoral.
 ## Los números
 
 - **28 módulos** en `modules/`, 12 con contraparte pública y 16 exclusivos del panel.
-- **48 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
+- **55 tablas** en `install.sql`, agrupadas por tema al final de `docs/BASE-DE-DATOS.md`.
 - **6 roles**, sin ninguno atado al nombre de una pastoral.
 
 ## Lo que falta, y por qué se dejó fuera a propósito

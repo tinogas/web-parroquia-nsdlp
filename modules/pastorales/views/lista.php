@@ -39,15 +39,15 @@ $dibujarTarjeta = static function (array $pastoral): void {
                     <h3 class="h6 fw-bold mb-0"><?= e($pastoral['nombre']) ?></h3>
                 </div>
                 <?php /* Quién coordina, con el mismo texto y los mismos iconos que el panel de
-                         la pastoral (views/panel.php): corazón si es una pareja —JECSA, Raíces,
-                         Matrimonios y AMA las coordina un matrimonio— y silueta si es una sola
-                         persona. Puesto aquí, la pregunta "¿cuáles se llevan en pareja?" se
-                         responde recorriendo la lista, sin abrir una por una. Se cambia en
-                         "Editar", no aquí. */ ?>
-                <?php if ($pastoral['responsable_nombre']): ?>
+                         la pastoral (views/panel.php): corazón si es un matrimonio, dos siluetas
+                         si son varias personas que no lo son —Betesaida y Dante en Raíces— y una
+                         si es una sola (icono_coordina()). Puesto aquí, la pregunta "¿cuáles se
+                         llevan en pareja?" se responde recorriendo la lista, sin abrir una por
+                         una. Se cambia en "Editar", no aquí. */ ?>
+                <?php if ($pastoral['coordina']): ?>
                 <p class="small text-muted mb-2">
-                    <i class="bi <?= $pastoral['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?> me-1"></i>
-                    Coordina <?= e($pastoral['responsable_nombre']) ?>
+                    <i class="bi <?= icono_coordina($pastoral) ?> me-1"></i>
+                    <?= $pastoral['coordina_varios'] ? 'Coordinan' : 'Coordina' ?> <?= e($pastoral['coordina']) ?>
                 </p>
                 <?php endif; ?>
                 <?php if ($pastoral['descripcion_corta']): ?>
@@ -98,17 +98,19 @@ $dibujarTarjeta = static function (array $pastoral): void {
     <div class="d-flex align-items-center justify-content-between mb-3">
         <?php /* La Comisión también tiene quien la coordina, y hasta ahora solo se veía
                  abriendo su ficha: en el encabezado se lee de corrido "Litúrgica ·
-                 Martha Aimeé", que es como se nombra en la parroquia. Corazón si son una
-                 pareja y silueta si es una persona, los mismos iconos que las tarjetas de
-                 abajo. Sin responsable no se escribe nada. */ ?>
+                 Martha Aimeé", que es como se nombra en la parroquia. Los mismos iconos
+                 que las tarjetas de abajo. Sin nadie que coordine no se escribe nada. */ ?>
         <h2 class="h6 fw-bold text-uppercase text-muted mb-0">
             <i class="bi <?= e($grupo['padre']['icono'] ?: 'bi-people') ?> me-1"></i>
             <?= e($grupo['padre']['nombre']) ?>
-            <?php if ($grupo['padre']['responsable_nombre']): ?>
-            <span class="fw-normal text-body-tertiary text-capitalize ms-1">
+            <?php if ($grupo['padre']['coordina']): ?>
+            <?php /* text-transform: none y no text-capitalize, que escribía «Betesaida Y
+                     Dante»: el encabezado va en mayúsculas y los nombres ya vienen escritos
+                     como se escriben. */ ?>
+            <span class="fw-normal text-body-tertiary ms-1" style="text-transform: none">
                 ·
-                <i class="bi <?= $grupo['padre']['responsable_pareja_id'] ? 'bi-heart-fill text-danger' : 'bi-person' ?>"></i>
-                <?= e($grupo['padre']['responsable_nombre']) ?>
+                <i class="bi <?= icono_coordina($grupo['padre']) ?>"></i>
+                <?= e($grupo['padre']['coordina']) ?>
             </span>
             <?php endif; ?>
         </h2>

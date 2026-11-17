@@ -1180,13 +1180,17 @@ mensual completo en `/eventos?pastoral=slug`, y sus documentos descargables
 edición de archivo). El centro/sede al que pertenece se muestra en la tarjeta de
 información.
 
-**El responsable se elige del equipo pastoral, no se escribe a mano.**
-`pastorales.responsable_persona_id` (FK a `personas`, `ON DELETE SET NULL`) es el select del
-formulario; `responsable_nombre` sigue existiendo solo como respaldo para cuando esa persona
-todavía no tiene ficha en el equipo (AMA y Grupo JECSA, hoy). Con persona elegida, el nombre
-mostrado **no es editable**: viene de `personas.nombre` y `PersonaModel::sincronizarResponsable()`
-lo vuelve a copiar cada vez que la ficha se guarda, exactamente con el mismo mecanismo que ya
-mantiene sincronizados `usuarios.nombre/telefono/foto` (`PersonaModel::sincronizarCuenta()`).
+**Quien coordina se elige del equipo pastoral, no se escribe a mano.** Son las personas que
+hagan falta, en `pastoral_coordinadores` (un renglón por persona en el formulario, con
+"Agregar a alguien más"); `responsable_nombre` sigue existiendo solo para quien todavía no
+tiene ficha en el equipo (Grupo JECSA, hoy), y su nombre se suma al final de los elegidos.
+El nombre mostrado **no se guarda**: `PastoralModel::conCoordinacion()` lo arma en cada
+lectura con los nombres de las fichas. Hasta noviembre de 2026 era una sola persona,
+`pastorales.responsable_persona_id`, y `responsable_nombre` guardaba una copia de su nombre
+que `PersonaModel::sincronizarResponsable()` volvía a escribir en cada guardado de la ficha;
+con varias personas esa copia habría tenido que rehacerse también al cambiar una pareja o
+al borrar una ficha, y calcularla al leer quita el problema de raíz. Ver más abajo, en
+"Parejas de la parroquia", por qué se pasó de una a varias.
 
 El correo de contacto **no** sigue esa idea, y esto cambió: hoy `contacto_email` es un campo
 propio de la pastoral, se escribe a mano y no se hereda de ninguna cuenta. Durante un tiempo se
@@ -1340,13 +1344,22 @@ nadie está en dos a la vez, y ese es todo el mantenimiento que hay.
 equipo no tiene pareja registrada y no le falta nada; quien participa solo aparece en las
 listas como cualquier otro, sin advertencia ni marca.
 
-**El responsable de una pastoral puede ser una persona o una pareja.** Son dos columnas
-(`responsable_persona_id`, `responsable_pareja_id`) pero un solo selector, con el valor
-prefijado `persona:12`/`pareja:3`: con dos listas separadas se podrían elegir las dos a la vez
-y habría que decidir cuál gana, que es exactamente el tipo de estado contradictorio que no
-conviene poder representar. Con pareja, `responsable_nombre` es "Ella y Él", calculado de las
-dos fichas y mantenido desde ahí, igual que ya pasaba con una persona. El correo no entra en
-esto: es de la pastoral y se escribe a mano, coordine quien coordine (ver más arriba).
+**Una pastoral la coordinan las personas que haga falta, y la pareja ya no es una forma de
+coordinar.** Primero fueron dos columnas, `responsable_persona_id` y `responsable_pareja_id`,
+con un solo selector (`persona:12`/`pareja:3`) para que no pudieran elegirse las dos a la vez.
+Resolvía el matrimonio que coordina JECSA, pero no el caso que llegó en noviembre de 2026: en
+Raíces van a coordinar Betesaida y Dante, que no son matrimonio. Para que cupieran en el
+selector había que darlos de alta como pareja, y eso habría sido mentir en un dato que vale en
+toda la parroquia —el panel de cada pastoral dice con quién está cada integrante—.
+
+Ahora quien coordina vive en `pastoral_coordinadores`, una fila por persona y con su orden, y
+un matrimonio que coordina son sus dos fichas, como cualesquiera otras dos. Que sean pareja se
+sigue sabiendo por `parejas`, y de ahí sale el corazón: `PastoralModel::conCoordinacion()` lo
+pinta solo cuando coordinan exactamente dos personas y son pareja entre sí; con varias que no
+lo son, dos siluetas y "Coordinan" en plural. Así el estado contradictorio que evitaba el
+selector único tampoco puede darse: no hay dos maneras de decir lo mismo. El correo sigue
+fuera de esto: es de la pastoral y se escribe a mano, coordine quien coordine (ver más
+arriba).
 
 ### Publicar en dos escalones: interno y público
 
@@ -1766,8 +1779,9 @@ caso de Zulema muestra que una misma persona sirve legítimamente en más de uno
 vez—). Con persona elegida, `nombre`/`telefono` (y `email`, en las dos tablas que lo
 tienen; `mesc_ministros` no lo necesitó nunca y no se le agregó) se toman de la ficha y
 `PersonaModel::sincronizarPersonal()` los mantiene al día si la ficha cambia —mismo
-mecanismo que `sincronizarCuenta()` para `usuarios` y `sincronizarResponsable()` para
-`pastorales.responsable_nombre`—; sin persona, los campos de texto libre de siempre
+mecanismo que `sincronizarCuenta()` para `usuarios`, y que tuvo `pastorales.responsable_nombre`
+hasta que quien coordina pasó a calcularse al leer (ver "Parejas de la parroquia")—; sin
+persona, los campos de texto libre de siempre
 siguen funcionando igual, para quien todavía no está de alta en el equipo pastoral.
 
 Deliberadamente **sin migración automática** de los 13 ministros y 5 catequistas que ya
