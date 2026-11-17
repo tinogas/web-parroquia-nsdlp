@@ -302,7 +302,8 @@ El directorio se agrupa por pastoral y su jerarquía —una Comisión y, indenta
 sus dimensiones y los grupos de cada dimensión—, no por `tipo`: dentro de cada pastoral, primero quien la coordina
 ("Coordinador general" si coordina la Comisión entera, "Coordinador" si solo esa
 dimensión, vía [`pastoral_coordinadores`](#pastoral_coordinadores)), luego quien tiene
-"Encargad-" en su `cargo`, y el resto por nombre. Pertenecer a una pastoral para esto es
+"Encargad-" en su cargo **de esa pastoral** (`persona_pastorales.cargo`, o el general si no
+tiene uno propio), y el resto por nombre. Cada quien sale con ese mismo cargo. Pertenecer a una pastoral para esto es
 estar en `persona_pastorales` **o** coordinarla, aunque no tenga la palomita de
 pertenencia marcada. Quien está en el directorio sin pertenecer ni
 coordinar ninguna pastoral cae en un grupo final, "Sin pastoral asignada".
@@ -338,6 +339,19 @@ seguir en cualquier carga posterior.
 Pivote análogo a `usuarios_pastorales`: una persona del equipo suele llevar más de una
 pastoral a la vez (catequesis y liturgia, por ejemplo). Clave primaria compuesta
 `(persona_id, pastoral_id)`, ambas foráneas con `ON DELETE CASCADE`.
+
+`cargo` (`VARCHAR(100)`, opcional) es el de esa persona **en esa** pastoral: Zulema es
+Coordinadora General en Profética, Ministro en MESC y Coordinadora de Equipos en Cáritas
+Desayunador. Vacío, vale `personas.cargo`, que queda como cargo general —el de «Quiénes
+somos» y el que acompaña su nombre en los selectores—. Antes había solo ese, y quien estaba
+en varias pastorales lo llenaba de todo a la vez («Coordinador de AMA/Ministro
+Extraordinario de la Sagrada Comunión»). Lo leen el directorio impreso, el panel de cada
+pastoral y la lista de Equipo pastoral; se escribe en la ficha
+(`PersonaModel::sincronizarPastorales()`, que conserva el de cada pastoral que se queda si
+el formulario no trae los campos) y desde el panel de la pastoral, con el permiso
+`personas.cargo` (`PastoralController::cargoGuardar()`). Es un título, no la coordinación:
+esa es [`pastoral_coordinadores`](#pastoral_coordinadores). Ver
+[`migraciones/2026-11-16-cargo-por-pastoral.sql`](migraciones/2026-11-16-cargo-por-pastoral.sql).
 
 ### `persona_centros`
 

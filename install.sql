@@ -518,9 +518,15 @@ CREATE TABLE IF NOT EXISTS personas (
 -- Pivote: una misma persona del equipo pastoral suele llevar más de una
 -- pastoral a la vez (catequesis y liturgia, por ejemplo), igual que ya pasa
 -- con usuarios_pastorales. FK real a pastorales, creada más abajo.
+--
+-- cargo es el de esa persona EN ESA pastoral (Zulema: Coordinadora General en
+-- Profética, Ministro en MESC). Opcional: vacío, vale personas.cargo, que es el
+-- cargo general. Es un título, no la coordinación —esa es
+-- pastoral_coordinadores—. Ver docs/migraciones/2026-11-16-cargo-por-pastoral.sql
 CREATE TABLE IF NOT EXISTS persona_pastorales (
     persona_id  SMALLINT UNSIGNED NOT NULL,
     pastoral_id TINYINT UNSIGNED  NOT NULL,
+    cargo       VARCHAR(100)      NULL,
     PRIMARY KEY (persona_id, pastoral_id),
     CONSTRAINT fk_pp_persona  FOREIGN KEY (persona_id)  REFERENCES personas(id)   ON DELETE CASCADE,
     CONSTRAINT fk_pp_pastoral FOREIGN KEY (pastoral_id) REFERENCES pastorales(id) ON DELETE CASCADE

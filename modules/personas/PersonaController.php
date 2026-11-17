@@ -57,6 +57,8 @@ class PersonaController extends Controller
             // vacío y se usa al editar.
             'candidatosPareja' => [],
             'parejaActual'     => null,
+            'cargos'           => [],
+            'cargosUsados'     => $this->modelo->cargosUsados(),
         ]);
     }
 
@@ -80,6 +82,10 @@ class PersonaController extends Controller
             'centrosAsignados' => $this->modelo->centrosDe((int) $persona['id']),
             'candidatosPareja' => $this->modelo->paraSelector(),
             'parejaActual'     => $this->modelo->parejaDe((int) $persona['id']),
+            // El cargo en cada pastoral marcada (persona_pastorales.cargo), y los
+            // que ya se usan, para sugerirlos y que no se escriban de tres formas.
+            'cargos'           => $this->modelo->cargosDe((int) $persona['id']),
+            'cargosUsados'     => $this->modelo->cargosUsados(),
         ]);
     }
 
@@ -132,6 +138,19 @@ class PersonaController extends Controller
             array_filter((array) ($_POST['centros'] ?? []), 'is_numeric')
         )));
 
+        // El cargo en cada pastoral: un campo por pastoral (cargos[id]), que el
+        // formulario solo enseña bajo las marcadas. Llegan también los de las
+        // no marcadas, ocultos; PersonaModel::sincronizarPastorales() solo
+        // guarda los de las que quedan marcadas.
+        $cargos = [];
+        if (isset($_POST['cargos']) && is_array($_POST['cargos'])) {
+            foreach ($_POST['cargos'] as $pastoralId => $cargo) {
+                if (is_numeric($pastoralId) && is_string($cargo)) {
+                    $cargos[(int) $pastoralId] = PersonaModel::normalizarCargo($cargo);
+                }
+            }
+        }
+
         $datos = [
             'nombre'     => $nombre,
             'cargo'      => $this->postStr('cargo') ?: null,
@@ -145,6 +164,9 @@ class PersonaController extends Controller
             'activo'     => $this->postBool('activo'),
             'en_directorio' => $this->postBool('en_directorio'),
             'pastorales' => $pastorales,
+            // null si el formulario no trae los campos de cargo: entonces cada
+            // pastoral conserva el que tenía (ver sincronizarPastorales()).
+            'cargos'     => isset($_POST['cargos']) ? $cargos : null,
             'centros'    => $centros,
         ];
 

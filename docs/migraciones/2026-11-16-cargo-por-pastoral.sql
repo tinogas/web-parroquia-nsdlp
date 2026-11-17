@@ -1,0 +1,37 @@
+-- ============================================================
+-- 2026-11-16 — Un cargo distinto en cada pastoral
+-- ============================================================
+-- Cada persona tenía un solo cargo, `personas.cargo`, y salía igual en todas
+-- sus pastorales. Treinta y ocho personas están en más de una, y el campo se
+-- llenaba de todo a la vez: «Coordinador de AMA/Ministro Extraordinario de la
+-- Sagrada Comunión», «Coordinadora General de Litúrgica - MESC - Proclamadora».
+-- El caso que lo pidió: Zulema es Coordinadora General en Profética,
+-- Coordinadora en Catequesis, Misionera en Misión y OMPE, Ministro en MESC y
+-- Coordinadora de Equipos en Cáritas Desayunador.
+--
+-- ── Qué cambia ─────────────────────────────────────────────────────────────
+--
+-- `persona_pastorales` —en qué pastorales está cada quien— gana `cargo`: el de
+-- esa persona en esa pastoral. Es opcional: vacío, se usa el de la ficha, que
+-- se queda como cargo general (el de «Quiénes somos» y el que acompaña su
+-- nombre en las listas para elegir personas). Por eso esta migración no llena
+-- nada: quien está en una sola pastoral se sigue viendo exactamente igual.
+--
+-- Se captura en la ficha de la persona, debajo de cada pastoral marcada, y
+-- también desde el panel de cada pastoral («Quiénes están en esta pastoral»),
+-- donde quien la coordina pone el cargo de su gente ahí y solo ahí, con el
+-- permiso nuevo `personas.cargo` (config/app.php).
+--
+-- El cargo es un título, no la coordinación: quién figura al frente de una
+-- pastoral sigue en `pastoral_coordinadores`. Escribir «Coordinadora» aquí no
+-- cambia quién coordina.
+--
+-- Aplicar con:
+--     C:\xampp\mysql\bin\mysql.exe -uroot parroquia_nsdlp < docs/migraciones/2026-11-16-cargo-por-pastoral.sql
+--
+-- Solo agrega una columna vacía; el código anterior la ignora, así que puede
+-- aplicarse antes de subir el código. No se puede repetir: la segunda vez
+-- falla porque la columna ya existe, sin tocar nada.
+
+ALTER TABLE persona_pastorales
+    ADD COLUMN cargo VARCHAR(100) NULL AFTER pastoral_id;

@@ -57,6 +57,11 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   cuándo dos que coordinan juntos son pareja y los marca con un corazón. El correo, en
   cambio, es de la pastoral y se escribe a mano: sobrevive a los relevos, en vez de
   publicar el correo personal de quien esté al frente hoy.
+- **Cada quien puede tener un cargo distinto en cada pastoral**: Zulema es Coordinadora
+  General en Profética, Coordinadora en Catequesis, Misionera en Misión y OMPE, Ministro
+  en MESC y Coordinadora de Equipos en Cáritas Desayunador. El de la ficha queda como cargo
+  general y vale donde no haya uno propio. Se escribe en la ficha, debajo de cada pastoral,
+  o lo pone quien coordina desde el panel de su pastoral, sin abrir la ficha.
 - **La portada muestra lo último publicado en Facebook**, con el Page Plugin oficial
   (un iframe, sin token ni API propia) sobre la misma URL que ya se usaba para el icono
   del pie.

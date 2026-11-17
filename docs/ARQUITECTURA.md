@@ -1389,6 +1389,34 @@ selector único tampoco puede darse: no hay dos maneras de decir lo mismo. El co
 fuera de esto: es de la pastoral y se escribe a mano, coordine quien coordine (ver más
 arriba).
 
+### Un cargo en cada pastoral
+
+Cada ficha tenía un solo `cargo`, y salía igual en todas las pastorales de esa persona. Con
+treinta y ocho personas en más de una, el campo acababa diciendo todo a la vez —«Coordinadora
+General de Litúrgica - MESC - Proclamadora»— y el directorio ponía a Zulema de «Coordinadora
+General» también bajo MESC, donde es ministra. Ahora `persona_pastorales` lleva `cargo`, el de
+esa persona en esa pastoral, y `personas.cargo` se queda como **cargo general**.
+
+**El de la pastoral manda, y vacío vale el general.** Así la migración no tuvo que llenar
+nada: quien está en una sola pastoral se sigue viendo igual, y solo se escribe donde hace
+falta. El cargo general sigue siendo el de «Quiénes somos» y el que acompaña el nombre en los
+selectores, donde no hay una pastoral de por medio.
+
+**Dos puertas para el mismo dato.** En la ficha, debajo de cada pastoral marcada (solo
+Administrador y Editor la abren), y en el panel de cada pastoral, donde quien la coordina
+pone el cargo de su gente ahí y solo ahí, con el permiso `personas.cargo`, sin abrir la ficha.
+Es la misma regla que ya seguían `personas.contactar` y `personas.enlace`: coordinar una
+pastoral incluye ocuparse de su gente, pero no abrir su expediente. Como es una sola columna,
+las dos puertas no pueden contradecirse; cada cambio desde el panel queda en la bitácora.
+Guardar la ficha sin los campos de cargo no los borra: `sincronizarPastorales()` conserva el
+de cada pastoral que se queda.
+
+**Es un título, no la coordinación.** Quién figura al frente sigue en
+`pastoral_coordinadores`. Si escribir «Coordinadora» en un cargo cambiara quién coordina, un
+título mal puesto movería la ficha pública de la pastoral sin que nadie lo decidiera; por eso
+son dos datos, aunque a veces digan lo mismo. Las sugerencias de los campos de cargo
+(`PersonaModel::cargosUsados()`) ayudan a que se escriban igual.
+
 ### Publicar en dos escalones: interno y público
 
 Publicar un aviso o un curso era un interruptor de dos posiciones —borrador o en el sitio

@@ -5,8 +5,8 @@ Este archivo se actualiza junto con el código: **cada migración nueva se agreg
 tabla del paso 2 y en la consulta del paso 1. Lo que ya se aplicó se anota al final, en el
 registro.
 
-> **Revisado el 16 de noviembre de 2026**, con `main` en `2c27542`. Se comprobó así: el
-> `install.sql` de agosto más las 14 migraciones, aplicadas en este orden sobre una base
+> **Revisado el 17 de noviembre de 2026**, con `main` en `fc97684`. Se comprobó así: el
+> `install.sql` de agosto más las 15 migraciones, aplicadas en este orden sobre una base
 > desechable, dan exactamente el mismo esquema que la base local (tablas, columnas, índices
 > y llaves foráneas).
 
@@ -42,6 +42,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
         UNION ALL SELECT 12, '2026-11-15-cambios-de-turno.sql',                 'mesc_cambios',     'visto_solicitante'
         UNION ALL SELECT 13, '2026-11-15-enlace-personal.sql',                  'persona_enlaces',  'token'
         UNION ALL SELECT 14, '2026-11-16-varios-coordinadores.sql',             'pastoral_coordinadores', 'persona_id'
+        UNION ALL SELECT 15, '2026-11-16-cargo-por-pastoral.sql',               'persona_pastorales', 'cargo'
        ) m
   LEFT JOIN information_schema.columns c
          ON c.table_schema = DATABASE() AND c.table_name = m.tabla AND c.column_name = m.columna
@@ -51,7 +52,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
 
 - **Todas dicen «ya está»:** la base está al día; sigue con el paso 3.
 - **Algunas dicen «FALTA»:** aplica solo esas, en el orden del paso 2.
-- **Las 14 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
+- **Las 15 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
   no había migraciones, y estas no alcanzan para ponerla al día. No la toques; hay que
   revisarla antes.
 
@@ -78,6 +79,7 @@ de la base local; en el servidor no sirve.
 | 12 | `2026-11-15-cambios-de-turno.sql` | Cambios de turno y solicitudes | Va la versión actual del archivo: se corrigió varias veces el 15 y 16 de noviembre |
 | 13 | `2026-11-15-enlace-personal.sql` | Enlace personal de los integrantes | **Después de la 12**: modifica sus tablas |
 | 14 | `2026-11-16-varios-coordinadores.sql` | Una pastoral la coordinan una o varias personas | **Borra dos columnas**: sin el respaldo no hay vuelta atrás. Con el código en seguida: ver abajo |
+| 15 | `2026-11-16-cargo-por-pastoral.sql` | Un cargo distinto en cada pastoral | Solo agrega una columna: el código anterior la ignora. En la carpeta aparece antes que la 14; el orden entre las dos no importa |
 
 **La 11 es obligatoria aunque su archivo no esté en `main`.** La página del enlace personal
 (`/mi`) lee esa columna y sin ella da error. El archivo solo existe en la rama
@@ -104,14 +106,15 @@ coordina cada pastoral y guardar una pastoral da error; con el código nuevo sin
 todo lo que muestra pastorales. Por eso va justo antes de subir el código, sin pausa entre
 las dos cosas. Si se aplica dos veces, la segunda falla sin tocar nada.
 
-- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 14 deben decir «ya está».
+- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 15 deben decir «ya está».
 
 ## 3. El código
 
 - [ ] Subir los archivos de `main`, sin lo que excluye el paso 3 de
       [`DESPLIEGUE.md`](DESPLIEGUE.md#pasos-previstos).
 - [ ] **`config/app.php` sí cambió**: trae los permisos del menú del sitio, de las
-      solicitudes de cambio de turno y del enlace personal. Súbelo y vuelve a ponerle lo que
+      solicitudes de cambio de turno, del enlace personal y del cargo por pastoral
+      (`personas.cargo`). Súbelo y vuelve a ponerle lo que
       solo tiene el servidor: `APP_DEBUG` en `false` y `URLS_AMIGABLES` como estaba.
 - [ ] `config/database.php` no se sube: no está en git y el del servidor tiene sus propias
       credenciales.
@@ -134,7 +137,7 @@ las dos cosas. Si se aplica dos veces, la segunda falla sin tocar nada.
 ## Si el servidor no tiene base todavía
 
 O si la del servidor se va a reemplazar con la de tu equipo: no hace falta ninguna
-migración, porque la base local ya tiene las 14. Genera un respaldo en local
+migración, porque la base local ya tiene las 15. Genera un respaldo en local
 (Administración → Respaldos), impórtalo en el servidor con phpMyAdmin y copia también la
 carpeta `uploads/`: el respaldo no lleva las imágenes ni los documentos subidos. Después
 sigue con los pasos 3 y 4.

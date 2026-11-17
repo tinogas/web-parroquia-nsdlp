@@ -130,7 +130,8 @@ class PastoralController extends Controller
         // por eso son dos llaves y no una. El número no se imprime en pantalla,
         // viaja en el enlace. Ver el comentario de PERMISOS_COORDINACION en
         // config/app.php, que a propósito sigue sin incluir personas.ver.
-        $personas = (new PersonaModel())->todas([(int) $pastoral['id']]);
+        $personaModel = new PersonaModel();
+        $personas     = $personaModel->todas([(int) $pastoral['id']]);
 
         $this->render('pastorales/panel', [
             'titulo'        => $pastoral['nombre'],
@@ -150,7 +151,55 @@ class PastoralController extends Controller
             'puedeEnlace'   => Auth::tienePermiso('personas.enlace'),
             'enlaces'       => (new EnlacePersonal())->estados(array_column($personas, 'id')),
             'enlaceExplica' => EnlacePersonal::explicacion(...$this->comoLoVe($pastoral)),
+            // El cargo de cada quien EN ESTA pastoral (vacío, el general de su
+            // ficha), y quién puede cambiarlo desde aquí: quien la coordina,
+            // con personas.cargo y su alcance, ya comprobado arriba.
+            'cargosAqui'    => $personaModel->cargosEnPastoral((int) $pastoral['id']),
+            'puedeCargo'    => Auth::tienePermiso('personas.cargo'),
+            'cargosUsados'  => Auth::tienePermiso('personas.cargo') ? $personaModel->cargosUsados() : [],
         ]);
+    }
+
+    /**
+     * El cargo de alguien en esta pastoral (persona_pastorales.cargo), desde
+     * «Quiénes están en esta pastoral» (POST). Lo pone quien la coordina
+     * (personas.cargo y su alcance), solo a quien está marcado en ella y solo
+     * ese dato: ni el cargo general ni nada más de la ficha, que sigue siendo
+     * de Equipo pastoral. Vacío vuelve al cargo general.
+     */
+    public function cargoGuardar(): void
+    {
+        $this->requirePermiso('personas.cargo');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->validarCsrf();
+
+        $pastoral = $this->modelo->porId($this->postInt('pastoral_id'));
+        if (!$pastoral) {
+            Session::flash('error', 'No encontramos esa pastoral.');
+            $this->redirect(url_admin('pastorales'));
+            return;
+        }
+        $this->requireAlcancePastoral((int) $pastoral['id']);
+        $volver = url_admin('pastorales', 'panel', ['id' => $pastoral['id']]) . '#quienes';
+
+        $personas = new PersonaModel();
+        $persona  = $personas->porId($this->postInt('persona_id'));
+        $cargo    = PersonaModel::normalizarCargo($this->postStr('cargo'));
+        if (!$persona || !$personas->guardarCargoEnPastoral((int) $persona['id'], (int) $pastoral['id'], $cargo)) {
+            Session::flash('error', 'Esa persona ya no está marcada en esta pastoral.');
+            $this->redirect($volver);
+            return;
+        }
+
+        $this->auditoria('editar', 'persona_pastorales', (int) $persona['id'],
+            mb_substr("Cargo en {$pastoral['nombre']}: " . ($cargo ?? '(el general)'), 0, 255));
+        Session::flash('success', $cargo !== null
+            ? "{$persona['nombre']} queda como «{$cargo}» en {$pastoral['nombre']}."
+            : "{$persona['nombre']} vuelve a su cargo general en {$pastoral['nombre']}.");
+        $this->redirect($volver);
     }
 
     /**

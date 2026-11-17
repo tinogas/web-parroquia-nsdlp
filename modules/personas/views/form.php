@@ -48,10 +48,14 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-8">
-                            <label for="cargo" class="form-label fw-semibold">Cargo</label>
+                            <label for="cargo" class="form-label fw-semibold">Cargo general</label>
                             <input type="text" name="cargo" id="cargo" class="form-control"
                                    value="<?= e($esNueva ? '' : (string) $persona['cargo']) ?>" maxlength="100"
-                                   placeholder="Ej. Párroco, Coordinador de catequesis…">
+                                   list="cargosUsados" placeholder="Ej. Párroco, Coordinadora General de Profética…">
+                            <div class="form-text">
+                                El que sale en «Quiénes somos» y junto a su nombre en las listas. Si en
+                                alguna pastoral tiene otro, escríbelo abajo, debajo de esa pastoral.
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label for="fecha_nacimiento" class="form-label fw-semibold">Fecha de nacimiento</label>
@@ -166,25 +170,53 @@
             <?php
             $comisiones = $agrupado['comisiones'];
             $sueltas    = $agrupado['sueltas'];
+
+            /* La casilla de una pastoral y, debajo, su cargo ahí
+               (persona_pastorales.cargo): el campo solo se ve con la casilla
+               marcada —oculto del todo, no deshabilitado—, y vacío vale el cargo
+               general de arriba. Una sola función para las tres listas
+               (Comisiones, dimensiones con sus grupos, sueltas), que solo
+               difieren en la clase de la casilla y en la sangría. */
+            $casillaPastoral = static function (array $pastoral, string $claseCasilla, bool $sangrar) use ($asignadas, $cargos): void {
+                $id      = (int) $pastoral['id'];
+                $marcada = in_array($id, $asignadas, true);
+                ?>
+                <div class="<?= $sangrar ? 'ms-4' : '' ?>">
+                    <div class="form-check">
+                        <input class="form-check-input <?= e($claseCasilla) ?>" type="checkbox" name="pastorales[]"
+                               value="<?= $id ?>" id="pas<?= $id ?>" <?= $marcada ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pas<?= $id ?>"><?= e($pastoral['nombre']) ?></label>
+                    </div>
+                    <div class="campo-cargo ps-4 mb-2 <?= $marcada ? '' : 'd-none' ?>" data-cargo-de="<?= $id ?>">
+                        <input type="text" name="cargos[<?= $id ?>]" class="form-control form-control-sm"
+                               value="<?= e((string) ($cargos[$id] ?? '')) ?>" maxlength="100" list="cargosUsados"
+                               placeholder="Cargo aquí — vacío: el general"
+                               aria-label="Cargo en <?= e($pastoral['nombre']) ?>">
+                    </div>
+                </div>
+                <?php
+            };
             ?>
+            <datalist id="cargosUsados">
+                <?php foreach ($cargosUsados as $sugerido): ?>
+                <option value="<?= e($sugerido) ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
             <div class="card border-0 shadow-sm mt-4">
                 <div class="card-body p-4">
                     <label class="form-label fw-semibold">Pastoral (Comisión)</label>
-                    <div class="form-text mb-2">A qué Comisión pertenece o coordina, en general. Puede ser más de una.</div>
+                    <div class="form-text mb-2">
+                        A qué Comisión pertenece o coordina, en general. Puede ser más de una. Debajo de cada
+                        una que marques puedes escribir su cargo ahí («Coordinadora General», «Ministro»…); si
+                        lo dejas vacío, se usa el cargo general.
+                    </div>
                     <?php if (!$comisiones && !$sueltas): ?>
                     <p class="text-muted small mb-0">Todavía no hay pastorales dadas de alta.</p>
                     <?php else: ?>
                     <div class="row row-cols-1 row-cols-sm-2 g-1">
                         <?php foreach ($comisiones as $grupo): ?>
                         <div class="col">
-                            <div class="form-check">
-                                <input class="form-check-input chk-comision" type="checkbox" name="pastorales[]"
-                                       value="<?= (int) $grupo['padre']['id'] ?>" id="pas<?= (int) $grupo['padre']['id'] ?>"
-                                       <?= in_array((int) $grupo['padre']['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="pas<?= (int) $grupo['padre']['id'] ?>">
-                                    <?= e($grupo['padre']['nombre']) ?>
-                                </label>
-                            </div>
+                            <?php $casillaPastoral($grupo['padre'], 'chk-comision', false); ?>
                         </div>
                         <?php endforeach; ?>
                     </div>
@@ -211,14 +243,7 @@
                             <?php foreach (PastoralModel::anidarHijas($grupo['hijas']) as $rama): ?>
                             <div class="col">
                                 <?php foreach (array_merge([$rama['pastoral']], $rama['grupos']) as $hija): ?>
-                                <div class="form-check <?= ($hija['profundidad'] ?? 2) > 2 ? 'ms-4' : '' ?>">
-                                    <input class="form-check-input chk-dimension" type="checkbox" name="pastorales[]"
-                                           value="<?= (int) $hija['id'] ?>" id="pas<?= (int) $hija['id'] ?>"
-                                           <?= in_array((int) $hija['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="pas<?= (int) $hija['id'] ?>">
-                                        <?= e($hija['nombre']) ?>
-                                    </label>
-                                </div>
+                                <?php $casillaPastoral($hija, 'chk-dimension', ($hija['profundidad'] ?? 2) > 2); ?>
                                 <?php endforeach; ?>
                             </div>
                             <?php endforeach; ?>
@@ -230,14 +255,7 @@
                         <div class="row row-cols-1 row-cols-sm-2 g-1">
                             <?php foreach ($sueltas as $suelta): ?>
                             <div class="col">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="pastorales[]"
-                                           value="<?= (int) $suelta['id'] ?>" id="pas<?= (int) $suelta['id'] ?>"
-                                           <?= in_array((int) $suelta['id'], $asignadas, true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="pas<?= (int) $suelta['id'] ?>">
-                                        <?= e($suelta['nombre']) ?>
-                                    </label>
-                                </div>
+                                <?php $casillaPastoral($suelta, '', false); ?>
                             </div>
                             <?php endforeach; ?>
                         </div>
@@ -318,4 +336,17 @@ document.querySelectorAll('.chk-comision').forEach(function (chk) {
     chk.addEventListener('change', actualizarDimensiones);
 });
 actualizarDimensiones();
+
+// El campo de cargo de cada pastoral, solo con su casilla marcada. Al
+// desmarcarla el texto se queda en el campo oculto —por si se vuelve a marcar
+// sin querer perderlo—, pero no se guarda: el servidor solo guarda el cargo de
+// las pastorales que quedan marcadas.
+document.querySelectorAll('input[name="pastorales[]"]').forEach(function (chk) {
+    chk.addEventListener('change', function () {
+        var campo = document.querySelector('.campo-cargo[data-cargo-de="' + chk.value + '"]');
+        if (campo) {
+            campo.classList.toggle('d-none', !chk.checked);
+        }
+    });
+});
 </script>
