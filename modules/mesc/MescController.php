@@ -3,6 +3,7 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/mesc/MescModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
+require_once BASE_PATH . '/core/EnlacePersonalAcciones.php';
 
 /**
  * MescController — Exclusivo de la pastoral "Ministro Extraordinario de la
@@ -17,6 +18,7 @@ require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
 class MescController extends Controller
 {
     use CambiosTurnoAcciones;
+    use EnlacePersonalAcciones;
 
     private MescModel $modelo;
 
@@ -374,11 +376,14 @@ class MescController extends Controller
             return;
         }
 
+        $ministros = $this->modelo->ministros($pastoralId);
         $this->render('mesc/ministros_lista', [
             'titulo'     => 'Ministros MESC',
             'pastoralId' => $pastoralId,
-            'ministros'  => $this->modelo->ministros($pastoralId),
+            'ministros'  => $ministros,
             'personas'   => (new PersonaModel())->paraSelector(),
+            // Cómo va el enlace personal de cada uno (core/EnlacePersonal.php).
+            'enlaces'    => (new EnlacePersonal())->estados(array_column($ministros, 'persona_id')),
         ]);
     }
 
@@ -778,13 +783,15 @@ class MescController extends Controller
 
     protected function cambiosConfig(): array
     {
-        return [
-            'modulo'   => 'mesc',
-            'tablas'   => CambiosTurno::MESC,
-            'singular' => 'ministro',
-            'plural'   => 'ministros',
-            'titulo'   => 'MESC',
-        ];
+        return CambiosTurno::MODULOS['mesc'];
+    }
+
+    /** El botón de enlace de la lista de ministros (core/EnlacePersonalAcciones.php). */
+    protected function enlaceConfig(): array
+    {
+        $cfg = $this->cambiosConfig();
+        return ['permiso' => 'mesc.editar', 'tabla' => $cfg['tablas']['personas'],
+                'singular' => $cfg['singular'], 'titulo' => $cfg['titulo'], 'turnos' => true];
     }
 
     protected function personasDelModulo(int $pastoralId): array

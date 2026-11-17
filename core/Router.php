@@ -28,6 +28,9 @@ class Router
         'sacramentos' => ['clase' => 'SacramentoPublicoController', 'archivo' => 'modules/sacramentos/SacramentoPublicoController.php'],
         'cursos'      => ['clase' => 'CursoPublicoController',      'archivo' => 'modules/cursos/CursoPublicoController.php'],
         'sitemap'     => ['clase' => 'SitemapController',           'archivo' => 'modules/sitemap/SitemapController.php'],
+        // La página del enlace personal de cada integrante (/mi/<token>): sin
+        // cuenta, por eso vive en el área pública. Ver modules/mi/MiController.php.
+        'mi'          => ['clase' => 'MiController',                'archivo' => 'modules/mi/MiController.php'],
     ];
 
     private static array $rutasAdmin = [

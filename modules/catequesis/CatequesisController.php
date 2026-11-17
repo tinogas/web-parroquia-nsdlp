@@ -3,6 +3,7 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/catequesis/CatequesisModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/core/EnlacePersonalAcciones.php';
 
 /**
  * CatequesisController — Igual que MESC y Proclamadores, este módulo es exclusivo
@@ -13,6 +14,8 @@ require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
  */
 class CatequesisController extends Controller
 {
+    use EnlacePersonalAcciones;
+
     private CatequesisModel $modelo;
 
     /**
@@ -43,12 +46,22 @@ class CatequesisController extends Controller
             return;
         }
 
+        $catequistas = $this->modelo->catequistas($pastoralId);
         $this->render('catequesis/catequistas_lista', [
             'titulo'      => 'Catequesis — Catequistas',
             'pastoralId'  => $pastoralId,
-            'catequistas' => $this->modelo->catequistas($pastoralId),
+            'catequistas' => $catequistas,
             'personas'    => (new PersonaModel())->paraSelector(),
+            // El enlace personal de cada quien (core/EnlacePersonal.php): cómo va el de cada uno.
+            'enlaces'     => (new EnlacePersonal())->estados(array_column($catequistas, 'persona_id')),
         ]);
+    }
+
+    /** El botón de enlace de la lista de catequistas (core/EnlacePersonalAcciones.php). */
+    protected function enlaceConfig(): array
+    {
+        return ['permiso' => 'catequesis.editar', 'tabla' => 'catequesis_catequistas',
+                'singular' => 'catequista', 'titulo' => 'Catequesis', 'turnos' => false];
     }
 
     public function catequistaGuardar(): void

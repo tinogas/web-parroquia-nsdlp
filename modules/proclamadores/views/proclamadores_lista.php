@@ -8,6 +8,14 @@
     </div>
 </div>
 
+<?php
+// El cuadro «Enlace personal» va antes de la tabla: define el botón de cada renglón.
+if (Auth::tienePermiso('proclamadores.editar')) {
+    $ep_url     = url_post('admin', 'proclamadores', 'enlace_personal');
+    $ep_explica = EnlacePersonal::explicacion('Proclamadores', true);
+    require BASE_PATH . '/shared/views/parciales/enlace_personal_modal.php';
+}
+?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
         <?php if (!$proclamadores): ?>
@@ -58,6 +66,7 @@
                                 <?= boton_whatsapp($proclamador['telefono'], $proclamador['nombre']) ?>
                                 <?php endif; ?>
                                 <?php if (Auth::tienePermiso('proclamadores.editar')): ?>
+                                <?= enlace_personal_boton($proclamador, $enlaces[(int) $proclamador['persona_id']] ?? null) ?>
                                 <button type="button" class="btn btn-sm btn-outline-primary"
                                         data-bs-toggle="modal" data-bs-target="#proclamador<?= (int) $proclamador['id'] ?>">
                                     <i class="bi bi-pencil"></i>

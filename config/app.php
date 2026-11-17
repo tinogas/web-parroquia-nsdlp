@@ -249,6 +249,11 @@ define('PERMISOS_COORDINACION', [
     // permisos que ya gobiernan esas pantallas (mesc.ver y sus gemelos) los
     // lleva también Consulta, que mira y no actúa. Ver docs/ARQUITECTURA.md
     'personas.contactar',
+    // Mandarle a la gente de su pastoral su enlace personal (/mi/<token>), desde
+    // la lista «Quiénes están en esta pastoral». Con él cada integrante ve los
+    // avisos internos, documentos y eventos de su pastoral, sin cuenta. Tampoco
+    // abre la ficha. Ver core/EnlacePersonal.php.
+    'personas.enlace',
     'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
     'documentos.ver', 'documentos.crear', 'documentos.eliminar',
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',

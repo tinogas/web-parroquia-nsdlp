@@ -345,6 +345,27 @@ Pivote análogo, pero por centro/sede: `(persona_id, centro_id)`, ambas foránea
 `ON DELETE CASCADE`. Igual que con las pastorales, alguien del equipo puede estar
 adscrito a más de un centro a la vez.
 
+### `persona_enlaces`
+
+El enlace personal de cada integrante (`/mi/<token>`): sin cuenta ni contraseña, con él ve
+lo que sus pastorales publican para su equipo —avisos internos, eventos, tablero y
+documentos— y, en MESC y Proclamadores, sus turnos y el rol del mes, y pide cambios de
+turno. Uno
+vigente por persona: `persona_id` es la clave primaria (FK a `personas`,
+`ON DELETE CASCADE`). `token` CHAR(32), único, 32 caracteres hexadecimales al azar (128
+bits) —solo minúsculas y dígitos, lo que aceptan los segmentos de URL del sitio—.
+`creado_por` (FK a `usuarios`, `ON DELETE SET NULL`), `created_at` y `ultimo_uso_at`, que
+le dice a la coordinación si la persona ya lo abrió.
+
+El token se guarda tal cual y no su hash, a propósito: la coordinación tiene que poder
+volver a copiarlo cuando alguien lo pierde, como la «dirección secreta» de un calendario
+de Google. Regenerarlo reemplaza el token y el anterior deja de servir. No hay fila hasta
+que alguien de la coordinación lo pide por primera vez, desde la lista de Ministros,
+Proclamadores, Integrantes de Coros o Catequistas, o desde «Quiénes están en esta pastoral»
+en el panel de cualquier pastoral. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md), «Cambios de turno y el enlace personal», y
+`docs/migraciones/2026-11-15-enlace-personal.sql`.
+
 ### `organigrama_nodos`
 
 Árbol autorreferenciado de hasta cuatro niveles. `padre_id` con clave foránea a sí misma y
@@ -655,6 +676,27 @@ pivote `(turno_id, ministro_id)`, de 1 a N ministros por turno.
 `ministrosActivos()` de esa pastoral antes de guardar: un ministro dado de baja no puede
 colarse en un turno nuevo aunque se manipule el formulario.
 
+### `mesc_cambios` y `mesc_cambio_movimientos`
+
+Las permutas, coberturas y refuerzos acordados después de armar el rol. **El rol original
+no se toca**: sigue en `mesc_turno_ministros`, y quién sirve realmente se calcula
+aplicando encima, en orden, los movimientos aprobados (`core/CambiosTurno.php`).
+
+`mesc_cambios`: `pastoral_id`, `tipo` ENUM(`permuta`, `sustitucion`, `agregado`), `notas`,
+y quién lo pidió o registró: `usuario_id` (FK a `usuarios`) si fue con una cuenta, o
+`persona_id` (FK a `personas`) si lo pidió una persona desde su enlace personal, sin
+cuenta. `estado` ENUM(`pendiente`, `aprobado`, `rechazado`, `deshecho`, `retirado`): solo
+`aprobado` cuenta para el calendario. `resuelto_por`/`resuelto_at`/`motivo_rechazo` dicen
+quién aprobó o rechazó una solicitud —un `aprobado` sin `resuelto_at` lo registró la
+coordinación directamente—; `cancelado_por`/`cancelado_at`/`motivo_cancelacion`, quién lo
+deshizo o lo retiró. `visto_solicitante` = 0 mantiene la respuesta en la campanita (o en la
+página del enlace) de quien pidió, hasta que la ve. Nada se borra: es la bitácora.
+
+`mesc_cambio_movimientos`: `cambio_id` (FK, `CASCADE`), `turno_id` (FK a `mesc_turnos`,
+`CASCADE`), `sale_id` y `entra_id` (FK a `mesc_ministros`), cualquiera de los dos NULL
+—nunca los dos—: sin `sale_id` es un refuerzo; sin `entra_id`, el sobrante de una permuta
+dispar (dos por uno). Ver `docs/migraciones/2026-11-15-cambios-de-turno.sql`.
+
 ---
 
 ## Catequesis — catequistas y periodos
@@ -763,6 +805,12 @@ color es el mismo para toda la parroquia, no un dato propio de este módulo — 
 renombre este módulo también lo administra, con su propia pantalla sobre esas mismas
 filas. `proclamadores_turno_proclamadores` es el pivote `(turno_id, proclamador_id)`, de 1
 a N por turno (una lectura puede repartirse entre dos personas).
+
+### `proclamadores_cambios` y `proclamadores_cambio_movimientos`
+
+Calcadas de `mesc_cambios` y `mesc_cambio_movimientos` (ver arriba), con `sale_id` y
+`entra_id` apuntando a `proclamadores`. El mismo código atiende a las dos parejas de tablas
+(`CambiosTurno::MESC` y `CambiosTurno::PROCLAMADORES`).
 
 ---
 
@@ -1057,10 +1105,10 @@ Es la única tabla que se purga de verdad: los registros de más de 24 horas se 
 |---|---|
 | Núcleo y seguridad | `usuarios`, `usuarios_pastorales`, `usuarios_centros`, `usuarios_perfiles`, `auditoria`, `respaldos_log`, `configuracion` |
 | Contenido | `bloques_contenido`, `paginas`, `evangelios_dia`, `carrusel`, `galeria_imagenes` |
-| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos`, `parejas` |
-| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
+| Parroquia | `centros`, `personas`, `persona_pastorales`, `persona_centros`, `persona_enlaces`, `organigrama_nodos`, `horarios`, `pastorales`, `pastoral_actividades`, `pastoral_tablero`, `pastoral_documentos`, `parejas` |
+| MESC | `mesc_visitas`, `mesc_rutas`, `mesc_ruta_visitas`, `mesc_ministros`, `mesc_turnos`, `mesc_turno_ministros`, `mesc_cambios`, `mesc_cambio_movimientos`, y `colores_liturgicos` (sin prefijo: la comparte con Proclamadores) |
 | Catequesis | `catequesis_catequistas`, `catequesis_periodos`, `catequesis_periodo_catequistas`, más `pastoral_tablero` y `pastoral_documentos`, que no son suyas |
-| Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
+| Proclamadores | `proclamadores`, `proclamadores_turnos`, `proclamadores_turno_proclamadores`, `proclamadores_cambios`, `proclamadores_cambio_movimientos`, y las compartidas: esa misma `colores_liturgicos`, `pastoral_tablero` y `pastoral_documentos` |
 | Coros | `coros`, `coristas`, `coro_coristas`; más `horarios`, que no es suya sino de la parroquia —de ahí sale la identidad de cada coro—, y las compartidas `pastoral_tablero` y `pastoral_documentos` |
 | Sacramentos | `sacramentos` |
 | Cursos | `cursos`, `curso_sesiones`, `inscripciones_curso` |
@@ -1087,3 +1135,9 @@ enteramente nuevo—. Después la subieron a **47** las tres tablas de Coros
 —`coros`, `coristas` y `coro_coristas`, otro módulo entero— y a **48**
 `parejas`, que no reemplaza a ninguna: guarda un dato que hasta entonces no se guardaba en
 ninguna parte, quién está con quién dentro del equipo pastoral.
+
+**Total actual: 54 tablas.** Después de esas 48 llegaron `menu_sitio`
+(`docs/migraciones/2026-11-02-menu-del-sitio.sql`), las cuatro de cambios de turno
+—`mesc_cambios`, `mesc_cambio_movimientos`, `proclamadores_cambios` y
+`proclamadores_cambio_movimientos`— y `persona_enlaces`, el enlace personal de los
+integrantes (las dos migraciones del 2026-11-15).
