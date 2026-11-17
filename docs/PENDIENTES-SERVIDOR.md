@@ -5,7 +5,7 @@ Este archivo se actualiza junto con el código: **cada migración nueva se agreg
 tabla del paso 2 y en la consulta del paso 1. Lo que ya se aplicó se anota al final, en el
 registro.
 
-> **Revisado el 16 de noviembre de 2026**, con `main` en `2c27542`. Se comprobó así: el
+> **Revisado el 17 de noviembre de 2026**, con `main` en `fc97684`. Se comprobó así: el
 > `install.sql` de agosto más las 15 migraciones, aplicadas en este orden sobre una base
 > desechable, dan exactamente el mismo esquema que la base local (tablas, columnas, índices
 > y llaves foráneas).
