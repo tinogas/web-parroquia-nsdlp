@@ -204,9 +204,14 @@
                     <div class="grupo-dimension mb-3" data-comision-id="<?= (int) $grupo['padre']['id'] ?>">
                         <div class="small fw-semibold text-muted mb-1"><?= e($grupo['padre']['nombre']) ?></div>
                         <div class="row row-cols-1 row-cols-sm-2 g-1">
-                            <?php foreach ($grupo['hijas'] as $hija): ?>
+                            <?php /* Una celda por dimensión, con sus grupos (tercer nivel: Piedad
+                                     Popular → Rosario Diario) sangrados debajo de ella en la misma
+                                     celda: en la rejilla de dos columnas, sueltos, caerían en la otra
+                                     columna y no se vería de quién son. */ ?>
+                            <?php foreach (PastoralModel::anidarHijas($grupo['hijas']) as $rama): ?>
                             <div class="col">
-                                <div class="form-check">
+                                <?php foreach (array_merge([$rama['pastoral']], $rama['grupos']) as $hija): ?>
+                                <div class="form-check <?= ($hija['profundidad'] ?? 2) > 2 ? 'ms-4' : '' ?>">
                                     <input class="form-check-input chk-dimension" type="checkbox" name="pastorales[]"
                                            value="<?= (int) $hija['id'] ?>" id="pas<?= (int) $hija['id'] ?>"
                                            <?= in_array((int) $hija['id'], $asignadas, true) ? 'checked' : '' ?>>
@@ -214,6 +219,7 @@
                                         <?= e($hija['nombre']) ?>
                                     </label>
                                 </div>
+                                <?php endforeach; ?>
                             </div>
                             <?php endforeach; ?>
                         </div>

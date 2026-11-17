@@ -10,10 +10,16 @@ pública y su panel de trabajo.
 ![Las pastorales, agrupadas por comisión](img/pastorales-lista.webp)
 
 Las pastorales **se agrupan por comisión** —Litúrgica, Profética, De la
-Familia, De la Comunicación, Pastoral Social, Piedad Popular, Asuntos
-Económicos—, igual que en el sitio. Cada
+Familia, De la Comunicación, Pastoral Social, Asuntos Económicos—, igual que
+en el sitio. Cada
 tarjeta lleva el nombre, quién coordina y dos botones: **Panel básico** y
 **Editar**.
+
+Hay hasta **tres niveles**: la comisión, sus dimensiones y, dentro de una
+dimensión, sus grupos. Hoy el único caso es **Piedad Popular**, una dimensión
+de Litúrgica que agrupa a Llama del Amor, Rosario Diario, Sábado Comunitario
+y Viernes de Reparación. En el listado, la tarjeta de cada grupo aparece
+justo después de la de su dimensión y dice «Dentro de Piedad Popular».
 
 Una **comisión** es una pastoral como cualquier otra, con su ficha y quien
 la coordina; lo que la hace comisión es que otras la tienen marcada como su
@@ -28,8 +34,8 @@ pastorales que agrupa.
 El botón **"Imprimir mapa"** del listado abre en una pestaña aparte un árbol
 de la jerarquía completa, listo para imprimir o guardar como PDF: cada
 Comisión encabeza su bloque y, indentadas debajo con una guía vertical, sus
-dimensiones —Litúrgica con Coros, MESC, Proclamadores…—, cada una con quién la
-coordina al lado. No es un árbol de cajitas conectadas por líneas como el del
+dimensiones —Litúrgica con Coros, MESC, Proclamadores…— y, un escalón más
+adentro, los grupos de una dimensión, cada una con quién la coordina al lado. No es un árbol de cajitas conectadas por líneas como el del
 organigrama: con Comisiones de hasta seis hijas, una hoja no alcanzaría a lo
 ancho.
 
@@ -43,7 +49,11 @@ Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
   nombre en el panel y en el sitio—.
 - **Sede o centro** a la que pertenece.
 - **Comisión padre.** Con qué comisión se agrupa. Vacío, la pastoral queda
-  suelta.
+  suelta. La lista ofrece también las dimensiones, escritas con su comisión
+  delante («Litúrgica › Piedad Popular»): elegir una deja a la pastoral como
+  grupo dentro de esa dimensión, el tercer y último nivel. Solo aparecen las
+  opciones que no pasan de tres niveles —a una pastoral que ya agrupa a otras,
+  solo comisiones—, y si algo no cabe, el panel no guarda y explica por qué.
 - **Descripción breve**, la línea de la tarjeta del listado público, y el
   **contenido**, el texto largo de su página. En una comisión, la descripción
   breve es la que sale en su tarjeta de la portada; si se deja vacía, la

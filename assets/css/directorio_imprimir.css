@@ -7,9 +7,10 @@
    calendarios de turnos; se repite en vez de compartir hoja porque son
    páginas sueltas con formas distintas. Ver docs/ARQUITECTURA.md
 
-   Agrupado por pastoral y su jerarquía (Comisión → Dimensión), indentado con
-   .di-nivel-1/.di-nivel-2: no es una tabla, porque una tabla no indenta bien
-   dos niveles de grupo dentro de sí misma. Ver
+   Agrupado por pastoral y su jerarquía (Comisión → Dimensión → Grupo),
+   indentado con .di-nivel-1/.di-nivel-2 y .di-dimension anidadas: no es una
+   tabla, porque una tabla no indenta bien niveles de grupo dentro de sí
+   misma. Ver
    modules/personas/views/directorio_imprimir.php
    ============================================================ */
 
@@ -118,6 +119,18 @@ body {
 .di-dimension-titulo {
     font-size: .92rem;
     font-weight: 600;
+    color: var(--di-azul);
+    margin: 0 0 .2rem;
+}
+
+/* Tercer nivel: los grupos de una dimensión (Piedad Popular → Rosario
+   Diario). Es una .di-dimension anidada, así que su margen se suma al de su
+   dimensión y queda un escalón más adentro; el título, un punto más chico y
+   en cursiva para que no se confunda con el de una dimensión. */
+.di-grupo-titulo {
+    font-size: .86rem;
+    font-weight: 600;
+    font-style: italic;
     color: var(--di-azul);
     margin: 0 0 .2rem;
 }

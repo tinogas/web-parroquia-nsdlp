@@ -311,13 +311,21 @@ $reunion = static function (array $p): string {
                 <?php endif; ?>
                 <?php if ($hijas): ?>
                 <ul class="comision-grupos">
-                    <?php foreach ($hijas as $hija): ?>
-                    <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
+                    <?php /* Los grupos de una dimensión (tercer nivel) en una sublista dentro
+                             de su celda, igual que en el listado de pastorales. */ ?>
+                    <?php foreach (PastoralModel::anidarHijas($hijas) as $rama): ?>
                     <li>
+                        <?php foreach (array_merge([$rama['pastoral']], $rama['grupos']) as $i => $hija): ?>
+                        <?php if ($i === 1): ?><ul class="lista-subgrupos"><?php endif; ?>
+                        <?php if ($i >= 1): ?><li><?php endif; ?>
+                        <?php $detalle = $reunion($hija) ?: $hija['descripcion_corta']; ?>
                         <a href="<?= e(url_publica('pastorales', ['slug' => $hija['slug']])) ?>">
                             <span class="nombre"><?= e($hija['nombre']) ?></span>
                             <?php if ($detalle): ?><span class="detalle"><?= e($detalle) ?></span><?php endif; ?>
                         </a>
+                        <?php if ($i >= 1): ?></li><?php endif; ?>
+                        <?php endforeach; ?>
+                        <?php if ($rama['grupos']): ?></ul><?php endif; ?>
                     </li>
                     <?php endforeach; ?>
                 </ul>

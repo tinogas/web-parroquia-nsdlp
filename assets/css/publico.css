@@ -1291,6 +1291,23 @@
     color: var(--tinta-suave);
 }
 
+/* Tercer nivel: los grupos de una dimensión (Piedad Popular → Rosario
+   Diario), dentro de la celda de su dimensión en .bento-lista y en
+   .comision-grupos, con una guía a la izquierda como la del mapa de
+   pastorales del panel. */
+.lista-subgrupos {
+    list-style: none;
+    margin: .5rem 0 0 .2rem;
+    padding: 0 0 0 .85rem;
+    border-left: 2px solid var(--borde);
+    display: grid;
+    gap: .45rem;
+}
+
+.lista-subgrupos a {
+    font-size: .88em;
+}
+
 /* En el teléfono, 16 px de margen a cada lado en vez de los 12 de
    Bootstrap: con 12 el texto se siente pegado a la orilla. */
 @media (max-width: 575.98px) {

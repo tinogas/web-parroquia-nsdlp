@@ -34,6 +34,13 @@ $dibujarTarjeta = static function (array $pastoral): void {
     <div class="col-md-6 col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-3">
+                <?php /* Un grupo (tercer nivel) se lista junto a las dimensiones de su
+                         Comisión, justo después de la suya; esta línea dice de cuál es. */ ?>
+                <?php if (($pastoral['profundidad'] ?? 2) > 2): ?>
+                <p class="small text-muted mb-1">
+                    <i class="bi bi-arrow-return-right me-1"></i>Dentro de <?= e($pastoral['padre_nombre']) ?>
+                </p>
+                <?php endif; ?>
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="bi <?= e($pastoral['icono'] ?: 'bi-people') ?> fs-4 text-primary"></i>
                     <h3 class="h6 fw-bold mb-0"><?= e($pastoral['nombre']) ?></h3>
@@ -154,7 +161,7 @@ foreach ($comisiones as $grupo) {
     $mcp_mensaje       = 'Se eliminará <strong>permanentemente</strong> a «' . e($pastoral['nombre']) . '», sus '
                        . 'actividades y sus documentos. Los avisos, eventos y cursos que ya le pertenecían '
                        . 'quedarán como contenido parroquial general (sin pastoral), no se borran.'
-                       . ($pastoral['pastoral_padre_id'] === null
+                       . ($pastoral['pastoral_padre_id'] === null || !empty($pastoral['tiene_grupos'])
                            ? ' Si agrupaba otras pastorales, esas quedarán sueltas, sin Comisión.' : '')
                        . ' Esta acción no se puede deshacer.';
     $mcp_accionUrl     = url_post('admin', 'pastorales', 'eliminar');

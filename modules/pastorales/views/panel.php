@@ -16,13 +16,13 @@
                 <li class="breadcrumb-item">
                     <a href="<?= e(url_admin('pastorales')) ?>" class="text-decoration-none">Pastorales</a>
                 </li>
-                <?php if ($comisionPadre): ?>
+                <?php foreach ($ancestros as $arriba): ?>
                 <li class="breadcrumb-item">
-                    <a href="<?= e(url_admin('pastorales', 'panel', ['id' => $comisionPadre['id']])) ?>" class="text-decoration-none">
-                        <?= e($comisionPadre['nombre']) ?>
+                    <a href="<?= e(url_admin('pastorales', 'panel', ['id' => $arriba['id']])) ?>" class="text-decoration-none">
+                        <?= e($arriba['nombre']) ?>
                     </a>
                 </li>
-                <?php endif; ?>
+                <?php endforeach; ?>
                 <li class="breadcrumb-item active" aria-current="page"><?= e($pastoral['nombre']) ?></li>
             </ol>
         </nav>

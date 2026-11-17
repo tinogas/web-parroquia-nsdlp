@@ -111,9 +111,10 @@ class PastoralController extends Controller
         }
         $this->requireAlcancePastoral((int) $pastoral['id']);
 
-        $comisionPadre = $pastoral['pastoral_padre_id']
-            ? $this->modelo->porId((int) $pastoral['pastoral_padre_id'])
-            : null;
+        // Las pastorales que la contienen, de la Comisión hacia abajo: con el
+        // tercer nivel, Rosario Diario está en Piedad Popular, que está en
+        // Litúrgica, y las migas de pan dicen las dos.
+        $ancestros = $this->modelo->ancestros((int) $pastoral['id']);
 
         // Quiénes están marcados en esta pastoral (persona_pastorales). Se
         // muestra a quien ya administra la pastoral —requireAlcancePastoral()
@@ -134,7 +135,7 @@ class PastoralController extends Controller
         $this->render('pastorales/panel', [
             'titulo'        => $pastoral['nombre'],
             'pastoral'      => $pastoral,
-            'comisionPadre' => $comisionPadre,
+            'ancestros'     => $ancestros,
             'moduloDedicado' => MODULO_POR_PASTORAL[$pastoral['slug']] ?? null,
             'documentos'    => $this->modelo->documentos((int) $pastoral['id']),
             'personas'      => $personas,
@@ -266,6 +267,24 @@ class PastoralController extends Controller
             return;
         }
 
+        // Hasta tres niveles —Comisión, dimensión, grupo— y sin ciclos: las
+        // reglas están en PastoralModel::motivoPadreInvalido(), y el selector
+        // ya solo ofrece candidatas válidas (candidatosPadre()). Si aun así
+        // llega una que no vale, no se guarda y se dice por qué. Antes se
+        // descartaba en silencio y la pastoral se quedaba sin comisión: le pasó
+        // a Llama del Amor al intentar meterla en Piedad Popular, cuando
+        // todavía no había tercer nivel. Va antes de la imagen para no dejar un
+        // archivo subido de una pastoral que no se guardó.
+        $pastoralPadreId = $this->postIntONull('pastoral_padre_id');
+        if ($pastoralPadreId !== null) {
+            $motivo = $this->modelo->motivoPadreInvalido($existente ? $id : null, $pastoralPadreId);
+            if ($motivo !== null) {
+                Session::flash('error', 'No se guardó: ' . $motivo);
+                $this->redirect($id ? url_admin('pastorales', 'editar', ['id' => $id]) : url_admin('pastorales', 'nueva'));
+                return;
+            }
+        }
+
         $slugPedido = $this->postStr('slug');
         $slug = $slugPedido !== ''
             ? Slug::unico($slugPedido, 'pastorales', $id ?: null)
@@ -290,23 +309,6 @@ class PastoralController extends Controller
         // son matrimonio. Un matrimonio que coordina se elige como dos personas;
         // que lo son se sabe por sus fichas (PastoralModel::conCoordinacion()).
         $coordinadores = $this->coordinadoresElegidos();
-
-        // Máximo 2 niveles: el padre elegido no puede ser ella misma, no puede
-        // ya tener su propio padre (evita un 3er nivel), y esta pastoral no
-        // puede a la vez agrupar hijas y tener un padre. La UI ya solo ofrece
-        // candidatos válidos (PastoralModel::candidatosPadre()) y oculta el
-        // selector si tieneHijos, así que esto es defensa ante un POST
-        // manipulado, no un caso de uso real — se ignora en silencio, como el
-        // resto de selects opcionales.
-        $pastoralPadreId = $this->postIntONull('pastoral_padre_id');
-        if ($pastoralPadreId !== null) {
-            $padre  = $this->modelo->porId($pastoralPadreId);
-            $valido = $padre && $pastoralPadreId !== $id && $padre['pastoral_padre_id'] === null
-                   && !($id && $this->modelo->tieneHijos($id));
-            if (!$valido) {
-                $pastoralPadreId = null;
-            }
-        }
 
         // El correo es de la pastoral, no de quien la coordina: se escribe aquí
         // y no se hereda de ninguna cuenta. Antes se copiaba del correo de

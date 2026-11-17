@@ -10,8 +10,9 @@
  * personas (modules/nosotros/views/publico/organigrama_imprimir.php): con
  * Comisiones de hasta seis hijas, un árbol horizontal se haría demasiado
  * ancho para cualquier hoja. Aquí cada Comisión encabeza su bloque y, debajo,
- * indentadas con una guía vertical, sus dimensiones — máximo dos niveles,
- * igual que en toda la jerarquía de pastorales (docs/ARQUITECTURA.md).
+ * indentadas con una guía vertical, sus dimensiones, y dentro de una
+ * dimensión sus grupos —tres niveles como máximo, igual que en toda la
+ * jerarquía de pastorales (docs/ARQUITECTURA.md)—.
  *
  * Variables esperadas:
  *   $comisiones  array, PastoralModel::agrupadoVisible()['comisiones'] —
@@ -65,8 +66,20 @@ $huboAlgo = $comisiones || $sueltas;
         <?php pastorales_mapa_nodo($grupo['padre']); ?>
         <?php if ($grupo['hijas']): ?>
         <ul>
-            <?php foreach ($grupo['hijas'] as $hija): ?>
-            <li><?php pastorales_mapa_nodo($hija); ?></li>
+            <?php /* Los grupos (tercer nivel, Piedad Popular → Rosario Diario) van en su
+                     propio <ul> dentro del <li> de su dimensión: las guías del CSS ya
+                     funcionan a cualquier profundidad. */ ?>
+            <?php foreach (PastoralModel::anidarHijas($grupo['hijas']) as $rama): ?>
+            <li>
+                <?php pastorales_mapa_nodo($rama['pastoral']); ?>
+                <?php if ($rama['grupos']): ?>
+                <ul>
+                    <?php foreach ($rama['grupos'] as $subgrupo): ?>
+                    <li><?php pastorales_mapa_nodo($subgrupo); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+            </li>
             <?php endforeach; ?>
         </ul>
         <?php endif; ?>

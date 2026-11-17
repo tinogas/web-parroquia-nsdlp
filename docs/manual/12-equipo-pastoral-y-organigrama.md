@@ -57,7 +57,9 @@ dice.
   ficha ya guardada: en una nueva todavía no hay a quién ligarla.
 - **Sede o centros**, **Pastoral (Comisión)** y **Dimensión**, en tres listas
   de palomitas. Las dimensiones de una comisión se pueden marcar después de
-  marcar la comisión arriba. Se puede pertenecer a varias de cada una.
+  marcar la comisión arriba; los grupos de una dimensión —como Rosario Diario
+  dentro de Piedad Popular— salen sangrados debajo de ella. Se puede
+  pertenecer a varias de cada una.
 - **Activa**, el interruptor de siempre.
 - **Incluir en el directorio telefónico.** Aparte de "Activa": no es para todo
   el equipo, es para altos mandos y cargos importantes del organigrama —a
@@ -84,7 +86,8 @@ un directorio telefónico, y el institucional ya se ve en "Quiénes somos".
 Va agrupado por pastoral, siguiendo la misma jerarquía de Comisión y
 Dimensión que el resto del sistema: cada Comisión (por ejemplo, Litúrgica)
 encabeza su bloque, y debajo, indentadas, sus dimensiones (Coros, MESC,
-Proclamadores…). Dentro de cada una, primero aparece quien la coordina —quien
+Proclamadores…); una dimensión con grupos, como Piedad Popular, lleva los
+suyos un escalón más adentro. Dentro de cada una, primero aparece quien la coordina —quien
 coordina la Comisión entera, y luego quien coordina cada dimensión en
 concreto—, después quien tiene "Encargado" o "Encargada" en su cargo, y al
 final el resto, por nombre. Quien está marcada para el directorio pero no
