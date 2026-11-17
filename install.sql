@@ -929,6 +929,7 @@ CREATE TABLE IF NOT EXISTS mesc_cambios (
     tipo        ENUM('permuta', 'sustitucion', 'agregado') NOT NULL,
     notas       VARCHAR(255)     NULL,
     usuario_id  INT UNSIGNED     NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
     estado      ENUM('pendiente', 'aprobado', 'rechazado', 'deshecho', 'retirado') NOT NULL DEFAULT 'aprobado',
     resuelto_por INT UNSIGNED    NULL,
     resuelto_at DATETIME         NULL,
@@ -942,6 +943,7 @@ CREATE TABLE IF NOT EXISTS mesc_cambios (
     KEY idx_mca_pastoral (pastoral_id, estado),
     CONSTRAINT fk_mca_pastoral FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
     CONSTRAINT fk_mca_usuario  FOREIGN KEY (usuario_id)   REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_mca_persona  FOREIGN KEY (persona_id)   REFERENCES personas(id)   ON DELETE SET NULL,
     CONSTRAINT fk_mca_resolvio FOREIGN KEY (resuelto_por) REFERENCES usuarios(id)   ON DELETE SET NULL,
     CONSTRAINT fk_mca_cancelo  FOREIGN KEY (cancelado_por) REFERENCES usuarios(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1100,6 +1102,7 @@ CREATE TABLE IF NOT EXISTS proclamadores_cambios (
     tipo        ENUM('permuta', 'sustitucion', 'agregado') NOT NULL,
     notas       VARCHAR(255)     NULL,
     usuario_id  INT UNSIGNED     NULL,
+    persona_id  SMALLINT UNSIGNED NULL,
     estado      ENUM('pendiente', 'aprobado', 'rechazado', 'deshecho', 'retirado') NOT NULL DEFAULT 'aprobado',
     resuelto_por INT UNSIGNED    NULL,
     resuelto_at DATETIME         NULL,
@@ -1113,6 +1116,7 @@ CREATE TABLE IF NOT EXISTS proclamadores_cambios (
     KEY idx_pca_pastoral (pastoral_id, estado),
     CONSTRAINT fk_pca_pastoral FOREIGN KEY (pastoral_id)  REFERENCES pastorales(id) ON DELETE CASCADE,
     CONSTRAINT fk_pca_usuario  FOREIGN KEY (usuario_id)   REFERENCES usuarios(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_pca_persona  FOREIGN KEY (persona_id)   REFERENCES personas(id)   ON DELETE SET NULL,
     CONSTRAINT fk_pca_resolvio FOREIGN KEY (resuelto_por) REFERENCES usuarios(id)   ON DELETE SET NULL,
     CONSTRAINT fk_pca_cancelo  FOREIGN KEY (cancelado_por) REFERENCES usuarios(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1129,6 +1133,23 @@ CREATE TABLE IF NOT EXISTS proclamadores_cambio_movimientos (
     CONSTRAINT fk_pcm_turno  FOREIGN KEY (turno_id)  REFERENCES proclamadores_turnos(id)  ON DELETE CASCADE,
     CONSTRAINT fk_pcm_sale   FOREIGN KEY (sale_id)   REFERENCES proclamadores(id)         ON DELETE CASCADE,
     CONSTRAINT fk_pcm_entra  FOREIGN KEY (entra_id)  REFERENCES proclamadores(id)         ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Enlace personal de cada integrante (/mi/<token>): con él ve sus turnos y
+-- pide cambios de turno sin cuenta ni contraseña. Uno vigente por persona;
+-- regenerarlo cambia el token y el anterior deja de servir. El token se guarda
+-- tal cual para que la coordinación pueda reenviarlo. Ver modules/mi/ y
+-- docs/migraciones/2026-11-15-enlace-personal.sql.
+CREATE TABLE IF NOT EXISTS persona_enlaces (
+    persona_id    SMALLINT UNSIGNED NOT NULL,
+    token         CHAR(32)          NOT NULL,
+    creado_por    INT UNSIGNED      NULL,
+    created_at    DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ultimo_uso_at DATETIME          NULL,
+    PRIMARY KEY (persona_id),
+    UNIQUE KEY uq_penl_token (token),
+    CONSTRAINT fk_penl_persona FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_penl_creador FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

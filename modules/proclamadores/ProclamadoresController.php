@@ -4,6 +4,7 @@ require_once BASE_PATH . '/modules/proclamadores/ProclamadoresModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
+require_once BASE_PATH . '/core/EnlacePersonalAcciones.php';
 
 /**
  * ProclamadoresController — Exclusivo de la pastoral "Proclamadores" (se
@@ -25,6 +26,7 @@ require_once BASE_PATH . '/core/CambiosTurnoAcciones.php';
 class ProclamadoresController extends Controller
 {
     use CambiosTurnoAcciones;
+    use EnlacePersonalAcciones;
 
     private ProclamadoresModel $modelo;
 
@@ -55,10 +57,13 @@ class ProclamadoresController extends Controller
             return;
         }
 
+        $proclamadores = $this->modelo->proclamadores($pastoralId);
         $this->render('proclamadores/proclamadores_lista', [
             'titulo'        => 'Proclamadores',
             'pastoralId'    => $pastoralId,
-            'proclamadores' => $this->modelo->proclamadores($pastoralId),
+            'proclamadores' => $proclamadores,
+            // Cómo va el enlace personal de cada uno (core/EnlacePersonal.php).
+            'enlaces'       => (new EnlacePersonal())->estados(array_column($proclamadores, 'persona_id')),
             'personas'      => (new PersonaModel())->paraSelector(),
             'preferencias'  => ProclamadoresModel::PREFERENCIAS,
         ]);
@@ -667,13 +672,15 @@ class ProclamadoresController extends Controller
 
     protected function cambiosConfig(): array
     {
-        return [
-            'modulo'   => 'proclamadores',
-            'tablas'   => CambiosTurno::PROCLAMADORES,
-            'singular' => 'proclamador',
-            'plural'   => 'proclamadores',
-            'titulo'   => 'Proclamadores',
-        ];
+        return CambiosTurno::MODULOS['proclamadores'];
+    }
+
+    /** El botón de enlace de la lista de proclamadores (core/EnlacePersonalAcciones.php). */
+    protected function enlaceConfig(): array
+    {
+        $cfg = $this->cambiosConfig();
+        return ['permiso' => 'proclamadores.editar', 'tabla' => $cfg['tablas']['personas'],
+                'singular' => $cfg['singular'], 'titulo' => $cfg['titulo'], 'turnos' => true];
     }
 
     protected function personasDelModulo(int $pastoralId): array

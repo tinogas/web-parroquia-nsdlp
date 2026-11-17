@@ -2,6 +2,9 @@ User-agent: *
 Disallow: /admin/
 Disallow: /index.php?area=admin
 Disallow: /uploads/boletines/
+# La página del enlace personal: «/mi» a secas bloquearía también /misa-…
+Disallow: /mi/
+Disallow: /mi$
 Allow: /
 
 # El mapa del sitio se genera desde la base de datos (etapa 10).

@@ -13,6 +13,14 @@
     </a>
 </div>
 
+<?php
+// El cuadro «Enlace personal» va antes de la tabla: define el botón de cada renglón.
+if (Auth::tienePermiso('mesc.editar')) {
+    $ep_url     = url_post('admin', 'mesc', 'enlace_personal');
+    $ep_explica = EnlacePersonal::explicacion('MESC', true);
+    require BASE_PATH . '/shared/views/parciales/enlace_personal_modal.php';
+}
+?>
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
         <?php if (!$ministros): ?>
@@ -54,6 +62,7 @@
                                 <?= boton_whatsapp($ministro['telefono'], $ministro['nombre']) ?>
                                 <?php endif; ?>
                                 <?php if (Auth::tienePermiso('mesc.editar')): ?>
+                                <?= enlace_personal_boton($ministro, $enlaces[(int) $ministro['persona_id']] ?? null) ?>
                                 <button type="button" class="btn btn-sm btn-outline-primary"
                                         data-bs-toggle="modal" data-bs-target="#ministro<?= (int) $ministro['id'] ?>">
                                     <i class="bi bi-pencil"></i>

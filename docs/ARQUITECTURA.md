@@ -1887,6 +1887,104 @@ Hoy nadie tiene la pastoral de Coros asignada en `usuarios_pastorales`, así que
 solo lo ven las cuentas de alcance global. Darle acceso a la pastoral es añadir esa fila
 desde Usuarios, no tocar código.
 
+### Cambios de turno y el enlace personal de los integrantes
+
+**El rol original no se toca.** Después de armar el rol de MESC o de Proclamadores, los
+propios ministros se acomodan entre ellos y el cambio se cumplía sin quedar escrito. Ahora se
+registra en `mesc_cambios`/`proclamadores_cambios` (con sus movimientos) **sin modificar el
+pivote del rol**: quién sirve se calcula aplicando encima, en orden, los movimientos de los
+cambios aprobados (`CambiosTurno::aplicar()`). Así el calendario muestra las dos cosas
+—quién sirve y quién estaba originalmente—, y deshacer un cambio es cambiarle el estado: el
+rol original reaparece solo. Aplicar en orden es lo que permite encadenar cambios (Zulema le
+pasa el turno a Sandra y Sandra a Hiram); por eso tampoco se deshace un cambio mientras haya
+otro posterior en el mismo turno.
+
+**Quién hace qué.** La coordinación (`<modulo>.editar`) registra directo y resuelve
+solicitudes; el laico (`<modulo>.solicitar`) solo pide, y lo que pide tiene que incluirlo a
+él. Nada se borra —deshacer y retirar dejan el cambio en `deshecho`/`retirado`, con quién,
+cuándo y por qué— y nada se mueve en el pasado: ni registrar, ni aprobar, ni deshacer, ni
+retirar algo que toque un turno de antes de hoy (`CambiosTurno::yaPaso()`). La validación del
+formulario vive en `core/CambiosTurnoValidacion.php` y la usan los dos caminos por los que
+llega una solicitud: el panel y el enlace personal.
+
+**Por qué un enlace personal y no una cuenta por pastoral.** Darle cuenta y contraseña a
+cada ministro era demasiado trabajo, y la alternativa que se planteó —una sola cuenta
+compartida por pastoral— rompe justo lo que necesitan las solicitudes: saber quién pide (y
+que solo pida por sí mismo), a quién avisarle de la respuesta, quién puede retirar qué, y
+una bitácora que diga algo más que «Cuenta MESC». Con una cuenta compartida, la primera
+persona que abre la campanita marca como vista la respuesta de otra, y la contraseña
+termina en el grupo de WhatsApp. El enlace (`/mi/<token>`, `core/EnlacePersonal.php`,
+`modules/mi/`) identifica a cada quien sin que nadie administre usuarios: nace de su ficha
+del equipo pastoral la primera vez que la coordinación lo pide desde la lista de su módulo,
+y se manda por WhatsApp. La coordinación sigue entrando con su cuenta.
+
+**Qué abre y qué no.** Una pestaña por cada pastoral en la que la persona está marcada en
+su ficha. En todas ve quién coordina y cuándo se reúnen, los avisos internos, lo que viene
+(eventos y tablero) y los documentos de esa pastoral (`modules/mi/MiModel.php`), con las
+mismas reglas que una cuenta de Consulta en el panel: avisos publicados hacia dentro y
+vigentes, de su pastoral, de la Comisión que la agrupa, los generales de la parroquia y los
+comunicados —que van a todo el mundo, como en la campanita—; eventos de su pastoral
+publicados o no, porque la agenda del panel también le enseña al equipo lo que no sale en el
+sitio, y las reuniones internas casi nunca salen. En MESC y Proclamadores, si además está
+activa en esa lista, ve sus turnos, el rol del mes y sus solicitudes, y pide cambios, que la
+coordinación aprueba; esas pestañas van primero. No administra nada. Una pastoral que no ha
+publicado nada muestra al menos quién coordina y cuándo se reúnen, y un aviso de que todavía
+no hay nada para su equipo, en vez de una página que parezca rota.
+
+**Cómo le habla.** Su página («Hola, Male») y el mensaje con su enlace la llaman igual,
+venga el botón de la lista que venga: por su nombre corto si tiene, y si no, por su nombre
+de pila (`EnlacePersonal::comoLlamarle()`). El nombre corto solo lo guarda MESC, en la
+columna «Nombre corto» de Ministros; Proclamadores, Coros y Catequesis guardan el nombre
+completo, igual que la ficha.
+
+**Quién lo manda.** El botón está en las listas propias de los módulos —Ministros (MESC),
+Proclamadores, Integrantes (Coros) y Catequistas—, con el permiso de editar esa lista
+(`<modulo>.editar`), y en «Quiénes están en esta pastoral», en el panel de cualquier
+pastoral (`personas.enlace`, que lleva toda la coordinación, y su alcance sobre esa
+pastoral). Las listas comparten una sola acción (`core/EnlacePersonalAcciones.php`): cada
+controlador solo dice cuál es su tabla —una de `EnlacePersonal::LISTAS`, lista cerrada
+porque el nombre va dentro del SQL— y si su pastoral lleva turnos. El renglón sin ficha
+ligada no tiene botón: el enlace sale de la ficha. Todas las rutas responden igual
+(`core/EnlacePersonalRespuesta.php`), y el mensaje y el cuadro dicen lo que verá según
+lleve turnos o no (`EnlacePersonal::queVe()` y `explicacion()`). Si en su ficha no está
+marcado en esa pastoral, el cuadro lo avisa antes de mandarlo: su página no le mostraría
+nada de ella. Consulta no lo ve: mira, no manda enlaces.
+
+Una solicitud pedida desde el enlace se guarda con
+`persona_id` en vez de `usuario_id`, y del lado del panel es una solicitud como cualquier
+otra, marcada «enlace personal». Quien pide se identifica como `['usuario' => …, 'persona'
+=> …]`: si la persona además tiene cuenta, ve y retira lo que pidió por cualquiera de los
+dos caminos.
+
+**Se apaga solo.** El enlace vale mientras la ficha de la persona esté activa; cada
+pastoral se le muestra mientras siga marcada en ella en su ficha, y los turnos de MESC o
+Proclamadores mientras además siga activa en esa lista. Si lo pierde o lo reenvía, «Generar un enlace nuevo» cambia el token
+y el anterior deja de servir en cualquier teléfono.
+
+**El token se guarda tal cual, no su hash**, para que la coordinación pueda volver a
+copiarlo y reenviarlo. Lo que abre es poco, y una copia de la base expone de todos modos
+datos más delicados que este. Son 128 bits al azar en hexadecimal: imposible de adivinar, y
+caben en un segmento de URL del sitio.
+
+**Cookies y sesión.** Al abrir `/mi/<token>` el teléfono guarda el token en la cookie
+`nsdlp_mi` (un año, renovado en cada visita) y pasa a `/mi`, para que el token no se quede a
+la vista en la barra de direcciones ni en una captura de pantalla. Esa cookie es
+`SameSite=Lax` y no `Strict` como la de la sesión: el enlace llega desde otra aplicación
+(WhatsApp), y una cookie `Strict` no viaja en esa navegación. Por la misma razón la página
+**no abre sesión** para mostrarse: si lo hiciera, en un teléfono con el panel abierto
+reemplazaría la sesión del panel por una nueva y lo dejaría fuera. En lugar del token CSRF
+de la sesión, cada formulario lleva una firma derivada del token
+(`hash_hmac('sha256', 'formulario-mi', $token)`): solo puede armarla quien tiene el enlace,
+y una cookie `Lax` tampoco viaja en un POST desde otro sitio. La sesión solo se usa, si ya
+existe o al enviar un formulario, para el mensaje de «listo» después de redirigir.
+
+**Vista previa.** Si quien abre el enlace tiene sesión en el panel y no es la dueña (la
+coordinación revisando qué le llegó a alguien, o «Usar como…»), se muestra la página sin
+efectos: no se recuerda en ese navegador, no cuenta como «lo abrió», no marca las respuestas
+como vistas y no deja pedir nada a nombre de esa persona. Tampoco cuenta la visita que hace
+WhatsApp por su cuenta para armar la vista previa del mensaje: a esos agentes se les sirve
+una página genérica, sin nombre y sin cookie.
+
 ### Escribirle al equipo son enlaces `wa.me`, no la API de Meta
 
 La parroquia pidió poder avisarle por WhatsApp a la gente de una pastoral —una reunión, un

@@ -3,6 +3,7 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/coros/CoroModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
+require_once BASE_PATH . '/core/EnlacePersonalAcciones.php';
 
 /**
  * CoroController — Exclusivo de la pastoral "Coros": ninguna acción muestra ni
@@ -27,6 +28,8 @@ require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
  */
 class CoroController extends Controller
 {
+    use EnlacePersonalAcciones;
+
     private CoroModel $modelo;
 
     /**
@@ -164,14 +167,24 @@ class CoroController extends Controller
             return;
         }
 
+        $coristas = $this->modelo->coristas($pastoralId);
         $this->render('coros/coristas_lista', [
             'titulo'      => 'Integrantes',
             'pastoralId'  => $pastoralId,
-            'coristas'    => $this->modelo->coristas($pastoralId),
+            'coristas'    => $coristas,
             'personas'    => (new PersonaModel())->paraSelector(),
             'coros'       => $this->corosConEtiqueta($pastoralId),
             'susCoros'    => $this->modelo->corosDeCadaCorista($pastoralId),
+            // El enlace personal de cada quien (core/EnlacePersonal.php): cómo va el de cada uno.
+            'enlaces'     => (new EnlacePersonal())->estados(array_column($coristas, 'persona_id')),
         ]);
+    }
+
+    /** El botón de enlace de la lista de integrantes (core/EnlacePersonalAcciones.php). */
+    protected function enlaceConfig(): array
+    {
+        return ['permiso' => 'coros.editar', 'tabla' => 'coristas',
+                'singular' => 'integrante', 'titulo' => 'Coros', 'turnos' => false];
     }
 
     public function coristaGuardar(): void

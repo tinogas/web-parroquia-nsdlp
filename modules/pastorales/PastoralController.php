@@ -3,9 +3,13 @@ require_once BASE_PATH . '/core/Controller.php';
 require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 require_once BASE_PATH . '/modules/centros/CentroModel.php';
 require_once BASE_PATH . '/modules/personas/PersonaModel.php';
+require_once BASE_PATH . '/core/EnlacePersonalRespuesta.php';
+require_once BASE_PATH . '/core/CambiosTurno.php';
 
 class PastoralController extends Controller
 {
+    use EnlacePersonalRespuesta;
+
     private PastoralModel $modelo;
 
     public function __construct()
@@ -142,7 +146,59 @@ class PastoralController extends Controller
             'agrupaOtras'   => $this->modelo->tieneHijos((int) $pastoral['id']),
             'puedeEditar'   => Auth::tienePermiso('pastorales.editar'),
             'puedeEditarPersonas' => Auth::tienePermiso('personas.editar'),
+            // El enlace personal de cada integrante (core/EnlacePersonal.php):
+            // quién puede mandarlo y cómo va el de cada quien.
+            'puedeEnlace'   => Auth::tienePermiso('personas.enlace'),
+            'enlaces'       => (new EnlacePersonal())->estados(array_column($personas, 'id')),
+            'enlaceExplica' => EnlacePersonal::explicacion(...$this->comoLoVe($pastoral)),
         ]);
+    }
+
+    /**
+     * Con qué nombre y si con turnos se le explica a alguien de esta pastoral
+     * lo que ve con su enlace: en MESC y Proclamadores también sus turnos.
+     *
+     * @return array{0: string, 1: bool}
+     */
+    private function comoLoVe(array $pastoral): array
+    {
+        $turnos = CambiosTurno::moduloDePastoral($pastoral['slug']);
+        return $turnos ? [$turnos['titulo'], true] : [$pastoral['nombre'], false];
+    }
+
+    /**
+     * El enlace personal de alguien de esta pastoral, para el cuadro de la
+     * lista «Quiénes están en esta pastoral» (POST, responde JSON): lo crea si
+     * no existía, o genera uno nuevo con `regenerar`. Con él, esa persona ve
+     * los avisos internos, documentos y eventos de sus pastorales, sin cuenta.
+     * Lo puede mandar quien administra esta pastoral (personas.enlace y su
+     * alcance), y solo a quien está marcado en ella.
+     */
+    public function enlacePersonal(): void
+    {
+        $this->requirePermiso('personas.enlace');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['error' => 'Este enlace se pide desde la lista.'], 405);
+        }
+        $this->validarCsrf();
+
+        $pastoral = $this->modelo->porId($this->getInt('pastoral_id'));
+        if (!$pastoral) {
+            $this->json(['error' => 'No encontramos esa pastoral.'], 404);
+        }
+        $this->requireAlcancePastoral((int) $pastoral['id']);
+
+        $personas = new PersonaModel();
+        $persona  = $personas->porId($this->postInt('id'));
+        if (!$persona || !in_array((int) $pastoral['id'], $personas->pastoralesDe((int) $persona['id']), true)) {
+            $this->json(['error' => 'Esa persona ya no está marcada en esta pastoral.'], 404);
+        }
+        if (!$persona['activo']) {
+            $this->json(['error' => "{$persona['nombre']} está inactiva: su enlace no le mostraría nada."], 422);
+        }
+
+        $this->responderEnlacePersonal((int) $persona['id'], $persona['nombre'], $persona['telefono'],
+            EnlacePersonal::queVe(...$this->comoLoVe($pastoral)));
     }
 
     /*

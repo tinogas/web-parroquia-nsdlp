@@ -13,8 +13,8 @@ require_once BASE_PATH . '/core/Model.php';
  * en el orden en que se registraron, los movimientos de `*_cambio_movimientos`
  * —cada uno «sale X, entra Y», solo «entra Y» si es un refuerzo, o solo
  * «sale X» en una permuta de grupos dispares, dos por uno—. Así la consulta
- * puede mostrar las dos cosas a la vez, y deshacer un cambio es borrar su
- * fila: el rol original reaparece solo.
+ * puede mostrar las dos cosas a la vez, y deshacer un cambio es pasarlo a
+ * 'deshecho' (nunca se borra): el rol original reaparece solo.
  *
  * Una permuta es de grupo a grupo: uno o varios de un turno por uno o varios
  * del otro. Marcando a todos en los dos lados se intercambian los turnos
@@ -56,6 +56,61 @@ class CambiosTurno extends Model
         'pivote_col'  => 'proclamador_id',
         'personas'    => 'proclamadores',
     ];
+
+    /**
+     * Los dos módulos con turnos, con su vocabulario: lo que cada controlador
+     * del panel devuelve en cambiosConfig() y lo que recorre la página del
+     * enlace personal (modules/mi/). `slug` es el de su pastoral.
+     */
+    public const MODULOS = [
+        'mesc' => [
+            'modulo'   => 'mesc',
+            'tablas'   => self::MESC,
+            'slug'     => PASTORAL_MESC,
+            'singular' => 'ministro',
+            'plural'   => 'ministros',
+            'titulo'   => 'MESC',
+        ],
+        'proclamadores' => [
+            'modulo'   => 'proclamadores',
+            'tablas'   => self::PROCLAMADORES,
+            'slug'     => PASTORAL_PROCLAMADORES,
+            'singular' => 'proclamador',
+            'plural'   => 'proclamadores',
+            'titulo'   => 'Proclamadores',
+        ],
+    ];
+
+    /**
+     * Quién pidió, quién resolvió y quién deshizo o retiró, para la bitácora.
+     * Una solicitud la pide una cuenta (`usuario_id`) o una persona desde su
+     * enlace personal, sin cuenta (`persona_id`); `autor` es el nombre de
+     * cualquiera de las dos y `por_enlace` dice cuál fue. Retirar lo hace
+     * siempre quien pidió, y desde el enlace no hay cuenta que guardar en
+     * `cancelado_por`: por eso `cancelo` cae en el autor.
+     */
+    private const COLUMNAS_BITACORA = "c.*,
+        COALESCE(u.nombre, sp.nombre) AS autor,
+        (c.usuario_id IS NULL AND c.persona_id IS NOT NULL) AS por_enlace,
+        r.nombre AS resolvio,
+        COALESCE(x.nombre, CASE WHEN c.estado = 'retirado' THEN COALESCE(u.nombre, sp.nombre) END) AS cancelo";
+
+    private const UNIONES_BITACORA = "
+        LEFT JOIN usuarios u  ON u.id  = c.usuario_id
+        LEFT JOIN personas sp ON sp.id = c.persona_id
+        LEFT JOIN usuarios r  ON r.id  = c.resuelto_por
+        LEFT JOIN usuarios x  ON x.id  = c.cancelado_por";
+
+    /** El módulo con turnos de esa pastoral (por su slug), o null si no lleva turnos. */
+    public static function moduloDePastoral(string $slug): ?array
+    {
+        foreach (self::MODULOS as $cfg) {
+            if ($cfg['slug'] === $slug) {
+                return $cfg;
+            }
+        }
+        return null;
+    }
 
     /** @param array $t una de las constantes MESC / PROCLAMADORES: los nombres son fijos, nunca vienen del usuario. */
     public function __construct(private array $t)
@@ -197,13 +252,11 @@ class CambiosTurno extends Model
         };
 
         return $this->conMovimientos($this->fetchAll(
-            "SELECT DISTINCT c.*, u.nombre AS autor, r.nombre AS resolvio, x.nombre AS cancelo
+            "SELECT DISTINCT " . self::COLUMNAS_BITACORA . "
                FROM {$this->t['cambios']} c
                JOIN {$this->t['movimientos']} m ON m.cambio_id = c.id
                JOIN {$this->t['turnos']} t ON t.id = m.turno_id
-               LEFT JOIN usuarios u ON u.id = c.usuario_id
-               LEFT JOIN usuarios r ON r.id = c.resuelto_por
-               LEFT JOIN usuarios x ON x.id = c.cancelado_por
+               " . self::UNIONES_BITACORA . "
               WHERE c.pastoral_id = :pastoral AND {$condicion}
                 AND t.fecha BETWEEN :desde AND :hasta
               ORDER BY COALESCE(c.cancelado_at, c.resuelto_at, c.created_at) DESC, c.id DESC",
@@ -248,11 +301,10 @@ class CambiosTurno extends Model
     public function cambiosDeTurno(int $turnoId): array
     {
         return $this->conMovimientos($this->fetchAll(
-            "SELECT DISTINCT c.*, u.nombre AS autor, r.nombre AS resolvio
+            "SELECT DISTINCT " . self::COLUMNAS_BITACORA . "
                FROM {$this->t['cambios']} c
                JOIN {$this->t['movimientos']} m ON m.cambio_id = c.id
-               LEFT JOIN usuarios u ON u.id = c.usuario_id
-               LEFT JOIN usuarios r ON r.id = c.resuelto_por
+               " . self::UNIONES_BITACORA . "
               WHERE m.turno_id = :turno AND c.estado = 'aprobado'
               ORDER BY c.created_at, c.id",
             [':turno' => $turnoId]
@@ -272,15 +324,20 @@ class CambiosTurno extends Model
      * @param array $movimientos lista de ['turno_id' => int, 'sale_id' => ?int, 'entra_id' => ?int],
      *                           nunca los dos en null
      * @param string $estado     'aprobado' si lo registra la coordinación; 'pendiente' si es la solicitud de un laico
+     * @param ?int   $personaId  quien la pidió desde su enlace personal (modules/mi/), sin cuenta: entonces $usuarioId va en null
      */
-    public function registrar(int $pastoralId, string $tipo, array $movimientos, ?string $notas, int $usuarioId, string $estado = 'aprobado'): int
+    public function registrar(int $pastoralId, string $tipo, array $movimientos, ?string $notas, ?int $usuarioId,
+                              string $estado = 'aprobado', ?int $personaId = null): int
     {
         $this->beginTransaction();
         try {
             $this->execute(
-                "INSERT INTO {$this->t['cambios']} (pastoral_id, tipo, notas, usuario_id, estado)
-                 VALUES (:pastoral, :tipo, :notas, :usuario, :estado)",
-                [':pastoral' => $pastoralId, ':tipo' => $tipo, ':notas' => $notas, ':usuario' => $usuarioId, ':estado' => $estado]
+                "INSERT INTO {$this->t['cambios']} (pastoral_id, tipo, notas, usuario_id, persona_id, estado)
+                 VALUES (:pastoral, :tipo, :notas, :usuario, :persona, :estado)",
+                [
+                    ':pastoral' => $pastoralId, ':tipo' => $tipo, ':notas' => $notas,
+                    ':usuario'  => $usuarioId, ':persona' => $personaId, ':estado' => $estado,
+                ]
             );
             $cambioId = $this->lastInsertId();
             foreach ($movimientos as $mov) {
@@ -370,18 +427,24 @@ class CambiosTurno extends Model
     }
 
     // ── Solicitudes ──────────────────────────────────────────────────────
-    // Lo que pide un laico (rol Consulta) nace 'pendiente' y no toca el
-    // calendario —aplicar() solo mira los aprobados— hasta que una
-    // coordinación de la pastoral lo resuelve.
+    // Lo que pide un laico nace 'pendiente' y no toca el calendario —aplicar()
+    // solo mira los aprobados— hasta que una coordinación de la pastoral lo
+    // resuelve. Lo pide con su cuenta (rol Consulta) o desde su enlace
+    // personal, sin cuenta (modules/mi/).
+    //
+    // Quién es «el solicitante» se pasa como ['usuario' => ?int, 'persona' =>
+    // ?int]: la cuenta y la ficha del equipo pastoral de la misma persona. Así
+    // ve todas sus solicitudes, y las respuestas, entre por donde entre: lo que
+    // pidió desde el enlace aparece también en su cuenta, y al revés.
 
     /** Solicitudes por resolver de la pastoral, de la más vieja a la más nueva: se atienden en el orden en que llegaron. */
     public function pendientes(int $pastoralId, ?int $limite = null): array
     {
         $limit = $limite ? ' LIMIT ' . (int) $limite : '';
         return $this->conMovimientos($this->fetchAll(
-            "SELECT c.*, u.nombre AS autor
+            "SELECT " . self::COLUMNAS_BITACORA . "
                FROM {$this->t['cambios']} c
-               LEFT JOIN usuarios u ON u.id = c.usuario_id
+               " . self::UNIONES_BITACORA . "
               WHERE c.pastoral_id = :pastoral AND c.estado = 'pendiente'
               ORDER BY c.created_at, c.id{$limit}",
             [':pastoral' => $pastoralId]
@@ -397,48 +460,69 @@ class CambiosTurno extends Model
     }
 
     /**
-     * Lo que pidió esta cuenta: las pendientes y las ya resueltas, de la más
+     * Lo que pidió esta persona: las pendientes y las ya resueltas, de la más
      * nueva a la más vieja. Un cambio aprobado sin `resuelto_at` no es una
      * solicitud —lo registró directamente la coordinación— y no sale aquí,
      * aunque lo haya capturado la misma persona desde otro perfil.
+     *
+     * @param array{usuario: ?int, persona: ?int} $quien
      */
-    public function solicitudesDe(int $usuarioId, int $pastoralId, int $limite = 20): array
+    public function solicitudesDe(array $quien, int $pastoralId, int $limite = 20): array
     {
+        [$deQuien, $params] = $this->condicionSolicitante($quien, 'c.');
         return $this->conMovimientos($this->fetchAll(
-            "SELECT c.*, r.nombre AS resolvio, x.nombre AS cancelo
+            "SELECT " . self::COLUMNAS_BITACORA . "
                FROM {$this->t['cambios']} c
-               LEFT JOIN usuarios r ON r.id = c.resuelto_por
-               LEFT JOIN usuarios x ON x.id = c.cancelado_por
-              WHERE c.usuario_id = :usuario AND c.pastoral_id = :pastoral
+               " . self::UNIONES_BITACORA . "
+              WHERE {$deQuien} AND c.pastoral_id = :pastoral
                 AND (c.resuelto_at IS NOT NULL OR c.estado IN ('pendiente', 'retirado'))
               ORDER BY c.created_at DESC, c.id DESC
               LIMIT " . (int) $limite,
-            [':usuario' => $usuarioId, ':pastoral' => $pastoralId]
+            $params + [':pastoral' => $pastoralId]
         ));
     }
 
-    /** Respuestas que el solicitante todavía no ha visto: lo que su campanita le anuncia. */
-    public function respuestasNoVistas(int $usuarioId, int $pastoralId): array
+    /**
+     * Respuestas que el solicitante todavía no ha visto: lo que su campanita
+     * le anuncia, o la página de su enlace personal.
+     *
+     * @param array{usuario: ?int, persona: ?int} $quien
+     */
+    public function respuestasNoVistas(array $quien, int $pastoralId): array
     {
+        [$deQuien, $params] = $this->condicionSolicitante($quien, 'c.');
         return $this->conMovimientos($this->fetchAll(
-            "SELECT c.*, r.nombre AS resolvio, x.nombre AS cancelo
+            "SELECT " . self::COLUMNAS_BITACORA . "
                FROM {$this->t['cambios']} c
-               LEFT JOIN usuarios r ON r.id = c.resuelto_por
-               LEFT JOIN usuarios x ON x.id = c.cancelado_por
-              WHERE c.usuario_id = :usuario AND c.pastoral_id = :pastoral
+               " . self::UNIONES_BITACORA . "
+              WHERE {$deQuien} AND c.pastoral_id = :pastoral
                 AND c.estado <> 'pendiente' AND c.visto_solicitante = 0
               ORDER BY COALESCE(c.cancelado_at, c.resuelto_at) DESC",
-            [':usuario' => $usuarioId, ':pastoral' => $pastoralId]
+            $params + [':pastoral' => $pastoralId]
         ));
     }
 
-    public function marcarRespuestasVistas(int $usuarioId, int $pastoralId): void
+    /** @param array{usuario: ?int, persona: ?int} $quien */
+    public function marcarRespuestasVistas(array $quien, int $pastoralId): void
     {
+        [$deQuien, $params] = $this->condicionSolicitante($quien, '');
         $this->execute(
             "UPDATE {$this->t['cambios']} SET visto_solicitante = 1
-              WHERE usuario_id = :usuario AND pastoral_id = :pastoral AND visto_solicitante = 0",
-            [':usuario' => $usuarioId, ':pastoral' => $pastoralId]
+              WHERE {$deQuien} AND pastoral_id = :pastoral AND visto_solicitante = 0",
+            $params + [':pastoral' => $pastoralId]
         );
+    }
+
+    /**
+     * ¿La pidió esta persona? Con su cuenta o desde su enlace: es lo que
+     * decide quién puede retirarla.
+     *
+     * @param array{usuario: ?int, persona: ?int} $quien
+     */
+    public static function esDe(array $cambio, array $quien): bool
+    {
+        return (!empty($quien['usuario']) && (int) $cambio['usuario_id'] === (int) $quien['usuario'])
+            || (!empty($quien['persona']) && (int) $cambio['persona_id'] === (int) $quien['persona']);
     }
 
     /**
@@ -459,15 +543,20 @@ class CambiosTurno extends Model
 
     /**
      * El solicitante retira su propia solicitud mientras sigue pendiente. No
-     * se borra: queda 'retirado' en la bitácora, con cuándo se retiró.
+     * se borra: queda 'retirado' en la bitácora, con cuándo se retiró. Desde
+     * el enlace personal no hay cuenta que anotar en `cancelado_por`, y no
+     * hace falta: retirar solo lo hace quien la pidió.
+     *
+     * @param array{usuario: ?int, persona: ?int} $quien
      */
-    public function retirarSolicitud(int $id, int $usuarioId): int
+    public function retirarSolicitud(int $id, array $quien): int
     {
+        [$deQuien, $params] = $this->condicionSolicitante($quien, '');
         return $this->execute(
             "UPDATE {$this->t['cambios']}
-                SET estado = 'retirado', cancelado_por = :quien, cancelado_at = NOW()
-              WHERE id = :id AND usuario_id = :solicitante AND estado = 'pendiente'",
-            [':id' => $id, ':quien' => $usuarioId, ':solicitante' => $usuarioId]
+                SET estado = 'retirado', cancelado_por = :cuenta, cancelado_at = NOW()
+              WHERE id = :id AND {$deQuien} AND estado = 'pendiente'",
+            $params + [':id' => $id, ':cuenta' => $quien['usuario'] ?? null]
         );
     }
 
@@ -514,8 +603,9 @@ class CambiosTurno extends Model
     public function conDetalle(int $id, int $pastoralId): ?array
     {
         $cambio = $this->fetchOne(
-            "SELECT c.*, u.nombre AS autor FROM {$this->t['cambios']} c
-               LEFT JOIN usuarios u ON u.id = c.usuario_id
+            "SELECT " . self::COLUMNAS_BITACORA . "
+               FROM {$this->t['cambios']} c
+               " . self::UNIONES_BITACORA . "
               WHERE c.id = :id AND c.pastoral_id = :pastoral",
             [':id' => $id, ':pastoral' => $pastoralId]
         );
@@ -539,6 +629,55 @@ class CambiosTurno extends Model
         );
     }
 
+    /** Todas las personas del módulo, activas e inactivas (id, nombre, activo), para las listas del formulario. */
+    public function personasDe(int $pastoralId): array
+    {
+        return $this->fetchAll(
+            "SELECT id, nombre, activo FROM {$this->t['personas']} WHERE pastoral_id = :pastoral ORDER BY nombre",
+            [':pastoral' => $pastoralId]
+        );
+    }
+
+    /** Id de la pastoral por su slug (PASTORAL_MESC, PASTORAL_PROCLAMADORES), o null si no existe. */
+    public function pastoralIdPorSlug(string $slug): ?int
+    {
+        return ((int) $this->fetchColumn('SELECT id FROM pastorales WHERE slug = :slug', [':slug' => $slug])) ?: null;
+    }
+
+    /**
+     * Los turnos de una persona entre dos fechas, con el rol real: donde sirve
+     * después de los cambios, y también los que cedió —con `cedido` = true—,
+     * para que vea que ese ya no le toca y por qué.
+     */
+    public function turnosDePersona(int $pastoralId, int $idEnModulo, string $desde, string $hasta): array
+    {
+        $suyos = [];
+        foreach ($this->turnosEntre($pastoralId, $desde, $hasta) as $turno) {
+            $sirve  = isset($turno['actuales'][$idEnModulo]);
+            $cedido = isset($turno['salieron'][$idEnModulo]);
+            if ($sirve || $cedido) {
+                $turno['cedido'] = !$sirve;
+                $suyos[] = $turno;
+            }
+        }
+        return $suyos;
+    }
+
+    /**
+     * Los turnos de un día tal como los pide el formulario de cambios (el
+     * select de turnos y, por turno, quiénes están en él): lo comparten la
+     * pantalla del panel y la del enlace personal.
+     */
+    public static function paraFormulario(array $turnos): array
+    {
+        return array_map(static fn (array $t): array => [
+            'id'       => (int) $t['id'],
+            'etiqueta' => trim(($t['hora'] ? substr((string) $t['hora'], 0, 5) . ' ' : '') . $t['descripcion'])
+                        . ' — ' . ($t['nombres_actuales'] ?: 'sin asignar'),
+            'rol'      => array_map('intval', array_keys($t['actuales'])),
+        ], $turnos);
+    }
+
     /**
      * Lo que la campanita del panel anuncia sobre cambios de turno, en MESC y
      * en Proclamadores: a quien coordina, las solicitudes por resolver de su
@@ -551,19 +690,17 @@ class CambiosTurno extends Model
      */
     public static function paraCampana(int $usuarioId): array
     {
-        $modulos = [
-            'mesc'          => [self::MESC,          PASTORAL_MESC,          'MESC'],
-            'proclamadores' => [self::PROCLAMADORES, PASTORAL_PROCLAMADORES, 'Proclamadores'],
-        ];
         $total  = 0;
         $grupos = [];
+        $quien  = null;
 
-        foreach ($modulos as $modulo => [$tablas, $slug, $nombre]) {
-            if (!Auth::tienePermiso($modulo . '.ver') || !Auth::administraPastoral($slug)) {
+        foreach (self::MODULOS as $modulo => $cfg) {
+            $nombre = $cfg['titulo'];
+            if (!Auth::tienePermiso($modulo . '.ver') || !Auth::administraPastoral($cfg['slug'])) {
                 continue;
             }
-            $modelo     = new self($tablas);
-            $pastoralId = (int) $modelo->fetchColumn('SELECT id FROM pastorales WHERE slug = :slug', [':slug' => $slug]);
+            $modelo     = new self($cfg['tablas']);
+            $pastoralId = $modelo->pastoralIdPorSlug($cfg['slug']);
             if (!$pastoralId) {
                 continue;
             }
@@ -584,7 +721,13 @@ class CambiosTurno extends Model
                     $total += $n;
                 }
             } elseif (Auth::tienePermiso($modulo . '.solicitar')) {
-                $respuestas = $modelo->respuestasNoVistas($usuarioId, $pastoralId);
+                // También lo que pidió desde su enlace personal, si su cuenta
+                // está ligada a su ficha del equipo pastoral.
+                $quien ??= [
+                    'usuario' => $usuarioId,
+                    'persona' => ((int) $modelo->fetchColumn('SELECT persona_id FROM usuarios WHERE id = :id', [':id' => $usuarioId])) ?: null,
+                ];
+                $respuestas = $modelo->respuestasNoVistas($quien, $pastoralId);
                 if ($respuestas) {
                     $items = [];
                     foreach (array_slice($respuestas, 0, 5) as $c) {
@@ -707,6 +850,23 @@ class CambiosTurno extends Model
         }
         unset($cambio);
         return $cambios;
+    }
+
+    /**
+     * «La pidió esta persona», en SQL: con su cuenta o desde su enlace. Un
+     * dato que falta se compara con 0, que no es el id de nadie, en vez de
+     * armar dos consultas distintas.
+     *
+     * @param array{usuario: ?int, persona: ?int} $quien
+     * @param string $alias 'c.' en un SELECT con alias; '' en un UPDATE
+     * @return array{0: string, 1: array}
+     */
+    private function condicionSolicitante(array $quien, string $alias): array
+    {
+        return [
+            "({$alias}usuario_id = :sol_usuario OR {$alias}persona_id = :sol_persona)",
+            [':sol_usuario' => (int) ($quien['usuario'] ?? 0), ':sol_persona' => (int) ($quien['persona'] ?? 0)],
+        ];
     }
 
     /** @return array{0: string, 1: array} marcadores «:i0,:i1» y sus valores */

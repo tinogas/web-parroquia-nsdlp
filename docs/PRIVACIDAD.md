@@ -161,6 +161,31 @@ MESC" arriba). Un coordinador **sí** ve las visitas, pero únicamente de la pas
 MESC que tenga asignada; secretaría **no** las ve, aunque sí vea el resto de datos
 personales del sitio.
 
+### El enlace personal de los integrantes
+
+Cada integrante del equipo pastoral puede tener un enlace personal (`/mi/<token>`) sin
+cuenta ni contraseña. Con él ve, de **sus** pastorales, lo mismo que vería con una cuenta de
+Consulta: quién coordina y cuándo se reúnen, los avisos internos, los eventos (también los que
+no salen en el sitio), el tablero y los documentos. En MESC y Proclamadores ve además **sus**
+turnos, el rol del mes —los nombres de quién sirve en cada misa, lo mismo que el rol impreso
+que ya se reparte— y **sus** solicitudes de cambio. No ve teléfonos, domicilios, fichas, la
+lista de integrantes ni las visitas a enfermos, y no administra nada.
+
+El enlace funciona como una llave: quien lo tenga entra como esa persona. Por eso:
+
+- Se le manda solo a ella, y la página le recuerda que no lo comparta.
+- La coordinación puede generar uno nuevo en cualquier momento; el anterior deja de servir
+  en el acto.
+- Se apaga solo al desactivar la ficha de la persona; cada pastoral desaparece de su página
+  al sacarla de esa pastoral en su ficha, y los turnos al sacarla de la lista.
+- Lo más que puede hacer alguien con un enlace ajeno es pedir un cambio de turno, que la
+  coordinación igual tiene que aprobar, y queda en la bitácora a nombre de esa persona.
+- La página no se indexa (`noindex`, `robots.txt`), no se guarda en caché y no deja el token
+  en la barra de direcciones después de abrirlo.
+
+Crear o regenerar un enlace queda en la auditoría (`crear_enlace`, `regenerar_enlace`), lo
+mismo que cada solicitud pedida o retirada desde él.
+
 ## Trazabilidad
 
 La función `auditoria()` se llama **también en la lectura** de datos personales, no solo

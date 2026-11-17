@@ -173,6 +173,12 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
         $mw_lista = 'pastoral' . (int) $pastoral['id'];
         $mw_filas = $personas;
         require BASE_PATH . '/shared/views/parciales/mensaje_whatsapp.php';
+        // El cuadro «Enlace personal» va antes de la lista: define el botón de cada renglón.
+        if ($puedeEnlace) {
+            $ep_url     = url_post('admin', 'pastorales', 'enlace_personal', ['pastoral_id' => (int) $pastoral['id']]);
+            $ep_explica = $enlaceExplica;
+            require BASE_PATH . '/shared/views/parciales/enlace_personal_modal.php';
+        }
         ?>
         <ul class="list-group list-group-flush">
             <?php foreach ($personas as $persona): ?>
@@ -213,6 +219,12 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                              pantalla entra a la ficha, que es lo que pide personas.ver. */ ?>
                     <?php if (Auth::tienePermiso('personas.contactar')): ?>
                     <?= boton_whatsapp($persona['telefono'], $persona['nombre']) ?>
+                    <?php endif; ?>
+                    <?php if ($puedeEnlace): ?>
+                    <?= enlace_personal_boton(
+                        ['id' => $persona['id'], 'nombre' => $persona['nombre'], 'activo' => $persona['activo'], 'persona_id' => $persona['id']],
+                        $enlaces[(int) $persona['id']] ?? null
+                    ) ?>
                     <?php endif; ?>
                     <?php if ($puedeEditarPersonas): ?>
                     <a href="<?= e(url_admin('personas', 'editar', ['id' => $persona['id']])) ?>"
