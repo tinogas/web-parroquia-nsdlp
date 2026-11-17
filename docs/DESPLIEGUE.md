@@ -185,7 +185,9 @@ Como mínimo:
 Mientras no haya datos reales, `install.sql` se reimporta desde cero. **En cuanto el sitio
 esté en producción eso deja de ser una opción**: a partir de ahí, cada cambio de esquema
 necesita su propio script `ALTER TABLE`, guardado en `docs/migraciones/` con la fecha en
-el nombre y aplicado por phpMyAdmin.
+el nombre y aplicado por phpMyAdmin. Cuáles faltan en el servidor, en qué orden y cómo
+saber cuáles tiene ya está en [`PENDIENTES-SERVIDOR.md`](PENDIENTES-SERVIDOR.md), que se
+actualiza con cada migración nueva.
 
 Conviene marcar ese momento con claridad. Es el punto en el que el proyecto deja de ser
 desechable.
