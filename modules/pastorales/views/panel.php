@@ -141,7 +141,7 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
    de Equipo pastoral: quien dejó el cargo sigue contando para el historial y
    esconderla haría pensar que se borró. */
 ?>
-<div class="card border-0 shadow-sm mt-4">
+<div class="card border-0 shadow-sm mt-4" id="quienes">
     <div class="card-body p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h6 fw-bold mb-0">
@@ -193,8 +193,15 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                             <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal">Inactivo</span>
                             <?php endif; ?>
                         </div>
-                        <?php if ($persona['cargo']): ?>
-                        <div class="text-muted small"><?= e($persona['cargo']) ?></div>
+                        <?php /* Su cargo EN ESTA pastoral (persona_pastorales.cargo); si no
+                                 tiene uno propio, el general de su ficha. Zulema sale aquí de
+                                 Ministro y en Profética de Coordinadora General. */ ?>
+                        <?php $cargoAqui = $cargosAqui[(int) $persona['id']] ?? null; ?>
+                        <?php if ($cargoAqui || $persona['cargo']): ?>
+                        <div class="text-muted small"
+                             <?= $cargoAqui ? '' : 'title="Su cargo general: aquí no tiene uno propio"' ?>>
+                            <?= e($cargoAqui ?: $persona['cargo']) ?>
+                        </div>
                         <?php endif; ?>
                         <?php if (!empty($persona['pastorales_coordina'])): ?>
                         <div class="small text-dorado">
@@ -226,6 +233,19 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                         $enlaces[(int) $persona['id']] ?? null
                     ) ?>
                     <?php endif; ?>
+                    <?php if ($puedeCargo): ?>
+                    <?php /* Una etiqueta y no un lápiz: el lápiz de al lado abre la ficha
+                             entera, y este botón cambia solo su cargo aquí. */ ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#cargoAqui"
+                            data-persona-id="<?= (int) $persona['id'] ?>"
+                            data-persona-nombre="<?= e($persona['nombre']) ?>"
+                            data-cargo="<?= e((string) $cargoAqui) ?>"
+                            data-cargo-general="<?= e((string) $persona['cargo']) ?>"
+                            title="Su cargo en esta pastoral" aria-label="Cargo de <?= e($persona['nombre']) ?> en esta pastoral">
+                        <i class="bi bi-tag"></i>
+                    </button>
+                    <?php endif; ?>
                     <?php if ($puedeEditarPersonas): ?>
                     <a href="<?= e(url_admin('personas', 'editar', ['id' => $persona['id']])) ?>"
                        class="btn btn-sm btn-outline-primary" title="Editar su ficha">
@@ -236,6 +256,61 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
             </li>
             <?php endforeach; ?>
         </ul>
+
+        <?php if ($puedeCargo): ?>
+        <?php /* Un solo modal para todos los renglones: el botón de etiqueta de cada
+                 quien le pasa su id, su nombre y sus cargos (ver el script de abajo). */ ?>
+        <div class="modal fade" id="cargoAqui" tabindex="-1" aria-labelledby="cargoAquiTitulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="POST" accept-charset="UTF-8"
+                      action="<?= e(url_post('admin', 'pastorales', 'cargoGuardar')) ?>" class="modal-content">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="pastoral_id" value="<?= (int) $pastoral['id'] ?>">
+                    <input type="hidden" name="persona_id" value="">
+                    <div class="modal-header border-0 pb-0">
+                        <h2 class="h6 modal-title fw-bold" id="cargoAquiTitulo">Cargo en <?= e($pastoral['nombre']) ?></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="cargoAquiCampo" class="form-label small fw-semibold" data-cargo-etiqueta>Cargo</label>
+                        <input type="text" name="cargo" id="cargoAquiCampo" class="form-control" maxlength="100"
+                               list="cargosUsadosPanel" autocomplete="off">
+                        <datalist id="cargosUsadosPanel">
+                            <?php foreach ($cargosUsados as $sugerido): ?>
+                            <option value="<?= e($sugerido) ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                        <div class="form-text" data-cargo-ayuda></div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+        (function () {
+            var modal = document.getElementById('cargoAqui');
+            if (!modal) { return; }
+            modal.addEventListener('show.bs.modal', function (ev) {
+                var b = ev.relatedTarget;
+                if (!b) { return; }
+                var general = b.getAttribute('data-cargo-general');
+                modal.querySelector('[name="persona_id"]').value = b.getAttribute('data-persona-id');
+                modal.querySelector('[name="cargo"]').value = b.getAttribute('data-cargo');
+                modal.querySelector('[data-cargo-etiqueta]').textContent =
+                    'Cargo de ' + b.getAttribute('data-persona-nombre') + ' aquí';
+                modal.querySelector('[data-cargo-ayuda]').textContent = general
+                    ? 'Si lo dejas vacío, se usa su cargo general: «' + general + '».'
+                    : 'Si lo dejas vacío, no se muestra ningún cargo: tampoco tiene uno general.';
+            });
+            modal.addEventListener('shown.bs.modal', function () {
+                modal.querySelector('[name="cargo"]').focus();
+            });
+        })();
+        </script>
+        <?php endif; ?>
         <?php if ($puedeEditarPersonas): ?>
         <p class="form-text mb-0 mt-3">
             Quién pertenece a esta pastoral se marca en la ficha de cada persona, no aquí.

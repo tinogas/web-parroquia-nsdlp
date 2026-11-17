@@ -116,11 +116,14 @@ $porAmbito   = $porPastoral + $porCentro;
                                 <?php if ($persona['cargo']): ?>
                                 <div class="text-muted small"><?= e($persona['cargo']) ?></div>
                                 <?php endif; ?>
-                                <?php
-                                $ambitos = array_filter([$persona['pastorales_nombres'] ?? null, $persona['centros_nombres'] ?? null]);
-                                if ($ambitos):
-                                ?>
-                                <div class="text-muted small"><i class="bi bi-people me-1"></i><?= e(implode(', ', $ambitos)) ?></div>
+                                <?php /* Cada pastoral con su cargo ahí entre paréntesis, si tiene uno
+                                         propio («Catequesis (Coordinadora) · MESC (Ministro)»); las
+                                         sedes en su propio renglón, para no mezclar las dos listas. */ ?>
+                                <?php if (!empty($persona['pastorales_con_cargo'])): ?>
+                                <div class="text-muted small"><i class="bi bi-people me-1"></i><?= e($persona['pastorales_con_cargo']) ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($persona['centros_nombres'])): ?>
+                                <div class="text-muted small"><i class="bi bi-building me-1"></i><?= e($persona['centros_nombres']) ?></div>
                                 <?php endif; ?>
                                 <?php if (!empty($persona['pastorales_coordina']) || !empty($persona['en_directorio'])): ?>
                                 <div class="small mt-1 d-flex flex-wrap gap-1">

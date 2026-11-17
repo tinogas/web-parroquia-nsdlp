@@ -120,9 +120,9 @@ define('ROLES_DESCRIPCION', [
         . 'pastoral, nunca de un rol igual o superior al suyo.',
     ROL_COORDINADOR =>
         'Su pastoral en una sede: publica sus avisos, sus eventos y sus cursos, sube fotos '
-        . 'y documentos, y entra al módulo propio de su pastoral si lo tiene (MESC, '
-        . 'Catequesis, Proclamadores o Coros). No edita la ficha de la pastoral ni administra '
-        . 'cuentas: eso es de la coordinación general.',
+        . 'y documentos, pone el cargo de su gente en su pastoral, y entra al módulo propio '
+        . 'de su pastoral si lo tiene (MESC, Catequesis, Proclamadores o Coros). No edita la '
+        . 'ficha de la pastoral ni administra cuentas: eso es de la coordinación general.',
     ROL_CONSULTA =>
         'Solo mira, sin poder cambiar nada: el calendario de la parroquia, su pastoral, sus '
         . 'documentos y los avisos que su pastoral publica hacia dentro. Es el rol de quien '
@@ -254,6 +254,11 @@ define('PERMISOS_COORDINACION', [
     // avisos internos, documentos y eventos de su pastoral, sin cuenta. Tampoco
     // abre la ficha. Ver core/EnlacePersonal.php.
     'personas.enlace',
+    // Poner el cargo de su gente EN SU pastoral (persona_pastorales.cargo),
+    // desde esa misma lista. Solo ese dato y solo en sus pastorales: ni el
+    // cargo general ni nada más de la ficha. Quien coordina sabe qué hace cada
+    // quien ahí. Ver docs/migraciones/2026-11-16-cargo-por-pastoral.sql
+    'personas.cargo',
     'actividades.ver', 'actividades.crear', 'actividades.editar', 'actividades.eliminar',
     'documentos.ver', 'documentos.crear', 'documentos.eliminar',
     'mesc.ver', 'mesc.crear', 'mesc.editar', 'mesc.eliminar',
@@ -285,7 +290,7 @@ define('PERMISOS', [
         'evangelio.ver', 'evangelio.editar',
         'horarios.ver', 'horarios.editar',
         'centros.ver', 'centros.editar',
-        'personas.ver', 'personas.editar', 'personas.contactar',
+        'personas.ver', 'personas.editar', 'personas.contactar', 'personas.cargo',
         'organigrama.ver', 'organigrama.editar',
         // El editor no toca la configuración global: los datos de contacto, el
         // logo y las claves legales son responsabilidad del administrador.

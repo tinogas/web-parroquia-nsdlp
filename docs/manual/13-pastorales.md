@@ -100,7 +100,14 @@ página pública de la pastoral.
 
 **Quiénes están en esta pastoral.** La lista de su gente, que sale del equipo
 pastoral: alguien aparece aquí porque en su ficha está marcada esta pastoral.
-Cada renglón lleva su botón de **WhatsApp**.
+Cada renglón lleva su botón de **WhatsApp** y, debajo del nombre, **su cargo en
+esta pastoral** —o el general de su ficha, si aquí no tiene uno propio—.
+
+Quien coordina la pastoral ve además, en cada renglón, un botón con una
+**etiqueta**: abre un cuadro para escribir el cargo de esa persona aquí
+(«Ministro», «Coordinadora de Equipos»…). Cambia solo ese dato y solo en esta
+pastoral: ni el cargo general ni nada más de la ficha. Dejarlo vacío la regresa
+a su cargo general.
 
 **Mensaje para todos.** Encima de la lista hay un cuadro de texto: se escribe
 el aviso una vez —«recordatorio: reunión el jueves a las 7»— y cada botón de

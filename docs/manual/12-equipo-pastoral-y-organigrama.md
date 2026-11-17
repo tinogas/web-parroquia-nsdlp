@@ -40,8 +40,9 @@ dice.
   partes.
 - **Tipo.** Párroco, vicario, diácono, religioso o religiosa, laico, personal
   de oficina. Es lo que agrupa las fichas en «Quiénes somos».
-- **Cargo.** Una línea: «Encargada de Coro Infantil», «Coordinadora de
-  Catequesis».
+- **Cargo general.** Una línea: «Encargada de Coro Infantil», «Coordinadora
+  General de Profética». Es el que sale en «Quiénes somos» y junto a su nombre
+  en las listas para elegir personas.
 - **Fecha de nacimiento.** Es lo que alimenta los cumpleaños del panel. **No se
   publica en el sitio**: solo se usa puertas adentro.
 - **Correo institucional** y **Teléfono.** El correo institucional es el único
@@ -60,6 +61,14 @@ dice.
   marcar la comisión arriba; los grupos de una dimensión —como Rosario Diario
   dentro de Piedad Popular— salen sangrados debajo de ella. Se puede
   pertenecer a varias de cada una.
+- **Cargo aquí**, debajo de cada pastoral marcada. Quien está en varias
+  pastorales suele tener un cargo distinto en cada una: Zulema es Coordinadora
+  General en Profética, Coordinadora en Catequesis, Misionera en Misión y OMPE,
+  Ministro en MESC y Coordinadora de Equipos en Cáritas Desayunador. Cada uno
+  va debajo de su pastoral, y si se deja vacío se usa el cargo general. Al
+  escribir, el campo sugiere los cargos que ya se usan, para que «Coordinadora»
+  no acabe escrito de tres formas. Este cargo es solo el título: quién coordina
+  una pastoral se elige en la pastoral (capítulo 13).
 - **Activa**, el interruptor de siempre.
 - **Incluir en el directorio telefónico.** Aparte de "Activa": no es para todo
   el equipo, es para altos mandos y cargos importantes del organigrama —a

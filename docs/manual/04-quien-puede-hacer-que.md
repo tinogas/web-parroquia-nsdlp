@@ -37,8 +37,9 @@ de contacto ni las inscripciones a cursos.
 ### Coordinador de pastoral
 
 Su pastoral, en una sede. Publica sus avisos, sus eventos y sus cursos, sube
-fotos y documentos, y entra al módulo propio de su pastoral si lo tiene —MESC,
-Catequesis, Proclamadores o Coros—.
+fotos y documentos, pone el cargo de su gente en su pastoral —desde el panel
+de la pastoral, sin abrir sus fichas— y entra al módulo propio de su pastoral
+si lo tiene —MESC, Catequesis, Proclamadores o Coros—.
 
 No edita la ficha de la pastoral ni administra cuentas: eso es de la
 coordinación general. La razón es que esa ficha —el responsable, el correo, lo
@@ -82,6 +83,7 @@ más tiene por qué verlos.
 | Documentos y actividades de la pastoral | ✔ | ✔ | ✔ | ✔ | mira | — |
 | Módulos MESC, Catequesis, Proclamadores, Coros | ✔ | ✔ | de lo suyo | de lo suyo | mira | — |
 | Ficha de la pastoral | ✔ | ✔ | de lo suyo | — | mira | — |
+| Cargo de su gente en su pastoral | ✔ | ✔ | de lo suyo | de lo suyo | mira | — |
 | Textos, páginas, evangelio, horarios, sedes, equipo, organigrama, sacramentos, carrusel | ✔ | ✔ | — | — | — | — |
 | Mensajes de contacto | ✔ | — | — | — | — | ✔ |
 | Inscripciones a cursos | ✔ | — | — | — | — | ✔ |

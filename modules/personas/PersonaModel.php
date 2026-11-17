@@ -41,6 +41,11 @@ class PersonaModel extends Model
                     (SELECT GROUP_CONCAT(pa.nombre ORDER BY pa.nombre SEPARATOR ', ')
                        FROM persona_pastorales pp JOIN pastorales pa ON pa.id = pp.pastoral_id
                       WHERE pp.persona_id = p.id) AS pastorales_nombres,
+                    (SELECT GROUP_CONCAT(
+                              CONCAT(pa.nombre, IF(COALESCE(pp.cargo, '') = '', '', CONCAT(' (', pp.cargo, ')')))
+                              ORDER BY pa.nombre SEPARATOR ' · ')
+                       FROM persona_pastorales pp JOIN pastorales pa ON pa.id = pp.pastoral_id
+                      WHERE pp.persona_id = p.id) AS pastorales_con_cargo,
                     (SELECT GROUP_CONCAT(c.nombre ORDER BY c.nombre SEPARATOR ', ')
                        FROM persona_centros pc JOIN centros c ON c.id = pc.centro_id
                       WHERE pc.persona_id = p.id) AS centros_nombres,
@@ -150,9 +155,10 @@ class PersonaModel extends Model
             return ['por_pastoral' => [], 'sin_pastoral' => []];
         }
 
+        // pastoral => persona => su cargo ahí ('' si no tiene uno propio).
         $miembros = [];
-        foreach ($this->fetchAll('SELECT persona_id, pastoral_id FROM persona_pastorales') as $fila) {
-            $miembros[(int) $fila['pastoral_id']][(int) $fila['persona_id']] = true;
+        foreach ($this->fetchAll('SELECT persona_id, pastoral_id, cargo FROM persona_pastorales') as $fila) {
+            $miembros[(int) $fila['pastoral_id']][(int) $fila['persona_id']] = trim((string) $fila['cargo']);
         }
 
         $vistos    = [];
@@ -169,6 +175,11 @@ class PersonaModel extends Model
                     continue; // no está marcada para el directorio, o está inactiva
                 }
                 $ficha          = $personas[$personaId];
+                // En cada pastoral, el cargo que tiene ahí; si no tiene uno
+                // propio, el general de su ficha. Con eso Zulema sale de
+                // Ministro bajo MESC y de Coordinadora General bajo Profética,
+                // y "Encargad-" se busca en el cargo de esta pastoral.
+                $ficha['cargo'] = ($miembros[$pastoralId][$personaId] ?? '') ?: $ficha['cargo'];
                 $esResponsable  = in_array($personaId, $responsables, true);
                 $ficha['rango'] = $esResponsable
                     ? ($esComision ? 0 : 1)
@@ -218,6 +229,84 @@ class PersonaModel extends Model
         return array_map(static fn (array $f): int => (int) $f['pastoral_id'], $filas);
     }
 
+    // ── El cargo en cada pastoral ───────────────────────────────────────
+    // persona_pastorales.cargo: el de esta persona EN ESA pastoral, opcional;
+    // vacío, vale personas.cargo, que es el cargo general. Se captura en la
+    // ficha y, desde el panel de cada pastoral, lo pone quien la coordina
+    // (PastoralController::cargoGuardar()). Es un título: quién coordina sigue
+    // en pastoral_coordinadores. Ver
+    // docs/migraciones/2026-11-16-cargo-por-pastoral.sql
+
+    /** pastoral_id => cargo propio de esta persona ahí, solo las que lo tienen. */
+    public function cargosDe(int $personaId): array
+    {
+        $cargos = [];
+        foreach ($this->fetchAll(
+            "SELECT pastoral_id, cargo FROM persona_pastorales WHERE persona_id = :id AND COALESCE(cargo, '') <> ''",
+            [':id' => $personaId]
+        ) as $fila) {
+            $cargos[(int) $fila['pastoral_id']] = $fila['cargo'];
+        }
+        return $cargos;
+    }
+
+    /** persona_id => cargo propio en esta pastoral, solo quienes lo tienen. Para el panel de la pastoral. */
+    public function cargosEnPastoral(int $pastoralId): array
+    {
+        $cargos = [];
+        foreach ($this->fetchAll(
+            "SELECT persona_id, cargo FROM persona_pastorales WHERE pastoral_id = :id AND COALESCE(cargo, '') <> ''",
+            [':id' => $pastoralId]
+        ) as $fila) {
+            $cargos[(int) $fila['persona_id']] = $fila['cargo'];
+        }
+        return $cargos;
+    }
+
+    /**
+     * Pone (o quita, con null) el cargo de esta persona en esta pastoral. No
+     * la marca en la pastoral: si no está marcada no hace nada y devuelve
+     * false, para que quien llama lo diga.
+     */
+    public function guardarCargoEnPastoral(int $personaId, int $pastoralId, ?string $cargo): bool
+    {
+        if (!in_array($pastoralId, $this->pastoralesDe($personaId), true)) {
+            return false;
+        }
+        $this->execute(
+            'UPDATE persona_pastorales SET cargo = :cargo WHERE persona_id = :persona AND pastoral_id = :pastoral',
+            [':cargo' => self::normalizarCargo($cargo), ':persona' => $personaId, ':pastoral' => $pastoralId]
+        );
+        return true;
+    }
+
+    /**
+     * Los cargos que ya se usan, generales y por pastoral, sin repetir, para
+     * las sugerencias de los campos de cargo: así «Coordinadora» no termina
+     * escrito de tres formas. Primero los más usados.
+     */
+    public function cargosUsados(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT cargo, COUNT(*) AS veces FROM (
+                SELECT TRIM(cargo) AS cargo FROM personas WHERE activo = 1 AND COALESCE(TRIM(cargo), '') <> ''
+                UNION ALL
+                SELECT TRIM(cargo) FROM persona_pastorales WHERE COALESCE(TRIM(cargo), '') <> ''
+             ) x
+             GROUP BY cargo
+             ORDER BY veces DESC, cargo
+             LIMIT 80"
+        );
+        return array_column($filas, 'cargo');
+    }
+
+    /** Sin espacios de sobra, cortado a lo que cabe en la columna; vacío es null. */
+    public static function normalizarCargo(?string $cargo): ?string
+    {
+        $cargo = trim(preg_replace('/\s+/u', ' ', (string) $cargo));
+        return $cargo === '' ? null : mb_substr($cargo, 0, 100);
+    }
+
     /** IDs de centro/sede asignados, para marcar las casillas del formulario. */
     public function centrosDe(int $id): array
     {
@@ -240,7 +329,7 @@ class PersonaModel extends Model
                 $this->parametros($datos)
             );
             $id = $this->lastInsertId();
-            $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarPastorales($id, $datos['pastorales'], $datos['cargos'] ?? null);
             $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
             return $id;
@@ -263,7 +352,7 @@ class PersonaModel extends Model
                   WHERE id = :id',
                 $this->parametros($datos) + [':id' => $id]
             );
-            $this->sincronizarPastorales($id, $datos['pastorales']);
+            $this->sincronizarPastorales($id, $datos['pastorales'], $datos['cargos'] ?? null);
             $this->sincronizarCentros($id, $datos['centros']);
             $this->sincronizarCuenta($id, $datos);
             $this->sincronizarCuentaAlcance($id, $datos['pastorales'], $datos['centros']);
@@ -441,13 +530,24 @@ class PersonaModel extends Model
         );
     }
 
-    private function sincronizarPastorales(int $personaId, array $pastoralIds): void
+    /**
+     * Deja a esta persona en estas pastorales, cada una con su cargo.
+     *
+     * $cargos (pastoral_id => texto) es lo que trajo el formulario de la
+     * ficha; solo cuenta para las pastorales marcadas. Si no llega (null),
+     * cada pastoral que se queda conserva el cargo que ya tenía: quien guarda
+     * la ficha sin esos campos no los borra. Una pastoral desmarcada se va
+     * con su cargo.
+     */
+    private function sincronizarPastorales(int $personaId, array $pastoralIds, ?array $cargos = null): void
     {
+        $anteriores = $this->cargosDe($personaId);
         $this->execute('DELETE FROM persona_pastorales WHERE persona_id = :id', [':id' => $personaId]);
         foreach (array_unique($pastoralIds) as $pid) {
+            $cargo = $cargos !== null ? ($cargos[(int) $pid] ?? null) : ($anteriores[(int) $pid] ?? null);
             $this->execute(
-                'INSERT INTO persona_pastorales (persona_id, pastoral_id) VALUES (:pid, :pastoral)',
-                [':pid' => $personaId, ':pastoral' => $pid]
+                'INSERT INTO persona_pastorales (persona_id, pastoral_id, cargo) VALUES (:pid, :pastoral, :cargo)',
+                [':pid' => $personaId, ':pastoral' => $pid, ':cargo' => self::normalizarCargo($cargo)]
             );
         }
     }
