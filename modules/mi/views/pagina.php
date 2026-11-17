@@ -7,7 +7,7 @@
  * avisos, lo que viene, el formulario de cambio, sus solicitudes, el rol del
  * mes y los documentos.
  *
- *   $persona      su ficha del equipo pastoral (id, nombre, foto)
+ *   $persona      su ficha del equipo pastoral (id, nombre, foto, llamarle)
  *   $secciones    sus pastorales, por slug (MiController::secciones())
  *   $seccion      el slug de la que se está viendo, o null si no está en ninguna
  *   $novedades    respuestas de la coordinación que todavía no ha visto
@@ -21,7 +21,7 @@
  */
 require_once BASE_PATH . '/shared/views/parciales/cambios_turno_funciones.php';
 
-$pila  = strtok(trim((string) $persona['nombre']), ' ') ?: $persona['nombre'];
+$pila  = $persona['llamarle'];   // su nombre corto de MESC, o su nombre de pila
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
           'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $ocultos = '<input type="hidden" name="_mi" value="' . e($firma) . '">'

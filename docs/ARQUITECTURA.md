@@ -1931,6 +1931,12 @@ coordinación aprueba; esas pestañas van primero. No administra nada. Una pasto
 publicado nada muestra al menos quién coordina y cuándo se reúnen, y un aviso de que todavía
 no hay nada para su equipo, en vez de una página que parezca rota.
 
+**Cómo le habla.** Su página («Hola, Male») y el mensaje con su enlace la llaman igual,
+venga el botón de la lista que venga: por su nombre corto si tiene, y si no, por su nombre
+de pila (`EnlacePersonal::comoLlamarle()`). El nombre corto solo lo guarda MESC, en la
+columna «Nombre corto» de Ministros; Proclamadores, Coros y Catequesis guardan el nombre
+completo, igual que la ficha.
+
 **Quién lo manda.** El botón está en las listas propias de los módulos —Ministros (MESC),
 Proclamadores, Integrantes (Coros) y Catequistas—, con el permiso de editar esa lista
 (`<modulo>.editar`), y en «Quiénes están en esta pastoral», en el panel de cualquier

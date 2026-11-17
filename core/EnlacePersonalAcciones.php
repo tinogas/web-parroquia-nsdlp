@@ -58,7 +58,6 @@ trait EnlacePersonalAcciones
         $this->responderEnlacePersonal(
             $personaId,
             $ficha['nombre_completo'] ?: $ficha['nombre'],
-            $ficha['nombre'],
             $ficha['telefono'],
             EnlacePersonal::queVe($cfg['titulo'], $cfg['turnos']),
             // Si en su ficha no está marcado en esta pastoral, su página no le

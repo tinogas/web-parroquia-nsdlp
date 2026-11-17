@@ -197,7 +197,7 @@ class PastoralController extends Controller
             $this->json(['error' => "{$persona['nombre']} está inactiva: su enlace no le mostraría nada."], 422);
         }
 
-        $this->responderEnlacePersonal((int) $persona['id'], $persona['nombre'], $persona['nombre'], $persona['telefono'],
+        $this->responderEnlacePersonal((int) $persona['id'], $persona['nombre'], $persona['telefono'],
             EnlacePersonal::queVe(...$this->comoLoVe($pastoral)));
     }
 

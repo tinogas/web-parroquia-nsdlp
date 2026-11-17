@@ -14,13 +14,16 @@ require_once BASE_PATH . '/core/EnlacePersonal.php';
 trait EnlacePersonalRespuesta
 {
     /**
-     * @param string  $nombre       su nombre completo, para el título del cuadro y la bitácora
-     * @param string  $nombreCorto  como se le habla en el mensaje: «Hola Zulema»
-     * @param string  $queVe        lo que verá con el enlace, para el mensaje: «Ahí ves …»
-     * @param ?string $aviso        algo que la coordinación debe saber antes de mandarlo
+     * El mensaje le habla como su página: por su nombre corto si tiene, o por
+     * su nombre de pila (EnlacePersonal::comoLlamarle()), venga de la lista
+     * que venga.
+     *
+     * @param string  $nombre  su nombre completo, para el título del cuadro y la bitácora
+     * @param string  $queVe   lo que verá con el enlace, para el mensaje: «Ahí ves …»
+     * @param ?string $aviso   algo que la coordinación debe saber antes de mandarlo
      */
-    private function responderEnlacePersonal(int $personaId, string $nombre, string $nombreCorto,
-                                             ?string $telefono, string $queVe, ?string $aviso = null): void
+    private function responderEnlacePersonal(int $personaId, string $nombre, ?string $telefono,
+                                             string $queVe, ?string $aviso = null): void
     {
         $enlaces   = new EnlacePersonal();
         $usuarioId = (int) Auth::usuario()['id'];
@@ -38,7 +41,7 @@ trait EnlacePersonalRespuesta
         }
 
         $url     = EnlacePersonal::url($fila['token']);
-        $pila    = strtok(trim($nombreCorto), ' ') ?: $nombreCorto;
+        $pila    = $enlaces->comoLlamarle($personaId);
         $mensaje = "Hola {$pila}, este es tu enlace personal de la parroquia:\n{$url}\n\n"
                  . "Ahí ves {$queVe}. Es solo tuyo: no lo compartas.";
 

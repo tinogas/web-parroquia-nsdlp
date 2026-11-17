@@ -79,19 +79,61 @@ class EnlacePersonal extends Model
         return url_absoluta(url_publica('mi', ['slug' => $token]));
     }
 
-    /** La persona dueña del enlace, si sigue vigente (ficha activa), o null. */
+    /**
+     * La persona dueña del enlace, si sigue vigente (ficha activa), o null.
+     * Trae `llamarle`, el nombre con que la saluda su página (comoLlamarle()).
+     */
     public function personaPorToken(string $token): ?array
     {
         if (!self::tokenValido($token)) {
             return null;
         }
-        return $this->fetchOne(
-            'SELECT p.id, p.nombre, p.foto, e.token, e.ultimo_uso_at
+        $persona = $this->fetchOne(
+            'SELECT p.id, p.nombre, p.foto, e.token, e.ultimo_uso_at, m.nombre AS nombre_corto
                FROM persona_enlaces e
                JOIN personas p ON p.id = e.persona_id
+               LEFT JOIN mesc_ministros m ON m.persona_id = p.id
               WHERE e.token = :token AND p.activo = 1',
             [':token' => $token]
         );
+        if ($persona) {
+            $persona['llamarle'] = self::nombreParaHablarle($persona['nombre'], $persona['nombre_corto']);
+        }
+        return $persona;
+    }
+
+    /**
+     * Cómo se le habla a alguien, igual en su página («Hola, Male») que en el
+     * mensaje con su enlace: su nombre corto si tiene, y si no, su nombre de
+     * pila. El nombre corto solo lo guarda MESC (la columna «Nombre corto» de
+     * Ministros); las listas de Proclamadores, Coros y Catequesis guardan el
+     * nombre completo, igual que la ficha.
+     */
+    public function comoLlamarle(int $personaId): string
+    {
+        $fila = $this->fetchOne(
+            'SELECT p.nombre, m.nombre AS nombre_corto
+               FROM personas p
+               LEFT JOIN mesc_ministros m ON m.persona_id = p.id
+              WHERE p.id = :id',
+            [':id' => $personaId]
+        );
+        return $fila ? self::nombreParaHablarle($fila['nombre'], $fila['nombre_corto']) : '';
+    }
+
+    /**
+     * El nombre corto, si lo hay y no es el nombre completo repetido (así lo
+     * capturan a veces); si no, la primera palabra del nombre: «María Elena
+     * Ruiz Soto» → «María», pero con nombre corto «Male».
+     */
+    public static function nombreParaHablarle(string $nombre, ?string $corto): string
+    {
+        $nombre = trim($nombre);
+        $corto  = trim((string) $corto);
+        if ($corto !== '' && mb_strtolower($corto) !== mb_strtolower($nombre)) {
+            return $corto;
+        }
+        return strtok($nombre, ' ') ?: $nombre;
     }
 
     public function dePersona(int $personaId): ?array
