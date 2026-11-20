@@ -55,8 +55,25 @@ foreach (array_keys($mvv) as $clave) {
                         <img src="<?= e(foto_o_avatar($persona['foto'], $persona['nombre'], 96)) ?>"
                              class="rounded-circle mb-3" style="width:88px;height:88px;object-fit:cover" alt="">
                         <h4 class="h6 fw-bold mb-1"><?= e($persona['nombre']) ?></h4>
-                        <?php if ($persona['cargo']): ?>
-                        <p class="text-dorado small fw-semibold mb-2"><?= e($persona['cargo']) ?></p>
+                        <?php // Todos sus cargos, ya ordenados: ver PersonaModel::cargosParaMostrar(). ?>
+                        <?php if ($persona['cargos']): ?>
+                        <ul class="list-unstyled small mb-2">
+                            <?php foreach ($persona['cargos'] as $cargo): ?>
+                            <li class="mb-1">
+                                <span class="text-dorado fw-semibold"><?= e($cargo['cargo']) ?></span>
+                                <?php if ($cargo['pastoral'] !== null): ?>
+                                <span class="text-muted">·
+                                    <?php if ($cargo['slug'] !== ''): ?>
+                                    <a href="<?= e(url_publica('pastorales', ['slug' => $cargo['slug']])) ?>"
+                                       class="text-muted"><?= e($cargo['pastoral']) ?></a>
+                                    <?php else: ?>
+                                    <?= e($cargo['pastoral']) ?>
+                                    <?php endif; ?>
+                                </span>
+                                <?php endif; ?>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
                         <?php endif; ?>
                         <?php if ($persona['semblanza']): ?>
                         <p class="small text-muted mb-0"><?= e($persona['semblanza']) ?></p>

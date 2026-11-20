@@ -41,8 +41,9 @@ dice.
 - **Tipo.** Párroco, vicario, diácono, religioso o religiosa, laico, personal
   de oficina. Es lo que agrupa las fichas en «Quiénes somos».
 - **Cargo general.** Una línea: «Encargada de Coro Infantil», «Coordinadora
-  General de Profética». Es el que sale en «Quiénes somos» y junto a su nombre
-  en las listas para elegir personas.
+  General de Profética». Es el que sale junto a su nombre en las listas para
+  elegir personas y, en «Quiénes somos», junto a los cargos de cada pastoral
+  (ver «Cargo aquí», más abajo).
 - **Fecha de nacimiento.** Es lo que alimenta los cumpleaños del panel. **No se
   publica en el sitio**: solo se usa puertas adentro.
 - **Correo institucional** y **Teléfono.** El correo institucional es el único
@@ -69,6 +70,15 @@ dice.
   escribir, el campo sugiere los cargos que ya se usan, para que «Coordinadora»
   no acabe escrito de tres formas. Este cargo es solo el título: quién coordina
   una pastoral se elige en la pastoral (capítulo 13).
+
+  En **«Quiénes somos»** la tarjeta de cada persona lleva todos sus cargos,
+  cada uno con su pastoral: «Coordinadora General · Profética», «Ministro ·
+  MESC». Van primero los de coordinación general, luego los de coordinación y
+  al final el resto. El cargo general sale también, sin pastoral, pero solo si
+  dice algo distinto: si es «Coordinadora General» o «Coordinadora General de
+  Profética» y ya está «Coordinadora General · Profética», no se repite. Ojo con
+  los errores de dedo: «Coordiandora General» ya no se reconoce como el mismo,
+  y sale aparte. Las pastorales inactivas no se publican, y su cargo tampoco.
 - **Activa**, el interruptor de siempre.
 - **Incluir en el directorio telefónico.** Aparte de "Activa": no es para todo
   el equipo, es para altos mandos y cargos importantes del organigrama —a
@@ -76,7 +86,7 @@ dice.
   Se marca ficha por ficha, igual que se decide quién sale en "Quiénes somos".
 
 > **Dar de alta a alguien aquí lo publica en el sitio.** Toda persona activa
-> aparece en «Quiénes somos» con su nombre, su cargo, su foto y su semblanza.
+> aparece en «Quiénes somos» con su nombre, sus cargos, su foto y su semblanza.
 > Para que deje de aparecer —alguien que dejó su encargo— se marca la ficha
 > como inactiva; no hace falta borrarla, y conviene no hacerlo: su nombre puede
 > estar todavía colgando del organigrama o de un catálogo.
