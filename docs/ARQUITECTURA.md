@@ -1395,12 +1395,32 @@ Cada ficha tenía un solo `cargo`, y salía igual en todas las pastorales de esa
 treinta y ocho personas en más de una, el campo acababa diciendo todo a la vez —«Coordinadora
 General de Litúrgica - MESC - Proclamadora»— y el directorio ponía a Zulema de «Coordinadora
 General» también bajo MESC, donde es ministra. Ahora `persona_pastorales` lleva `cargo`, el de
-esa persona en esa pastoral, y `personas.cargo` se queda como **cargo general**.
+esa persona en esa pastoral, y el de la ficha se queda como **cargo general**.
 
 **El de la pastoral manda, y vacío vale el general.** Así la migración no tuvo que llenar
 nada: quien está en una sola pastoral se sigue viendo igual, y solo se escribe donde hace
-falta. El cargo general sigue siendo el que acompaña el nombre en los selectores, donde no hay
-una pastoral de por medio.
+falta.
+
+**El cargo que se muestra se calcula** (20 de noviembre). Con un cargo en cada pastoral, el
+general sobraba casi siempre —«Proclamador» arriba y Proclamadores marcada abajo—, pero
+dejarlo vacío dejaba a la persona sin cargo en todo lo que no tiene una pastoral de por
+medio: las listas para elegir personas, el organigrama, las cuentas. Ahora el de la ficha
+vive en `personas.cargo_general`, opcional, y `personas.cargo` es el que se muestra: el
+general si lo hay y, si no, el más alto de sus cargos por pastoral, con el mismo
+`rangoCargo()` de «Quiénes somos». Se guarda calculado (`PersonaModel::recalcularCargo()`,
+después de guardar la ficha o un cargo desde el panel) en vez de calcularse al leer porque lo
+leen una docena de pantallas y consultas, y así ninguna tuvo que cambiar. La migración hace
+la misma cuenta en SQL, sin barras invertidas en el patrón —`(*UCP)` y `[[:alpha:]]`— para
+que valga igual en cualquier servidor; se comprobó que da lo mismo que PHP para todas las
+fichas. El cuadro del panel, que avisa qué pasa al dejar vacío el cargo de una pastoral, no
+puede usar `personas.cargo` porque ese puede salir justo de esa pastoral: lo calcula sin ella
+(`cargosSinPastoral()`).
+
+Con eso se pudo **vaciar el cargo general** de casi todos: `herramientas/mover_cargo_general.php`
+lo pasa a la pastoral donde se ejerce —la única, la que nombra el cargo («Proclamador» y
+Proclamadores), la dimensión antes que la Comisión—, nunca pisa un cargo ya escrito, deja al
+clero y a quien no está en ninguna pastoral con el suyo, y lo que no puede decidir lo lista
+para decidirlo a mano.
 
 **En «Quiénes somos», todos juntos.** Cada tarjeta lista los cargos propios de esa persona en
 pastorales activas, con la pastoral enlazada a su página, más el general si no repite alguno

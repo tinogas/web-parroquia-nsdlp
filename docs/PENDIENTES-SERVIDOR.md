@@ -6,7 +6,7 @@ tabla del paso 2 y en la consulta del paso 1. Lo que ya se aplicó se anota al f
 registro.
 
 > **Revisado el 17 de noviembre de 2026**, con `main` en `fc97684`. Se comprobó así: el
-> `install.sql` de agosto más las 15 migraciones, aplicadas en este orden sobre una base
+> `install.sql` de agosto más las 16 migraciones, aplicadas en este orden sobre una base
 > desechable, dan exactamente el mismo esquema que la base local (tablas, columnas, índices
 > y llaves foráneas).
 
@@ -43,6 +43,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
         UNION ALL SELECT 13, '2026-11-15-enlace-personal.sql',                  'persona_enlaces',  'token'
         UNION ALL SELECT 14, '2026-11-16-varios-coordinadores.sql',             'pastoral_coordinadores', 'persona_id'
         UNION ALL SELECT 15, '2026-11-16-cargo-por-pastoral.sql',               'persona_pastorales', 'cargo'
+        UNION ALL SELECT 16, '2026-11-20-cargo-general-aparte.sql',             'personas',         'cargo_general'
        ) m
   LEFT JOIN information_schema.columns c
          ON c.table_schema = DATABASE() AND c.table_name = m.tabla AND c.column_name = m.columna
@@ -52,7 +53,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
 
 - **Todas dicen «ya está»:** la base está al día; sigue con el paso 3.
 - **Algunas dicen «FALTA»:** aplica solo esas, en el orden del paso 2.
-- **Las 15 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
+- **Las 16 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
   no había migraciones, y estas no alcanzan para ponerla al día. No la toques; hay que
   revisarla antes.
 
@@ -80,6 +81,7 @@ de la base local; en el servidor no sirve.
 | 13 | `2026-11-15-enlace-personal.sql` | Enlace personal de los integrantes | **Después de la 12**: modifica sus tablas |
 | 14 | `2026-11-16-varios-coordinadores.sql` | Una pastoral la coordinan una o varias personas | **Borra dos columnas**: sin el respaldo no hay vuelta atrás. Con el código en seguida: ver abajo |
 | 15 | `2026-11-16-cargo-por-pastoral.sql` | Un cargo distinto en cada pastoral | Solo agrega una columna: el código anterior la ignora. En la carpeta aparece antes que la 14; el orden entre las dos no importa |
+| 16 | `2026-11-20-cargo-general-aparte.sql` | El cargo general, aparte; el que se muestra sale solo | **Con el código en seguida**, y después la mudanza de cargos: ver abajo |
 
 **La 11 es obligatoria aunque su archivo no esté en `main`.** La página del enlace personal
 (`/mi`) lee esa columna y sin ella da error. El archivo solo existe en la rama
@@ -106,7 +108,18 @@ coordina cada pastoral y guardar una pastoral da error; con el código nuevo sin
 todo lo que muestra pastorales. Por eso va justo antes de subir el código, sin pausa entre
 las dos cosas. Si se aplica dos veces, la segunda falla sin tocar nada.
 
-- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 15 deben decir «ya está».
+**La 16 va con el código, y después la mudanza de cargos.** Aparta el cargo que se escribe
+en la ficha (`cargo_general`) del que se muestra (`cargo`, que desde ahí calcula el código).
+El código anterior seguiría escribiendo el de la ficha en `cargo`, así que una ficha guardada
+entre la migración y el código nuevo quedaría con el general viejo: van juntas.
+
+Después, en la base local se pasó el cargo general de cada persona a la pastoral donde lo
+ejerce, con `herramientas/mover_cargo_general.php` (20 de noviembre de 2026). Si la base del
+servidor se va a reemplazar con la local, ya viene hecho. Si no, hay que correrla allá:
+primero sin `--aplicar`, para ver qué haría, y luego con `--aplicar` y las mismas decisiones
+a mano que se tomaron aquí: `--asignar=9:30=Coordinadora General --asignar=9:16=Coordinadora --asignar=9:21=Proclamadora --asignar=11:34 --asignar=73:36 --asignar=73:24`.
+
+- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 16 deben decir «ya está».
 
 ## 3. El código
 
@@ -137,7 +150,7 @@ las dos cosas. Si se aplica dos veces, la segunda falla sin tocar nada.
 ## Si el servidor no tiene base todavía
 
 O si la del servidor se va a reemplazar con la de tu equipo: no hace falta ninguna
-migración, porque la base local ya tiene las 15. Genera un respaldo en local
+migración, porque la base local ya tiene las 16. Genera un respaldo en local
 (Administración → Respaldos), impórtalo en el servidor con phpMyAdmin y copia también la
 carpeta `uploads/`: el respaldo no lleva las imágenes ni los documentos subidos. Después
 sigue con los pasos 3 y 4.

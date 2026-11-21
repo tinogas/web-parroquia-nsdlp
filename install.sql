@@ -492,7 +492,12 @@ INSERT IGNORE INTO centros (tipo, nombre, orden) VALUES
 CREATE TABLE IF NOT EXISTS personas (
     id         SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre     VARCHAR(140)      NOT NULL,
+    -- cargo: el que SE MUESTRA, calculado (PersonaModel::recalcularCargo()):
+    -- cargo_general si lo hay y, si no, el más alto de sus cargos por
+    -- pastoral. cargo_general: el que se escribe en la ficha, opcional. Ver
+    -- docs/migraciones/2026-11-20-cargo-general-aparte.sql
     cargo      VARCHAR(100)      NULL,
+    cargo_general VARCHAR(100)   NULL,
     tipo       ENUM('parroco','vicario','diacono','religioso','laico','staff')
                                  NOT NULL DEFAULT 'laico',
     semblanza  TEXT              NULL,
@@ -520,8 +525,8 @@ CREATE TABLE IF NOT EXISTS personas (
 -- con usuarios_pastorales. FK real a pastorales, creada más abajo.
 --
 -- cargo es el de esa persona EN ESA pastoral (Zulema: Coordinadora General en
--- Profética, Ministro en MESC). Opcional: vacío, vale personas.cargo, que es el
--- cargo general. Es un título, no la coordinación —esa es
+-- Profética, Ministro en MESC). Opcional: vacío, vale personas.cargo, el que
+-- se muestra de esa persona. Es un título, no la coordinación —esa es
 -- pastoral_coordinadores—. Ver docs/migraciones/2026-11-16-cargo-por-pastoral.sql
 CREATE TABLE IF NOT EXISTS persona_pastorales (
     persona_id  SMALLINT UNSIGNED NOT NULL,
