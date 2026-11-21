@@ -113,7 +113,7 @@ class PersonaModel extends Model
         $propios = $this->cargosEnPastoralesActivas();
         $porTipo = [];
         foreach ($filas as $fila) {
-            $fila['cargos'] = self::cargosParaMostrar($fila['cargo'], $propios[(int) $fila['id']] ?? []);
+            $fila['cargos'] = self::cargosParaMostrar($fila['cargo_general'], $propios[(int) $fila['id']] ?? []);
             $porTipo[$fila['tipo']][] = $fila;
         }
         return $porTipo;
@@ -373,7 +373,94 @@ class PersonaModel extends Model
             'UPDATE persona_pastorales SET cargo = :cargo WHERE persona_id = :persona AND pastoral_id = :pastoral',
             [':cargo' => self::normalizarCargo($cargo), ':persona' => $personaId, ':pastoral' => $pastoralId]
         );
+        $this->recalcularCargo($personaId);
         return true;
+    }
+
+    /**
+     * Recalcula `personas.cargo`, el cargo que SE MUESTRA de esta persona en
+     * las listas para elegir personas, el organigrama, las cuentas y, donde
+     * no tiene uno propio, en el panel y el directorio de cada pastoral. Es su
+     * cargo general (`cargo_general`, el que se escribe en la ficha) y, si no
+     * tiene, el más alto de los que tiene en sus pastorales: así quien ya
+     * tiene su cargo en cada pastoral no necesita repetirlo arriba.
+     *
+     * Se guarda en vez de calcularse al leer porque lo leen muchas pantallas,
+     * y así ninguna tiene que saberlo. Se llama cada vez que cambia la ficha
+     * o un cargo por pastoral. Ver
+     * docs/migraciones/2026-11-20-cargo-general-aparte.sql, que hace la misma
+     * cuenta en SQL para los datos que ya había.
+     */
+    public function recalcularCargo(int $personaId): void
+    {
+        $cargo = self::normalizarCargo(
+            (string) $this->fetchColumn('SELECT cargo_general FROM personas WHERE id = :id', [':id' => $personaId])
+        );
+        if ($cargo === null) {
+            // Por nombre de la pastoral, para que a igual rango gane el mismo
+            // que en la migración (ORDER BY rango, pa.nombre).
+            $propios = $this->fetchAll(
+                "SELECT TRIM(pp.cargo) AS cargo
+                   FROM persona_pastorales pp
+                   JOIN pastorales pa ON pa.id = pp.pastoral_id
+                  WHERE pp.persona_id = :id AND COALESCE(TRIM(pp.cargo), '') <> ''
+                  ORDER BY pa.nombre",
+                [':id' => $personaId]
+            );
+            $cargo = self::cargoMasAlto(array_column($propios, 'cargo'));
+        }
+        $this->execute('UPDATE personas SET cargo = :cargo WHERE id = :id', [':cargo' => $cargo, ':id' => $personaId]);
+    }
+
+    /**
+     * persona_id => el cargo que se le mostraría en esta pastoral si aquí no
+     * tuviera uno propio: su general o, si no tiene, el más alto de los de sus
+     * OTRAS pastorales. Para el cuadro del panel, que avisa qué pasa al dejar
+     * vacío el cargo de aquí. Null si no le quedaría ninguno.
+     *
+     * @param  int[] $personaIds
+     * @return array<int, ?string>
+     */
+    public function cargosSinPastoral(int $pastoralId, array $personaIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $personaIds)));
+        if (!$ids) {
+            return [];
+        }
+        $lista = implode(',', $ids); // enteros: no hace falta parámetro
+        $propios = [];
+        foreach ($this->fetchAll(
+            "SELECT pp.persona_id, TRIM(pp.cargo) AS cargo
+               FROM persona_pastorales pp
+               JOIN pastorales pa ON pa.id = pp.pastoral_id
+              WHERE pp.persona_id IN ($lista) AND pp.pastoral_id <> :pastoral
+                AND COALESCE(TRIM(pp.cargo), '') <> ''
+              ORDER BY pa.nombre",
+            [':pastoral' => $pastoralId]
+        ) as $fila) {
+            $propios[(int) $fila['persona_id']][] = $fila['cargo'];
+        }
+        $resultado = [];
+        foreach ($this->fetchAll("SELECT id, cargo_general FROM personas WHERE id IN ($lista)") as $fila) {
+            $id = (int) $fila['id'];
+            $resultado[$id] = self::normalizarCargo($fila['cargo_general']) ?? self::cargoMasAlto($propios[$id] ?? []);
+        }
+        return $resultado;
+    }
+
+    /** El de menor rango (ver rangoCargo()); a igual rango, el primero de la lista. Null si no hay ninguno. */
+    public static function cargoMasAlto(array $cargos): ?string
+    {
+        $elegido = null;
+        $mejor   = PHP_INT_MAX;
+        foreach ($cargos as $cargo) {
+            $rango = self::rangoCargo((string) $cargo);
+            if ($rango < $mejor) {
+                $elegido = (string) $cargo;
+                $mejor   = $rango;
+            }
+        }
+        return $elegido;
     }
 
     /**
@@ -385,7 +472,7 @@ class PersonaModel extends Model
     {
         $filas = $this->fetchAll(
             "SELECT cargo, COUNT(*) AS veces FROM (
-                SELECT TRIM(cargo) AS cargo FROM personas WHERE activo = 1 AND COALESCE(TRIM(cargo), '') <> ''
+                SELECT TRIM(cargo_general) AS cargo FROM personas WHERE activo = 1 AND COALESCE(TRIM(cargo_general), '') <> ''
                 UNION ALL
                 SELECT TRIM(cargo) FROM persona_pastorales WHERE COALESCE(TRIM(cargo), '') <> ''
              ) x
@@ -419,13 +506,14 @@ class PersonaModel extends Model
         try {
             $this->execute(
                 'INSERT INTO personas
-                    (nombre, cargo, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo, en_directorio)
+                    (nombre, cargo_general, tipo, semblanza, foto, email, telefono, fecha_nacimiento, orden, activo, en_directorio)
                  VALUES
                     (:nombre, :cargo, :tipo, :semblanza, :foto, :email, :telefono, :fechaNacimiento, :orden, :activo, :enDirectorio)',
                 $this->parametros($datos)
             );
             $id = $this->lastInsertId();
             $this->sincronizarPastorales($id, $datos['pastorales'], $datos['cargos'] ?? null);
+            $this->recalcularCargo($id);
             $this->sincronizarCentros($id, $datos['centros']);
             $this->commit();
             return $id;
@@ -441,7 +529,7 @@ class PersonaModel extends Model
         try {
             $filas = $this->execute(
                 'UPDATE personas
-                    SET nombre = :nombre, cargo = :cargo, tipo = :tipo, semblanza = :semblanza,
+                    SET nombre = :nombre, cargo_general = :cargo, tipo = :tipo, semblanza = :semblanza,
                         foto = :foto, email = :email, telefono = :telefono,
                         fecha_nacimiento = :fechaNacimiento, orden = :orden, activo = :activo,
                         en_directorio = :enDirectorio
@@ -449,6 +537,7 @@ class PersonaModel extends Model
                 $this->parametros($datos) + [':id' => $id]
             );
             $this->sincronizarPastorales($id, $datos['pastorales'], $datos['cargos'] ?? null);
+            $this->recalcularCargo($id);
             $this->sincronizarCentros($id, $datos['centros']);
             $this->sincronizarCuenta($id, $datos);
             $this->sincronizarCuentaAlcance($id, $datos['pastorales'], $datos['centros']);

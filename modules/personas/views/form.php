@@ -50,11 +50,14 @@
                         <div class="col-md-8">
                             <label for="cargo" class="form-label fw-semibold">Cargo general</label>
                             <input type="text" name="cargo" id="cargo" class="form-control"
-                                   value="<?= e($esNueva ? '' : (string) $persona['cargo']) ?>" maxlength="100"
-                                   list="cargosUsados" placeholder="Ej. Párroco, Coordinadora General de Profética…">
+                                   value="<?= e($esNueva ? '' : (string) $persona['cargo_general']) ?>" maxlength="100"
+                                   list="cargosUsados" placeholder="Ej. Párroco, Secretaria…">
+                            <?php /* cargo_general: el que se escribe. personas.cargo, el que se muestra, lo
+                                     calcula PersonaModel::recalcularCargo() a partir de este y de los de abajo. */ ?>
                             <div class="form-text">
-                                El que sale en «Quiénes somos» y junto a su nombre en las listas. Si en
-                                alguna pastoral tiene otro, escríbelo abajo, debajo de esa pastoral.
+                                Opcional. Para un cargo que no es de ninguna pastoral —Párroco, Secretaria—.
+                                Si tiene cargo en sus pastorales, escríbelo abajo, debajo de cada una, y deja
+                                este vacío: junto a su nombre se usará el más alto de esos.
                             </div>
                         </div>
                         <div class="col-md-4">

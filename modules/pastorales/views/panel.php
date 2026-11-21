@@ -194,12 +194,13 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                             <?php endif; ?>
                         </div>
                         <?php /* Su cargo EN ESTA pastoral (persona_pastorales.cargo); si no
-                                 tiene uno propio, el general de su ficha. Zulema sale aquí de
-                                 Ministro y en Profética de Coordinadora General. */ ?>
+                                 tiene uno propio, el que se le muestra en general (personas.cargo:
+                                 su cargo general o el más alto de sus pastorales). Zulema sale
+                                 aquí de Ministro y en Profética de Coordinadora General. */ ?>
                         <?php $cargoAqui = $cargosAqui[(int) $persona['id']] ?? null; ?>
                         <?php if ($cargoAqui || $persona['cargo']): ?>
                         <div class="text-muted small"
-                             <?= $cargoAqui ? '' : 'title="Su cargo general: aquí no tiene uno propio"' ?>>
+                             <?= $cargoAqui ? '' : 'title="Aquí no tiene uno propio: es el que se le muestra en general"' ?>>
                             <?= e($cargoAqui ?: $persona['cargo']) ?>
                         </div>
                         <?php endif; ?>
@@ -241,7 +242,7 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                             data-persona-id="<?= (int) $persona['id'] ?>"
                             data-persona-nombre="<?= e($persona['nombre']) ?>"
                             data-cargo="<?= e((string) $cargoAqui) ?>"
-                            data-cargo-general="<?= e((string) $persona['cargo']) ?>"
+                            data-cargo-general="<?= e((string) ($cargosSinEsta[(int) $persona['id']] ?? '')) ?>"
                             title="Su cargo en esta pastoral" aria-label="Cargo de <?= e($persona['nombre']) ?> en esta pastoral">
                         <i class="bi bi-tag"></i>
                     </button>
@@ -302,8 +303,8 @@ $dibujarAccesoBasico = static function (string $icono, string $titulo, string $s
                 modal.querySelector('[data-cargo-etiqueta]').textContent =
                     'Cargo de ' + b.getAttribute('data-persona-nombre') + ' aquí';
                 modal.querySelector('[data-cargo-ayuda]').textContent = general
-                    ? 'Si lo dejas vacío, se usa su cargo general: «' + general + '».'
-                    : 'Si lo dejas vacío, no se muestra ningún cargo: tampoco tiene uno general.';
+                    ? 'Si lo dejas vacío, aquí se mostrará el que tiene en general: «' + general + '».'
+                    : 'Si lo dejas vacío, aquí no se mostrará ningún cargo: no tiene otro.';
             });
             modal.addEventListener('shown.bs.modal', function () {
                 modal.querySelector('[name="cargo"]').focus();

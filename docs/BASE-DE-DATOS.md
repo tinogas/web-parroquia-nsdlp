@@ -284,9 +284,22 @@ Señor"). Ver [`ARQUITECTURA.md`](ARQUITECTURA.md), sección "Sede y centros".
 
 ### `personas`
 
-Párroco, vicarios, diáconos, religiosos, laicos y personal. `nombre`, `cargo`, `tipo`
-ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`, `staff`), `semblanza`, `foto`,
-`email`, `telefono`, `fecha_nacimiento`, `orden`, `activo`, `en_directorio`.
+Párroco, vicarios, diáconos, religiosos, laicos y personal. `nombre`, `cargo`,
+`cargo_general`, `tipo` ENUM(`parroco`, `vicario`, `diacono`, `religioso`, `laico`,
+`staff`), `semblanza`, `foto`, `email`, `telefono`, `fecha_nacimiento`, `orden`, `activo`,
+`en_directorio`.
+
+`cargo_general` (`VARCHAR(100)`, opcional) es el que se escribe en la ficha, en «Cargo
+general»: para un cargo que no es de ninguna pastoral —Párroco, Secretaria—. `cargo` es el
+que **se muestra** —en las listas para elegir personas, el organigrama, las cuentas y, donde
+no tiene uno propio, en el panel y el directorio de cada pastoral—, y no se escribe a mano:
+es `cargo_general` si lo hay y, si no, el más alto de sus cargos por pastoral
+([`persona_pastorales.cargo`](#persona_pastorales)), primero los de coordinación general,
+luego los de coordinación y luego el resto; a igual rango, por nombre de la pastoral. Lo
+recalcula `PersonaModel::recalcularCargo()` cada vez que cambia la ficha o un cargo por
+pastoral. Se guarda en vez de calcularse al leer porque lo leen muchas pantallas, y así
+ninguna tiene que saberlo. Ver
+[`migraciones/2026-11-20-cargo-general-aparte.sql`](migraciones/2026-11-20-cargo-general-aparte.sql).
 
 Solo se publica el correo institucional. Ver [`PRIVACIDAD.md`](PRIVACIDAD.md).
 
@@ -342,8 +355,8 @@ pastoral a la vez (catequesis y liturgia, por ejemplo). Clave primaria compuesta
 
 `cargo` (`VARCHAR(100)`, opcional) es el de esa persona **en esa** pastoral: Zulema es
 Coordinadora General en Profética, Ministro en MESC y Coordinadora de Equipos en Cáritas
-Desayunador. Vacío, vale `personas.cargo`, que queda como cargo general —el de «Quiénes
-somos» y el que acompaña su nombre en los selectores—. Antes había solo ese, y quien estaba
+Desayunador. Vacío, vale `personas.cargo`, el que se muestra de esa persona (ver
+[`personas`](#personas)). Antes había solo un cargo por persona, y quien estaba
 en varias pastorales lo llenaba de todo a la vez («Coordinador de AMA/Ministro
 Extraordinario de la Sagrada Comunión»). Lo leen el directorio impreso, el panel de cada
 pastoral y la lista de Equipo pastoral; se escribe en la ficha

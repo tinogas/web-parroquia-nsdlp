@@ -105,13 +105,14 @@ página pública de la pastoral.
 **Quiénes están en esta pastoral.** La lista de su gente, que sale del equipo
 pastoral: alguien aparece aquí porque en su ficha está marcada esta pastoral.
 Cada renglón lleva su botón de **WhatsApp** y, debajo del nombre, **su cargo en
-esta pastoral** —o el general de su ficha, si aquí no tiene uno propio—.
+esta pastoral** —o, si aquí no tiene uno propio, el que se le muestra en
+general—.
 
 Quien coordina la pastoral ve además, en cada renglón, un botón con una
 **etiqueta**: abre un cuadro para escribir el cargo de esa persona aquí
 («Ministro», «Coordinadora de Equipos»…). Cambia solo ese dato y solo en esta
-pastoral: ni el cargo general ni nada más de la ficha. Dejarlo vacío la regresa
-a su cargo general.
+pastoral: ni el cargo general ni nada más de la ficha. Si se deja vacío, aquí se
+muestra el que tiene en general, y el cuadro dice cuál.
 
 El botón de la **cadena** es su **enlace personal**: su página en la parroquia,
 sin cuenta ni contraseña. Se explica más abajo.

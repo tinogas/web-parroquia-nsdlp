@@ -151,10 +151,14 @@ class PastoralController extends Controller
             'puedeEnlace'   => Auth::tienePermiso('personas.enlace'),
             'enlaces'       => (new EnlacePersonal())->estados(array_column($personas, 'id')),
             'enlaceExplica' => EnlacePersonal::explicacion(...$this->comoLoVe($pastoral)),
-            // El cargo de cada quien EN ESTA pastoral (vacío, el general de su
-            // ficha), y quién puede cambiarlo desde aquí: quien la coordina,
-            // con personas.cargo y su alcance, ya comprobado arriba.
+            // El cargo de cada quien EN ESTA pastoral (vacío, el que se le
+            // muestra en general), y quién puede cambiarlo desde aquí: quien la
+            // coordina, con personas.cargo y su alcance, ya comprobado arriba.
             'cargosAqui'    => $personaModel->cargosEnPastoral((int) $pastoral['id']),
+            // Lo que se vería si aquí no tuviera uno propio: para el cuadro, que
+            // dice qué pasa si se deja vacío. No es simplemente personas.cargo,
+            // porque ese puede salir justo del cargo de esta pastoral.
+            'cargosSinEsta' => $personaModel->cargosSinPastoral((int) $pastoral['id'], array_column($personas, 'id')),
             'puedeCargo'    => Auth::tienePermiso('personas.cargo'),
             'cargosUsados'  => Auth::tienePermiso('personas.cargo') ? $personaModel->cargosUsados() : [],
         ]);

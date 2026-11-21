@@ -40,10 +40,12 @@ dice.
   partes.
 - **Tipo.** Párroco, vicario, diácono, religioso o religiosa, laico, personal
   de oficina. Es lo que agrupa las fichas en «Quiénes somos».
-- **Cargo general.** Una línea: «Encargada de Coro Infantil», «Coordinadora
-  General de Profética». Es el que sale junto a su nombre en las listas para
-  elegir personas y, en «Quiénes somos», junto a los cargos de cada pastoral
-  (ver «Cargo aquí», más abajo).
+- **Cargo general.** Opcional. Es para un cargo que no es de ninguna pastoral:
+  «Párroco», «Secretaria». Quien tiene su cargo en sus pastorales lo escribe
+  abajo, en «Cargo aquí», y deja este vacío: junto a su nombre —en las listas
+  para elegir personas, en el organigrama, en las cuentas— se muestra entonces el
+  más alto de sus cargos por pastoral, primero los de coordinación general, luego
+  los de coordinación y luego el resto. Si se escribe, se muestra este.
 - **Fecha de nacimiento.** Es lo que alimenta los cumpleaños del panel. **No se
   publica en el sitio**: solo se usa puertas adentro.
 - **Correo institucional** y **Teléfono.** El correo institucional es el único
@@ -66,7 +68,8 @@ dice.
   pastorales suele tener un cargo distinto en cada una: Zulema es Coordinadora
   General en Profética, Coordinadora en Catequesis, Misionera en Misión y OMPE,
   Ministro en MESC y Coordinadora de Equipos en Cáritas Desayunador. Cada uno
-  va debajo de su pastoral, y si se deja vacío se usa el cargo general. Al
+  va debajo de su pastoral; si se deja vacío, ahí se muestra el que tiene en
+  general. Al
   escribir, el campo sugiere los cargos que ya se usan, para que «Coordinadora»
   no acabe escrito de tres formas. Este cargo es solo el título: quién coordina
   una pastoral se elige en la pastoral (capítulo 13).

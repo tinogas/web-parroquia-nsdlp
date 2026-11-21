@@ -59,8 +59,9 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   publicar el correo personal de quien esté al frente hoy.
 - **Cada quien puede tener un cargo distinto en cada pastoral**: Zulema es Coordinadora
   General en Profética, Coordinadora en Catequesis, Misionera en Misión y OMPE, Ministro
-  en MESC y Coordinadora de Equipos en Cáritas Desayunador. El de la ficha queda como cargo
-  general y vale donde no haya uno propio. Se escribe en la ficha, debajo de cada pastoral,
+  en MESC y Coordinadora de Equipos en Cáritas Desayunador. El de la ficha, el cargo
+  general, es opcional: sin él, junto a su nombre se muestra el más alto de sus cargos por
+  pastoral. Se escribe en la ficha, debajo de cada pastoral,
   o lo pone quien coordina desde el panel de su pastoral, sin abrir la ficha. En «Quiénes
   somos» cada tarjeta lleva todos sus cargos, cada uno con su pastoral: primero los de
   coordinación general, luego los de coordinación y al final el resto.
