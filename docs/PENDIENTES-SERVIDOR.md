@@ -5,7 +5,7 @@ Este archivo se actualiza junto con el código: **cada migración nueva se agreg
 tabla del paso 2 y en la consulta del paso 1. Lo que ya se aplicó se anota al final, en el
 registro.
 
-> **Revisado el 17 de noviembre de 2026**, con `main` en `fc97684`. Se comprobó así: el
+> **Revisado el 21 de noviembre de 2026**, con `main` en `cfdace2`. Se comprobó así: el
 > `install.sql` de agosto más las 16 migraciones, aplicadas en este orden sobre una base
 > desechable, dan exactamente el mismo esquema que la base local (tablas, columnas, índices
 > y llaves foráneas).
@@ -114,10 +114,17 @@ El código anterior seguiría escribiendo el de la ficha en `cargo`, así que un
 entre la migración y el código nuevo quedaría con el general viejo: van juntas.
 
 Después, en la base local se pasó el cargo general de cada persona a la pastoral donde lo
-ejerce, con `herramientas/mover_cargo_general.php` (20 de noviembre de 2026). Si la base del
-servidor se va a reemplazar con la local, ya viene hecho. Si no, hay que correrla allá:
-primero sin `--aplicar`, para ver qué haría, y luego con `--aplicar` y las mismas decisiones
-a mano que se tomaron aquí: `--asignar=9:30=Coordinadora General --asignar=9:16=Coordinadora --asignar=9:21=Proclamadora --asignar=11:34 --asignar=73:36 --asignar=73:24`.
+ejerce, con `herramientas/mover_cargo_general.php` (21 de noviembre de 2026: 64 personas,
+cada una con su renglón en la bitácora). Si la base del servidor se va a reemplazar con la
+local, ya viene hecho. Si no, hay que correrla allá: primero sin `--aplicar`, para ver qué
+haría, y luego con `--aplicar` y las mismas decisiones a mano que se tomaron aquí (entre
+comillas las que llevan espacio, o la terminal las parte en dos):
+
+    "--asignar=9:30=Coordinadora General" --asignar=9:16=Coordinadora --asignar=9:21=Proclamadora
+    --asignar=11:34 --asignar=73:36 --asignar=73:24 "--asignar=106:38=Coordinadora General"
+
+La última corrige de paso «Cordinadora General». Aparte, en la ficha del diácono se
+corrigió «Diacono» por «Diácono»; allá se hace igual, desde su ficha.
 
 - [ ] Al terminar, vuelve a correr la consulta del paso 1: las 16 deben decir «ya está».
 
