@@ -19,6 +19,11 @@
       "foco": [0.22, 0.2, 0.75, 0.45]
     },
     {
+      "imagen": "catequesis-catequistas",
+      "texto": "El botón de la cadena le manda a cada catequista su enlace personal: su página sin contraseña, con los avisos, los eventos y los documentos de Catequesis. Aquí no hay turnos, así que no hay rol ni cambios.",
+      "foco": [0.55, 0.42, 0.98, 0.84]
+    },
+    {
       "imagen": "catequesis-periodos",
       "texto": "En Periodos, cada periodo es un ciclo de catecismo, normalmente de agosto a junio. Tiene su nombre, sus fechas de vigencia y su estado, y guarda qué catequistas dieron clase en él."
     },

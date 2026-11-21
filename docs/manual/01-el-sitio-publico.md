@@ -175,9 +175,12 @@ La presentación de la parroquia. Tiene tres partes:
    si tiene contenido.
 2. **Nuestro equipo pastoral**: las fichas, agrupadas por tipo en este orden
    —párroco, vicario, diácono, religioso o religiosa, laico y personal de
-   oficina—, cada una con su foto, su nombre, su cargo y, si la tiene
-   capturada, una semblanza. Quien no tenga foto aparece con la inicial de su
-   nombre en un círculo azul, no con un hueco.
+   oficina—, cada una con su foto, su nombre, sus cargos y, si la tiene
+   capturada, una semblanza. Quien tiene un cargo en varias pastorales los
+   lleva todos, cada uno con su pastoral —«Coordinadora General · Profética»,
+   «Ministro · MESC»—, primero los de coordinación general, luego los de
+   coordinación y al final el resto; el capítulo 12 lo explica. Quien no tenga
+   foto aparece con la inicial de su nombre en un círculo azul, no con un hueco.
 3. **El organigrama**, con la estructura de la parroquia, y un botón para
    abrirlo en una versión pensada para imprimir en forma de árbol.
 
@@ -185,7 +188,7 @@ La presentación de la parroquia. Tiene tres partes:
 selección. Dar de alta a alguien en Parroquia → Equipo pastoral lo publica en
 esta página; para que deje de aparecer hay que marcar su ficha como inactiva.
 Lo que nunca sale, de nadie, es su contacto: de la ficha se publican solo el
-nombre, el cargo, la foto y la semblanza.
+nombre, los cargos, la foto y la semblanza.
 
 > **Se llena desde:** Contenido → Textos del sitio (los tres textos), Parroquia →
 > Equipo pastoral (las fichas) y Parroquia → Organigrama.

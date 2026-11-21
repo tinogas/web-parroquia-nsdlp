@@ -52,7 +52,7 @@
     },
     {
       "imagen": "panel-campana",
-      "texto": "Es el mismo número de la campana, arriba a la derecha, que suma los mensajes del formulario de contacto y los avisos hacia dentro que te tocan. Al pulsarla se despliega la lista.",
+      "texto": "Es el mismo número de la campana, arriba a la derecha, que suma los mensajes del formulario de contacto, los avisos hacia dentro que te tocan y, en MESC y Proclamadores, las solicitudes de cambio de turno. Al pulsarla se despliega la lista.",
       "foco": [
         0.54,
         0.0,

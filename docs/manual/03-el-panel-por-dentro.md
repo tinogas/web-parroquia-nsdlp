@@ -84,13 +84,16 @@ campana.
 
 ![La campana, con lo que está sin leer](img/panel-campana.webp)
 
-Arriba a la derecha. Suma dos cosas que llegan solas al panel:
+Arriba a la derecha. Suma lo que llega solo al panel:
 
 - **Los mensajes** que la gente manda por el formulario de contacto del sitio.
 - **Los avisos** publicados hacia dentro que te tocan a ti.
+- **Las solicitudes de cambio de turno** de MESC y Proclamadores: a quien
+  coordina, las que esperan su respuesta; a quien pidió un cambio con su
+  cuenta, la respuesta que todavía no ha visto. El capítulo 15 lo explica.
 
 Cuando hay algo sin leer se pone amarilla y aparece el globo rojo con la
-cuenta; al pulsarla se despliega la lista, separada en sus dos grupos, y cada
+cuenta; al pulsarla se despliega la lista, separada por grupos, y cada
 renglón lleva directo a lo suyo. Si son más de cinco, el último renglón dice
 cuántos faltan y lleva al listado completo.
 

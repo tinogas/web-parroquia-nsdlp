@@ -21,6 +21,8 @@ de Litúrgica que agrupa a Llama del Amor, Rosario Diario, Sábado Comunitario
 y Viernes de Reparación. En el listado, la tarjeta de cada grupo aparece
 justo después de la de su dimensión y dice «Dentro de Piedad Popular».
 
+![Los grupos de una dimensión, en el listado](img/pastorales-lista-grupos.webp)
+
 Una **comisión** es una pastoral como cualquier otra, con su ficha y quien
 la coordina; lo que la hace comisión es que otras la tienen marcada como su
 «comisión padre». Y eso tiene una consecuencia práctica que conviene recordar:
@@ -40,6 +42,8 @@ organigrama: con Comisiones de hasta seis hijas, una hoja no alcanzaría a lo
 ancho.
 
 ## La ficha
+
+![La ficha de una pastoral](img/pastorales-form.webp)
 
 Se abre con **Editar**. Es la que alimenta la página pública de la pastoral.
 
@@ -109,6 +113,9 @@ Quien coordina la pastoral ve además, en cada renglón, un botón con una
 pastoral: ni el cargo general ni nada más de la ficha. Dejarlo vacío la regresa
 a su cargo general.
 
+El botón de la **cadena** es su **enlace personal**: su página en la parroquia,
+sin cuenta ni contraseña. Se explica más abajo.
+
 **Mensaje para todos.** Encima de la lista hay un cuadro de texto: se escribe
 el aviso una vez —«recordatorio: reunión el jueves a las 7»— y cada botón de
 WhatsApp abre la conversación de esa persona **con el texto ya puesto**.
@@ -122,6 +129,74 @@ ningún lado**: es un borrador del navegador, no un ajuste del sitio.
 **Si la pastoral tiene módulo propio** —MESC, Catequesis, Proclamadores,
 Coros—, arriba aparece un aviso con el botón **Ir a turnos y catálogo**, que
 lleva a él. Esos módulos son los capítulos 15 a 18.
+
+## El enlace personal de cada integrante
+
+![El cuadro del enlace personal](img/enlace-personal.webp)
+
+Casi nadie de una pastoral tiene cuenta en el panel, y no hace falta: para
+enterarse de lo suyo basta su **enlace personal**. Es una dirección que es solo
+suya; la abre en su teléfono, sin usuario ni contraseña, y ve su página en la
+parroquia.
+
+**Dónde está el botón.** Es el de la **cadena**, en cada renglón de:
+
+- **Quiénes están en esta pastoral**, en el panel de cualquier pastoral. Lo ve
+  quien la coordina.
+- Las listas de los módulos: **Ministros** (MESC), **Proclamadores**,
+  **Integrantes** (Coros) y **Catequistas**. Lo ve quien puede editar esa lista.
+
+El enlace nace de la ficha del equipo pastoral la primera vez que se pide, así
+que un renglón escrito a mano, sin ficha ligada, no tiene botón. El color de la
+cadena dice en qué va: **gris**, todavía no tiene enlace; **azul**, ya tiene y
+no lo ha abierto; **verde**, ya lo abrió.
+
+**El cuadro.** Al pulsar la cadena se abre un cuadro con:
+
+- Si ya lo abrió: «Todavía no lo abre», o «Lo abrió por última vez el…».
+- La dirección, con su botón **Copiar**.
+- **Enviar por WhatsApp**: abre la conversación con esa persona con el mensaje
+  ya escrito —su nombre, su enlace y lo que va a encontrar—. Enviarlo sigue
+  siendo un clic tuyo. Si no tiene teléfono registrado, WhatsApp te deja elegir
+  a quién mandárselo.
+- **Ver su página**: la abre tal como la verá, en **vista previa**. Lo que
+  hagas ahí no cuenta: no queda como que la abrió y no deja pedir nada a su
+  nombre.
+- **Generar un enlace nuevo**, para cuando lo perdió o se lo reenvió a alguien:
+  el anterior deja de funcionar en ese momento, en cualquier teléfono.
+
+Si en su ficha no está marcada esta pastoral, el cuadro lo avisa antes de que
+lo mandes: su página no le mostraría nada de ella.
+
+### Lo que ve en su página
+
+![La página personal de un integrante](img/mi-pagina.webp)
+
+Lo saluda por su nombre —el corto, si en MESC tiene uno— y tiene una pestaña
+por cada pastoral marcada en su ficha. En cada una:
+
+- Quién la coordina y cuándo se reúnen.
+- Los **avisos** publicados hacia dentro para esa pastoral, para la Comisión que
+  la agrupa y para toda la parroquia.
+- **Lo que viene**: los eventos de su pastoral, también los internos que no
+  salen en el sitio.
+- Los **documentos** de la pastoral.
+
+En **MESC** y **Proclamadores**, si además está activa en la lista de esa
+pastoral, ve también **sus próximos turnos** —cada uno con su botón **Pedir
+un cambio**—, **el rol del mes**, con sus turnos resaltados, y **sus
+solicitudes**, y puede **pedir un cambio de turno**, que la coordinación
+aprueba (capítulo 15). Esas pestañas van primero.
+
+No administra nada: mira, y en esos dos módulos, pide. Al pie de su página
+está **Olvidar mi enlace en este teléfono**, para cuando lo abrió en uno
+prestado.
+
+> **Es solo suyo.** Quien tenga el enlace ve esa página, así que se manda a
+> cada quien, no a un grupo. Deja de funcionar cuando su ficha se marca
+> inactiva; cada pastoral desaparece de su página cuando se le desmarca en su
+> ficha, y sus turnos, cuando se le pone inactiva en la lista del módulo. Si
+> alguien más lo tiene, **Generar un enlace nuevo**.
 
 ## Dar de alta una pastoral
 

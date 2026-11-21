@@ -45,6 +45,11 @@ Cada renglón trae su botón de **WhatsApp**, y arriba el cuadro de **Mensaje
 para todos** que explica el capítulo 13: se escribe el recordatorio una vez y
 cada botón abre la conversación con el texto ya puesto.
 
+El botón de la **cadena** le manda a cada ministro su **enlace personal**: su
+página sin contraseña, donde ve sus turnos y el rol del mes y pide cambios de
+turno. El capítulo 13 explica ese cuadro. El **nombre corto** de esta lista es
+también como lo saludan su página y el mensaje con su enlace.
+
 El interruptor **Activo** saca a alguien del rol sin borrar su historial.
 
 ## Calendario de turnos
@@ -55,9 +60,11 @@ Quién sirve en cada misa. Se ve por meses, con las flechas para moverse, y cada
 turno dice la hora y el servicio. El color de cada turno es el **color
 litúrgico** del día.
 
-Arriba, tres botones:
+Arriba, cuatro botones:
 
 - **Nuevo turno**, para agregar uno.
+- **Cambios de turno**, la pantalla de las permutas y coberturas que se explica
+  enseguida.
 - **Colores litúrgicos**, el catálogo de referencia —verde, morado, blanco,
   rojo— con el que se etiquetan los turnos según el tiempo o la fiesta.
 - **Imprimir / Descargar PDF**, que saca la hoja del mes. Es la que se pega en
@@ -72,7 +79,83 @@ todos** quita el filtro.
 
 En la parte de arriba aparece además el recordatorio que la coordinación quiso
 dejar por escrito: si alguien no puede, **consigue el cambio con un compañero y
-avisa a la coordinación**.
+avisa a la coordinación**. Ese aviso ya no se queda en el aire: se registra en
+**Cambios de turno**.
+
+## Cambios de turno
+
+![MESC — Cambios de turno](img/mesc-cambios.webp)
+
+Después de armar el rol, los ministros se acomodan entre ellos: uno no puede el
+domingo y otro lo cubre. Esta pantalla es donde ese acuerdo queda escrito. Se
+entra con el botón **Cambios de turno** del calendario.
+
+**El rol original no se toca.** El cambio se guarda aparte y el calendario lo
+aplica encima: muestra quién sirve y, al abrir el turno, quién estaba
+originalmente. Por eso deshacer un cambio no obliga a acordarse de cómo estaba:
+el rol original reaparece solo.
+
+### Los tres tipos
+
+- **Permuta**: los marcados de cada turno toman el turno de los del otro —uno
+  por uno, dos por dos, o el turno completo por el otro completo con **Todo el
+  turno**—. Pueden ser de la misma fecha y hora o de fechas distintas.
+- **Cubre a otro**: alguien toma el lugar de otro en un turno, sin devolución.
+- **Se agrega**: alguien más se suma a un turno; nadie sale.
+
+Para elegir un turno primero se pone la **fecha**, y el sistema ofrece los
+turnos de ese día; luego se marca quién deja el turno y quién entra. La
+**nota** es opcional: «lo avisó por WhatsApp», «compromiso familiar».
+
+### Quién lo registra
+
+**La coordinación** lo registra directo, con **Registrar cambio**, y se aplica
+de inmediato en el calendario.
+
+**Los ministros lo piden.** Desde su enlace personal (capítulo 13), o desde su
+cuenta si tienen una ligada a su ficha, cada ministro puede **pedir** un
+cambio, siempre uno que lo incluya: que deje un turno, cubra a alguien o se
+sume a uno. Pedirlo no cambia nada todavía:
+
+- A quien coordina le aparece arriba de esta pantalla, en **Solicitudes por
+  aprobar**, y en la campana del panel (capítulo 3). Las pedidas desde el
+  enlace llevan la marca **enlace personal**.
+- Con **Aprobar** se aplica en el calendario; con **Rechazar** —con un motivo,
+  si se quiere— no se aplica.
+- Quien pidió ve la respuesta en su página, o en la campana si pidió con su
+  cuenta. Mientras nadie la resuelva, puede **retirarla**.
+
+### El historial
+
+Debajo están todos los cambios del mes —o del año entero, o de un solo día—
+con el filtro de **Año**, **Mes** y **Día**, separados en pestañas: **Todo**,
+**Registrados por la coordinación**, **Solicitudes aprobadas**, **Solicitudes
+rechazadas**, **Deshechos** y **Retiradas**. Cada renglón dice el tipo, qué
+cambió —tachado quien salió, después de la flecha quien entró—, su estado y su
+historia: quién lo pidió, quién lo aprobó o lo deshizo, y cuándo.
+
+**Nada se borra.** Un cambio equivocado se **deshace**, con el botón de la
+flecha circular, y el turno vuelve a como estaba; el cambio se queda en el
+historial como deshecho, con quién y cuándo. No se deshace uno si después hubo
+otro cambio en el mismo turno: primero va el más reciente.
+
+**Lo que ya pasó no se mueve.** Ningún cambio que toque un turno de antes de
+hoy se registra, se aprueba, se deshace ni se retira: esos renglones dicen
+**Ya pasó**.
+
+### En el calendario y en la hoja impresa
+
+![MESC — Un turno con cambios](img/mesc-turno-cambios.webp)
+
+Un turno con cambios lleva en el calendario el icono **⇆**. Al abrirlo, debajo
+de los ministros asignados aparece **Cambios de este turno**: quiénes
+**sirven**, cuál era el **rol original** y qué cambios lo tocaron, con un botón
+para registrar otro. Las palomitas de **Ministros asignados** siguen siendo el
+rol original: no hace falta moverlas.
+
+Con **Ver los turnos de** puesto en una persona, el turno que ella cedió sale
+tachado. Y en la hoja para imprimir, el turno cambiado dice quién sirve y, en
+pequeño, **en lugar de** quién.
 
 ## Rutas de visita
 

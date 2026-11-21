@@ -34,6 +34,11 @@
       "foco": [0.23, 0.15, 0.96, 0.38]
     },
     {
+      "imagen": "coros-integrantes",
+      "texto": "El botón de la cadena le manda a cada integrante su enlace personal: su página sin contraseña, con los avisos, los eventos y los documentos de su pastoral. Coros no lleva rol de turnos, así que ahí no hay cambios de turno.",
+      "foco": [0.55, 0.42, 0.98, 0.95]
+    },
+    {
       "imagen": "coros-lista",
       "texto": "Arriba están también Actividades y Documentos, las dos pantallas de siempre, compartidas con el panel básico de la pastoral. Lo que se captura en una se ve en la otra.",
       "foco": [0.62, 0.11, 0.98, 0.19]

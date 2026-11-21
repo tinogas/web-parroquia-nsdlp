@@ -33,6 +33,11 @@
     },
     {
       "imagen": "agenda-mes",
+      "texto": "Para ir lejos sin dar clic mes por mes, junto a las flechas están los selectores de mes y año: la agenda salta ahí, en la misma vista y con los mismos filtros. Y el botón Imprimir saca el periodo que ves, en hoja horizontal, o lo guarda como PDF.",
+      "foco": [0.6, 0.42, 0.98, 0.52]
+    },
+    {
+      "imagen": "agenda-mes",
       "texto": "Junto al periodo se dice cuántos registros tiene. Son registros, no días ocupados: un curso de tres meses cuenta como uno, aunque se pinte en noventa casillas.",
       "foco": [0.22, 0.48, 0.98, 0.56]
     },

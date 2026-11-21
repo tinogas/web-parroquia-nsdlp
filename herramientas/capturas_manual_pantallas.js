@@ -128,6 +128,43 @@ const volverAAdmin = async (page) => {
     ]);
 };
 
+/**
+ * De quién se fotografía el enlace personal y su página: la coordinadora de
+ * MESC, cuyo nombre el sitio ya publica, que además tiene turnos en el rol y
+ * está en otra pastoral, así que su página enseña las pestañas y los turnos.
+ * Va su nombre corto porque es el que lleva el botón en la lista de Ministros.
+ */
+const PERSONA_DEL_ENLACE = 'Aimeé';
+
+/** Las cookies de la sesión del panel mientras se fotografía la página personal. */
+let cookiesDelPanel = [];
+
+/** La dirección que se pone en el cuadro en lugar de la de verdad. */
+const TOKEN_DE_EJEMPLO = 'https://www.parroquia-ejemplo.org/mi/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
+
+/**
+ * Abre el cuadro del enlace personal de esa persona desde una lista de módulo
+ * (Ministros, Proclamadores…) y espera a que traiga su dirección. La primera
+ * vez le crea el enlace: el guion no escribe en la base salvo aquí, y por eso
+ * las capturas se toman sobre una copia de la base, no sobre la de uso diario.
+ */
+const abrirEnlaceDe = (nombre) => async (page) => {
+    await page.evaluate((n) => {
+        const boton = [...document.querySelectorAll('[data-enlace-personal]')]
+            // NFC en los dos lados: un acento capturado como «e» + tilde
+            // combinada no se parece a «é» aunque se vean igual.
+            .find((b) => (b.dataset.nombre || '').normalize('NFC').startsWith(n.normalize('NFC')));
+        if (!boton) { throw new Error('No hay botón de enlace personal para ' + n); }
+        boton.click();
+    }, nombre);
+    await page.waitForSelector('#modalEnlacePersonal.show');
+    await page.waitForFunction(() => {
+        const ver = document.querySelector('#modalEnlacePersonal [data-ep="ver"]');
+        return ver && ver.href.includes('/mi/');
+    }, { timeout: 15000 });
+    await new Promise((r) => setTimeout(r, 400));
+};
+
 module.exports = [
 
     // ------------------------------------------------------------
@@ -187,6 +224,24 @@ module.exports = [
         sesion: 'publico',
         espera: '.barra-sitio',
         recorte: '.barra-sitio',
+    },
+    {
+        id: 'publico-nosotros-cargos',
+        titulo: 'Quiénes somos: una tarjeta con todos sus cargos',
+        url: '/quienes-somos',
+        sesion: 'publico',
+        espera: '.barra-sitio',
+        // La fila de la tarjeta de alguien con cargos en varias pastorales: un
+        // coordinador, cuyo nombre y cargos ya publica esta misma página.
+        antes: async (page) => {
+            await page.evaluate(() => {
+                const nombre = [...document.querySelectorAll('h4')]
+                    .find((h) => h.textContent.trim().startsWith('Sergio'));
+                if (!nombre) { throw new Error('No se encontró la tarjeta'); }
+                // instant: el sitio baja con animación y la foto saldría a medio camino.
+                window.scrollTo({ top: nombre.closest('.card').getBoundingClientRect().top + window.scrollY - 120, behavior: 'instant' });
+            });
+        },
     },
     {
         id: 'publico-nosotros',
@@ -687,6 +742,22 @@ module.exports = [
         url: '/admin/personas/nueva',
         espera: '#nombre',
         completa: true,
+        // Dos pastorales marcadas, para que se vea el campo «Cargo aquí» que
+        // aparece debajo de cada una. Es una ficha nueva: no hay datos de nadie.
+        // Van en el orden del formulario: la sede (cen1), luego las Comisiones
+        // (Profética 25, Litúrgica 30), que son las que dejan ver sus
+        // dimensiones, y al final las dimensiones (Catequesis 18, MESC 16).
+        antes: async (page) => {
+            await page.evaluate(() => {
+                for (const id of ['cen1', 'pas25', 'pas30', 'pas18', 'pas16']) {
+                    document.getElementById(id).click(); // el clic dispara lo que muestra lo siguiente
+                }
+                for (const [id, cargo] of [[18, 'Catequista'], [16, 'Ministro']]) {
+                    const campo = document.querySelector(`input[name="cargos[${id}]"]`);
+                    if (campo) { campo.value = cargo; }
+                }
+            });
+        },
     },
     {
         id: 'personas-directorio-imprimir',
@@ -712,10 +783,39 @@ module.exports = [
         espera: '.sidebar-link',
     },
     {
+        id: 'pastorales-lista-grupos',
+        titulo: 'El listado de pastorales, con los grupos de una dimensión',
+        url: '/admin/pastorales',
+        espera: '.sidebar-link',
+        // El tercer nivel (Piedad Popular y sus grupos, dentro de Litúrgica)
+        // queda muy abajo del listado: se baja hasta ahí antes del disparo.
+        antes: async (page) => {
+            await page.evaluate(() => {
+                const titulo = [...document.querySelectorAll('.card h2, .card h3, .card .fw-semibold, .card a')]
+                    .find((el) => el.textContent.trim() === 'Piedad Popular');
+                if (!titulo) { throw new Error('No se encontró la tarjeta de Piedad Popular'); }
+                window.scrollTo({ top: titulo.closest('.card').getBoundingClientRect().top + window.scrollY - 140, behavior: 'instant' });
+            });
+        },
+    },
+    {
+        id: 'pastorales-form',
+        titulo: 'La ficha de una pastoral',
+        url: '/admin/pastorales/editar?id=23',
+        espera: '.sidebar-link',
+        completa: true,
+        // Raíces: la coordinan dos personas que no son matrimonio, el caso que
+        // enseña los renglones de «Quién la coordina». Sus nombres ya los
+        // publica el sitio, en la página de la pastoral.
+    },
+    {
         id: 'pastorales-panel',
         titulo: 'El panel básico de una pastoral',
         url: '/admin/pastorales/panel?id=18',
         espera: '.sidebar-link',
+        // Completa: lo que el capítulo explica de «Quiénes están» —el cargo y
+        // los botones de WhatsApp, cadena y etiqueta— queda debajo del pliegue.
+        completa: true,
     },
     {
         id: 'pastorales-mapa-imprimir',
@@ -725,6 +825,45 @@ module.exports = [
         completa: true,
         // Quién coordina cada pastoral ya lo publica el sitio; no hace falta
         // tapar ningún nombre aquí.
+    },
+    {
+        id: 'enlace-personal',
+        titulo: 'El cuadro del enlace personal',
+        url: '/admin/mesc/ministros',
+        espera: 'table',
+        // La dirección lleva el token de verdad, y quien lo tenga abre la
+        // página de esa persona: se cambia por uno de ejemplo antes del disparo.
+        antes: async (page) => {
+            await abrirEnlaceDe(PERSONA_DEL_ENLACE)(page);
+            await page.evaluate((url) => {
+                const campo = document.querySelector('#modalEnlacePersonal [data-ep="url"]');
+                if (campo) { campo.value = url; }
+            }, TOKEN_DE_EJEMPLO);
+        },
+    },
+    {
+        id: 'mi-pagina',
+        titulo: 'La página personal de un integrante',
+        url: '/admin/mesc/ministros',
+        espera: 'table',
+        recorte: '.mx-auto[style*="46rem"]',
+        // Se llega por «Ver su página» del mismo cuadro, pero sin la sesión del
+        // panel: con ella sería una vista previa, que no enseña el formulario
+        // para pedir un cambio. Las cookies se guardan antes y se devuelven
+        // después, para que las capturas siguientes sigan dentro del panel.
+        // Abrirla así cuenta como que la persona la abrió: otra razón para
+        // tomar las capturas sobre una copia de la base.
+        antes: async (page) => {
+            await abrirEnlaceDe(PERSONA_DEL_ENLACE)(page);
+            const ver = await page.$eval('#modalEnlacePersonal [data-ep="ver"]', (a) => a.href);
+            cookiesDelPanel = await page.cookies();
+            await page.deleteCookie(...cookiesDelPanel);
+            await page.goto(ver, { waitUntil: 'networkidle2' });
+        },
+        despues: async (page) => {
+            await page.deleteCookie(...(await page.cookies()));
+            await page.setCookie(...cookiesDelPanel);
+        },
     },
     {
         id: 'sacramentos-lista',
@@ -760,6 +899,24 @@ module.exports = [
         titulo: 'MESC — Calendario de turnos',
         url: '/admin/mesc/turnos',
         espera: '.sidebar-link',
+    },
+    {
+        id: 'mesc-cambios',
+        titulo: 'MESC — Cambios de turno',
+        url: '/admin/mesc/cambios?anio=2026&mes=11',
+        espera: '#form-cambio',
+        completa: true,
+        // Los nombres de los ministros salen como en su lista; las notas, no:
+        // son lo que se dijeron entre ellos, y a veces explican el porqué.
+        tapar: [['.text-muted.fst-italic', 'Lo acordaron entre ellos por WhatsApp.']],
+    },
+    {
+        id: 'mesc-turno-cambios',
+        titulo: 'MESC — Un turno con cambios',
+        url: '/admin/mesc/turno_editar?id=209',
+        espera: '.sidebar-link',
+        completa: true,
+        tapar: [['.text-muted.fst-italic', '— Lo acordaron entre ellos por WhatsApp.']],
     },
     {
         id: 'mesc-rutas',

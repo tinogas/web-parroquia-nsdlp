@@ -24,7 +24,7 @@
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "El coordinador de pastoral lleva su pastoral en una sede: publica sus avisos, eventos y cursos, sube fotos y documentos, y entra al módulo propio de su pastoral, si lo tiene. No edita la ficha de la pastoral ni administra cuentas."
+      "texto": "El coordinador de pastoral lleva su pastoral en una sede: publica sus avisos, eventos y cursos, sube fotos y documentos, y entra al módulo propio de su pastoral, si lo tiene. También le manda a su gente su enlace personal y, en MESC y Proclamadores, aprueba o rechaza los cambios de turno. No edita la ficha de la pastoral ni administra cuentas."
     },
     {
       "imagen": "panel-menu-coordinador",
@@ -32,7 +32,7 @@
     },
     {
       "imagen": "inscripciones-lista",
-      "texto": "Consulta solo mira, sin cambiar nada: es el rol de quien pertenece a una pastoral y entra a enterarse. Y Secretaría es un rol aparte, solo para los mensajes y las inscripciones, porque ahí hay datos personales, algunos de menores."
+      "texto": "Consulta solo mira, sin cambiar nada: es el rol de quien pertenece a una pastoral y entra a enterarse. Si está en MESC o en Proclamadores, además pide cambios de turno para sí. Y Secretaría es un rol aparte, solo para los mensajes y las inscripciones, porque ahí hay datos personales, algunos de menores."
     },
     {
       "imagen": "roles-usuario-form",

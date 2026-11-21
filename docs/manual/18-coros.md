@@ -37,6 +37,11 @@ completa sin que la pantalla se haga interminable. Y como en los otros
 catálogos, cada quien trae su botón de **WhatsApp** y arriba está el **Mensaje
 para todos**.
 
+El botón de la **cadena** le manda a cada integrante su **enlace personal**: su
+página sin contraseña, con los avisos, los eventos y los documentos de su
+pastoral. Coros no lleva rol de turnos, así que ahí no hay cambios de turno. El
+capítulo 13 explica ese cuadro.
+
 ## Actividades y documentos
 
 Las dos pantallas de siempre, compartidas con el panel básico de la pastoral:
