@@ -1116,8 +1116,18 @@ y en la cabecera de `docs/migraciones/2026-09-04-avisos-sin-leer.sql`.
 
 `slug` con `uq_eve_slug`, `titulo`, `descripcion`, `imagen`, `lugar`, `fecha_inicio`
 DATETIME, `fecha_fin` DATETIME NULL, `todo_el_dia`, `pastoral_id`, `centro_id`, `color`
-VARCHAR(7) para el calendario, `publicado`, `usuario_id`. Índices `idx_eve_fecha
-(fecha_inicio)`, `idx_eve_pub (publicado, fecha_inicio)` e `idx_eve_centro (centro_id)`.
+VARCHAR(7) para el calendario, `publicado`, `destacado`, `cuenta_regresiva`, `usuario_id`.
+Índices `idx_eve_fecha (fecha_inicio)`, `idx_eve_pub (publicado, fecha_inicio)` e
+`idx_eve_centro (centro_id)`.
+
+`destacado` y `cuenta_regresiva` (migración 17) deciden qué sale en la portada además de la
+fiesta patronal, que se reconoce sola por el título. **Destacado**: estrella dorada en «Lo
+que viene en la parroquia», donde el evento aparece desde 60 días antes aunque no esté entre
+los próximos nueve. **Cuenta regresiva**: franja propia con los días que faltan; la más
+próxima sale desde 60 días antes y las demás cuando les faltan 30 o menos. Las dos las marcan
+solo los roles con alcance global (administrador y editor): `EventoController::guardar()`
+ignora lo que mande un coordinador. Ver
+[`ARQUITECTURA.md`](ARQUITECTURA.md#franjas-con-cuenta-regresiva-y-eventos-destacados).
 
 `pastoral_id` dice quién organiza el evento y `centro_id` (FK a `centros`, `ON DELETE SET
 NULL`) en qué sede ocurre; las dos juntas son el alcance de quien puede editarlo. NULL en

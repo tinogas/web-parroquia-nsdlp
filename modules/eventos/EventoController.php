@@ -502,7 +502,8 @@ class EventoController extends Controller
 
     /**
      * Duplicar, como en cualquier calendario: el mismo evento —título, horario,
-     * lugar, descripción, pastoral, sede, color e imagen— en otra fecha. Abre
+     * lugar, descripción, pastoral, sede, color, imagen y, para quien puede
+     * marcarlos, destacado y cuenta regresiva— en otra fecha. Abre
      * el formulario de evento nuevo ya lleno; nada se guarda hasta que se
      * pulsa Guardar, así que arrepentirse es solo no guardar.
      *
@@ -612,6 +613,15 @@ class EventoController extends Controller
         $puedePublicar = Auth::tienePermiso('eventos.publicar');
         $publicado = $puedePublicar ? $this->postBool('publicado') : ($existente['publicado'] ?? 0);
 
+        // Lo que sale en la portada de toda la parroquia lo deciden quienes
+        // llevan el contenido general (administrador y editor), no cada
+        // coordinador para los eventos de su pastoral. A los demás el
+        // formulario no les enseña las casillas, y aquí se ignora lo que manden:
+        // se queda como estaba, y un evento nuevo nace sin marcar.
+        $puedeDestacar   = Auth::tieneAlcanceGlobal();
+        $destacado       = $puedeDestacar ? $this->postBool('destacado') : (int) ($existente['destacado'] ?? 0);
+        $cuentaRegresiva = $puedeDestacar ? $this->postBool('cuenta_regresiva') : (int) ($existente['cuenta_regresiva'] ?? 0);
+
         $datos = [
             'slug'         => $slug,
             'titulo'       => $titulo,
@@ -625,6 +635,8 @@ class EventoController extends Controller
             'centro_id'    => $centroId,
             'color'        => $this->postStr('color') ?: '#1e4d8b',
             'publicado'    => $publicado,
+            'destacado'        => $destacado,
+            'cuenta_regresiva' => $cuentaRegresiva,
         ];
 
         if ($existente) {

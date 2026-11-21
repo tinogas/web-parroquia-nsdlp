@@ -2534,6 +2534,45 @@ otra página a la que ir; aquí no lo tenía. De paso, las secciones de eventos 
 ancho completo mientras el resto de la portada va centrado en `col-lg-8`, así que quedaban
 desalineadas entre sí: ahora todas usan el mismo contenedor.
 
+### Franjas con cuenta regresiva y eventos destacados
+
+La portada tiene una franja azul con los días que faltan para algo importante, y la agenda
+«Lo que viene en la parroquia» pinta en dorado, con estrella, lo que conviene no perderse.
+Al principio solo era para la fiesta patronal, que `EventoModel::fiestaPatronalProxima()`
+reconoce sola por el título (la de la sede, en los próximos 60 días, con su novena y su
+kermés). Desde la migración 17, cualquier evento puede llevar las dos cosas, con dos
+casillas del formulario: `destacado` y `cuenta_regresiva`.
+
+**La fiesta sigue siendo automática.** La agenda de cada año se importa con
+`herramientas/importar_agenda.php` y llega con el título de siempre; si la franja dependiera
+de marcarla, el año en que nadie se acordara no saldría. Si alguien marca también el evento
+de la fiesta, cuenta una sola vez, como fiesta, que tiene su propio texto.
+
+**Qué franjas salen.** `InicioController::franjasCuentaRegresiva()` junta la fiesta con los
+eventos marcados que empiezan en los próximos 60 días (`EventoModel::cuentasRegresivas()`) y
+los ordena por fecha. La más próxima sale siempre; las demás, solo cuando les faltan 30 días
+o menos, para que la portada no se llene de franjas de cosas que todavía están a dos meses.
+Cada una se va sola al día siguiente de empezar el evento, con el mismo criterio de fecha que
+la fiesta (`DATE(fecha_inicio) >= CURDATE()`). La de un evento cualquiera usa el mismo diseño
+que la de la fiesta, con el título y la fecha del evento y un botón a su ficha. Si se juntan
+varias, `.franja-fiesta + .franja-fiesta` les pone una línea entre ellas.
+
+**Los destacados entran en la agenda aunque estén lejos.** La agenda son los próximos nueve
+eventos, y con cerca de 470 al año eso cubre más o menos una semana: un evento destacado de
+dentro de un mes no saldría hasta tenerlo encima. Por eso `InicioController::agendaConDestacados()`
+le suma los destacados y los de cuenta regresiva de los próximos 60 días
+(`EventoModel::destacadosProximos()`), cada uno en su lugar por fecha y sin repetir. Van en
+dorado los destacados, los de cuenta regresiva y los de la fiesta (fiesta, novena y kermés).
+
+**Solo administrador y editor.** Un coordinador crea y publica los eventos de su pastoral,
+pero la portada es de toda la parroquia: si cada pastoral pudiera destacar sus reuniones, la
+estrella dejaría de significar algo. Las casillas solo se le enseñan a quien tiene alcance
+global (`Auth::tieneAlcanceGlobal()`), y `EventoController::guardar()` ignora lo que mande
+cualquier otro: un evento ya marcado se queda como estaba y uno nuevo nace sin marcar. Es el
+mismo patrón que `publicado` con `eventos.publicar`. El «Destacado» de avisos, en cambio, lo
+marca cualquiera que pueda editar el aviso; no se igualaron porque en los avisos la casilla
+no llega a la portada.
+
 ## Usuarios, roles y auditoría
 
 El CRUD de cuentas y la bandeja de auditoría son, por diseño del plan, exclusivos del
