@@ -71,6 +71,8 @@ dice.
   no acabe escrito de tres formas. Este cargo es solo el título: quién coordina
   una pastoral se elige en la pastoral (capítulo 13).
 
+  ![Una tarjeta de «Quiénes somos» con todos sus cargos](img/publico-nosotros-cargos.webp)
+
   En **«Quiénes somos»** la tarjeta de cada persona lleva todos sus cargos,
   cada uno con su pastoral: «Coordinadora General · Profética», «Ministro ·
   MESC». Van primero los de coordinación general, luego los de coordinación y

@@ -38,8 +38,10 @@ de contacto ni las inscripciones a cursos.
 
 Su pastoral, en una sede. Publica sus avisos, sus eventos y sus cursos, sube
 fotos y documentos, pone el cargo de su gente en su pastoral —desde el panel
-de la pastoral, sin abrir sus fichas— y entra al módulo propio de su pastoral
-si lo tiene —MESC, Catequesis, Proclamadores o Coros—.
+de la pastoral, sin abrir sus fichas—, le manda a cada quien su **enlace
+personal** (capítulo 13) y entra al módulo propio de su pastoral si lo tiene
+—MESC, Catequesis, Proclamadores o Coros—. En MESC y Proclamadores registra los
+cambios de turno y aprueba o rechaza los que pide su gente (capítulo 15).
 
 No edita la ficha de la pastoral ni administra cuentas: eso es de la
 coordinación general. La razón es que esa ficha —el responsable, el correo, lo
@@ -65,6 +67,12 @@ sus documentos y los avisos que su pastoral publica hacia dentro.
 Es el rol de quien pertenece a una pastoral y entra a enterarse. Es el rol más
 frecuente y el que menos miedo da dar.
 
+Una sola excepción: si su cuenta está ligada a su ficha y la persona está en
+la lista de MESC o de Proclamadores, **pide cambios de turno** para sí misma, y
+la coordinación los aprueba (capítulo 15). Para eso no hace falta darle una
+cuenta: su enlace personal le deja ver lo mismo y pedir lo mismo, sin
+contraseña (capítulo 13).
+
 ### Secretaría
 
 Solo trámites: los mensajes que llegan por el formulario de contacto y las
@@ -84,6 +92,8 @@ más tiene por qué verlos.
 | Módulos MESC, Catequesis, Proclamadores, Coros | ✔ | ✔ | de lo suyo | de lo suyo | mira | — |
 | Ficha de la pastoral | ✔ | ✔ | de lo suyo | — | mira | — |
 | Cargo de su gente en su pastoral | ✔ | ✔ | de lo suyo | de lo suyo | mira | — |
+| Enlace personal de su gente | ✔ | desde los módulos | de lo suyo | de lo suyo | — | — |
+| Cambios de turno en MESC y Proclamadores | ✔ | ✔ | de lo suyo | de lo suyo | pide los suyos | — |
 | Textos, páginas, evangelio, horarios, sedes, equipo, organigrama, sacramentos, carrusel | ✔ | ✔ | — | — | — | — |
 | Mensajes de contacto | ✔ | — | — | — | — | ✔ |
 | Inscripciones a cursos | ✔ | — | — | — | — | ✔ |

@@ -2,7 +2,7 @@
   "capitulo": 13,
   "titulo": "Pastorales",
   "subtitulo": "Cada pastoral, con su ficha pública y su panel de trabajo",
-  "intro": "Capítulo trece: pastorales. En este video verás cómo se agrupan en comisiones, qué lleva la ficha de cada una y cómo se trabaja desde su panel básico.",
+  "intro": "Capítulo trece: pastorales. En este video verás cómo se agrupan en comisiones, dimensiones y grupos, qué lleva la ficha de cada una, cómo se trabaja desde su panel básico y qué es el enlace personal de cada integrante.",
   "escenas": [
     {
       "imagen": "pastorales-lista",
@@ -11,35 +11,45 @@
     {
       "imagen": "pastorales-lista",
       "texto": "Una comisión es una pastoral como cualquier otra; lo que la hace comisión es que otras la tienen marcada como su comisión padre. Y ojo: quien la coordina recibe también lo que publican hacia dentro las pastorales que agrupa.",
-      "foco": [0.21, 0.5, 0.98, 1.0]
+      "foco": [0.21, 0.2, 0.98, 0.82]
+    },
+    {
+      "imagen": "pastorales-lista-grupos",
+      "texto": "Hay hasta tres niveles: la comisión, sus dimensiones y, dentro de una dimensión, sus grupos. Hoy el único caso es Piedad Popular, dentro de Litúrgica. La tarjeta de cada grupo va justo después de la de su dimensión, y dice dentro de cuál está.",
+      "foco": [0.21, 0.1, 0.98, 0.66]
     },
     {
       "imagen": "pastorales-mapa-imprimir",
-      "texto": "El botón Imprimir mapa abre en otra pestaña la jerarquía completa, lista para imprimir o guardar como PDF: cada comisión con sus dimensiones debajo y, al lado de cada una, quién la coordina."
+      "texto": "El botón Imprimir mapa abre en otra pestaña la jerarquía completa, lista para imprimir o guardar como PDF: cada comisión con sus dimensiones debajo, un escalón más adentro los grupos, y al lado de cada una, quién la coordina."
     },
     {
-      "imagen": "pastorales-lista",
-      "texto": "La ficha se abre con Editar, y es la que alimenta la página pública de la pastoral. Lleva su nombre, su icono, su sede y su comisión padre; si esta se deja vacía, la pastoral queda suelta.",
-      "foco": [0.21, 0.26, 0.5, 0.52]
+      "imagen": "pastorales-form",
+      "texto": "La ficha se abre con Editar, y es la que alimenta la página pública de la pastoral."
     },
     {
-      "imagen": "publico-pastorales",
-      "texto": "La descripción breve es la línea de su tarjeta en el listado público, y el contenido es el texto largo de su página. En una comisión, la descripción breve es la que sale en su tarjeta de la portada.",
-      "foco": [0.05, 0.3, 0.6, 0.65]
+      "imagen": "pastorales-form",
+      "texto": "Lleva su nombre, su icono, su sede y su comisión padre. Si esta se deja vacía, la pastoral queda suelta. Si se elige una dimensión, la pastoral queda como grupo dentro de ella, el tercer y último nivel.",
+      "foco": [0.22, 0.09, 0.71, 0.28]
     },
     {
-      "imagen": "publico-pastorales",
-      "texto": "La reunión, con día, hora y lugar, es lo que la gente busca cuando quiere acercarse. La ficha lleva además la palomita de Acepta voluntarios, su orden dentro de la comisión y sus documentos.",
-      "foco": [0.6, 0.62, 0.97, 0.97]
+      "imagen": "pastorales-form",
+      "texto": "La descripción breve es la línea de su tarjeta en el listado público, y la descripción completa es el texto largo de su página. En una comisión, la descripción breve es la que sale en su tarjeta de la portada.",
+      "foco": [0.22, 0.28, 0.71, 0.5]
     },
     {
-      "imagen": "pastorales-mapa-imprimir",
-      "texto": "El responsable se elige del equipo pastoral, no se escribe a mano. Si tiene pareja marcada en su ficha, la pastoral aparece coordinada por el matrimonio. El campo de nombre libre solo se usa si no eliges a nadie del equipo.",
-      "foco": [0.13, 0.75, 0.78, 0.89]
+      "imagen": "pastorales-form",
+      "texto": "Quién la coordina se elige del equipo pastoral, y pueden ser una persona o varias, cada una en su renglón. Agregar a alguien más abre el siguiente, y la equis lo quita. Si coordina un matrimonio se eligen los dos, y si en sus fichas son pareja, el panel lo marca con un corazón.",
+      "foco": [0.74, 0.2, 0.98, 0.45]
     },
     {
-      "imagen": "publico-pastorales",
-      "texto": "El correo y el teléfono de contacto se publican en su página. Ojo: el correo es el de la pastoral, no el de quien la coordina. Se escribe a mano a propósito, para que sobreviva a los relevos."
+      "imagen": "pastorales-form",
+      "texto": "El correo y el teléfono de contacto se publican en su página. Ojo: el correo es el de la pastoral, no el de quien la coordina. Se escribe a mano a propósito, para que sobreviva a los relevos.",
+      "foco": [0.74, 0.44, 0.98, 0.64]
+    },
+    {
+      "imagen": "pastorales-form",
+      "texto": "Abajo está la reunión, con día, hora y lugar, que es lo que la gente busca cuando quiere acercarse. Luego la palomita de Acepta voluntarios y su orden dentro de la comisión.",
+      "foco": [0.74, 0.66, 0.98, 0.94]
     },
     {
       "imagen": "pastorales-panel",
@@ -47,38 +57,72 @@
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Arriba están Avisos, Eventos y Cursos, cada uno con su botón de más para crear uno ya asignado a esta pastoral, sin tener que elegirla en el formulario.",
-      "foco": [0.21, 0.3, 0.98, 0.5]
+      "texto": "Si la pastoral tiene módulo propio, como MESC, Catequesis, Proclamadores o Coros, arriba aparece un aviso con el botón Ir a turnos y catálogo, que lleva a él.",
+      "foco": [0.21, 0.05, 0.98, 0.18]
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Debajo, los documentos descargables: los mismos de la ficha, aquí a la mano, para agregarlos o quitarlos sin salir de esta pantalla. Son los que la gente baja desde su página.",
-      "foco": [0.21, 0.47, 0.72, 0.7]
+      "texto": "Debajo están Avisos, Eventos y Cursos, cada uno con su botón de más para crear uno ya asignado a esta pastoral, sin tener que elegirla en el formulario.",
+      "foco": [0.21, 0.18, 0.98, 0.26]
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Después, quiénes están en esta pastoral: su gente, que sale del equipo pastoral. Alguien aparece aquí porque en su ficha está marcada esta pastoral, y cada renglón lleva su botón de WhatsApp.",
-      "foco": [0.21, 0.72, 0.75, 1.0]
+      "texto": "Luego, los documentos descargables: los mismos de la ficha, aquí a la mano, para agregarlos o quitarlos sin salir de esta pantalla. Son los que la gente baja desde su página.",
+      "foco": [0.21, 0.25, 0.98, 0.39]
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Encima de esa lista está el Mensaje para todos: escribes el aviso una vez, y cada botón de WhatsApp abre la conversación con el texto ya puesto. Si escribes la palabra nombre entre llaves, se cambia por el nombre de pila de cada quien.",
-      "foco": [0.22, 0.82, 0.82, 0.95]
+      "texto": "Después, quiénes están en esta pastoral: su gente, que sale del equipo pastoral. Alguien aparece aquí porque en su ficha está marcada esta pastoral. Debajo de cada nombre va su cargo en esta pastoral, o el general de su ficha si aquí no tiene uno propio.",
+      "foco": [0.21, 0.39, 0.98, 0.72]
+    },
+    {
+      "imagen": "pastorales-panel",
+      "texto": "Encima de la lista está el Mensaje para todos: escribes el aviso una vez, y cada botón de WhatsApp abre la conversación con el texto ya puesto. Si escribes la palabra nombre entre llaves, se cambia por el nombre de pila de cada quien.",
+      "foco": [0.21, 0.43, 0.98, 0.52]
     },
     {
       "imagen": "pastorales-panel",
       "texto": "Dos cosas que conviene saber: enviar sigue siendo un clic tuyo, uno por persona, porque el sistema no manda nada solo. Y el texto no se guarda en ningún lado: es un borrador del navegador.",
-      "foco": [0.22, 0.9, 0.8, 0.98]
+      "foco": [0.21, 0.43, 0.98, 0.52]
     },
     {
       "imagen": "pastorales-panel",
-      "texto": "Si la pastoral tiene módulo propio, como MESC, Catequesis, Proclamadores o Coros, arriba aparece un aviso con el botón Ir a turnos y catálogo, que lleva a él.",
-      "foco": [0.21, 0.08, 0.98, 0.33]
+      "texto": "Cada renglón trae sus botones. El de la etiqueta abre un cuadro para escribir el cargo de esa persona aquí, como Ministro o Coordinadora de equipos. Cambia solo ese dato y solo en esta pastoral; si se deja vacío, vuelve a su cargo general.",
+      "foco": [0.6, 0.52, 0.98, 0.72]
+    },
+    {
+      "imagen": "enlace-personal",
+      "texto": "El de la cadena es su enlace personal: una dirección que es solo suya, para ver su página en la parroquia desde el teléfono, sin usuario ni contraseña. El botón está aquí y en las listas de MESC, Proclamadores, Coros y Catequesis."
+    },
+    {
+      "imagen": "enlace-personal",
+      "texto": "El cuadro dice si ya lo abrió, y trae la dirección para copiarla, el botón para enviarla por WhatsApp con el mensaje ya escrito, y Ver su página, que la enseña tal como la verá, sin que cuente como abierta.",
+      "foco": [0.3, 0.26, 0.7, 0.57]
+    },
+    {
+      "imagen": "enlace-personal",
+      "texto": "Si lo perdió o se lo reenvió a alguien, Generar un enlace nuevo. El anterior deja de funcionar en ese momento, en cualquier teléfono.",
+      "foco": [0.3, 0.56, 0.7, 0.73]
+    },
+    {
+      "imagen": "mi-pagina",
+      "texto": "En su página tiene una pestaña por cada pastoral marcada en su ficha. En cada una ve quién la coordina y cuándo se reúnen, los avisos internos, los eventos que vienen y los documentos.",
+      "foco": [0.0, 0.0, 1.0, 0.1]
+    },
+    {
+      "imagen": "mi-pagina",
+      "texto": "En MESC y Proclamadores ve además sus próximos turnos, cada uno con su botón Pedir un cambio, y el rol del mes con sus turnos resaltados.",
+      "foco": [0.0, 0.065, 1.0, 0.18]
+    },
+    {
+      "imagen": "mi-pagina",
+      "texto": "Desde ahí pide cambios de turno, que la coordinación aprueba. No administra nada. Y como el enlace es solo suyo, se manda a cada quien, nunca a un grupo.",
+      "foco": [0.0, 0.41, 1.0, 0.55]
     },
     {
       "imagen": "pastorales-lista",
       "texto": "Para dar de alta una pastoral, se crea desde el listado con Nueva pastoral y se llena su ficha. Desde ese momento ya tiene su panel básico: sus avisos, sus eventos, sus cursos y sus documentos, sin más trámite.",
-      "foco": [0.66, 0.1, 0.98, 0.36]
+      "foco": [0.66, 0.1, 0.98, 0.2]
     },
     {
       "imagen": "panel-menu",

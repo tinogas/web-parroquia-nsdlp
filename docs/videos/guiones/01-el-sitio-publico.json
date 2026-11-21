@@ -33,7 +33,7 @@
     },
     {
       "imagen": "publico-nosotros",
-      "texto": "Quiénes somos presenta la misión y la visión de la parroquia, el equipo pastoral y el organigrama. Ojo: del equipo sale toda persona activa, no una selección; para que alguien deje de aparecer, hay que marcar su ficha como inactiva. Su contacto no se publica nunca.",
+      "texto": "Quiénes somos presenta la misión y la visión de la parroquia, el equipo pastoral y el organigrama. Cada persona del equipo sale con todos sus cargos, cada uno con su pastoral. Ojo: del equipo sale toda persona activa, no una selección; para que alguien deje de aparecer, hay que marcar su ficha como inactiva. Su contacto no se publica nunca.",
       "foco": [0.05, 0.6, 0.6, 1]
     },
     {
@@ -46,7 +46,7 @@
     },
     {
       "imagen": "publico-pastorales",
-      "texto": "Pastorales tiene una tarjeta por comisión, con sus pastorales, quién las lleva y cuándo se reúnen. Ojo: en la página de cada pastoral, el correo es el de la pastoral, no el de quien la coordina; así sobrevive a los relevos."
+      "texto": "Pastorales tiene una tarjeta por comisión, con sus dimensiones y sus grupos, quién los coordina y cuándo se reúnen. Ojo: en la página de cada pastoral, el correo es el de la pastoral, no el de quien la coordina; así sobrevive a los relevos."
     },
     {
       "imagen": "publico-cursos",

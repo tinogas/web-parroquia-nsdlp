@@ -51,14 +51,14 @@ El orden es el del número en el nombre del archivo.
 
 - [11 — Horarios y sedes](11-horarios-y-sedes.md)
 - [12 — Equipo pastoral y organigrama](12-equipo-pastoral-y-organigrama.md)
-- [13 — Pastorales](13-pastorales.md)
+- [13 — Pastorales: listado, ficha, panel y enlace personal](13-pastorales.md)
 - [14 — Sacramentos](14-sacramentos.md)
 
 ### Las pastorales con módulo propio
 
-- [15 — MESC: visitas a enfermos, rutas y turnos](15-mesc.md)
+- [15 — MESC: visitas a enfermos, turnos, cambios de turno y rutas](15-mesc.md)
 - [16 — Catequesis: catequistas y periodos](16-catequesis.md)
-- [17 — Proclamadores: quién proclama y su calendario](17-proclamadores.md)
+- [17 — Proclamadores: quién proclama, su calendario y sus cambios](17-proclamadores.md)
 - [18 — Coros: un coro por misa](18-coros.md)
 
 ### Contenido del sitio
@@ -75,12 +75,21 @@ El orden es el del número en el nombre del archivo.
 
 No se toman a mano: las rehace
 [`herramientas/capturas_manual.js`](../../herramientas/capturas_manual.js)
-contra el XAMPP local, con Apache y MySQL arriba.
+contra el sitio corriendo en el equipo, con MySQL arriba.
 
 ```sh
 node herramientas/capturas_manual.js --lista        # qué pantallas hay
 node herramientas/capturas_manual.js                # todas
 node herramientas/capturas_manual.js avisos-*       # solo un capítulo
+```
+
+Conviene tomarlas sobre **una copia de la base**, servida aparte, y no sobre la
+de uso diario: entrar al panel queda en la bitácora, y las capturas del enlace
+personal le crean uno a una persona y cuentan como que abrió su página. La
+dirección de ese sitio de pruebas se le pasa en `MANUAL_BASE`:
+
+```sh
+MANUAL_BASE=http://127.0.0.1:8091 node herramientas/capturas_manual.js
 ```
 
 La lista de qué se fotografía está en

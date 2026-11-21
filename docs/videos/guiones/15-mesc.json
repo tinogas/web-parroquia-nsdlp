@@ -2,7 +2,7 @@
   "capitulo": 15,
   "titulo": "MESC",
   "subtitulo": "Quién sirve en cada misa y a quién se le lleva la comunión",
-  "intro": "Capítulo quince: MESC, Ministros Extraordinarios de la Sagrada Comunión. En este video verás cómo se organiza quién sirve en cada misa y a quién se le lleva la comunión a su casa.",
+  "intro": "Capítulo quince: MESC, Ministros Extraordinarios de la Sagrada Comunión. En este video verás cómo se organiza quién sirve en cada misa, cómo se registran los cambios de turno y a quién se le lleva la comunión a su casa.",
   "escenas": [
     {
       "imagen": "mesc-visitas",
@@ -47,28 +47,68 @@
       "foco": [0.22, 0.2, 0.75, 0.4]
     },
     {
+      "imagen": "mesc-ministros",
+      "texto": "El botón de la cadena le manda a cada ministro su enlace personal, el del capítulo trece: su página sin contraseña, donde ve sus turnos y el rol del mes, y pide cambios de turno. El nombre corto de esta lista es como lo saludan su página y su mensaje.",
+      "foco": [0.6, 0.4, 0.98, 0.8]
+    },
+    {
       "imagen": "mesc-turnos",
       "texto": "El calendario de turnos dice quién sirve en cada misa. Se ve por meses, con las flechas para moverse, y cada turno dice la hora y el servicio. Su color es el color litúrgico del día."
     },
     {
       "imagen": "mesc-turnos",
-      "texto": "Arriba hay tres botones: Nuevo turno, para agregar uno; Colores litúrgicos, el catálogo de referencia, verde, morado, blanco y rojo, con el que se etiquetan los turnos según el tiempo o la fiesta; y el de imprimir.",
-      "foco": [0.5, 0.12, 0.98, 0.46]
+      "texto": "Arriba hay cuatro botones: Nuevo turno, para agregar uno; Colores litúrgicos, el catálogo de referencia con el que se etiquetan los turnos según el tiempo o la fiesta; Cambios de turno, que se ve enseguida; y el de imprimir.",
+      "foco": [0.21, 0.15, 0.84, 0.27]
     },
     {
       "imagen": "mesc-turnos",
       "texto": "Imprimir o Descargar PDF saca la hoja del mes, la que se pega en la sacristía. Es la razón de que este calendario exista: el rol se consulta en papel.",
-      "foco": [0.5, 0.1, 0.75, 0.39]
+      "foco": [0.21, 0.17, 0.42, 0.25]
     },
     {
       "imagen": "mesc-turnos",
       "texto": "Encima del mes está Ver los turnos de. Si eliges un ministro, el calendario deja solo sus turnos y dice cuántos tiene ese mes. El filtro se mantiene al cambiar de mes, y la hoja de imprimir sale con su nombre: así cada quien puede tener su propio calendario.",
-      "foco": [0.22, 0.33, 0.62, 0.42]
+      "foco": [0.22, 0.39, 0.62, 0.48]
     },
     {
       "imagen": "mesc-turnos",
-      "texto": "En la parte de arriba aparece además el recordatorio que la coordinación quiso dejar por escrito: si alguien no puede, consigue el cambio con un compañero y avisa a la coordinación.",
-      "foco": [0.21, 0.2, 0.98, 0.31]
+      "texto": "En la parte de arriba está el recordatorio de la coordinación: si alguien no puede, consigue el cambio con un compañero y avisa. Ese cambio ya no se queda en el aire: se registra en Cambios de turno.",
+      "foco": [0.21, 0.26, 0.98, 0.38]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Cambios de turno es donde quedan escritas las permutas y coberturas que se acuerdan después de armar el rol. El rol original no se toca: el cambio se guarda aparte, y el calendario muestra quién sirve y quién estaba originalmente.",
+      "foco": [0.21, 0.04, 0.98, 0.14]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Hay tres tipos. Permuta: los marcados de cada turno toman el turno de los del otro, de la misma fecha o de fechas distintas. Cubre a otro: alguien toma el lugar de otro, sin devolución. Y Se agrega: alguien más se suma a un turno, y nadie sale.",
+      "foco": [0.22, 0.15, 0.98, 0.3]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Se elige primero la fecha, y el sistema ofrece los turnos de ese día; luego se marca quién deja el turno y quién entra. La coordinación lo registra directo con Registrar cambio, y se aplica de inmediato en el calendario.",
+      "foco": [0.22, 0.26, 0.98, 0.46]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Los ministros también pueden pedir un cambio desde su enlace personal, siempre uno que los incluya. La solicitud le llega a la coordinación arriba de esta pantalla y en la campana. Con Aprobar se aplica; con Rechazar, no. Y quien la pidió ve la respuesta en su página.",
+      "foco": [0.22, 0.6, 0.98, 0.79]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Debajo está el historial, con el filtro de año, mes y día, y separado en pestañas: lo registrado por la coordinación, las solicitudes aprobadas y rechazadas, lo deshecho y lo retirado. Cada renglón dice quién lo pidió, quién lo aprobó y cuándo.",
+      "foco": [0.22, 0.48, 0.98, 0.6]
+    },
+    {
+      "imagen": "mesc-cambios",
+      "texto": "Nada se borra: un cambio equivocado se deshace, y el turno vuelve a como estaba. Y lo que ya pasó no se mueve: ningún cambio que toque un turno de antes de hoy se registra, se aprueba ni se deshace.",
+      "foco": [0.22, 0.79, 0.98, 0.97]
+    },
+    {
+      "imagen": "mesc-turno-cambios",
+      "texto": "En el calendario, un turno con cambios lleva el icono de las dos flechas. Al abrirlo, abajo dice quiénes sirven, cuál era el rol original y qué cambios lo tocaron. Las palomitas de arriba siguen siendo el rol original: no hace falta moverlas.",
+      "foco": [0.21, 0.72, 0.98, 0.94]
     },
     {
       "imagen": "mesc-rutas",

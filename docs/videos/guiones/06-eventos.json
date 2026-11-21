@@ -29,6 +29,26 @@
       ]
     },
     {
+      "imagen": "eventos-lista",
+      "texto": "Encima del listado hay tres botones: Excel, PDF e Imprimir. Los tres llevan todos los eventos del filtro que tienes puesto, no solo los de la página, en orden de fecha. Arriba de la hoja va el logo de la parroquia y los filtros que se usaron.",
+      "foco": [
+        0.58,
+        0.5,
+        0.98,
+        0.6
+      ]
+    },
+    {
+      "imagen": "eventos-lista",
+      "texto": "Excel descarga una hoja con fechas de verdad, para ordenar y filtrar. PDF abre la hoja lista y la ventana de impresión: ahí, en Destino, eliges Guardar como PDF. Imprimir la manda directo a la impresora.",
+      "foco": [
+        0.58,
+        0.5,
+        0.98,
+        0.6
+      ]
+    },
+    {
       "imagen": "eventos-calendario",
       "texto": "La pestaña Calendario enseña los eventos igual que el calendario del sitio, con sus vistas de día, semana, mes y año. La diferencia es que aquí también salen los borradores, con el borde punteado.",
       "foco": [
@@ -46,6 +66,16 @@
         0.27,
         0.82,
         0.5
+      ]
+    },
+    {
+      "imagen": "eventos-calendario",
+      "texto": "Junto a las flechas están los selectores de mes y año: eliges marzo y el año que entra, y el calendario salta ahí sin perder la vista ni los filtros. El botón Imprimir saca el periodo que estás viendo, en hoja horizontal.",
+      "foco": [
+        0.6,
+        0.5,
+        0.98,
+        0.62
       ]
     },
     {
@@ -182,6 +212,16 @@
       "foco": [
         0.84,
         0.52,
+        0.98,
+        1.0
+      ]
+    },
+    {
+      "imagen": "eventos-lista",
+      "texto": "Cuando un evento se repite con otra fecha, como la junta mensual o la fiesta del año que viene, no se captura de nuevo. El botón de las dos hojas lo duplica: abre un evento nuevo ya lleno con todo lo del original. Solo pones la nueva fecha de inicio, el fin se mueve solo, y el original no se toca.",
+      "foco": [
+        0.75,
+        0.6,
         0.98,
         1.0
       ]

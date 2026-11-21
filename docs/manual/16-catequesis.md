@@ -20,6 +20,11 @@ Cada renglón trae su botón de **WhatsApp** y arriba está el cuadro de **Mensa
 para todos**: es la forma de mandar el aviso de la junta de catequistas sin
 teclearlo doce veces.
 
+El botón de la **cadena** le manda a cada catequista su **enlace personal**: su
+página sin contraseña, con los avisos, los eventos y los documentos de
+Catequesis. Catequesis no lleva turnos, así que ahí no hay rol ni cambios. El
+capítulo 13 explica ese cuadro.
+
 ## Periodos
 
 ![Catequesis — Periodos](img/catequesis-periodos.webp)

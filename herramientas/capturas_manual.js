@@ -25,7 +25,12 @@
  * institucionales @parroquiansdlp.org.
  *
  * Al tapar se toca solo el DOM de la página ya cargada, nunca la base de
- * datos: el guion no escribe una sola línea en MySQL.
+ * datos. Pero tomar las capturas sí deja rastro: entrar al panel queda en la
+ * bitácora, y la captura del enlace personal le crea uno a esa persona si no
+ * lo tenía. Por eso se toman sobre una COPIA de la base, servida aparte, y no
+ * sobre la de uso diario:
+ *
+ *     MANUAL_BASE=http://127.0.0.1:8091 node herramientas/capturas_manual.js
  *
  * La contraseña del administrador no se versiona ni se pasa por la línea de
  * órdenes: se lee de herramientas/.env (que .gitignore ya excluye, por la

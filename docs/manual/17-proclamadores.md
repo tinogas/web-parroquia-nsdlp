@@ -29,7 +29,9 @@ Se puede marcar más de una. Quien arma el rol mira esta lista antes de repartir
 el mes: el salmo cantado no lo hace cualquiera, y el monitor tampoco.
 
 Como en los demás catálogos, cada renglón trae su **WhatsApp** y arriba está el
-**Mensaje para todos**.
+**Mensaje para todos**, y el botón de la **cadena** le manda a cada quien su
+**enlace personal**: su página sin contraseña, donde ve sus turnos y el rol del
+mes y pide cambios de turno (capítulo 13).
 
 ## Calendario de turnos
 
@@ -40,6 +42,13 @@ MESC: turnos con su hora y su servicio, colores litúrgicos —en el botón
 **Colores**—, y el botón **Imprimir**, que abre la hoja del mes lista para
 imprimir o guardar en PDF. También tiene el filtro **Ver los turnos de**, para
 ver, y para imprimir, solo los turnos de un proclamador.
+
+Y tiene también **Cambios de turno**: las permutas y coberturas que se acuerdan
+después de armar el rol, registradas por la coordinación o pedidas por los
+propios proclamadores desde su enlace personal. Funciona igual que en MESC, y
+el capítulo 15 lo explica completo: el rol original no se toca, la
+coordinación aprueba o rechaza lo que se pide, nada se borra y lo que ya pasó
+no se mueve.
 
 ## Colores litúrgicos
 

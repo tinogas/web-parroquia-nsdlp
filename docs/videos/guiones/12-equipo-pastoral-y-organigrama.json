@@ -21,7 +21,12 @@
     {
       "imagen": "personas-form",
       "texto": "Con el botón Nueva persona se abre la ficha. El nombre va completo y de verdad, porque es el que se verá en todas partes. El tipo, de párroco a personal de oficina, es lo que agrupa las fichas en Quiénes somos.",
-      "foco": [0.22, 0.12, 0.72, 0.27]
+      "foco": [0.22, 0.09, 0.71, 0.14]
+    },
+    {
+      "imagen": "personas-form",
+      "texto": "El cargo general es una línea, como Coordinadora General de Profética. Es el que acompaña su nombre en las listas para elegir personas.",
+      "foco": [0.22, 0.14, 0.71, 0.22]
     },
     {
       "imagen": "panel-inicio",
@@ -31,27 +36,32 @@
     {
       "imagen": "personas-form",
       "texto": "Del correo y el teléfono, solo se publica el correo institucional. El teléfono es para uso del equipo: de ahí salen los botones de WhatsApp de los listados, y nunca aparece en el sitio.",
-      "foco": [0.22, 0.27, 0.72, 0.42]
+      "foco": [0.22, 0.21, 0.71, 0.31]
     },
     {
       "imagen": "personas-form",
-      "texto": "La semblanza es un párrafo breve para Quiénes somos. Más abajo, en listas de palomitas, se marcan sus sedes o centros y sus pastorales, y se puede pertenecer a varias de cada una.",
-      "foco": [0.22, 0.55, 0.72, 0.97]
+      "texto": "La semblanza es un párrafo breve para Quiénes somos. Más abajo, en listas de palomitas, se marcan sus sedes o centros, sus comisiones y sus dimensiones, y se puede pertenecer a varias de cada una.",
+      "foco": [0.22, 0.3, 0.71, 0.68]
     },
     {
-      "imagen": "pastorales-mapa-imprimir",
-      "texto": "La ficha guarda también su pareja, que se elige de la misma lista y vale en toda la parroquia. Es lo que permite que en Matrimonios, AMA, JECSA y Raíces coordine un matrimonio y no una persona suelta.",
-      "foco": [0.13, 0.75, 0.78, 0.89]
+      "imagen": "personas-form",
+      "texto": "Quien está en varias pastorales suele tener un cargo distinto en cada una. Por eso, debajo de cada pastoral que marques aparece Cargo aquí: Ministro en MESC, Catequista en Catequesis. Si se deja vacío, vale el cargo general. Es solo un título: quién coordina se elige en la pastoral.",
+      "foco": [0.22, 0.68, 0.71, 0.98]
+    },
+    {
+      "imagen": "pastorales-panel",
+      "texto": "La ficha guarda también su pareja, que se elige de la misma lista y vale en toda la parroquia. Cuando los dos coordinan juntos una pastoral, el panel los marca con un corazón.",
+      "foco": [0.22, 0.77, 0.98, 0.93]
     },
     {
       "imagen": "personas-form",
       "texto": "A la derecha están el interruptor Activo y, aparte, Incluir en el directorio telefónico. Esa casilla no es para todo el equipo: es para altos mandos y cargos importantes, a quienes tenga sentido imprimir con su teléfono.",
-      "foco": [0.72, 0.29, 0.98, 0.56]
+      "foco": [0.73, 0.25, 0.98, 0.41]
     },
     {
-      "imagen": "publico-nosotros",
-      "texto": "Ojo con esto: dar de alta a alguien aquí lo publica en el sitio. Toda persona activa aparece en Quiénes somos con su nombre, su cargo, su foto y su semblanza.",
-      "foco": [0.05, 0.5, 0.6, 0.9]
+      "imagen": "publico-nosotros-cargos",
+      "texto": "Ojo con esto: dar de alta a alguien aquí lo publica en el sitio. Toda persona activa aparece en Quiénes somos con su nombre, sus cargos, su foto y su semblanza. Quien tiene cargos en varias pastorales los lleva todos, cada uno con su pastoral: primero los de coordinación general, luego los de coordinación y al final el resto.",
+      "foco": [0.64, 0.14, 0.95, 0.53]
     },
     {
       "imagen": "personas-lista",
@@ -70,7 +80,7 @@
     },
     {
       "imagen": "personas-directorio-imprimir",
-      "texto": "Va agrupada por pastoral: cada comisión encabeza su bloque, con sus dimensiones debajo, y en cada una va primero quien coordina, luego los encargados y al final el resto."
+      "texto": "Va agrupada por pastoral: cada comisión encabeza su bloque, con sus dimensiones debajo, y en cada una va primero quien coordina, luego los encargados y al final el resto, cada quien con el cargo que tiene en esa pastoral."
     },
     {
       "imagen": "organigrama-lista",

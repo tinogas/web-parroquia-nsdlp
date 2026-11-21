@@ -2,7 +2,7 @@
   "capitulo": 17,
   "titulo": "Proclamadores",
   "subtitulo": "Quién proclama la Palabra en cada misa",
-  "intro": "Capítulo diecisiete: proclamadores. En este video verás el catálogo de quienes proclaman la Palabra y su calendario de turnos.",
+  "intro": "Capítulo diecisiete: proclamadores. En este video verás el catálogo de quienes proclaman la Palabra, su calendario de turnos y sus cambios de turno.",
   "escenas": [
     {
       "imagen": "proclamadores-lista",
@@ -24,6 +24,11 @@
       "foco": [0.48, 0.5, 0.98, 0.95]
     },
     {
+      "imagen": "proclamadores-lista",
+      "texto": "El botón de la cadena le manda a cada quien su enlace personal: su página sin contraseña, donde ve sus turnos y el rol del mes, y pide cambios de turno.",
+      "foco": [0.55, 0.48, 0.98, 0.95]
+    },
+    {
       "imagen": "proclamadores-turnos",
       "texto": "El calendario de turnos dice quién proclama en cada misa, mes a mes. Funciona igual que el de MESC: turnos con su hora y su servicio, colores litúrgicos y un botón para imprimir o descargar en PDF la hoja del mes."
     },
@@ -31,6 +36,11 @@
       "imagen": "proclamadores-turnos",
       "texto": "Con Ver los turnos de eliges a un proclamador, y el calendario y la hoja de imprimir muestran solo sus turnos.",
       "foco": [0.22, 0.28, 0.6, 0.36]
+    },
+    {
+      "imagen": "proclamadores-turnos",
+      "texto": "Y tiene Cambios de turno: las permutas y coberturas que se acuerdan después de armar el rol, registradas por la coordinación o pedidas por los propios proclamadores desde su enlace personal. Funciona igual que en MESC, y el capítulo quince lo explica completo.",
+      "foco": [0.21, 0.17, 0.6, 0.27]
     },
     {
       "imagen": "proclamadores-turnos",
