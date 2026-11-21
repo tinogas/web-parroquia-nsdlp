@@ -99,7 +99,8 @@ en su apartado.
 
 **Fiesta patronal de Nuestra Señora de la Paz.** Una franja azul que aparece sola en las semanas previas a
 la fiesta de Nuestra Señora de la Paz, con una cuenta regresiva —«38 días para
-la fiesta»—, las fechas de la novena y el aviso de la kermés. Se dibuja cuando
+la fiesta»—, las fechas de la novena mientras no ha terminado y el aviso de la
+kermés. Se dibuja cuando
 **la fiesta está publicada como evento** y faltan menos de dos meses, y se va
 sola al día siguiente. El sistema la reconoce porque el título del evento dice
 «fiesta patronal», y toma la novena y la kermés de los eventos publicados con

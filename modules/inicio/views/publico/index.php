@@ -136,14 +136,23 @@ $advocacion  = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
             <div class="col-lg-7">
                 <h2 id="fiesta-titulo" class="titulo-seccion">Fiesta patronal de <?= e($advocacion) ?></h2>
                 <p class="fiesta-texto">
-                    <?php if ($novena): ?>
                     <?php
-                    $iniNovena = substr($novena['fecha_inicio'], 0, 10);
-                    $finNovena = substr($novena['fecha_fin'] ?: $novena['fecha_inicio'], 0, 10);
-                    $enNovena  = $fechaHoy >= $iniNovena && $fechaHoy <= $finNovena;
+                    // La novena se anuncia mientras está por venir o en curso; cuando
+                    // ya terminó —los días entre la novena y la fiesta, y el día de
+                    // la fiesta— no se menciona: «Prepárate con la novena» de algo
+                    // que acabó ayer confundía. Si empieza en otro mes, lo dice.
+                    $iniNovena = $novena ? substr($novena['fecha_inicio'], 0, 10) : '';
+                    $finNovena = $novena ? substr($novena['fecha_fin'] ?: $novena['fecha_inicio'], 0, 10) : '';
                     ?>
-                    <?= $enNovena ? 'Estamos en la novena: ' : 'Prepárate con la novena, ' ?>del <?= (int) date('j', strtotime($iniNovena)) ?>
-                    al <?= (int) date('j', strtotime($finNovena)) ?> de <?= e($meses[(int) date('n', strtotime($finNovena)) - 1]) ?>.
+                    <?php if ($novena && $fechaHoy <= $finNovena): ?>
+                    <?php
+                    $enNovena = $fechaHoy >= $iniNovena;
+                    $mesIniNovena = $meses[(int) date('n', strtotime($iniNovena)) - 1];
+                    $mesFinNovena = $meses[(int) date('n', strtotime($finNovena)) - 1];
+                    ?>
+                    <?= e(($enNovena ? 'Estamos en la novena: del ' : 'Prepárate con la novena, del ')
+                        . (int) date('j', strtotime($iniNovena)) . ($mesIniNovena !== $mesFinNovena ? ' de ' . $mesIniNovena : '')
+                        . ' al ' . (int) date('j', strtotime($finNovena)) . ' de ' . $mesFinNovena . '.') ?>
                     <?php endif; ?>
                     <?= e($cerrarFrase(
                         'La fiesta se celebra el ' . nombre_dia((int) date('w', strtotime($diaFiesta)))

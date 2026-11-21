@@ -203,7 +203,8 @@ evento, la copia lleva los dos interruptores como el original.
   título dice «fiesta patronal» —el de la sede, no el de un centro— y faltan
   menos de dos meses, la portada muestra una franja con la cuenta regresiva.
   Si además están publicadas la novena y la kermés, con esas palabras en el
-  título, salen ahí mismo y en dorado en **Lo que viene en la parroquia**.
+  título, salen ahí mismo —la novena, hasta que termina— y en dorado en **Lo
+  que viene en la parroquia**.
   Mientras sigan en borrador, la portada no dice nada de la fiesta.
 - **Los destacados y los de cuenta regresiva**, también en la portada, como se
   explica en «En la portada», más arriba. En el listado de Eventos llevan una
