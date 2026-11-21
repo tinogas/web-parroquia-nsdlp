@@ -106,6 +106,12 @@ sola al día siguiente. El sistema la reconoce porque el título del evento dice
 esas palabras en el título en las dos semanas anteriores y el mismo día. Si la
 fiesta sigue en borrador, la franja no aparece.
 
+Otros eventos importantes —Navidad, Semana Santa— pueden tener **su propia
+franja** con la cuenta regresiva, si se les enciende **Cuenta regresiva** en su
+formulario. Llevan el título y la fecha del evento y un botón **Ver el evento**
+que abre su página. La franja más cercana sale desde dos meses antes; si hay
+otras, se apilan debajo cuando les falta un mes o menos.
+
 > **Se llena desde:** Comunicación → Eventos.
 
 **Sacramentos.** Bajo el título «Lo que necesitas para cada sacramento», todos
@@ -128,8 +134,10 @@ día de reunión. Cada nombre lleva a la página de esa pastoral, y un solo bot�
 > **Se llena desde:** Parroquia → Pastorales.
 
 **Lo que viene en la parroquia.** Los próximos eventos **publicados**, en una cuadrícula, cada
-uno con su día en un recuadro, el horario y la sede. Los de la fiesta patronal
-—novena, fiesta y kermés— van en dorado y con estrella.
+uno con su día en un recuadro, el horario y la sede. Van en dorado y con
+estrella los de la fiesta patronal —novena, fiesta y kermés— y los que tienen
+encendido **Destacado** o **Cuenta regresiva**. Esos destacados aparecen aquí
+desde dos meses antes, aunque todavía no estén entre los próximos.
 
 > **Se llena desde:** Comunicación → Eventos.
 

@@ -1,6 +1,9 @@
 <?php
 $esNuevo       = $evento === null;
 $puedePublicar = Auth::tienePermiso('eventos.publicar');
+// Destacar y la cuenta regresiva salen en la portada de toda la parroquia:
+// solo administrador y editor (ver EventoController::guardar()).
+$puedeDestacar = Auth::tieneAlcanceGlobal();
 
 // Al duplicar llega $original: el formulario es de evento nuevo (id 0), pero
 // lleno con los datos del original para cambiar solo la fecha. $base es de
@@ -153,6 +156,35 @@ $paraInput = static fn (?string $valor): string => $valor ? str_replace(' ', 'T'
                     <p class="small text-muted mb-0">
                         <i class="bi bi-info-circle me-1"></i>Este evento se enviará como borrador para que un editor lo publique.
                     </p>
+                    <?php endif; ?>
+
+                    <?php if ($puedeDestacar): ?>
+                    <fieldset class="border-top pt-3 mt-3">
+                        <legend class="form-label fw-semibold fs-6 mb-2">En la portada</legend>
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   name="destacado" id="destacado" value="1" aria-describedby="destacado_ayuda"
+                                   <?= ($base && !empty($base['destacado'])) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="destacado">
+                                <i class="bi bi-star-fill text-dorado me-1" aria-hidden="true"></i>Destacado
+                            </label>
+                        </div>
+                        <div class="form-text mt-0 mb-2" id="destacado_ayuda">
+                            Estrella dorada en «Lo que viene en la parroquia», donde aparece desde 60 días antes.
+                        </div>
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   name="cuenta_regresiva" id="cuenta_regresiva" value="1" aria-describedby="cuenta_regresiva_ayuda"
+                                   <?= ($base && !empty($base['cuenta_regresiva'])) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="cuenta_regresiva">
+                                <i class="bi bi-hourglass-split text-dorado me-1" aria-hidden="true"></i>Cuenta regresiva
+                            </label>
+                        </div>
+                        <div class="form-text mt-0" id="cuenta_regresiva_ayuda">
+                            Franja con los días que faltan, desde 60 días antes. Si hay otra más cercana, aparece
+                            cuando falten 30 días o menos. La fiesta patronal la tiene sola, sin marcarla.
+                        </div>
+                    </fieldset>
                     <?php endif; ?>
 
                 </div>

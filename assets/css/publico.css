@@ -1953,6 +1953,12 @@ html.js .solo-con-js { display: flex !important; }
     .franja-fiesta { padding: 5rem 0; }
 }
 
+/* Varias cuentas regresivas a la vez: una línea apenas visible entre una y
+   otra, para que se lean como franjas distintas y no como una sola. */
+.franja-fiesta + .franja-fiesta {
+    border-top: 1px solid rgba(255, 255, 255, .12);
+}
+
 :is(.franja-noche, .franja-fiesta) :is(h2, h3).titulo-seccion {
     color: #fff;
 }

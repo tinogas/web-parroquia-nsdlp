@@ -413,6 +413,11 @@ CREATE TABLE IF NOT EXISTS eventos (
     centro_id    SMALLINT UNSIGNED NULL,
     color        VARCHAR(7)   NULL,
     publicado    TINYINT(1)   NOT NULL DEFAULT 0,
+    -- Los marcan solo los roles con alcance global. destacado: estrella en la
+    -- agenda de la portada desde 60 días antes. cuenta_regresiva: franja con
+    -- los días que faltan. Ver docs/ARQUITECTURA.md, "La portada".
+    destacado        TINYINT(1) NOT NULL DEFAULT 0,
+    cuenta_regresiva TINYINT(1) NOT NULL DEFAULT 0,
     usuario_id   INT UNSIGNED NULL,
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

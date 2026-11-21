@@ -6,9 +6,10 @@ tabla del paso 2 y en la consulta del paso 1. Lo que ya se aplicó se anota al f
 registro.
 
 > **Revisado el 21 de noviembre de 2026**, con `main` en `cfdace2`. Se comprobó así: el
-> `install.sql` de agosto más las 16 migraciones, aplicadas en este orden sobre una base
-> desechable, dan exactamente el mismo esquema que la base local (tablas, columnas, índices
-> y llaves foráneas).
+> `install.sql` de agosto más las 16 migraciones de entonces, aplicadas en este orden sobre
+> una base desechable, dan exactamente el mismo esquema que la base local (tablas, columnas,
+> índices y llaves foráneas). La 17 se agregó ese mismo día después: solo suma dos columnas
+> a `eventos`.
 
 ## Antes de empezar
 
@@ -44,6 +45,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
         UNION ALL SELECT 14, '2026-11-16-varios-coordinadores.sql',             'pastoral_coordinadores', 'persona_id'
         UNION ALL SELECT 15, '2026-11-16-cargo-por-pastoral.sql',               'persona_pastorales', 'cargo'
         UNION ALL SELECT 16, '2026-11-20-cargo-general-aparte.sql',             'personas',         'cargo_general'
+        UNION ALL SELECT 17, '2026-11-21-eventos-destacado-y-cuenta-regresiva.sql', 'eventos',      'cuenta_regresiva'
        ) m
   LEFT JOIN information_schema.columns c
          ON c.table_schema = DATABASE() AND c.table_name = m.tabla AND c.column_name = m.columna
@@ -53,7 +55,7 @@ SELECT m.orden AS `#`, m.archivo AS `Migración`,
 
 - **Todas dicen «ya está»:** la base está al día; sigue con el paso 3.
 - **Algunas dicen «FALTA»:** aplica solo esas, en el orden del paso 2.
-- **Las 16 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
+- **Las 17 dicen «FALTA»:** la base del servidor es de antes de septiembre, cuando todavía
   no había migraciones, y estas no alcanzan para ponerla al día. No la toques; hay que
   revisarla antes.
 
@@ -82,6 +84,7 @@ de la base local; en el servidor no sirve.
 | 14 | `2026-11-16-varios-coordinadores.sql` | Una pastoral la coordinan una o varias personas | **Borra dos columnas**: sin el respaldo no hay vuelta atrás. Con el código en seguida: ver abajo |
 | 15 | `2026-11-16-cargo-por-pastoral.sql` | Un cargo distinto en cada pastoral | Solo agrega una columna: el código anterior la ignora. En la carpeta aparece antes que la 14; el orden entre las dos no importa |
 | 16 | `2026-11-20-cargo-general-aparte.sql` | El cargo general, aparte; el que se muestra sale solo | **Con el código en seguida**, y después la mudanza de cargos: ver abajo |
+| 17 | `2026-11-21-eventos-destacado-y-cuenta-regresiva.sql` | Eventos destacados y con cuenta regresiva en la portada | **Antes que el código**: la portada nueva lee esas columnas y sin ellas da error. Solo agrega columnas, así que el código anterior las ignora |
 
 **La 11 es obligatoria aunque su archivo no esté en `main`.** La página del enlace personal
 (`/mi`) lee esa columna y sin ella da error. El archivo solo existe en la rama
@@ -126,7 +129,7 @@ comillas las que llevan espacio, o la terminal las parte en dos):
 La última corrige de paso «Cordinadora General». Aparte, en la ficha del diácono se
 corrigió «Diacono» por «Diácono»; allá se hace igual, desde su ficha.
 
-- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 16 deben decir «ya está».
+- [ ] Al terminar, vuelve a correr la consulta del paso 1: las 17 deben decir «ya está».
 
 ## 3. El código
 
@@ -153,11 +156,13 @@ corrigió «Diacono» por «Diácono»; allá se hace igual, desde su ficha.
 - [ ] Parroquia → Pastorales: cada tarjeta dice quién coordina, y Matrimonios lleva su
       corazón. Al editar cualquiera, «Quién la coordina» tiene sus renglones y el botón
       «Agregar a alguien más».
+- [ ] La portada abre, y al editar un evento como administrador aparece el bloque «En la
+      portada» con «Destacado» y «Cuenta regresiva».
 
 ## Si el servidor no tiene base todavía
 
 O si la del servidor se va a reemplazar con la de tu equipo: no hace falta ninguna
-migración, porque la base local ya tiene las 16. Genera un respaldo en local
+migración, porque la base local ya tiene las 17. Genera un respaldo en local
 (Administración → Respaldos), impórtalo en el servidor con phpMyAdmin y copia también la
 carpeta `uploads/`: el respaldo no lleva las imágenes ni los documentos subidos. Después
 sigue con los pasos 3 y 4.

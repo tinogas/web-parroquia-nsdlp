@@ -177,6 +177,24 @@ apágalo antes de guardar.
 Si tu cuenta no puede publicar, el interruptor no aparece: lo que captures
 queda en borrador hasta que alguien con permiso lo publique.
 
+### En la portada
+
+Debajo de **Publicado**, quien administra el sitio o es editor ve el bloque
+**En la portada**, con dos interruptores más:
+
+- **Destacado.** El evento va en dorado y con estrella en **Lo que viene en la
+  parroquia**, y aparece ahí desde dos meses antes, aunque todavía no esté
+  entre los próximos.
+- **Cuenta regresiva.** El evento tiene en la portada una franja propia con los
+  días que faltan, como la de la fiesta patronal. La más cercana sale desde dos
+  meses antes; si hay otras, aparecen debajo cuando les falta un mes o menos.
+  También lleva la estrella en **Lo que viene en la parroquia**.
+
+La fiesta patronal no hace falta marcarla: tiene su franja sola (ver abajo).
+Las cuentas de coordinación no ven este bloque: lo que sale en la portada de
+toda la parroquia lo deciden la administración y los editores. Al duplicar un
+evento, la copia lleva los dos interruptores como el original.
+
 ## Dónde acaba
 
 - **En el sitio**, en la sección Eventos, con sus cuatro vistas —día, semana,
@@ -187,6 +205,9 @@ queda en borrador hasta que alguien con permiso lo publique.
   Si además están publicadas la novena y la kermés, con esas palabras en el
   título, salen ahí mismo y en dorado en **Lo que viene en la parroquia**.
   Mientras sigan en borrador, la portada no dice nada de la fiesta.
+- **Los destacados y los de cuenta regresiva**, también en la portada, como se
+  explica en «En la portada», más arriba. En el listado de Eventos llevan una
+  estrella o un reloj de arena junto al título.
 - **En la agenda interna** del panel, publicado o no, junto a los cursos y
   junto a lo de las demás pastorales. Eso es el capítulo 8.
 
@@ -202,7 +223,8 @@ retiro de cada trimestre, la junta mensual, la fiesta del año que viene— no
 hace falta capturarlo de nuevo: el botón de las **dos hojas** en el renglón
 de la lista, o **Duplicar** arriba del formulario de un evento, abre un
 evento **nuevo** ya lleno con todo lo del original: título, horario, lugar,
-descripción, pastoral, sede, color, imagen y si va publicado.
+descripción, pastoral, sede, color, imagen, si va publicado y, si quien duplica
+administra el sitio o es editor, si va destacado o con cuenta regresiva.
 
 - Solo hay que **poner la nueva fecha de inicio**. El cursor ya está ahí, y
   **el fin se mueve solo**, guardando la duración: si el original iba del

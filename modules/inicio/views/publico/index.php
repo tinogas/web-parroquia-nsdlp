@@ -105,19 +105,27 @@ $lecturas = array_filter([
 
 
 <?php /* ================================================================
-         FIESTA PATRONAL — aparece cuando la fiesta está publicada en la
-         agenda y falta menos de dos meses; se va sola al día siguiente.
+         CUENTA REGRESIVA — la fiesta patronal cuando se acerca (se reconoce
+         sola por el título) y los eventos marcados con "Cuenta regresiva en
+         la portada". La más próxima sale desde dos meses antes; si hay
+         otras, también, cuando les falta un mes o menos. Cada una se va
+         sola al día siguiente. InicioController::franjasCuentaRegresiva()
+         decide cuáles; aquí solo se pintan.
          ================================================================ */ ?>
-<?php if ($fiesta): ?>
 <?php
-$diaFiesta  = substr($fiesta['fiesta']['fecha_inicio'], 0, 10);
-$faltan     = (int) (new DateTimeImmutable($fechaHoy))->diff(new DateTimeImmutable($diaFiesta))->days;
-$horaFiesta = date('H:i', strtotime($fiesta['fiesta']['fecha_inicio']));
-$conMisa    = stripos($fiesta['fiesta']['titulo'], 'misa') !== false;
-$meses      = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-$mesFiesta  = $meses[(int) date('n', strtotime($diaFiesta)) - 1];
-$novena     = $fiesta['novena'];
-$advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
+$meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+?>
+<?php foreach ($franjas as $franja): ?>
+<?php if ($franja['tipo'] === 'fiesta'): ?>
+<?php
+$datosFiesta = $franja['fiesta'];
+$diaFiesta   = substr($datosFiesta['fiesta']['fecha_inicio'], 0, 10);
+$faltan      = $franja['dias'];
+$horaFiesta  = date('H:i', strtotime($datosFiesta['fiesta']['fecha_inicio']));
+$conMisa     = stripos($datosFiesta['fiesta']['titulo'], 'misa') !== false;
+$mesFiesta   = $meses[(int) date('n', strtotime($diaFiesta)) - 1];
+$novena      = $datosFiesta['novena'];
+$advocacion  = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
 ?>
 <section class="franja-fiesta" aria-labelledby="fiesta-titulo">
     <div class="container">
@@ -136,7 +144,7 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
                     <?php endif; ?>
                     La fiesta se celebra el <?= e(nombre_dia((int) date('w', strtotime($diaFiesta)))) ?>
                     <?= (int) date('j', strtotime($diaFiesta)) ?> de <?= e($mesFiesta) ?>
-                    <?php if ($horaFiesta !== '00:00'): ?><?= $conMisa ? 'con misa a las' : 'a las' ?> <?= e(hora_corta($horaFiesta)) ?><?php endif; ?><?= $fiesta['kermes'] ? ' y la kermés parroquial' : '' ?>.
+                    <?php if ($horaFiesta !== '00:00'): ?><?= $conMisa ? 'con misa a las' : 'a las' ?> <?= e(hora_corta($horaFiesta)) ?><?php endif; ?><?= $datosFiesta['kermes'] ? ' y la kermés parroquial' : '' ?>.
                 </p>
                 <a href="#agenda" class="btn btn-dorado btn-lg px-4 fs-6 mt-3">Ver la agenda</a>
             </div>
@@ -155,7 +163,54 @@ $advocacion = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
         </div>
     </div>
 </section>
+<?php else: ?>
+<?php
+// Un evento marcado: el mismo diseño, con el título y la fecha del evento y
+// el botón a su ficha.
+$cuenta     = $franja['evento'];
+$faltan     = $franja['dias'];
+$iniCuenta  = strtotime($cuenta['fecha_inicio']);
+$finCuenta  = $cuenta['fecha_fin'] ? strtotime($cuenta['fecha_fin']) : null;
+$variosDias = $finCuenta && date('Y-m-d', $finCuenta) !== date('Y-m-d', $iniCuenta);
+$conHora    = empty($cuenta['todo_el_dia']) && date('H:i', $iniCuenta) !== '00:00';
+$mesCuenta  = $meses[(int) date('n', $iniCuenta) - 1];
+$dondeEs    = (string) ($cuenta['lugar'] ?: ($cuenta['centro_id'] ? ($nombresCortos[(int) $cuenta['centro_id']] ?? '') : ''));
+$idTitulo   = 'cuenta-titulo-' . (int) $cuenta['id'];
+?>
+<section class="franja-fiesta" aria-labelledby="<?= e($idTitulo) ?>">
+    <div class="container">
+        <div class="row g-4 g-lg-5 align-items-center">
+            <div class="col-lg-7">
+                <h2 id="<?= e($idTitulo) ?>" class="titulo-seccion"><?= e($cuenta['titulo']) ?></h2>
+                <p class="fiesta-texto">
+                    <?php if ($variosDias): ?>
+                    Del <?= (int) date('j', $iniCuenta) ?><?= date('n', $iniCuenta) !== date('n', $finCuenta) ? ' de ' . e($mesCuenta) : '' ?>
+                    al <?= (int) date('j', $finCuenta) ?> de <?= e($meses[(int) date('n', $finCuenta) - 1]) ?><?php if ($conHora): ?>,
+                    desde las <?= e(hora_corta(date('H:i', $iniCuenta))) ?><?php endif; ?><?php else: ?>
+                    <?= $faltan === 0 ? 'Es hoy,' : 'Será el' ?> <?= e(nombre_dia((int) date('w', $iniCuenta))) ?>
+                    <?= (int) date('j', $iniCuenta) ?> de <?= e($mesCuenta) ?><?php if ($conHora): ?>,
+                    a las <?= e(hora_corta(date('H:i', $iniCuenta))) ?><?php endif; ?><?php endif; ?><?php if ($dondeEs !== ''): ?>,
+                    en <?= e($dondeEs) ?><?php endif; ?>.
+                </p>
+                <a href="<?= e(url_publica('eventos', ['slug' => $cuenta['slug']])) ?>" class="btn btn-dorado btn-lg px-4 fs-6 mt-3">Ver el evento</a>
+            </div>
+            <div class="col-lg-5">
+                <div class="d-flex gap-3">
+                    <div class="fiesta-cifra">
+                        <span class="numero text-dorado"><?= $faltan ?></span>
+                        <span class="etiqueta"><?= $faltan === 0 ? 'Es hoy' : ($faltan === 1 ? 'día para el evento' : 'días para el evento') ?></span>
+                    </div>
+                    <div class="fiesta-cifra">
+                        <span class="numero"><?= (int) date('j', $iniCuenta) ?></span>
+                        <span class="etiqueta text-capitalize"><?= e($mesCuenta) ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 <?php endif; ?>
+<?php endforeach; ?>
 
 
 <?php /* ================================================================
@@ -356,8 +411,10 @@ $reunion = static function (array $p): string {
 
 
 <?php /* ================================================================
-         AGENDA — próximos eventos publicados; los de la fiesta patronal
-         (fiesta, novena y kermés) van en dorado.
+         AGENDA — próximos eventos publicados, más los destacados de los
+         próximos dos meses aunque no alcancen a entrar. Van en dorado los
+         destacados, los de cuenta regresiva y los de la fiesta patronal
+         (fiesta, novena y kermés).
          ================================================================ */ ?>
 <?php if ($agenda): ?>
 <?php
@@ -381,7 +438,8 @@ $mesesCortos = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', '
             $fin        = $ev['fecha_fin'] ? strtotime($ev['fecha_fin']) : null;
             $variosDias = $fin && date('Y-m-d', $fin) !== date('Y-m-d', $inicio);
             $conHora    = empty($ev['todo_el_dia']) && date('H:i', $inicio) !== '00:00';
-            $destacado  = in_array((int) $ev['id'], $idsFiesta, true)
+            $destacado  = !empty($ev['destacado']) || !empty($ev['cuenta_regresiva'])
+                || in_array((int) $ev['id'], $idsFiesta, true)
                 || ($fiesta && stripos($ev['titulo'], 'kerm') !== false);
             ?>
             <li class="<?= $destacado ? 'destacado' : '' ?>">

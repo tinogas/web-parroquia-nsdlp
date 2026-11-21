@@ -185,6 +185,12 @@ $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
                     <td>
                         <span class="badge rounded-pill me-1" style="background:<?= e($evento['color'] ?: '#1e4d8b') ?>;width:.6rem;height:.6rem;padding:0"></span>
                         <span class="fw-semibold"><?= e($evento['titulo']) ?></span>
+                        <?php if (!empty($evento['destacado'])): ?>
+                        <i class="bi bi-star-fill text-dorado" title="Destacado en la portada" aria-label="Destacado en la portada"></i>
+                        <?php endif; ?>
+                        <?php if (!empty($evento['cuenta_regresiva'])): ?>
+                        <i class="bi bi-hourglass-split text-dorado" title="Con cuenta regresiva en la portada" aria-label="Con cuenta regresiva en la portada"></i>
+                        <?php endif; ?>
                         <span class="badge bg-light text-secondary border">
                             <?= e($evento['pastoral_nombre'] ?? 'General') ?>
                         </span>

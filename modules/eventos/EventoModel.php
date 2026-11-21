@@ -206,11 +206,6 @@ class EventoModel extends Model
     }
 
     /**
-     * Próximos eventos a partir de ahora, para la portada y la página de
-     * eventos. $pastoralId acota a "el calendario de esta pastoral" en su
-     * ficha pública (issue #3).
-     */
-    /**
      * La próxima fiesta patronal de la parroquia, para la franja de la
      * portada, con su novena y si ese día hay kermés. Solo eventos publicados:
      * la franja aparece cuando la fiesta se publica en la agenda y se va sola
@@ -263,6 +258,11 @@ class EventoModel extends Model
         return ['fiesta' => $fiesta, 'novena' => $novena, 'kermes' => $kermes];
     }
 
+    /**
+     * Próximos eventos a partir de ahora, para la portada y la página de
+     * eventos. $pastoralId acota a "el calendario de esta pastoral" en su
+     * ficha pública (issue #3).
+     */
     public function proximos(int $limite = 6, ?int $pastoralId = null): array
     {
         $condicionPastoral = $pastoralId !== null ? ' AND pastoral_id = :pastoral' : '';
@@ -275,6 +275,44 @@ class EventoModel extends Model
               ORDER BY fecha_inicio ASC
               LIMIT ' . max(1, $limite),
             $pastoralId !== null ? [':pastoral' => $pastoralId] : []
+        );
+    }
+
+    /**
+     * Los eventos marcados con "Cuenta regresiva en la portada" que empiezan
+     * de hoy a $dias, del más próximo al más lejano. Con el mismo criterio de
+     * fecha que fiestaPatronalProxima(): la franja dura hasta que acaba el día
+     * en que empieza el evento. Cuáles se muestran de verdad —el más próximo
+     * siempre, los demás si faltan 30 días o menos— lo decide la portada,
+     * porque compiten también con la fiesta patronal.
+     */
+    public function cuentasRegresivas(int $dias = 60): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM eventos
+              WHERE publicado = 1 AND cuenta_regresiva = 1
+                AND DATE(fecha_inicio) >= CURDATE()
+                AND DATE(fecha_inicio) <= DATE_ADD(CURDATE(), INTERVAL ' . max(1, $dias) . ' DAY)
+              ORDER BY fecha_inicio'
+        );
+    }
+
+    /**
+     * Los destacados —o con cuenta regresiva, que también llevan estrella— que
+     * todavía no terminan y empiezan dentro de $dias. La portada los suma a sus
+     * próximos nueve: con cerca de 470 eventos al año, esos nueve cubren una
+     * semana, y marcar un evento de dentro de un mes no serviría de nada si
+     * solo apareciera cuando ya está encima.
+     */
+    public function destacadosProximos(int $dias = 60): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM eventos
+              WHERE publicado = 1 AND (destacado = 1 OR cuenta_regresiva = 1)
+                AND ((fecha_fin IS NOT NULL AND fecha_fin >= NOW())
+                  OR (fecha_fin IS NULL AND fecha_inicio >= NOW()))
+                AND fecha_inicio <= DATE_ADD(NOW(), INTERVAL ' . max(1, $dias) . ' DAY)
+              ORDER BY fecha_inicio'
         );
     }
 
@@ -364,10 +402,12 @@ class EventoModel extends Model
         $this->execute(
             'INSERT INTO eventos
                 (slug, titulo, descripcion, imagen, lugar, fecha_inicio, fecha_fin,
-                 todo_el_dia, pastoral_id, centro_id, color, publicado, usuario_id)
+                 todo_el_dia, pastoral_id, centro_id, color, publicado,
+                 destacado, cuenta_regresiva, usuario_id)
              VALUES
                 (:slug, :titulo, :descripcion, :imagen, :lugar, :inicio, :fin,
-                 :todoDia, :pastoral, :centro, :color, :publicado, :usuario)',
+                 :todoDia, :pastoral, :centro, :color, :publicado,
+                 :destacado, :cuentaRegresiva, :usuario)',
             $this->parametros($datos) + [':usuario' => $usuarioId]
         );
         return $this->lastInsertId();
@@ -379,7 +419,8 @@ class EventoModel extends Model
             'UPDATE eventos
                 SET slug = :slug, titulo = :titulo, descripcion = :descripcion, imagen = :imagen,
                     lugar = :lugar, fecha_inicio = :inicio, fecha_fin = :fin, todo_el_dia = :todoDia,
-                    pastoral_id = :pastoral, centro_id = :centro, color = :color, publicado = :publicado
+                    pastoral_id = :pastoral, centro_id = :centro, color = :color, publicado = :publicado,
+                    destacado = :destacado, cuenta_regresiva = :cuentaRegresiva
               WHERE id = :id',
             $this->parametros($datos) + [':id' => $id]
         );
@@ -402,9 +443,13 @@ class EventoModel extends Model
             ':fin'         => $datos['fecha_fin'],
             ':todoDia'     => $datos['todo_el_dia'],
             ':pastoral'    => $datos['pastoral_id'],
-            ':centro'      => $datos['centro_id'],
+            ':centro'      => $datos['centro_id'] ?? null,   // el importador no la manda
             ':color'       => $datos['color'],
             ':publicado'   => $datos['publicado'],
+            // Con ?? porque herramientas/importar_agenda.php no las manda, y
+            // un NULL explícito en una columna NOT NULL no toma el DEFAULT.
+            ':destacado'       => (int) ($datos['destacado'] ?? 0),
+            ':cuentaRegresiva' => (int) ($datos['cuenta_regresiva'] ?? 0),
         ];
     }
 }

@@ -14,6 +14,25 @@ require_once BASE_PATH . '/modules/pastorales/PastoralModel.php';
 class InicioController extends ControllerPublico
 {
     /**
+     * Desde cuántos días antes puede salir la franja con cuenta regresiva de un
+     * evento marcado. Es la misma cifra que usa la fiesta patronal.
+     */
+    private const DIAS_CUENTA_REGRESIVA = 60;
+
+    /**
+     * Si hay varias franjas, la más próxima sale siempre y las demás solo
+     * cuando les faltan estos días o menos: así la portada no se llena de
+     * franjas de cosas que todavía están a dos meses.
+     */
+    private const DIAS_FRANJAS_EXTRA = 30;
+
+    /**
+     * Los destacados que se suman a la agenda de la portada aunque no estén
+     * entre los próximos nueve.
+     */
+    private const DIAS_DESTACADOS = 60;
+
+    /**
      * La portada sigue, sección por sección, la propuesta de rediseño: la
      * cabecera editorial con las próximas misas, los horarios de la semana,
      * la fiesta patronal cuando se acerca, sacramentos, pastorales, la agenda,
@@ -34,6 +53,7 @@ class InicioController extends ControllerPublico
         $cortos        = CentroModel::nombresCortos($centros, $horarios);
         $proximasMisas = $this->conCuando((new HorarioModel())->proximasMisas(3));
         $eventos       = new EventoModel();
+        $fiesta        = $eventos->fiestaPatronalProxima(self::DIAS_CUENTA_REGRESIVA);
         // Los avisos van arriba, en un recuadro de la cabecera: es lo primero
         // que la parroquia quiere que se lea al entrar.
         $avisosPortada = (new AvisoModel())->recientes(4);
@@ -56,15 +76,74 @@ class InicioController extends ControllerPublico
             'centros'          => $centros,
             'nombresCortos'    => $cortos,
             'proximasMisas'    => $proximasMisas,
-            'fiesta'           => $eventos->fiestaPatronalProxima(),
+            'fiesta'           => $fiesta,
+            'franjas'          => $this->franjasCuentaRegresiva(
+                $fiesta,
+                $eventos->cuentasRegresivas(self::DIAS_CUENTA_REGRESIVA)
+            ),
             'sacramentos'      => (new SacramentoModel())->activos(),
             'pastorales'       => (new PastoralModel())->activasAgrupadas(),
-            'agenda'           => $eventos->proximos(9),
+            'agenda'           => $this->agendaConDestacados(
+                $eventos->proximos(9),
+                $eventos->destacadosProximos(self::DIAS_DESTACADOS)
+            ),
             'evangelioHoy'     => (new EvangelioModel())->deHoy(),
             'avisosPortada'    => $avisosPortada,
             'proximosCursos'   => (new CursoModel())->proximos(3),
             'jsonLd'           => $this->datosEstructurados(),
         ]);
+    }
+
+    /**
+     * Las franjas con cuenta regresiva: la de la fiesta patronal, si se acerca,
+     * y las de los eventos marcados con "Cuenta regresiva en la portada", por
+     * fecha. La más próxima se queda siempre; las demás, solo si les faltan
+     * DIAS_FRANJAS_EXTRA o menos. Si alguien marcó también el evento de la
+     * fiesta, cuenta una vez, como fiesta, que tiene su propio texto.
+     *
+     * @return list<array{tipo: string, evento: array, dias: int, fiesta?: array}>
+     */
+    private function franjasCuentaRegresiva(?array $fiesta, array $marcados): array
+    {
+        $hoy  = new DateTimeImmutable('today');
+        $dias = static fn (array $ev): int =>
+            (int) $hoy->diff(new DateTimeImmutable(substr($ev['fecha_inicio'], 0, 10)))->days;
+
+        $franjas  = [];
+        $idFiesta = 0;
+        if ($fiesta) {
+            $idFiesta  = (int) $fiesta['fiesta']['id'];
+            $franjas[] = ['tipo' => 'fiesta', 'evento' => $fiesta['fiesta'], 'dias' => $dias($fiesta['fiesta']), 'fiesta' => $fiesta];
+        }
+        foreach ($marcados as $ev) {
+            if ((int) $ev['id'] !== $idFiesta) {
+                $franjas[] = ['tipo' => 'evento', 'evento' => $ev, 'dias' => $dias($ev)];
+            }
+        }
+        // usort es estable: con la misma hora, la fiesta va primero.
+        usort($franjas, static fn (array $a, array $b): int =>
+            strcmp($a['evento']['fecha_inicio'], $b['evento']['fecha_inicio']));
+
+        return array_values(array_filter(
+            $franjas,
+            static fn (array $franja, int $i): bool => $i === 0 || $franja['dias'] <= self::DIAS_FRANJAS_EXTRA,
+            ARRAY_FILTER_USE_BOTH
+        ));
+    }
+
+    /**
+     * Los próximos eventos de la agenda más los destacados que no alcanzaron a
+     * entrar entre ellos, cada uno en su lugar por fecha y sin repetir.
+     */
+    private function agendaConDestacados(array $proximos, array $destacados): array
+    {
+        $porId = [];
+        foreach (array_merge($proximos, $destacados) as $ev) {
+            $porId[(int) $ev['id']] = $ev;
+        }
+        $agenda = array_values($porId);
+        usort($agenda, static fn (array $a, array $b): int => strcmp($a['fecha_inicio'], $b['fecha_inicio']));
+        return $agenda;
     }
 
     /**
