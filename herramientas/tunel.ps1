@@ -96,9 +96,12 @@ if ($LASTEXITCODE) {
     Fallar "No encuentro el túnel $tunel en tu cuenta; quizá venció. Cómo crear otro:  Get-Help '$PSCommandPath' -Full"
 }
 
+# Trabaja en la carpeta temporal: si heredara la de la terminal, mientras el
+# túnel siga abierto Windows no dejaría mover ni borrar esa carpeta.
 $log      = Join-Path $env:TEMP 'webparroquia-tunel.log'
 $logError = Join-Path $env:TEMP 'webparroquia-tunel-error.log'
 $proceso = Start-Process -FilePath $devtunnel -ArgumentList 'host', $tunel -WindowStyle Hidden -PassThru `
+    -WorkingDirectory $env:TEMP `
     -RedirectStandardOutput $log -RedirectStandardError $logError
 
 $liga = $null
