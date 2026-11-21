@@ -273,6 +273,32 @@ php -S localhost:8080 router.php
 
 `router.php` es solo una herramienta de desarrollo; en Apache y en cPanel no interviene.
 
+En Windows, `herramientas/servidor_local.ps1` hace lo mismo sin dejar una terminal ocupada:
+arranca el MySQL de XAMPP si no estaba y el servidor de PHP en `http://localhost:8080`,
+los dos ocultos, y comprueba que la página abra y llegue a la base. Lo que ya estaba arriba
+lo deja como está.
+
+```
+.\herramientas\servidor_local.ps1
+```
+
+### Compartirlo para que otros lo revisen
+
+`herramientas/tunel.ps1` abre un túnel de Microsoft Dev Tunnels hacia ese servidor y deja
+la liga en el portapapeles; correrlo otra vez lo cierra. La liga es siempre la misma porque
+el túnel es fijo: se crea una vez con la cuenta Microsoft de quien desarrolla y su ID se
+anota en `herramientas/.env` (`TUNEL_ID`), fuera del repositorio. Los pasos para crearlo
+están en la ayuda del script:
+
+```
+.\herramientas\tunel.ps1                    # lo abre; otra vez, lo cierra
+Get-Help .\herramientas\tunel.ps1 -Full     # cómo preparar el túnel la primera vez
+```
+
+Quien tenga la liga entra al sitio con la base de esta computadora: lo que cambie en el
+panel se queda. Para que revisen el panel sin tocar los datos de trabajo, conviene apuntar
+el servidor a una copia de la base.
+
 ## Estructura del proyecto
 
 ```
@@ -290,7 +316,7 @@ WebParroquia/
 ├── assets/              CSS y JavaScript propios
 ├── uploads/             Archivos subidos desde el panel
 ├── backups/             Respaldos .sql generados desde el panel (su contenido no se versiona)
-└── herramientas/        Carga masiva por línea de órdenes; no se despliega
+└── herramientas/        Carga masiva y scripts de desarrollo; no se despliega
 ```
 
 Cada módulo agrupa su controlador de administración, su controlador público, su modelo
