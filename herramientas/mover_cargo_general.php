@@ -48,6 +48,11 @@
  * la bitácora (sin usuario: la hizo esta herramienta).
  */
 
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Este script solo se ejecuta desde la línea de órdenes.');
+}
+
 define('BASE_PATH', dirname(__DIR__));
 require_once BASE_PATH . '/config/app.php';
 

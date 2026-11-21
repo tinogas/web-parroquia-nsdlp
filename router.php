@@ -17,10 +17,27 @@ $archivo = __DIR__ . $ruta;
 if ($ruta !== '/' && is_file($archivo)) {
     // Salvo lo que en Apache bloquean .htaccess y uploads/.htaccess: el código
     // del proyecto y cualquier script dentro de uploads. Se replica aquí para
-    // que el entorno de desarrollo se comporte como el servidor real.
-    if (preg_match('#^/(config|core|modules|shared|docs)/#', $ruta)
-        || preg_match('#\.(sql|log|env|md|json|lock|sh|bak|ini)$#', $ruta)
-        || preg_match('#^/uploads/.*\.(php|phtml|phar|cgi|pl|py|sh)$#i', $ruta)) {
+    // que el entorno de desarrollo se comporte como el servidor real, y se
+    // cierra además lo que en el servidor real no está porque no se sube
+    // —herramientas/, backups/, .git/ y todo lo que empieza con punto—: este
+    // servidor a veces se comparte (un túnel, la red de la casa) para que otros
+    // revisen el sitio, y entonces queda tan expuesto como el de verdad.
+    //
+    // Las reglas miran la ruta real del archivo, en minúsculas. En Windows
+    // «/BACKUPS/x.sql», «/backups/x.sql.» —con punto al final— o «/.GIT/HEAD»
+    // abren el mismo archivo que la ruta bien escrita, y comparando la ruta tal
+    // como llega se colaban.
+    $raiz = realpath(__DIR__);
+    $real = realpath($archivo);
+    if ($real === false || !str_starts_with($real, $raiz . DIRECTORY_SEPARATOR)) {
+        http_response_code(403);
+        exit('403');
+    }
+    $relativa = strtolower(str_replace('\\', '/', substr($real, strlen($raiz))));
+    if (preg_match('#^/(config|core|modules|shared|docs|cli|backups|herramientas)/#', $relativa)
+        || preg_match('#/\.#', $relativa)
+        || preg_match('#\.(sql|log|env|md|json|lock|sh|bak|ini)$#', $relativa)
+        || preg_match('#^/uploads/.*\.(php|phtml|phar|cgi|pl|py|sh)$#', $relativa)) {
         http_response_code(403);
         exit('403');
     }
