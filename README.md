@@ -61,7 +61,9 @@ ha trabajado un segundo bloque de cambios pedidos por la parroquia:
   General en Profética, Coordinadora en Catequesis, Misionera en Misión y OMPE, Ministro
   en MESC y Coordinadora de Equipos en Cáritas Desayunador. El de la ficha queda como cargo
   general y vale donde no haya uno propio. Se escribe en la ficha, debajo de cada pastoral,
-  o lo pone quien coordina desde el panel de su pastoral, sin abrir la ficha.
+  o lo pone quien coordina desde el panel de su pastoral, sin abrir la ficha. En «Quiénes
+  somos» cada tarjeta lleva todos sus cargos, cada uno con su pastoral: primero los de
+  coordinación general, luego los de coordinación y al final el resto.
 - **La portada muestra lo último publicado en Facebook**, con el Page Plugin oficial
   (un iframe, sin token ni API propia) sobre la misma URL que ya se usaba para el icono
   del pie.

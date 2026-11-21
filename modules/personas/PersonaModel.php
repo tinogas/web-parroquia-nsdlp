@@ -99,18 +99,114 @@ class PersonaModel extends Model
         return $this->fetchOne('SELECT * FROM personas WHERE id = :id', [':id' => $id]);
     }
 
-    /** Para el sitio público: solo activos, agrupados por tipo. */
+    /**
+     * Para "Quiénes somos": solo activos, agrupados por tipo. Cada ficha
+     * lleva además `cargos`, todos los suyos ya ordenados para mostrarse
+     * juntos: ver cargosParaMostrar().
+     */
     public function activasPorTipo(): array
     {
         $filas = $this->fetchAll(
             "SELECT * FROM personas WHERE activo = 1
              ORDER BY FIELD(tipo, " . $this->ordenTipos() . "), orden, nombre"
         );
+        $propios = $this->cargosEnPastoralesActivas();
         $porTipo = [];
         foreach ($filas as $fila) {
+            $fila['cargos'] = self::cargosParaMostrar($fila['cargo'], $propios[(int) $fila['id']] ?? []);
             $porTipo[$fila['tipo']][] = $fila;
         }
         return $porTipo;
+    }
+
+    /**
+     * persona_id => sus cargos propios en pastorales activas, cada uno con
+     * su pastoral (nombre y slug, para enlazarla). Las pastorales que no
+     * están activas no se publican, y su cargo tampoco.
+     *
+     * @return array<int, list<array{cargo: string, pastoral: string, slug: string}>>
+     */
+    private function cargosEnPastoralesActivas(): array
+    {
+        $porPersona = [];
+        foreach ($this->fetchAll(
+            "SELECT pp.persona_id, TRIM(pp.cargo) AS cargo, pa.nombre AS pastoral, pa.slug
+               FROM persona_pastorales pp
+               JOIN pastorales pa ON pa.id = pp.pastoral_id AND pa.activa = 1
+              WHERE COALESCE(TRIM(pp.cargo), '') <> ''
+              ORDER BY pa.nombre"
+        ) as $fila) {
+            $porPersona[(int) $fila['persona_id']][] = [
+                'cargo'    => $fila['cargo'],
+                'pastoral' => $fila['pastoral'],
+                'slug'     => (string) $fila['slug'],
+            ];
+        }
+        return $porPersona;
+    }
+
+    /**
+     * Todos los cargos de una persona en una sola lista: el de cada pastoral
+     * donde tiene uno propio, con el nombre de la pastoral, y el general, que
+     * va sin pastoral y solo si no repite alguno de esos. Casi siempre es el
+     * resumen de uno de ellos, y entonces sobra: «Coordinadora General» o
+     * «Coordinadora General de Profética» junto a «Coordinadora General ·
+     * Profética» dirían lo mismo dos veces. Se compara sin mayúsculas ni
+     * acentos, con el cargo solo y con «cargo de/en pastoral».
+     *
+     * Orden: primero quien coordina en general, luego quien coordina, luego
+     * el resto (ver rangoCargo()); dentro de cada grupo, el general primero y
+     * luego por nombre de la pastoral.
+     *
+     * @param  list<array{cargo: string, pastoral: string, slug: string}> $propios Por nombre de la pastoral.
+     * @return list<array{cargo: string, pastoral: ?string, slug: ?string}>
+     */
+    public static function cargosParaMostrar(?string $general, array $propios): array
+    {
+        $comparable = static fn (string $texto): string => strtr(
+            mb_strtolower((string) preg_replace('/\s+/u', ' ', trim($texto)), 'UTF-8'),
+            ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u']
+        );
+        $repetidos = [];
+        foreach ($propios as $propio) {
+            $repetidos[] = $comparable($propio['cargo']);
+            $repetidos[] = $comparable($propio['cargo'] . ' de ' . $propio['pastoral']);
+            $repetidos[] = $comparable($propio['cargo'] . ' en ' . $propio['pastoral']);
+        }
+
+        $cargos  = [];
+        $general = trim((string) $general);
+        if ($general !== '' && !in_array($comparable($general), $repetidos, true)) {
+            $cargos[] = ['cargo' => $general, 'pastoral' => null, 'slug' => null];
+        }
+        foreach ($propios as $propio) {
+            $cargos[] = $propio;
+        }
+
+        // usort es estable desde PHP 8.0: a igual rango se queda el orden de
+        // arriba (el general, luego por pastoral).
+        usort($cargos, static fn (array $a, array $b): int
+            => self::rangoCargo($a['cargo']) <=> self::rangoCargo($b['cargo']));
+        return $cargos;
+    }
+
+    /**
+     * Para ordenar cargos por lo que dicen: 0 coordinación general
+     * («Coordinadora General de Profética», «Coordinador General de Coros»),
+     * 1 coordinación de algo («Coordinadora», «Coordinador de MAE»), 2 el
+     * resto («Ministro», «Proclamador», «Encargada»). Por el texto y no por
+     * pastoral_coordinadores, porque lo que se ordena es lo que se lee. Acepta
+     * los errores de dedo que ya hay en la base («Cordinadora»,
+     * «Coordiandora»): basta con que la palabra empiece en «co» y tenga «rd»
+     * y luego «dor» o «aci».
+     */
+    public static function rangoCargo(string $cargo): int
+    {
+        $texto = mb_strtolower($cargo, 'UTF-8');
+        if (!preg_match('/\bco\pL*rd\pL*(?:dor|aci)/u', $texto)) {
+            return 2;
+        }
+        return preg_match('/\bco\pL*rd\pL*(?:dor|aci)\pL*\s+general/u', $texto) ? 0 : 1;
     }
 
     /**

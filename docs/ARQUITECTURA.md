@@ -1399,8 +1399,19 @@ esa persona en esa pastoral, y `personas.cargo` se queda como **cargo general**.
 
 **El de la pastoral manda, y vacío vale el general.** Así la migración no tuvo que llenar
 nada: quien está en una sola pastoral se sigue viendo igual, y solo se escribe donde hace
-falta. El cargo general sigue siendo el de «Quiénes somos» y el que acompaña el nombre en los
-selectores, donde no hay una pastoral de por medio.
+falta. El cargo general sigue siendo el que acompaña el nombre en los selectores, donde no hay
+una pastoral de por medio.
+
+**En «Quiénes somos», todos juntos.** Cada tarjeta lista los cargos propios de esa persona en
+pastorales activas, con la pastoral enlazada a su página, más el general si no repite alguno
+(`PersonaModel::cargosParaMostrar()`). Casi siempre el general es el resumen de uno de ellos,
+así que se compara sin mayúsculas ni acentos contra cada cargo solo y contra «cargo de/en
+pastoral». Aquí no se aplica «vacío vale el general» pastoral por pastoral: con eso, quien
+tiene «Coordinadora General» de cargo general saldría de coordinadora general en cada
+pastoral donde solo participa. El orden es por lo que dice el texto (`rangoCargo()`):
+coordinación general, coordinación y el resto, porque lo que se ordena es lo que se lee, no
+quién figura en `pastoral_coordinadores`; el patrón acepta los errores de dedo que ya había en
+la base («Cordinadora», «Coordiandora»).
 
 **Dos puertas para el mismo dato.** En la ficha, debajo de cada pastoral marcada (solo
 Administrador y Editor la abren), y en el panel de cada pastoral, donde quien la coordina
