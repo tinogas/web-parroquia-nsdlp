@@ -588,13 +588,23 @@ class Controller
         exit;
     }
 
-    /** Vuelve a la página anterior, siempre que sea de este mismo sitio. */
+    /**
+     * Vuelve a la página anterior, siempre que sea de este mismo sitio.
+     *
+     * HTTP_HOST trae el puerto cuando no es el de siempre («localhost:8080»), así
+     * que se compara contra el host y el puerto del Referer juntos. Comparando
+     * solo el host, en el servidor de desarrollo nunca coincidían y siempre se
+     * caía al panel; en el servidor real no se notaba porque no hay puerto.
+     */
     protected function redirectBack(?string $fallback = null): void
     {
-        $ref  = $_SERVER['HTTP_REFERER'] ?? '';
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        $propio = $ref !== '' && $host !== ''
-               && strcasecmp((string) parse_url($ref, PHP_URL_HOST), $host) === 0;
+        $ref    = $_SERVER['HTTP_REFERER'] ?? '';
+        $host   = $_SERVER['HTTP_HOST'] ?? '';
+        $partes = parse_url($ref) ?: [];
+        $origen = ($partes['host'] ?? '') . (isset($partes['port']) ? ':' . $partes['port'] : '');
+        $propio = $host !== '' && $origen !== ''
+               && in_array(strtolower($partes['scheme'] ?? ''), ['http', 'https'], true)
+               && strcasecmp($origen, $host) === 0;
 
         $this->redirect($propio ? $ref : ($fallback ?? url_admin('panel')));
     }

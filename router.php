@@ -12,6 +12,25 @@
 $ruta = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 $ruta = '/' . trim($ruta, '/');
 
+// Detrás de un túnel (devtunnel, cloudflared) la petición llega desde esta
+// misma máquina con «Host: localhost:8080», y el nombre con el que la abrió el
+// visitante viene aparte, en X-Forwarded-Host. Se toma ese, y HTTPS si el túnel
+// lo era, para que las URL absolutas (canonical, el enlace personal) y la
+// vuelta de redirectBack() usen la liga del túnel y no localhost. Solo se cree
+// cuando la conexión viene de 127.0.0.1 o ::1, que es por donde entra el túnel;
+// el relevo de Microsoft además pisa el X-Forwarded-Host que mande el visitante.
+// Va antes que todo porque los formularios apuntan a /index.php, que es un
+// archivo y sale por el bloque de abajo. En Apache esto no existe: allá manda
+// el Host verdadero.
+$deLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+$reenviado = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '';
+if ($deLocal && preg_match('/^[a-z0-9.-]+(:\d{1,5})?$/i', $reenviado)) {
+    $_SERVER['HTTP_HOST'] = $reenviado;
+    if (strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
+        $_SERVER['HTTPS'] = 'on';
+    }
+}
+
 // Los archivos que existen en disco se sirven tal cual (assets, uploads).
 $archivo = __DIR__ . $ruta;
 if ($ruta !== '/' && is_file($archivo)) {

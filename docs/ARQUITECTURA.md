@@ -145,6 +145,23 @@ bloque por un `define()` si algún hosting se comportara de forma extraña.
 cualquier script dentro de `uploads/`. Así el entorno de desarrollo se comporta como el
 servidor real. En Apache y en cPanel no interviene.
 
+Ese servidor a veces se comparte por un túnel para que otros revisen el sitio
+(`herramientas/tunel.ps1`, ver el README). El túnel entrega cada petición desde la misma
+máquina con `Host: localhost:8080` y manda aparte, en `X-Forwarded-Host` y
+`X-Forwarded-Proto`, la liga y el `https` con que la abrió el visitante. `router.php` toma
+esos dos valores cuando la conexión viene de `127.0.0.1` o `::1`, y lo hace antes que nada,
+porque los formularios apuntan a `/index.php`, que es un archivo y no pasa por las reglas de
+reescritura. Sin eso, las URL absolutas (canonical, `og:url`, el enlace personal) salían con
+`localhost`, la cookie de sesión no se marcaba `secure` y `redirectBack()` nunca reconocía la
+página anterior como propia. Se comprobó que el relevo de Microsoft pisa el
+`X-Forwarded-Host` que mande el visitante: lo que él escriba llega en
+`X-Original-Forwarded-Host`, que nadie lee.
+
+`redirectBack()` compara el host **con su puerto** contra `HTTP_HOST`. Comparando solo el
+host, en `localhost:8080` nunca coincidían y, tras una contraseña de confirmación equivocada,
+siempre se volvía al inicio del panel en vez de a la pantalla donde se estaba. En el servidor
+real no se notaba porque la dirección no lleva puerto.
+
 ## Los dos layouts
 
 `layout_admin.php` es el layout del sistema de inventario portado: navbar fija, sidebar
