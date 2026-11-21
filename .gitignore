@@ -52,6 +52,11 @@ docs/*.pdf
 .agents/
 .taste-skill/
 skills-lock.json
+# Las de Emil Kowalski que usa Claude Code (cada una lleva su ORIGEN.md). Van por
+# nombre: un skill propio del proyecto en .claude/skills/ sí se versionaría.
+.claude/skills/break-ui/
+.claude/skills/learn-taste/
+.claude/skills/mobile-native/
 
 # Logs y caché
 *.log
