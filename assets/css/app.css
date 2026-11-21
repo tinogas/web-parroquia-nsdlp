@@ -1384,6 +1384,24 @@ a.evento-linea:hover {
     color: var(--tinta-suave);
 }
 
+/* En el teléfono, ningún campo con letra de menos de 16 px. El iPhone acerca la
+   página al tocar uno así y, al salir, no la regresa: hay que pellizcar para
+   volver. Los campos pequeños de Bootstrap —filtros, tablas, modales, el cargo
+   de cada pastoral en la ficha— van en 14 px, y el código fuente del editor en
+   13.6. En pantallas táctiles suben a 16; con ratón se quedan como están. No se
+   arregla quitando el zoom (maximum-scale=1 en el viewport): eso le quitaría a
+   todos la posibilidad de agrandar la página para leerla. */
+@media (pointer: coarse) {
+    .form-control-sm,
+    .form-select-sm,
+    .input-group-sm > .form-control,
+    .input-group-sm > .form-select,
+    .input-group-sm > .input-group-text,
+    .editor-fuente {
+        font-size: 16px;
+    }
+}
+
 /* ---- Pestañas, avisos, listas, paginación y desplegables ---- */
 
 .main-content .nav-tabs {

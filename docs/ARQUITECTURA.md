@@ -2881,6 +2881,19 @@ arma tipo `Church`, con `address`, `geo` y `sameAs` solo si esos campos de `conf
 tienen valor real —un `"telephone": ""` se lee como dato de mala calidad, no como ausente—.
 El detalle de evento (`EventoPublicoController::datosEstructurados()`) arma tipo `Event`.
 
+## El panel en el teléfono: ningún campo de menos de 16 px
+
+El iPhone acerca la página cuando se toca un campo con letra de menos de 16 px, y al salir
+no la regresa. El panel usa mucho los campos pequeños de Bootstrap (`form-control-sm`,
+`form-select-sm`, `input-group-sm`, en 14 px): filtros, tablas editables, modales, el
+cargo de cada pastoral en la ficha. Un recorrido de 261 pantallas, simulando un iPhone,
+encontró 748 campos así en 150 de ellas (21 de noviembre de 2026); el sitio público y la
+página personal ya estaban bien. La regla al final de «Formularios» en `app.css` los sube a
+16 px solo con `@media (pointer: coarse)`, así que en la computadora se ven igual que antes.
+Se descartó quitar el zoom del `viewport` (`maximum-scale=1`), que es lo que suele hacerse:
+también le quita a quien ve poco la posibilidad de agrandar la página. Un campo pequeño
+nuevo queda cubierto solo; uno con otra clase que lo achique, no.
+
 ## Seguridad
 
 Además de lo heredado —CSRF en todo POST, sentencias preparadas, contraseñas con bcrypt de
