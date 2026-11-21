@@ -103,12 +103,12 @@
     {
       "imagen": "mesc-cambios",
       "texto": "Nada se borra: un cambio equivocado se deshace, y el turno vuelve a como estaba. Y lo que ya pasó no se mueve: ningún cambio que toque un turno de antes de hoy se registra, se aprueba ni se deshace.",
-      "foco": [0.22, 0.79, 0.98, 0.97]
+      "foco": [0.22, 0.76, 0.98, 1.0]
     },
     {
       "imagen": "mesc-turno-cambios",
       "texto": "En el calendario, un turno con cambios lleva el icono de las dos flechas. Al abrirlo, abajo dice quiénes sirven, cuál era el rol original y qué cambios lo tocaron. Las palomitas de arriba siguen siendo el rol original: no hace falta moverlas.",
-      "foco": [0.21, 0.72, 0.98, 0.94]
+      "foco": [0.21, 0.68, 0.98, 1.0]
     },
     {
       "imagen": "mesc-rutas",
