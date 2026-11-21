@@ -114,6 +114,9 @@ $lecturas = array_filter([
          ================================================================ */ ?>
 <?php
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+// El punto final, salvo que la frase ya acabe en uno: «a las 7:00 p. m.» ya lo
+// trae, y sin esto quedaba «p. m..».
+$cerrarFrase = static fn (string $frase): string => str_ends_with($frase, '.') ? $frase : $frase . '.';
 ?>
 <?php foreach ($franjas as $franja): ?>
 <?php if ($franja['tipo'] === 'fiesta'): ?>
@@ -142,9 +145,12 @@ $advocacion  = preg_replace('/^Parroquia\s+/iu', '', $nombreSitio);
                     <?= $enNovena ? 'Estamos en la novena: ' : 'Prepárate con la novena, ' ?>del <?= (int) date('j', strtotime($iniNovena)) ?>
                     al <?= (int) date('j', strtotime($finNovena)) ?> de <?= e($meses[(int) date('n', strtotime($finNovena)) - 1]) ?>.
                     <?php endif; ?>
-                    La fiesta se celebra el <?= e(nombre_dia((int) date('w', strtotime($diaFiesta)))) ?>
-                    <?= (int) date('j', strtotime($diaFiesta)) ?> de <?= e($mesFiesta) ?>
-                    <?php if ($horaFiesta !== '00:00'): ?><?= $conMisa ? 'con misa a las' : 'a las' ?> <?= e(hora_corta($horaFiesta)) ?><?php endif; ?><?= $datosFiesta['kermes'] ? ' y la kermés parroquial' : '' ?>.
+                    <?= e($cerrarFrase(
+                        'La fiesta se celebra el ' . nombre_dia((int) date('w', strtotime($diaFiesta)))
+                        . ' ' . (int) date('j', strtotime($diaFiesta)) . ' de ' . $mesFiesta
+                        . ($horaFiesta !== '00:00' ? ($conMisa ? ' con misa a las ' : ' a las ') . hora_corta($horaFiesta) : '')
+                        . ($datosFiesta['kermes'] ? ' y la kermés parroquial' : '')
+                    )) ?>
                 </p>
                 <a href="#agenda" class="btn btn-dorado btn-lg px-4 fs-6 mt-3">Ver la agenda</a>
             </div>
@@ -176,22 +182,22 @@ $conHora    = empty($cuenta['todo_el_dia']) && date('H:i', $iniCuenta) !== '00:0
 $mesCuenta  = $meses[(int) date('n', $iniCuenta) - 1];
 $dondeEs    = (string) ($cuenta['lugar'] ?: ($cuenta['centro_id'] ? ($nombresCortos[(int) $cuenta['centro_id']] ?? '') : ''));
 $idTitulo   = 'cuenta-titulo-' . (int) $cuenta['id'];
+$horaCuenta = $conHora ? hora_corta(date('H:i', $iniCuenta)) : '';
+$fraseCuenta = $variosDias
+    ? 'Del ' . (int) date('j', $iniCuenta) . (date('n', $iniCuenta) !== date('n', $finCuenta) ? ' de ' . $mesCuenta : '')
+      . ' al ' . (int) date('j', $finCuenta) . ' de ' . $meses[(int) date('n', $finCuenta) - 1]
+      . ($conHora ? ', desde las ' . $horaCuenta : '')
+    : ($faltan === 0 ? 'Es hoy, ' : 'Será el ') . nombre_dia((int) date('w', $iniCuenta))
+      . ' ' . (int) date('j', $iniCuenta) . ' de ' . $mesCuenta
+      . ($conHora ? ', a las ' . $horaCuenta : '');
+$fraseCuenta .= $dondeEs !== '' ? ', en ' . $dondeEs : '';
 ?>
 <section class="franja-fiesta" aria-labelledby="<?= e($idTitulo) ?>">
     <div class="container">
         <div class="row g-4 g-lg-5 align-items-center">
             <div class="col-lg-7">
                 <h2 id="<?= e($idTitulo) ?>" class="titulo-seccion"><?= e($cuenta['titulo']) ?></h2>
-                <p class="fiesta-texto">
-                    <?php if ($variosDias): ?>
-                    Del <?= (int) date('j', $iniCuenta) ?><?= date('n', $iniCuenta) !== date('n', $finCuenta) ? ' de ' . e($mesCuenta) : '' ?>
-                    al <?= (int) date('j', $finCuenta) ?> de <?= e($meses[(int) date('n', $finCuenta) - 1]) ?><?php if ($conHora): ?>,
-                    desde las <?= e(hora_corta(date('H:i', $iniCuenta))) ?><?php endif; ?><?php else: ?>
-                    <?= $faltan === 0 ? 'Es hoy,' : 'Será el' ?> <?= e(nombre_dia((int) date('w', $iniCuenta))) ?>
-                    <?= (int) date('j', $iniCuenta) ?> de <?= e($mesCuenta) ?><?php if ($conHora): ?>,
-                    a las <?= e(hora_corta(date('H:i', $iniCuenta))) ?><?php endif; ?><?php endif; ?><?php if ($dondeEs !== ''): ?>,
-                    en <?= e($dondeEs) ?><?php endif; ?>.
-                </p>
+                <p class="fiesta-texto"><?= e($cerrarFrase($fraseCuenta)) ?></p>
                 <a href="<?= e(url_publica('eventos', ['slug' => $cuenta['slug']])) ?>" class="btn btn-dorado btn-lg px-4 fs-6 mt-3">Ver el evento</a>
             </div>
             <div class="col-lg-5">
