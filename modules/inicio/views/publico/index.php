@@ -118,6 +118,8 @@ $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agost
 // trae, y sin esto quedaba «p. m..».
 $cerrarFrase = static fn (string $frase): string => str_ends_with($frase, '.') ? $frase : $frase . '.';
 ?>
+<?php if ($franjas): /* Juntas en un contenedor: el manual las fotografía como un solo recorte. */ ?>
+<div class="franjas-cuenta">
 <?php foreach ($franjas as $franja): ?>
 <?php if ($franja['tipo'] === 'fiesta'): ?>
 <?php
@@ -226,6 +228,8 @@ $fraseCuenta .= $dondeEs !== '' ? ', en ' . $dondeEs : '';
 </section>
 <?php endif; ?>
 <?php endforeach; ?>
+</div>
+<?php endif; ?>
 
 
 <?php /* ================================================================

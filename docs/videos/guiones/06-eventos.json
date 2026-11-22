@@ -113,9 +113,9 @@
       "texto": "Con el botón Nuevo evento se abre el formulario. El título es obligatorio. El inicio lleva fecha y hora, y es el único dato de tiempo que se exige. El fin es opcional: se deja en blanco si el evento es de un solo momento.",
       "foco": [
         0.22,
-        0.2,
+        0.16,
         0.72,
-        0.45
+        0.38
       ]
     },
     {
@@ -123,9 +123,9 @@
       "texto": "Todo el día es para lo que no tiene hora, como una jornada o un día de campo: al marcarlo, el calendario deja de mostrar la hora. El lugar es texto libre, y no es la sede: dice dónde se junta la gente.",
       "foco": [
         0.22,
-        0.44,
+        0.37,
         0.72,
-        0.56
+        0.46
       ]
     },
     {
@@ -143,9 +143,9 @@
       "texto": "A la derecha, la pastoral funciona igual que en avisos. La sede o centro dice en qué comunidad ocurre, y se puede dejar en Toda la parroquia. Es el dato que permite filtrar por comunidad el calendario del sitio.",
       "foco": [
         0.73,
-        0.44,
+        0.35,
         0.98,
-        0.64
+        0.51
       ]
     },
     {
@@ -153,9 +153,9 @@
       "texto": "El color en el calendario pinta su casilla, tanto en el sitio como en la agenda interna. Sirve para distinguir de un vistazo lo de una pastoral, o lo extraordinario de lo ordinario. Si no lo tocas, va el azul de la casa.",
       "foco": [
         0.73,
-        0.62,
+        0.5,
         0.98,
-        0.74
+        0.59
       ]
     },
     {
@@ -163,9 +163,9 @@
       "texto": "Los eventos no tienen los tres escalones de los avisos: llevan un solo interruptor, Publicado. Apagado es borrador, y solo lo ve el equipo en la agenda interna. Encendido, sale en el calendario del sitio.",
       "foco": [
         0.73,
-        0.68,
+        0.55,
         0.98,
-        0.8
+        0.64
       ]
     },
     {
@@ -173,9 +173,29 @@
       "texto": "Si tu cuenta no puede publicar, el interruptor no aparece: lo que captures queda en borrador hasta que alguien con permiso lo publique. Ojo: en un evento nuevo viene encendido; si todavía no quieres que se vea, apágalo antes de guardar.",
       "foco": [
         0.73,
-        0.7,
+        0.56,
         0.98,
-        0.88
+        0.65
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Debajo, quien administra el sitio o es editor ve En la portada, con dos interruptores. Destacado pone el evento en dorado y con estrella en Lo que viene en la parroquia, y lo hace aparecer ahí desde dos meses antes, aunque todavía no esté entre los próximos.",
+      "foco": [
+        0.73,
+        0.62,
+        0.98,
+        0.76
+      ]
+    },
+    {
+      "imagen": "eventos-form",
+      "texto": "Cuenta regresiva le da al evento una franja propia en la portada, con los días que faltan, como la de la fiesta patronal. La más cercana sale desde dos meses antes; si hay otras, aparecen debajo cuando les falta un mes o menos. Las cuentas de coordinación no ven este bloque.",
+      "foco": [
+        0.73,
+        0.75,
+        0.98,
+        0.89
       ]
     },
     {
@@ -189,18 +209,22 @@
       ]
     },
     {
-      "imagen": "publico-inicio",
-      "texto": "La fiesta patronal tiene franja propia en la portada, con cuenta regresiva. Aparece cuando faltan menos de dos meses y está publicado el evento cuyo título dice fiesta patronal: el de la sede, no el de un centro."
+      "imagen": "publico-inicio-franjas",
+      "texto": "La fiesta patronal tiene franja propia en la portada, con cuenta regresiva, sin marcar nada. Aparece cuando faltan menos de dos meses y está publicado el evento cuyo título dice fiesta patronal: el de la sede, no el de un centro.",
+      "foco": [
+        0.0,
+        0.0,
+        1.0,
+        0.5
+      ]
     },
     {
-      "imagen": "publico-inicio",
-      "texto": "Si también están publicadas la novena y la kermés, con esas palabras en el título, salen en esa franja, y en dorado en Lo que viene en la parroquia. Mientras sigan en borrador, la portada no dice nada de la fiesta.",
-      "foco": [
-        0.45,
-        0.2,
-        0.85,
-        0.66
-      ]
+      "imagen": "publico-inicio-agenda",
+      "texto": "Si también están publicadas la novena y la kermés, con esas palabras en el título, salen en esa franja, la novena hasta que termina, y en dorado en Lo que viene en la parroquia. Mientras sigan en borrador, la portada no dice nada de la fiesta."
+    },
+    {
+      "imagen": "publico-inicio-franjas",
+      "texto": "Cuando hay varias, las franjas se apilan, y cada una se va sola al día siguiente de su evento. La de un evento marcado lleva su título, su fecha y un botón para abrir su página."
     },
     {
       "imagen": "agenda-mes",

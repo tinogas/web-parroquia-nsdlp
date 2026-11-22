@@ -199,6 +199,28 @@ module.exports = [
         recorte: '#horarios',
     },
     {
+        // Las franjas con cuenta regresiva: la de la fiesta patronal cuando se
+        // acerca y las de los eventos marcados con «Cuenta regresiva». Solo
+        // existen si hay alguna en los próximos dos meses: para que la captura
+        // enseñe más de una, se marca antes algún evento en la copia de la base.
+        id: 'publico-inicio-franjas',
+        titulo: 'Las franjas con cuenta regresiva en la portada',
+        url: '/',
+        sesion: 'publico',
+        espera: '.franjas-cuenta',
+        recorte: '.franjas-cuenta',
+    },
+    {
+        // La agenda de la portada; los destacados van en dorado y con estrella
+        // (lo mismo: se marcan antes en la copia para que se vean).
+        id: 'publico-inicio-agenda',
+        titulo: 'Lo que viene en la parroquia, con los destacados en dorado',
+        url: '/',
+        sesion: 'publico',
+        espera: '#agenda',
+        recorte: '#agenda',
+    },
+    {
         // La cabecera con el recuadro de avisos (lema, presentación y avisos
         // con su miniatura). Las columnas entran con una animación de
         // aparición: se dejan ya en su sitio antes de disparar.

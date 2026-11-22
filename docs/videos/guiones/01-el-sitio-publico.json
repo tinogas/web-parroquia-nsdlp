@@ -14,7 +14,7 @@
     },
     {
       "imagen": "publico-inicio-completa",
-      "texto": "Así es la portada, de arriba abajo: la cabecera con los avisos y las próximas misas, el evangelio del día, los horarios de la semana, los requisitos de cada sacramento, las pastorales agrupadas por comisión, quiénes somos y, al final, el contacto. Cada franja aparece solo si tiene algo que mostrar."
+      "texto": "Así es la portada, de arriba abajo: la cabecera con los avisos y las próximas misas, el evangelio del día, los horarios de la semana, la cuenta regresiva cuando se acerca algo importante, los requisitos de cada sacramento, las pastorales agrupadas por comisión, lo que viene en la parroquia, quiénes somos y, al final, el contacto. Cada franja aparece solo si tiene algo que mostrar."
     },
     {
       "imagen": "publico-inicio-avisos",
@@ -63,7 +63,7 @@
     },
     {
       "imagen": "publico-eventos",
-      "texto": "Ojo con la fiesta patronal: la franja de la portada con la cuenta regresiva aparece sola cuando faltan menos de dos meses, pero solo si la fiesta está publicada como evento, con fiesta patronal en el título. Si sigue en borrador, no sale.",
+      "texto": "Ojo con la fiesta patronal: la franja de la portada con la cuenta regresiva aparece sola cuando faltan menos de dos meses, pero solo si la fiesta está publicada como evento, con fiesta patronal en el título. Si sigue en borrador, no sale. Otros eventos importantes pueden tener también su franja, si en su formulario se enciende Cuenta regresiva.",
       "foco": [0.2, 0.4, 0.8, 0.8]
     },
     {

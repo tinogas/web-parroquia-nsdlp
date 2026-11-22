@@ -113,6 +113,8 @@ formulario. Llevan el título y la fecha del evento y un botón **Ver el evento*
 que abre su página. La franja más cercana sale desde dos meses antes; si hay
 otras, se apilan debajo cuando les falta un mes o menos.
 
+![Las franjas con cuenta regresiva en la portada](img/publico-inicio-franjas.webp)
+
 > **Se llena desde:** Comunicación → Eventos.
 
 **Sacramentos.** Bajo el título «Lo que necesitas para cada sacramento», todos
@@ -139,6 +141,8 @@ uno con su día en un recuadro, el horario y la sede. Van en dorado y con
 estrella los de la fiesta patronal —novena, fiesta y kermés— y los que tienen
 encendido **Destacado** o **Cuenta regresiva**. Esos destacados aparecen aquí
 desde dos meses antes, aunque todavía no estén entre los próximos.
+
+![Lo que viene en la parroquia, con los destacados en dorado](img/publico-inicio-agenda.webp)
 
 > **Se llena desde:** Comunicación → Eventos.
 
